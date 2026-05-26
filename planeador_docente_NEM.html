@@ -253,11 +253,11 @@
         <div class="flex-btns"><button id="descargarWord">📎 Descargar Word</button><button id="copiarTexto">📋 Copiar</button><button id="nuevoDoc">🔄 Nuevo</button></div></div>`;
     }
 
-    // ======================= GEMINI CORREGIDO =======================
+    // ======================= GEMINI CORREGIDO - USANDO gemini-2.5-flash =======================
     async function generarConGemini(datosFormulario, tipoDocumento) {
         const GEMINI_KEY = "AIzaSyDALopmFHobLJkYsyHnQdx58641IqyMwb8";
-        // MODELO CORREGIDO - usa gemini-1.5-pro que SÍ existe
-        const MODELO = "gemini-1.5-pro";
+        // ✅ MODELO CORRECTO que SÍ funciona gratis
+        const MODELO = "gemini-2.5-flash";
         
         const prompt = `Eres un experto en Nueva Escuela Mexicana (NEM), Fase 6 de secundaria.
 Genera un documento educativo oficial llamado "${tipoDocumento}" con estos datos:
