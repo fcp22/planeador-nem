@@ -2,571 +2,217 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Planeador Docente NEM — Fase 6</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planeador Docente NEM</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: #f0f7ff;
-            padding: 16px;
-            color: #1e293b;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        /* Tarjetas */
-        .card {
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-            padding: 24px 20px;
-            margin-bottom: 24px;
-            transition: all 0.2s ease;
-            border: 1px solid #e2e8f0;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #0b3b5f, #1e4a76);
-            color: white;
-            border-radius: 28px;
-            padding: 24px 20px;
-            margin-bottom: 24px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 1.7rem;
-            margin-bottom: 6px;
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 0.9rem;
-        }
-
-        h2 {
-            font-size: 1.4rem;
-            color: #0c4a6e;
-            margin-bottom: 16px;
-            border-left: 5px solid #2c7da0;
-            padding-left: 14px;
-        }
-
-        h3 {
-            font-size: 1.1rem;
-            color: #1e4a76;
-            margin: 12px 0 8px 0;
-        }
-
-        label {
-            font-weight: 600;
-            display: block;
-            margin-top: 12px;
-            margin-bottom: 5px;
-            font-size: 0.85rem;
-            color: #2c3e66;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 16px;
-            border: 1px solid #cbd5e1;
-            background: #ffffff;
-            font-size: 0.9rem;
-            transition: 0.2s;
-            font-family: inherit;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #2c7da0;
-            box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
-        }
-
-        button {
-            background: #1e4a76;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 40px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        button:hover {
-            background: #0f3b5f;
-            transform: scale(0.98);
-        }
-
-        .btn-sec {
-            background: #e2e8f0;
-            color: #1e293b;
-            margin-top: 8px;
-        }
-
-        .flex-btns {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .flex-btns button {
-            flex: 1;
-        }
-
-        .result-area {
-            background: #f8fafc;
-            border-radius: 20px;
-            padding: 20px;
-            white-space: pre-wrap;
-            font-family: 'Courier New', monospace;
-            font-size: 0.8rem;
-            max-height: 500px;
-            overflow-y: auto;
-            border: 1px solid #cbd5e1;
-            line-height: 1.5;
-        }
-
-        .badge {
-            background: #e6f7f0;
-            color: #1f6e43;
-            padding: 6px 12px;
-            border-radius: 40px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 12px;
-        }
-
-        .step {
-            background: #eef2ff;
-            border-radius: 40px;
-            padding: 6px 14px;
-            font-weight: bold;
-            font-size: 0.75rem;
-            display: inline-block;
-            margin-bottom: 12px;
-        }
-
-        hr {
-            margin: 16px 0;
-            border: none;
-            height: 1px;
-            background: #e2e8f0;
-        }
-
-        @media (max-width: 640px) {
-            body {
-                padding: 10px;
-            }
-            .card {
-                padding: 18px;
-            }
-        }
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:Arial,sans-serif;background:#f0f7ff;padding:16px;}
+        .container{max-width:1000px;margin:0 auto;}
+        .card{background:white;border-radius:20px;padding:20px;margin-bottom:20px;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
+        .header{background:#0b3b5f;color:white;border-radius:20px;padding:20px;text-align:center;margin-bottom:20px;}
+        h1{font-size:1.5rem;}
+        h2{color:#0b3b5f;margin-bottom:15px;}
+        label{font-weight:bold;display:block;margin-top:12px;margin-bottom:5px;}
+        input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;}
+        button{background:#0b3b5f;color:white;border:none;padding:12px;border-radius:30px;font-weight:bold;cursor:pointer;width:100%;margin-top:15px;}
+        button:hover{background:#1e4a76;}
+        .result-area{background:#f4f4f4;padding:15px;border-radius:10px;max-height:500px;overflow:auto;white-space:pre-wrap;}
+        .flex-btns{display:flex;gap:10px;margin-top:15px;}
+        .flex-btns button{flex:1;}
     </style>
 </head>
 <body>
 <div class="container" id="app"></div>
 
 <script>
-    // ======================= DATOS BASE NEM =======================
-    const CAMPOS = [
-        "Lenguajes",
-        "Saberes y pensamiento científico",
-        "Ética, naturaleza y sociedades",
-        "De lo humano y lo comunitario"
-    ];
-
-    const ASIGNATURAS_POR_CAMPO = {
-        "Lenguajes": ["Español", "Inglés", "Artes", "Lengua indígena"],
-        "Saberes y pensamiento científico": ["Matemáticas", "Biología", "Física", "Química"],
-        "Ética, naturaleza y sociedades": ["Formación Cívica y Ética", "Historia", "Geografía"],
-        "De lo humano y lo comunitario": ["Tutoría", "Vida saludable", "Educación socioemocional"]
-    };
-
-    const GRADOS = ["1", "2", "3"];
-    const TRIMESTRES = ["Primer trimestre", "Segundo trimestre", "Tercer trimestre"];
-    const METODOLOGIAS = ["Aprendizaje basado en proyectos comunitarios", "Aprendizaje basado en indagación", "Aprendizaje basado en problemas", "Aprendizaje servicio"];
-
-    // EJES ARTICULADORES (versión reducida pero oficial)
-    const EJES_ARTICULADORES = [
-        "Inclusión",
-        "Pensamiento crítico",
-        "Interculturalidad crítica",
-        "Igualdad de género",
-        "Vida saludable",
-        "Apropiación de las culturas a través de la lectura y la escritura",
-        "Artes y experiencias estéticas"
-    ];
-
-    // PERFILES DE EGRESO simplificados
-    const PERFILES_EGRESO = [
-        "Reconoce y valora diversas expresiones culturales y artísticas.",
-        "Argumenta y estructura juicios éticos sobre situaciones de su entorno.",
-        "Comunica ideas con claridad, oral y escrita, usando recursos digitales.",
-        "Resuelve problemas mediante el pensamiento matemático y científico.",
-        "Participa en proyectos comunitarios con responsabilidad e inclusión."
-    ];
-
-    // ======================= ESTADO GLOBAL =======================
     let S = {
         step: 1,
         user: null,
-        escuela: "",
-        cct: "",
-        turno: "Matutino",
-        municipio: "",
-        campo: "",
-        asig: "",
-        grado: "",
-        trimestre: "Primer trimestre",
-        met: "",
-        contexto: "",
-        pdaSeleccionados: [],   // códigos de PDA
-        ejes: [],
-        pe: [],
-        proyecto: "",
-        docTipo: "analitico",
-        resultado: "",
-        gen: false
+        escuela: "", cct: "", turno: "Matutino", municipio: "",
+        campo: "", asig: "", grado: "", trimestre: "Primer trimestre",
+        met: "Aprendizaje basado en proyectos comunitarios", contexto: "",
+        pdaSeleccionados: [], ejes: [], pe: [], proyecto: "",
+        docTipo: "", resultado: ""
     };
 
-    // ======================= PDA SIMULADOS =======================
-    // Contenidos y PDA oficiales estilo NEM 2025-2026
-    const PDA_POR_ASIGNATURA = {
-        "Español": [
-            { cod: "LENG-01", texto: "Prácticas sociales del lenguaje: participación en debates y diálogos argumentados." },
-            { cod: "LENG-02", texto: "Análisis de textos literarios y no literarios desde perspectivas comunitarias." },
-            { cod: "LENG-03", texto: "Producción de textos expositivos y creativos para la difusión en la comunidad." }
-        ],
-        "Matemáticas": [
-            { cod: "MATE-01", texto: "Resolución de problemas mediante la modelación matemática en contextos reales." },
-            { cod: "MATE-02", texto: "Interpretación de datos estadísticos en proyectos comunitarios." },
-            { cod: "MATE-03", texto: "Pensamiento algebraico y funcional en situaciones cotidianas." }
-        ],
-        "Biología": [
-            { cod: "BIO-01", texto: "Ecosistemas locales: impacto humano y propuestas de sustentabilidad." },
-            { cod: "BIO-02", texto: "Salud integral y prevención desde el conocimiento científico." }
-        ],
-        "Historia": [
-            { cod: "HIST-01", texto: "Identidad cultural y memoria histórica en el entorno comunitario." },
-            { cod: "HIST-02", texto: "Pensamiento histórico para entender desigualdades sociales." }
-        ],
-        "Formación Cívica y Ética": [
-            { cod: "FCE-01", texto: "Ejercicio de la ciudadanía y participación juvenil." },
-            { cod: "FCE-02", texto: "Dilemas éticos y construcción de acuerdos en el aula." }
-        ]
+    const CAMPOS = ["Lenguajes", "Saberes y pensamiento científico", "Ética, naturaleza y sociedades", "De lo humano y lo comunitario"];
+    const ASIGNATURAS = {
+        "Lenguajes": ["Español", "Inglés", "Artes"],
+        "Saberes y pensamiento científico": ["Matemáticas", "Biología", "Física", "Química"],
+        "Ética, naturaleza y sociedades": ["Formación Cívica y Ética", "Historia", "Geografía"],
+        "De lo humano y lo comunitario": ["Tutoría", "Vida saludable"]
     };
+    const GRADOS = ["1", "2", "3"];
+    const TRIMESTRES = ["Primer trimestre", "Segundo trimestre", "Tercer trimestre"];
+    const METODOLOGIAS = ["Aprendizaje basado en proyectos comunitarios", "Aprendizaje basado en indagación", "Aprendizaje servicio"];
+    const EJES = ["Inclusión", "Pensamiento crítico", "Interculturalidad crítica", "Igualdad de género", "Vida saludable"];
+    const PERFILES = ["Comunica ideas con claridad", "Resuelve problemas comunitarios", "Participa con responsabilidad social"];
+    const PDA_LIST = [
+        "PDA 1: Desarrollo de pensamiento crítico",
+        "PDA 2: Participación democrática en el aula",
+        "PDA 3: Producción de textos comunitarios"
+    ];
 
-    function obtenerPDAs(asignatura) {
-        return PDA_POR_ASIGNATURA[asignatura] || [
-            { cod: "PDA-01", texto: "Desarrollo de pensamiento crítico y resolución de problemas comunitarios." },
-            { cod: "PDA-02", texto: "Fortalecimiento de saberes comunitarios y diálogo de saberes." }
-        ];
-    }
-
-    // ======================= FUNCIONES DE UI =======================
     function R() {
         const app = document.getElementById("app");
-        if (!S.user) {
-            app.innerHTML = renderLogin();
-            return;
-        }
+        if (!S.user) { app.innerHTML = renderLogin(); bindLogin(); return; }
         if (S.step === 1) app.innerHTML = renderStep1();
         else if (S.step === 2) app.innerHTML = renderStep2();
         else if (S.step === 3) app.innerHTML = renderStep3();
         else if (S.step === 4) app.innerHTML = renderStep4();
         else if (S.step === 5) app.innerHTML = renderStep5();
         else if (S.step === 6) app.innerHTML = renderResultado();
+        bindEvents();
     }
 
     function renderLogin() {
-        return `
-            <div class="card">
-                <div class="header">
-                    <h1>📘 Planeador Docente NEM — Fase 6</h1>
-                    <p>Secundaria | Nueva Escuela Mexicana 2025-2026</p>
-                </div>
-                <div class="card">
-                    <h2>🔐 Acceso docente</h2>
-                    <label>Usuario</label>
-                    <input type="text" id="username" placeholder="Ej: maestra01">
-                    <label>Contraseña</label>
-                    <input type="password" id="password" placeholder="Contraseña">
-                    <button id="btnLogin">Ingresar</button>
-                    <p style="margin-top:16px; font-size:0.7rem; text-align:center;">Demo: maestra01 / 123456 | admin / admin2025</p>
-                </div>
-            </div>
-        `;
+        return `<div class="card"><div class="header"><h1>📘 Planeador Docente NEM</h1><p>Secundaria | Ciclo 2025-2026</p></div>
+        <div class="card"><h2>🔐 Acceso docente</h2>
+        <label>Usuario</label><input type="text" id="username" placeholder="maestra01">
+        <label>Contraseña</label><input type="password" id="password" placeholder="123456">
+        <button id="btnLogin">Ingresar</button>
+        <p style="margin-top:12px;font-size:12px;">Demo: maestra01/123456 | admin/admin2025</p></div></div>`;
+    }
+
+    function bindLogin() {
+        const btn = document.getElementById("btnLogin");
+        if(btn) btn.onclick = () => {
+            const u = document.getElementById("username").value;
+            const p = document.getElementById("password").value;
+            if((u === "maestra01" || u === "maestro02" || u === "maestra03") && p === "123456") {
+                S.user = { nombre: u };
+                S.step = 1;
+                R();
+            } else if(u === "admin" && p === "admin2025") {
+                S.user = { nombre: "Admin" };
+                S.step = 1;
+                R();
+            } else alert("Error: usa maestra01/123456");
+        };
     }
 
     function renderStep1() {
-        return `
-            <div class="card">
-                <div class="header"><h1>📌 Paso 1/5 — Datos de la escuela</h1></div>
-                <label>🏫 Nombre de la escuela</label>
-                <input type="text" id="escuela" value="${S.escuela}" placeholder="Ej: Secundaria Técnica 42">
-                <label>📛 CCT (Clave)</label>
-                <input type="text" id="cct" value="${S.cct}" placeholder="31DST0042X">
-                <label>⏰ Turno</label>
-                <select id="turno">${["Matutino","Vespertino"].map(t => `<option ${S.turno===t ? "selected" : ""}>${t}</option>`).join("")}</select>
-                <label>📍 Municipio / Localidad</label>
-                <input type="text" id="municipio" value="${S.municipio}" placeholder="Ej: Felipe Carrillo Puerto">
-                <button id="next1">Continuar →</button>
-            </div>
-        `;
+        return `<div class="card"><div class="header"><h1>📌 Paso 1/5 — Escuela</h1></div>
+        <label>🏫 Nombre de la escuela</label><input type="text" id="escuela" value="${S.escuela}">
+        <label>📛 CCT</label><input type="text" id="cct" value="${S.cct}">
+        <label>⏰ Turno</label><select id="turno">${["Matutino","Vespertino"].map(t=>`<option ${S.turno===t?"selected":""}>${t}</option>`)}</select>
+        <label>📍 Municipio</label><input type="text" id="municipio" value="${S.municipio}">
+        <button id="next1">Continuar →</button></div>`;
     }
 
     function renderStep2() {
-        return `
-            <div class="card">
-                <div class="header"><h1>📖 Paso 2/5 — Campo formativo y asignatura</h1></div>
-                <label>🌿 Campo formativo</label>
-                <select id="campo">${CAMPOS.map(c => `<option ${S.campo===c ? "selected" : ""}>${c}</option>`).join("")}</select>
-                <label>📚 Asignatura</label>
-                <select id="asig">${(ASIGNATURAS_POR_CAMPO[S.campo] || ASIGNATURAS_POR_CAMPO["Lenguajes"]).map(a => `<option ${S.asig===a ? "selected" : ""}>${a}</option>`).join("")}</select>
-                <label>🎓 Grado</label>
-                <select id="grado">${GRADOS.map(g => `<option ${S.grado===g ? "selected" : ""}>${g}°</option>`).join("")}</select>
-                <label>📅 Trimestre</label>
-                <select id="trimestre">${TRIMESTRES.map(t => `<option ${S.trimestre===t ? "selected" : ""}>${t}</option>`).join("")}</select>
-                <button id="next2">Continuar →</button>
-            </div>
-        `;
+        return `<div class="card"><div class="header"><h1>📖 Paso 2/5 — Campo y asignatura</h1></div>
+        <label>🌿 Campo formativo</label><select id="campo">${CAMPOS.map(c=>`<option ${S.campo===c?"selected":""}>${c}</option>`)}</select>
+        <label>📚 Asignatura</label><select id="asig">${(ASIGNATURAS[S.campo]||ASIGNATURAS["Lenguajes"]).map(a=>`<option ${S.asig===a?"selected":""}>${a}</option>`)}</select>
+        <label>🎓 Grado</label><select id="grado">${GRADOS.map(g=>`<option ${S.grado===g?"selected":""}>${g}°</option>`)}</select>
+        <label>📅 Trimestre</label><select id="trimestre">${TRIMESTRES.map(t=>`<option ${S.trimestre===t?"selected":""}>${t}</option>`)}</select>
+        <button id="next2">Continuar →</button></div>`;
     }
 
     function renderStep3() {
-        const pdasDisponibles = obtenerPDAs(S.asig);
-        return `
-            <div class="card">
-                <div class="header"><h1>🎯 Paso 3/5 — PDA y ejes articuladores</h1></div>
-                <label>📌 PDA a desarrollar (selecciona al menos 2)</label>
-                ${pdasDisponibles.map(p => `
-                    <div style="margin:6px 0">
-                        <label style="font-weight:normal; display:flex; align-items:center; gap:8px;">
-                            <input type="checkbox" value="${p.cod}" ${S.pdaSeleccionados.includes(p.cod) ? "checked" : ""}> 
-                            <strong>${p.cod}</strong> — ${p.texto}
-                        </label>
-                    </div>
-                `).join("")}
-                <label>🧩 Ejes articuladores (máximo 3)</label>
-                ${EJES_ARTICULADORES.map(e => `
-                    <div style="margin:4px 0"><label style="font-weight:normal"><input type="checkbox" class="chk-eje" value="${e}" ${S.ejes.includes(e) ? "checked" : ""}> ${e}</label></div>
-                `).join("")}
-                <label>🎯 Perfiles de egreso (selecciona 2)</label>
-                ${PERFILES_EGRESO.map(p => `
-                    <div><label style="font-weight:normal"><input type="checkbox" class="chk-pe" value="${p}" ${S.pe.includes(p) ? "checked" : ""}> ${p}</label></div>
-                `).join("")}
-                <button id="next3">Continuar →</button>
-            </div>
-        `;
+        return `<div class="card"><div class="header"><h1>🎯 Paso 3/5 — PDA y ejes</h1></div>
+        <label>📌 PDA (selecciona 2)</label>
+        ${PDA_LIST.map(p=>`<div><label><input type="checkbox" value="${p}" ${S.pdaSeleccionados.includes(p)?"checked":""}> ${p}</label></div>`).join("")}
+        <label>🧩 Ejes articuladores</label>
+        ${EJES.map(e=>`<div><label><input type="checkbox" class="eje" value="${e}" ${S.ejes.includes(e)?"checked":""}> ${e}</label></div>`).join("")}
+        <label>🎯 Perfiles de egreso</label>
+        ${PERFILES.map(p=>`<div><label><input type="checkbox" class="perfil" value="${p}" ${S.pe.includes(p)?"checked":""}> ${p}</label></div>`).join("")}
+        <button id="next3">Continuar →</button></div>`;
     }
 
     function renderStep4() {
-        return `
-            <div class="card">
-                <div class="header"><h1>🌎 Paso 4/5 — Contexto y metodología</h1></div>
-                <label>📖 Descripción del contexto comunitario (breve)</label>
-                <textarea rows="3" id="contexto" placeholder="Ej: Comunidad maya, actividades agrícolas, migración...">${S.contexto}</textarea>
-                <label>🛠️ Metodología didáctica</label>
-                <select id="met">${METODOLOGIAS.map(m => `<option ${S.met===m ? "selected" : ""}>${m}</option>`).join("")}</select>
-                <label>💡 Proyecto comunitario sugerido (opcional)</label>
-                <input type="text" id="proyecto" value="${S.proyecto}" placeholder="Huerto escolar, periódico mural, feria científica...">
-                <button id="next4">Continuar →</button>
-            </div>
-        `;
+        return `<div class="card"><div class="header"><h1>🌎 Paso 4/5 — Contexto</h1></div>
+        <label>📖 Contexto comunitario</label><textarea rows="3" id="contexto">${S.contexto}</textarea>
+        <label>🛠️ Metodología</label><select id="met">${METODOLOGIAS.map(m=>`<option ${S.met===m?"selected":""}>${m}</option>`)}</select>
+        <label>💡 Proyecto</label><input type="text" id="proyecto" value="${S.proyecto}">
+        <button id="next4">Continuar →</button></div>`;
     }
 
     function renderStep5() {
-        return `
-            <div class="card">
-                <div class="header"><h1>📄 Paso 5/5 — ¿Qué documento generar?</h1></div>
-                <div class="flex-btns">
-                    <button id="genAnalitico">📘 Programa Analítico Anual</button>
-                    <button id="genDidactico">🗂️ Plano Didáctico (F1, F2, F3)</button>
-                </div>
-                <button class="btn-sec" id="backStep">◀ Regresar</button>
-            </div>
-        `;
+        return `<div class="card"><div class="header"><h1>📄 Paso 5/5 — Generar</h1></div>
+        <button id="genAnalitico">📘 Programa Analítico</button>
+        <button id="genDidactico">🗂️ Plano Didáctico</button>
+        <button id="backStep" style="background:gray;">◀ Regresar</button></div>`;
     }
 
     function renderResultado() {
-        return `
-            <div class="card">
-                <div class="header"><h1>✅ Documento generado con IA</h1></div>
-                <div class="result-area" id="textoResultado">${S.resultado || "Generando..."}</div>
-                <div class="flex-btns" style="margin-top:16px;">
-                    <button id="descargarWord">📎 Descargar Word (.doc)</button>
-                    <button id="copiarTexto">📋 Copiar texto</button>
-                    <button id="nuevoDoc">🔄 Nuevo documento</button>
-                </div>
-            </div>
-        `;
+        return `<div class="card"><div class="header"><h1>✅ Documento generado</h1></div>
+        <div class="result-area" id="textoResultado">${S.resultado || "Generando..."}</div>
+        <div class="flex-btns"><button id="descargar">📎 Descargar Word</button><button id="copiar">📋 Copiar</button><button id="nuevo">🔄 Nuevo</button></div></div>`;
     }
 
-    // ======================= GENERACIÓN CON GEMINI (MODELO GRATUITO) =======================
-    async function generarConGemini(datosFormulario, tipoDocumento) {
-        // CLAVE CORRECTA (cambia SOLO si quieres usar otra)
-        const GEMINI_KEY = "AIzaSyDALopmFHobLJkYsyHnQdx58641IqyMwb8";
-        // MODELO 100% GRATUITO - sin necesidad de tarjeta de crédito
+    async function generarConGemini(datos, tipo) {
+        const API_KEY = "AIzaSyDALopmFHobLJkYsyHnQdx58641IqyMwb8";
         const MODELO = "gemini-1.5-flash-8b";
-        
-        const prompt = `Eres un experto en Nueva Escuela Mexicana (NEM), Fase 6 de secundaria.
-Genera un documento educativo oficial llamado "${tipoDocumento}" con los siguientes datos del docente:
-
-${JSON.stringify(datosFormulario, null, 2)}
-
-REQUISITOS DEL FORMATO:
-- Usa lenguaje oficial de la NEM, incluye los 3 planos (Diagnóstico, Curricular, Evaluación) si es Programa Analítico.
-- Si es Plano Didáctico: desarrolla Fase 1 (activación), Fase 2 (desarrollo), Fase 3 (cierre) con sesiones concretas y evaluación sumativa.
-- Incorpora los ejes articuladores seleccionados y perfiles de egreso.
-- Redacción clara, con títulos y subtítulos.
-
-Genera el documento completo y estructurado.`;
-
+        const prompt = `Genera un documento "${tipo}" para la Nueva Escuela Mexicana (Fase 6) con estos datos: ${JSON.stringify(datos)}. Incluye todos los planos y fases. Formato oficial.`;
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent?key=${GEMINI_KEY}`;
-            const response = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { maxOutputTokens: 8192, temperature: 0.7 }
-                })
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent?key=${API_KEY}`, {
+                method: "POST", headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({contents: [{parts: [{text: prompt}]}], generationConfig: {maxOutputTokens: 4096}})
             });
-            const data = await response.json();
-            if (data.error) {
-                return "Error de IA: " + data.error.message + "\n\nRevisa tu conexión o contacta al administrador.";
-            }
-            const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || "No se pudo generar el texto.";
-            return texto;
-        } catch (error) {
-            return "Error de conexión: " + error.message;
-        }
+            const data = await res.json();
+            if(data.error) return "Error: " + data.error.message;
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sin resultado";
+        } catch(e) { return "Error de conexión"; }
     }
 
-    // ======================= EVENTOS =======================
     function bindEvents() {
-        // LOGIN
-        const btnLogin = document.getElementById("btnLogin");
-        if (btnLogin) btnLogin.onclick = () => {
-            const user = document.getElementById("username").value;
-            const pass = document.getElementById("password").value;
-            if ((user === "maestra01" || user === "maestro02" || user === "maestra03") && pass === "123456") {
-                S.user = { nombre: user === "maestra01" ? "Docente 01" : (user === "maestro02" ? "Docente 02" : "Docente 03"), rol: "docente" };
-                S.step = 1;
-                R();
-            } else if (user === "admin" && pass === "admin2025") {
-                S.user = { nombre: "Administrador", rol: "admin" };
-                alert("Panel de admin: puedes agregar usuarios más tarde.");
-                S.step = 1;
-                R();
-            } else alert("Credenciales incorrectas");
-        };
-
-        // STEP1
-        const next1 = document.getElementById("next1");
-        if (next1) next1.onclick = () => {
+        if(S.step === 1) document.getElementById("next1")?.addEventListener("click", () => {
             S.escuela = document.getElementById("escuela").value;
             S.cct = document.getElementById("cct").value;
             S.turno = document.getElementById("turno").value;
             S.municipio = document.getElementById("municipio").value;
-            if (!S.escuela) { alert("Escribe el nombre de la escuela"); return; }
-            S.step = 2;
-            R();
-        };
-
-        // STEP2
-        const next2 = document.getElementById("next2");
-        if (next2) next2.onclick = () => {
+            if(!S.escuela) { alert("Escribe la escuela"); return; }
+            S.step = 2; R();
+        });
+        if(S.step === 2) document.getElementById("next2")?.addEventListener("click", () => {
             S.campo = document.getElementById("campo").value;
             S.asig = document.getElementById("asig").value;
             S.grado = document.getElementById("grado").value.replace("°","");
             S.trimestre = document.getElementById("trimestre").value;
-            S.step = 3;
-            R();
-        };
-
-        // STEP3
-        const next3 = document.getElementById("next3");
-        if (next3) next3.onclick = () => {
-            const checkboxesPDA = document.querySelectorAll("input[type='checkbox']:not(.chk-eje):not(.chk-pe)");
-            S.pdaSeleccionados = Array.from(checkboxesPDA).filter(cb => cb.checked).map(cb => cb.value);
-            if (S.pdaSeleccionados.length < 1) { alert("Selecciona al menos un PDA"); return; }
-            S.ejes = Array.from(document.querySelectorAll(".chk-eje:checked")).map(cb => cb.value);
-            S.pe = Array.from(document.querySelectorAll(".chk-pe:checked")).map(cb => cb.value);
-            S.step = 4;
-            R();
-        };
-
-        // STEP4
-        const next4 = document.getElementById("next4");
-        if (next4) next4.onclick = () => {
+            S.step = 3; R();
+        });
+        if(S.step === 3) document.getElementById("next3")?.addEventListener("click", () => {
+            S.pdaSeleccionados = Array.from(document.querySelectorAll("input[type='checkbox']:not(.eje):not(.perfil)")).filter(c=>c.checked).map(c=>c.value);
+            S.ejes = Array.from(document.querySelectorAll(".eje:checked")).map(c=>c.value);
+            S.pe = Array.from(document.querySelectorAll(".perfil:checked")).map(c=>c.value);
+            if(S.pdaSeleccionados.length < 1) { alert("Selecciona al menos un PDA"); return; }
+            S.step = 4; R();
+        });
+        if(S.step === 4) document.getElementById("next4")?.addEventListener("click", () => {
             S.contexto = document.getElementById("contexto").value;
             S.met = document.getElementById("met").value;
             S.proyecto = document.getElementById("proyecto").value;
-            S.step = 5;
-            R();
-        };
-
-        // STEP5 - Generar
-        const genAnalitico = document.getElementById("genAnalitico");
-        const genDidactico = document.getElementById("genDidactico");
-        if (genAnalitico) genAnalitico.onclick = async () => { S.docTipo = "Programa Analítico Anual"; await generarYMostrar(); };
-        if (genDidactico) genDidactico.onclick = async () => { S.docTipo = "Plano Didáctico (Fases F1, F2, F3)"; await generarYMostrar(); };
-        
-        const backStep = document.getElementById("backStep");
-        if (backStep) backStep.onclick = () => { if(S.step>1) S.step--; R(); };
-    }
-
-    async function generarYMostrar() {
-        S.gen = true;
-        S.step = 6;
-        R();
-        const datosParaIA = {
-            escuela: S.escuela, cct: S.cct, turno: S.turno, municipio: S.municipio,
-            campo: S.campo, asignatura: S.asig, grado: S.grado, trimestre: S.trimestre,
-            metodologia: S.met, contexto: S.contexto, proyecto: S.proyecto,
-            pda: S.pdaSeleccionados, ejes: S.ejes, perfiles_egreso: S.pe,
-            docente: S.user.nombre
-        };
-        const resultado = await generarConGemini(datosParaIA, S.docTipo);
-        S.resultado = resultado;
-        const divTexto = document.getElementById("textoResultado");
-        if (divTexto) divTexto.innerText = resultado;
-        bindEventsResultado();
-    }
-
-    function bindEventsResultado() {
-        const btnDescargar = document.getElementById("descargarWord");
-        const btnCopiar = document.getElementById("copiarTexto");
-        const btnNuevo = document.getElementById("nuevoDoc");
-        if (btnDescargar) btnDescargar.onclick = descargarWord;
-        if (btnCopiar) btnCopiar.onclick = () => { navigator.clipboard.writeText(S.resultado); alert("Copiado"); };
-        if (btnNuevo) btnNuevo.onclick = () => { S.step = 1; S.resultado = ""; R(); };
-    }
-
-    function descargarWord() {
-        if (!S.resultado) return;
-        const blob = new Blob([S.resultado], { type: "application/msword" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `${S.docTipo.replace(/\s/g,"_")}_${S.asig}.doc`;
-        a.click();
-        URL.revokeObjectURL(a.href);
+            S.step = 5; R();
+        });
+        if(S.step === 5) {
+            document.getElementById("genAnalitico")?.addEventListener("click", async () => {
+                S.docTipo = "Programa Analítico Anual";
+                S.step = 6; R();
+                const datos = {escuela:S.escuela,asignatura:S.asig,grado:S.grado,contexto:S.contexto,metodologia:S.met,pda:S.pdaSeleccionados};
+                S.resultado = await generarConGemini(datos, S.docTipo);
+                R();
+            });
+            document.getElementById("genDidactico")?.addEventListener("click", async () => {
+                S.docTipo = "Plano Didáctico";
+                S.step = 6; R();
+                const datos = {escuela:S.escuela,asignatura:S.asig,grado:S.grado,contexto:S.contexto};
+                S.resultado = await generarConGemini(datos, S.docTipo);
+                R();
+            });
+            document.getElementById("backStep")?.addEventListener("click", () => { if(S.step>1) S.step--; R(); });
+        }
+        if(S.step === 6) {
+            document.getElementById("descargar")?.addEventListener("click", () => {
+                const blob = new Blob([S.resultado], {type:"application/msword"});
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = `${S.docTipo.replace(/\s/g,"_")}.doc`;
+                a.click();
+            });
+            document.getElementById("copiar")?.addEventListener("click", () => { navigator.clipboard.writeText(S.resultado); alert("Copiado"); });
+            document.getElementById("nuevo")?.addEventListener("click", () => { S.step=1; S.resultado=""; R(); });
+        }
     }
 
     R();
