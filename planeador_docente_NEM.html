@@ -1,355 +1,516 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Planeador Docente NEM — Fase 6</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: #f0f7ff;
-            padding: 16px;
-            color: #1e293b;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-            padding: 24px 20px;
-            margin-bottom: 24px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #0b3b5f, #1e4a76);
-            color: white;
-            border-radius: 28px;
-            padding: 24px 20px;
-            margin-bottom: 24px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 1.7rem;
-            margin-bottom: 6px;
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 0.9rem;
-        }
-
-        h2 {
-            font-size: 1.4rem;
-            color: #0c4a6e;
-            margin-bottom: 16px;
-            border-left: 5px solid #2c7da0;
-            padding-left: 14px;
-        }
-
-        label {
-            font-weight: 600;
-            display: block;
-            margin-top: 12px;
-            margin-bottom: 5px;
-            font-size: 0.85rem;
-            color: #2c3e66;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 16px;
-            border: 1px solid #cbd5e1;
-            background: #ffffff;
-            font-size: 0.9rem;
-            font-family: inherit;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #2c7da0;
-            box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
-        }
-
-        button {
-            background: #1e4a76;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 40px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        button:hover {
-            background: #0f3b5f;
-        }
-
-        .btn-sec {
-            background: #e2e8f0;
-            color: #1e293b;
-            margin-top: 8px;
-        }
-
-        .flex-btns {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .flex-btns button {
-            flex: 1;
-        }
-
-        .result-area {
-            background: #f8fafc;
-            border-radius: 20px;
-            padding: 20px;
-            white-space: pre-wrap;
-            font-family: 'Courier New', monospace;
-            font-size: 0.8rem;
-            max-height: 500px;
-            overflow-y: auto;
-            border: 1px solid #cbd5e1;
-            line-height: 1.5;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #1e4a76;
-            font-weight: bold;
-        }
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Planeador Docente NEM — Fase 6 Secundaria</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--c1:#1a4a7a;--c2:#2563a8;--c3:#e8f2fc;--c4:#f0f7ff;--bg:#f4f6fa;--bgcard:#fff;--border:#d1d5db;--border2:#9ca3af;--text:#1f2937;--text2:#6b7280;--text3:#9ca3af;--ok:#15803d;--okbg:#dcfce7;--radius:10px}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:15px;color:var(--text);background:var(--bg);min-height:100vh}
+.app{max-width:940px;margin:0 auto;padding:16px}
+.header{background:var(--c1);color:white;border-radius:var(--radius);padding:16px 22px;margin-bottom:14px;display:flex;align-items:center;gap:14px}
+.header-logo{width:44px;height:44px;background:rgba(255,255,255,0.18);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.header h1{font-size:17px;font-weight:700;line-height:1.3}
+.header p{font-size:12px;opacity:.8;margin-top:2px}
+.card{background:var(--bgcard);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card h2{font-size:14px;font-weight:700;color:var(--c1);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.fg label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+.fg select,.fg input,.fg textarea{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;background:#fff;color:var(--text);width:100%;transition:border .15s}
+.fg select:focus,.fg input:focus,.fg textarea:focus{outline:none;border-color:var(--c2);box-shadow:0 0 0 3px rgba(37,99,168,.12)}
+.fg textarea{min-height:72px;resize:vertical;line-height:1.5}
+.btn{border:none;border-radius:7px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn-p{background:var(--c1);color:white}.btn-p:hover{background:var(--c2)}.btn-p:disabled{opacity:.45;cursor:not-allowed}
+.btn-s{background:#f9fafb;border:1px solid var(--border);color:var(--text)}.btn-s:hover{background:#f3f4f6}
+.btn-g{background:var(--ok);color:white}.btn-g:hover{background:#166534}
+.btn-sm{padding:6px 13px;font-size:12px}
+.steps{display:flex;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);margin-bottom:16px}
+.step{flex:1;padding:10px 5px;text-align:center;font-size:11px;font-weight:600;background:#f9fafb;color:var(--text2);border-right:1px solid var(--border);cursor:pointer}
+.step:last-child{border-right:none}
+.step.active{background:var(--c1);color:white}
+.step.done{background:var(--c3);color:var(--c1)}
+.pda-item{border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .15s;font-size:12px;line-height:1.5;margin-bottom:7px;display:flex;gap:8px;align-items:flex-start}
+.pda-item:hover{border-color:var(--c2);background:var(--c4)}
+.pda-item.sel{border-color:var(--c1);background:var(--c3)}
+.pda-item input[type=checkbox]{margin-top:2px;accent-color:var(--c1);flex-shrink:0}
+.result-area{background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:16px;white-space:pre-wrap;font-size:12px;line-height:1.75;max-height:500px;overflow-y:auto;font-family:'Courier New',monospace}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a4a7a 0%,#2563a8 100%)}
+.login-box{background:white;border-radius:16px;padding:36px;width:360px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.login-box h1{font-size:20px;font-weight:800;color:var(--c1);margin-bottom:4px;text-align:center}
+.login-box p{font-size:12px;color:var(--text2);text-align:center;margin-bottom:22px}
+.err{background:#fee2e2;color:#991b1b;border-radius:7px;padding:10px 12px;font-size:12px;margin-bottom:12px}
+.info-b{background:var(--c4);border:1px solid #bfdbfe;border-radius:8px;padding:11px 13px;font-size:12px;color:var(--c1);margin-bottom:12px}
+.tag-g{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--okbg);color:var(--ok)}
+.slbl{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.prog-bar{height:4px;background:#e5e7eb;border-radius:2px;margin-bottom:14px;overflow:hidden}
+.prog-fill{height:100%;background:var(--c1);border-radius:2px;transition:width .4s}
+.spin{width:28px;height:28px;border:3px solid #bfdbfe;border-top-color:var(--c1);border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.at{width:100%;border-collapse:collapse;font-size:12px}
+.at th{background:var(--c3);color:var(--c1);padding:8px 10px;text-align:left;font-weight:700}
+.at td{padding:8px 10px;border-bottom:1px solid #e5e7eb}
+.at tr:hover td{background:var(--c4)}
+.tab-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tab{padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:white}
+.tab.active{background:var(--c1);color:white;border-color:var(--c1)}
+.dc{border:2px solid var(--border);border-radius:9px;padding:16px;cursor:pointer;transition:all .15s;margin-bottom:10px}
+.dc:hover{border-color:var(--c2);background:var(--c4)}
+.dc.sel{border-color:var(--c1);background:var(--c3)}
+.dc h3{font-size:13px;font-weight:700;color:var(--c1);margin-bottom:5px}
+.dc p{font-size:11px;color:var(--text2);line-height:1.5}
+.pe-item{display:flex;gap:7px;align-items:flex-start;font-size:11px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;cursor:pointer;line-height:1.4;margin-bottom:5px}
+.pe-item.sel{background:var(--c3);border-color:var(--c1)}
+.pe-item input{margin-top:1px;accent-color:var(--c1);flex-shrink:0}
+.eje-p{display:inline-flex;gap:5px;align-items:center;font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:white;margin:3px}
+.eje-p.sel{background:var(--c3);border-color:var(--c1);color:var(--c1)}
+.eje-p input{accent-color:var(--c1)}
+.divider{height:1px;background:var(--border);margin:14px 0}
+@media(max-width:600px){.fr,.fr3{grid-template-columns:1fr}.steps{flex-direction:column}.step{border-right:none;border-bottom:1px solid var(--border)}.header h1{font-size:14px}}
+</style>
 </head>
 <body>
-<div class="container" id="app"></div>
-
+<div id="root"></div>
 <script>
-    // ======================= DATOS BASE =======================
-    const CAMPOS = ["Lenguajes", "Saberes y pensamiento científico", "Ética, naturaleza y sociedades", "De lo humano y lo comunitario"];
-    const ASIGNATURAS_POR_CAMPO = {
-        "Lenguajes": ["Español", "Inglés", "Artes", "Lengua indígena"],
-        "Saberes y pensamiento científico": ["Matemáticas", "Biología", "Física", "Química"],
-        "Ética, naturaleza y sociedades": ["Formación Cívica y Ética", "Historia", "Geografía"],
-        "De lo humano y lo comunitario": ["Tutoría", "Vida saludable", "Educación socioemocional"]
-    };
-    const GRADOS = ["1", "2", "3"];
-    const TRIMESTRES = ["Primer trimestre", "Segundo trimestre", "Tercer trimestre"];
-    const METODOLOGIAS = ["Aprendizaje basado en proyectos comunitarios", "Aprendizaje basado en indagación", "Aprendizaje basado en problemas", "Aprendizaje servicio"];
-    const EJES_ARTICULADORES = ["Inclusión", "Pensamiento crítico", "Interculturalidad crítica", "Igualdad de género", "Vida saludable", "Artes y experiencias estéticas"];
-    const PERFILES_EGRESO = ["Reconoce y valora expresiones culturales", "Argumenta juicios éticos", "Comunica ideas con claridad", "Resuelve problemas mediante pensamiento científico", "Participa en proyectos comunitarios"];
+const CUR={
+"Lenguajes":{
+"Español":{"1":[
+{id:"ES1-1",c:"La diversidad de lenguas y su uso en la comunicación familiar, escolar y comunitaria",p:"Reconoce la riqueza lingüística de México y el mundo, a partir de obras literarias procedentes de distintas culturas."},
+{id:"ES1-2",c:"La diversidad étnica, cultural y lingüística de México a favor de una sociedad intercultural",p:"Comprende las ideas centrales de textos relacionados con la diversidad étnica para comentarlas oral y escrita."},
+{id:"ES1-3",c:"Las lenguas como manifestación de la identidad y del sentido de pertenencia",p:"Describe en un texto cómo el lenguaje oral manifiesta las identidades personal y colectiva."},
+{id:"ES1-4",c:"El dinamismo de las lenguas y su relevancia como patrimonio cultural",p:"Identifica y expresa la relevancia de valorar las lenguas como legado de la comunidad."},
+{id:"ES1-5",c:"La función creativa del español en la expresión de necesidades e intereses comunitarios",p:"Produce textos creativos donde el español sea vehículo de expresión comunitaria."},
+{id:"ES1-6",c:"Los elementos y los recursos estéticos de la lengua española en la literatura oral y escrita",p:"Reconoce los recursos estéticos en textos literarios líricos, orales y escritos."},
+{id:"ES1-7",c:"Textos literarios escritos en español o traducidos",p:"Analiza textos literarios de libre elección y expresa un juicio estético."},
+{id:"ES1-8",c:"Creaciones literarias tradicionales y contemporáneas",p:"Recupera y clasifica creaciones literarias de la comunidad para promover creativamente su lectura."},
+{id:"ES1-9",c:"Recursos literarios en lengua española para expresar sensaciones, emociones y sentimientos",p:"Identifica recursos literarios y los emplea en la elaboración de cartas personales y biografías."},
+{id:"ES1-10",c:"Los géneros periodísticos y sus recursos para comunicar sucesos significativos",p:"Usa géneros periodísticos para comunicar sucesos familiares, escolares y comunitarios."},
+{id:"ES1-11",c:"Comunicación asertiva y dialógica para erradicar expresiones de violencia",p:"Produce mensajes asertivos que promuevan el diálogo para erradicar la violencia."},
+{id:"ES1-12",c:"Mensajes para promover una vida saludable en medios comunitarios o masivos",p:"Identifica características de mensajes que promueven vida saludable en medios de comunicación."},
+{id:"ES1-13",c:"Textos de divulgación científica",p:"Identifica las características del texto de divulgación científica y elabora uno."},
+{id:"ES1-14",c:"Manifestaciones culturales y artísticas que favorecen una sociedad incluyente",p:"Reconoce manifestaciones culturales y artísticas creadas por personas con discapacidad."}],
+"2":[
+{id:"ES2-1",c:"La diversidad de lenguas y su uso en la comunicación familiar, escolar y comunitaria",p:"Reconoce variantes lingüísticas del español e investiga su uso en distintos contextos."},
+{id:"ES2-2",c:"La diversidad étnica, cultural y lingüística de México a favor de una sociedad intercultural",p:"Comprende y redacta textos sobre la construcción de identidad y sentido de pertenencia."},
+{id:"ES2-3",c:"Las lenguas como manifestación de la identidad y del sentido de pertenencia",p:"Elabora textos donde reflexiona sobre la lengua como manifestación identitaria."},
+{id:"ES2-4",c:"El dinamismo de las lenguas y su relevancia como patrimonio cultural",p:"Analiza el dinamismo de las lenguas e identifica su relevancia como patrimonio."},
+{id:"ES2-5",c:"La función creativa del español en la expresión de necesidades e intereses comunitarios",p:"Crea textos literarios de distintos géneros para ofrecer propuestas de solución a problemas comunitarios."},
+{id:"ES2-6",c:"Los elementos y los recursos estéticos de la lengua española en la literatura oral y escrita",p:"Analiza recursos estéticos de textos narrativos; interpreta y disfruta cuentos y novelas."},
+{id:"ES2-7",c:"Textos literarios escritos en español o traducidos",p:"Analiza textos literarios de libre elección para expresar un juicio estético."},
+{id:"ES2-8",c:"Creaciones literarias tradicionales y contemporáneas",p:"Valora textos literarios y los adapta a otros lenguajes para sensibilizar a la comunidad."},
+{id:"ES2-9",c:"Recursos literarios en lengua española para expresar sensaciones, emociones y sentimientos",p:"Usa recursos literarios del español para crear textos que describan vínculos con el entorno."},
+{id:"ES2-10",c:"Los géneros periodísticos y sus recursos para comunicar sucesos significativos",p:"Usa géneros periodísticos para comunicar sucesos significativos de la comunidad."},
+{id:"ES2-11",c:"Comunicación asertiva y dialógica para erradicar expresiones de violencia",p:"Elabora texto informativo sobre la importancia de erradicar la violencia."},
+{id:"ES2-12",c:"Mensajes para promover una vida saludable en medios comunitarios o masivos",p:"Elabora mensajes saludables para difundirlos en medios de comunicación."},
+{id:"ES2-13",c:"Textos de divulgación científica",p:"Elabora propuesta de divulgación científica con participación de la comunidad escolar."},
+{id:"ES2-14",c:"Manifestaciones culturales y artísticas que favorecen una sociedad incluyente",p:"Elabora texto sobre manifestaciones culturales que promuevan una sociedad incluyente."}],
+"3":[
+{id:"ES3-1",c:"La diversidad de lenguas y su uso en la comunicación familiar, escolar y comunitaria",p:"Practica la comunicación asertiva y el diálogo intercultural en interacción con otras personas."},
+{id:"ES3-2",c:"La diversidad étnica, cultural y lingüística de México a favor de una sociedad intercultural",p:"Comparte propuesta creativa propia en la que valore y promueva textos en español a favor de sociedad intercultural."},
+{id:"ES3-3",c:"Las lenguas como manifestación de la identidad y del sentido de pertenencia",p:"Elabora textos argumentativos sobre la interculturalidad crítica para promover y fortalecer las lenguas."},
+{id:"ES3-4",c:"El dinamismo de las lenguas y su relevancia como patrimonio cultural",p:"Analiza en textos literarios neologismos, jerga, préstamos lingüísticos y extranjerismos como parte del dinamismo del español."},
+{id:"ES3-5",c:"La función creativa del español en la expresión de necesidades e intereses comunitarios",p:"Crea textos literarios con uso de recursos del español para ofrecer soluciones a problemas de la comunidad."},
+{id:"ES3-6",c:"Los elementos y los recursos estéticos de la lengua española en la literatura oral y escrita",p:"Usa creativamente características y recursos estéticos de textos dramáticos para escenificar situaciones comunitarias."},
+{id:"ES3-7",c:"Textos literarios escritos en español o traducidos",p:"Elabora ensayo sobre un tema de su elección con base en un género literario de su preferencia."},
+{id:"ES3-8",c:"Creaciones literarias tradicionales y contemporáneas",p:"Crea textos narrativos, poéticos, dramáticos y guiones a partir del uso de recursos literarios."},
+{id:"ES3-9",c:"Recursos literarios en lengua española para expresar sensaciones, emociones y sentimientos",p:"Recupera recursos literarios del español para crear texto libre que describa vínculos con el entorno."},
+{id:"ES3-10",c:"Los géneros periodísticos y sus recursos para comunicar sucesos significativos",p:"Analiza sucesos significativos de la comunidad y los comunica empleando géneros periodísticos."},
+{id:"ES3-11",c:"Comunicación asertiva y dialógica para erradicar expresiones de violencia",p:"Redacta texto informativo sobre la importancia de erradicar la violencia y lo difunde en la comunidad."},
+{id:"ES3-12",c:"Mensajes para promover una vida saludable en medios comunitarios o masivos",p:"Construye narrativas sobre vida saludable usando lenguaje audiovisual y las transmite por medios masivos."},
+{id:"ES3-13",c:"Textos de divulgación científica",p:"Elabora propuesta de divulgación científica para fomentar el conocimiento de las ciencias."},
+{id:"ES3-14",c:"Manifestaciones culturales y artísticas que favorecen una sociedad incluyente",p:"Crea texto literario que aborde un tema que promueva una sociedad incluyente."}]},
+"Inglés":{"1":[
+{id:"IN1-1",c:"La diversidad lingüística y sus formas de expresión en México y el mundo",p:"Realiza lectura crítica y emite opinión en inglés sobre manifestaciones culturales de pueblos de habla inglesa."},
+{id:"IN1-2",c:"La identidad y cultura de pueblos de habla inglesa",p:"Recupera información para presentaciones en inglés que describan rasgos étnicos, culturales e identitarios."},
+{id:"IN1-5",c:"El uso del inglés para expresar necesidades, intereses y problemas de la comunidad",p:"Usa el inglés para expresar necesidades e intereses de la comunidad escolar."},
+{id:"IN1-10",c:"Relatos en inglés para expresar sucesos significativos familiares, escolares, comunitarios y sociales",p:"Investiga y recupera manifestaciones culturales y artísticas de su comunidad para difundirlas en inglés."},
+{id:"IN1-11",c:"Comunicación asertiva y dialógica en inglés para erradicar la violencia en familias y escuela",p:"Diseña y difunde en inglés propuestas escritas para sensibilizar sobre la importancia de erradicar la violencia."},
+{id:"IN1-12",c:"Mensajes en inglés en medios de comunicación masiva que promuevan una vida saludable",p:"Cuenta historias en inglés sobre ejemplos de vida saludable y las difunde mediante medios de comunicación."},
+{id:"IN1-13",c:"El uso del inglés en la construcción de mensajes a favor de la inclusión",p:"Investiga en inglés sobre mensajes de interacción y sensibilización con la diversidad."}],
+"2":[
+{id:"IN2-1",c:"La diversidad lingüística y sus formas de expresión en México y el mundo",p:"Comprende textos narrativos y biográficos en inglés sobre hablantes de diversas lenguas del mundo."},
+{id:"IN2-3",c:"Las manifestaciones culturales, lingüísticas y artísticas en inglés a favor de la interculturalidad",p:"Interpreta juegos de roles en inglés sobre situaciones que favorezcan la comunicación asertiva."},
+{id:"IN2-5",c:"El uso del inglés para expresar necesidades, intereses y problemas de la comunidad",p:"Organiza campaña en inglés sobre soluciones a problemas de la comunidad."},
+{id:"IN2-6",c:"Elementos y recursos estéticos del inglés",p:"Emplea figuras retóricas para construir texto literario corto oral y escrito para difundirlo en la comunidad."},
+{id:"IN2-8",c:"Creaciones literarias tradicionales y contemporáneas en inglés",p:"Crea poemas cortos a partir del uso de recursos estéticos del inglés para difundirse en la comunidad."}],
+"3":[
+{id:"IN3-2",c:"La identidad y cultura de pueblos de habla inglesa",p:"Construye propuesta de comunicación en inglés donde contraste y promueva rasgos de sociedad intercultural."},
+{id:"IN3-5",c:"El uso del inglés para expresar necesidades, intereses y problemas de la comunidad",p:"Produce textos en inglés que expresen problemáticas comunitarias relevantes."},
+{id:"IN3-11",c:"Comunicación asertiva y dialógica en inglés para erradicar la violencia en familias y escuela",p:"Diseña y difunde en inglés propuestas escritas para sensibilizar sobre la erradicación de la violencia."},
+{id:"IN3-12",c:"Mensajes en inglés en medios de comunicación masiva que promuevan una vida saludable",p:"Cuenta historias en inglés sobre vida saludable y las difunde mediante medios de comunicación."}]},
+"Artes":{"1":[
+{id:"AR1-1",c:"Diversidad de lenguajes artísticos en la riqueza pluricultural de México y del mundo",p:"Reconoce en manifestaciones artísticas el uso del cuerpo, espacio y tiempo para valorarlas como parte de la riqueza pluricultural."},
+{id:"AR1-2",c:"Manifestaciones culturales y artísticas que conforman la diversidad étnica, cultural y lingüística",p:"Identifica diferentes manifestaciones culturales de pueblos indígenas y afrodescendientes para interpretar significados."},
+{id:"AR1-4",c:"Patrimonio cultural de la comunidad en manifestaciones artísticas",p:"Interpreta manifestaciones artísticas del patrimonio cultural para fomentar identidad y sentido de pertenencia."},
+{id:"AR1-5",c:"Los lenguajes artísticos en la expresión de problemas de la comunidad",p:"Expresa mediante elementos de las artes la relevancia del diálogo como alternativa a la violencia."},
+{id:"AR1-11",c:"Procesos creativos que ponen en práctica la comunicación dialógica para erradicar violencia",p:"Expresa la relevancia del diálogo como alternativa a la violencia usando elementos artísticos."},
+{id:"AR1-12",c:"Vida saludable expresada a través de mensajes con elementos de las artes",p:"Emplea elementos de las artes para representar una vida saludable y la difunde por medios de comunicación escolar."}],
+"2":[
+{id:"AR2-1",c:"Diversidad de lenguajes artísticos en la riqueza pluricultural de México y del mundo",p:"Explora la creación de secuencias y patrones identificando uso de formas, colores y movimientos en manifestaciones artísticas."},
+{id:"AR2-5",c:"Los lenguajes artísticos en la expresión de problemas de la comunidad",p:"Experimenta con técnicas artísticas para imaginar posibles soluciones a problemas de la comunidad."},
+{id:"AR2-7",c:"Valor estético de la naturaleza, de la vida cotidiana y de diferentes manifestaciones culturales",p:"Identifica categorías estéticas como lo bello, lo sublime, lo trágico al apreciarlas en manifestaciones artísticas."},
+{id:"AR2-8",c:"Creaciones artísticas que tienen su origen en textos literarios",p:"Adapta textos literarios de culturas indígenas experimentando con elementos artísticos para sensibilizar a la comunidad."},
+{id:"AR2-11",c:"Procesos creativos que ponen en práctica la comunicación dialógica para erradicar violencia",p:"Usa figuras retóricas en creaciones artísticas colectivas para representar situaciones vinculadas a la comunidad."}],
+"3":[
+{id:"AR3-1",c:"Diversidad de lenguajes artísticos en la riqueza pluricultural de México y del mundo",p:"Experimenta con características de estilos artísticos para representar la riqueza pluricultural de México y del mundo."},
+{id:"AR3-2",c:"Manifestaciones culturales y artísticas que conforman la diversidad étnica, cultural y lingüística",p:"Presenta propuesta creativa usando cuerpo, espacio y tiempo para valorar y promover la diversidad cultural."},
+{id:"AR3-4",c:"Patrimonio cultural de la comunidad en manifestaciones artísticas",p:"Reinterpreta de manera respetuosa manifestaciones del patrimonio cultural para valorar identidad y sentido de pertenencia."},
+{id:"AR3-10",c:"Memoria colectiva representada por medios artísticos para registrar experiencias comunitarias",p:"Manifiesta postura crítica sobre la memoria colectiva de un acontecimiento relevante usando lenguajes artísticos."},
+{id:"AR3-11",c:"Procesos creativos que ponen en práctica la comunicación dialógica para erradicar violencia",p:"Presenta al público propuesta artística respetuosa para sensibilizar sobre la importancia del diálogo."},
+{id:"AR3-12",c:"Vida saludable expresada a través de mensajes con elementos de las artes",p:"Construye narrativa a favor de una vida saludable mediante uso artístico de fotografía, historieta o secuencia corporal."}]}},
+"Saberes y Pensamiento Científico":{
+"Matemáticas":{"1":[
+{id:"MA1-1",c:"Expresión de fracciones como decimales y de decimales como fracciones",p:"Convierte fracciones a decimales y viceversa resolviendo problemas contextualizados."},
+{id:"MA1-2",c:"Extensión de los números a positivos y negativos y su orden",p:"Reconoce la necesidad de los números negativos y compara/ordena números con signo en la recta numérica."},
+{id:"MA1-3",c:"Extensión del significado de las operaciones y sus relaciones inversas",p:"Reconoce el significado de las cuatro operaciones básicas y sus relaciones inversas con números con signo."},
+{id:"MA1-5",c:"Introducción al álgebra",p:"Usa expresiones algebraicas y ecuaciones sencillas para modelar situaciones concretas."},
+{id:"MA1-6",c:"Ecuaciones lineales y cuadráticas",p:"Resuelve ecuaciones lineales en contextos de la vida cotidiana."},
+{id:"MA1-7",c:"Funciones",p:"Relaciona e interpreta relaciones proporcional y no proporcional a partir de su representación tabular y gráfica."},
+{id:"MA1-9",c:"Construcción y propiedades de las figuras planas y cuerpos",p:"Construye figuras planas y cuerpos identificando sus propiedades fundamentales."},
+{id:"MA1-11",c:"Medición y cálculo en diferentes contextos",p:"Obtiene y aplica fórmulas para calcular perímetro y área de polígonos y del círculo."},
+{id:"MA1-12",c:"Obtención y representación de información",p:"Usa tablas, gráficas de barras y circulares para el análisis de información."},
+{id:"MA1-13",c:"Interpretación de la información a través de medidas de tendencia central y de dispersión",p:"Determina e interpreta la media, mediana y moda de un conjunto de datos."},
+{id:"MA1-14",c:"Azar y probabilidad",p:"Compara cualitativamente eventos a partir de sus resultados posibles e identifica el espacio muestral."}],
+"2":[
+{id:"MA2-3",c:"Extensión del significado de las operaciones y sus relaciones inversas",p:"Usa la notación científica al realizar cálculos con cantidades muy grandes o muy pequeñas."},
+{id:"MA2-6",c:"Ecuaciones lineales y cuadráticas",p:"Plantea y resuelve ecuaciones lineales y cuadráticas en contextos problemáticos."},
+{id:"MA2-8",c:"Rectas y ángulos",p:"Identifica y usa relaciones entre ángulos, lados y diagonales para construir figuras a escala."},
+{id:"MA2-9",c:"Construcción y propiedades de las figuras planas y cuerpos",p:"Construye con regla y compás polígonos regulares con distinta información."},
+{id:"MA2-13",c:"Interpretación de la información a través de medidas de tendencia central y de dispersión",p:"Usa e interpreta medidas de tendencia central y rango para tomar decisiones."},
+{id:"MA2-14",c:"Azar y probabilidad",p:"Identifica eventos en los que interviene el azar y determina probabilidades experimentales."}],
+"3":[
+{id:"MA3-5",c:"Introducción al álgebra",p:"Usa expresiones algebraicas para modelar situaciones y resolver problemas."},
+{id:"MA3-6",c:"Ecuaciones lineales y cuadráticas",p:"Plantea y resuelve ecuaciones lineales y cuadráticas para modelar situaciones reales."},
+{id:"MA3-7",c:"Funciones",p:"Interpreta y modela situaciones mediante funciones lineales y no lineales."},
+{id:"MA3-9",c:"Construcción y propiedades de las figuras planas y cuerpos",p:"Reconoce propiedades de sólidos y explora sólidos de revolución a partir de figuras planas."},
+{id:"MA3-13",c:"Interpretación de la información a través de medidas de tendencia central y de dispersión",p:"Determina y compara medidas de tendencia central y de dispersión de dos conjuntos de datos."},
+{id:"MA3-14",c:"Azar y probabilidad",p:"Resuelve problemas donde se calcule la posibilidad de ocurrencia de dos eventos independientes."}]},
+"Biología":{"1":[
+{id:"BI1-1",c:"Funcionamiento del cuerpo humano coordinado por los sistemas nervioso y endocrino",p:"Describe y explica cómo el sistema nervioso y endocrino coordinan las funciones del cuerpo humano."},
+{id:"BI1-2",c:"Salud sexual y reproductiva: prevención de ITS y del embarazo en adolescentes",p:"Compara cómo la cultura influye en el concepto de sexualidad y valora métodos anticonceptivos."},
+{id:"BI1-3",c:"Prevención de enfermedades relacionadas con la alimentación y alimentos ultraprocesados",p:"Identifica los riesgos del consumo de alimentos ultraprocesados y propone hábitos saludables."},
+{id:"BI1-5",c:"Los procesos vitales de los seres vivos: nutrición, relación con el medio y reproducción",p:"Explica los procesos vitales de los seres vivos en distintos grupos de organismos."},
+{id:"BI1-6",c:"La biodiversidad como expresión del cambio de los seres vivos en el tiempo",p:"Analiza información sobre la biodiversidad local y propone acciones para su cuidado."},
+{id:"BI1-7",c:"El calentamiento global como consecuencia de la alteración de los ciclos biogeoquímicos",p:"Explica cómo la alteración de ciclos biogeoquímicos contribuye al calentamiento global."},
+{id:"BI1-8",c:"Importancia del microscopio para el conocimiento de la unidad y diversidad de los seres vivos",p:"Compara observaciones microscópicas históricas y actuales, describiendo estructuras celulares básicas."},
+{id:"BI1-9",c:"Las vacunas: su relevancia en el control de algunas enfermedades infecciosas",p:"Valora la importancia de las vacunas para el control de enfermedades infecciosas."}]},
+"Física":{"2":[
+{id:"FI2-1",c:"El pensamiento científico para plantear y solucionar problemas",p:"Aplica el pensamiento científico para plantear y resolver problemas de su entorno."},
+{id:"FI2-2",c:"Unidades y medidas utilizados en Física",p:"Identifica y usa unidades básicas y derivadas del Sistema Internacional de Unidades."},
+{id:"FI2-3",c:"Estructura, propiedades y características de la materia",p:"Describe la estructura y propiedades de la materia desde el modelo corpuscular."},
+{id:"FI2-5",c:"Interacciones en fenómenos relacionados con la fuerza y el movimiento",p:"Describe fenómenos relacionados con la fuerza y el movimiento aplicando principios básicos."},
+{id:"FI2-7",c:"Saberes y prácticas para el aprovechamiento de energías y la sustentabilidad",p:"Identifica saberes y prácticas sobre energías renovables y no renovables en la comunidad."},
+{id:"FI2-10",c:"Fenómenos, procesos y factores asociados al cambio climático",p:"Formula hipótesis que relacionan la actividad humana con el cambio climático y propone medidas de mitigación."}]},
+"Química":{"3":[
+{id:"QU3-2",c:"Propiedades extensivas e intensivas de sustancias y materiales",p:"Formula hipótesis para diferenciar propiedades extensivas e intensivas mediante actividades experimentales."},
+{id:"QU3-3",c:"Composición de mezclas y métodos de separación",p:"Deduce métodos para separar mezclas mediante actividades experimentales."},
+{id:"QU3-4",c:"Importancia de la concentración de sustancias en mezclas de uso cotidiano",p:"Analiza la concentración de sustancias en productos cotidianos para la toma de decisiones de salud."},
+{id:"QU3-9",c:"Los alimentos como fuente de energía química: carbohidratos, proteínas y lípidos",p:"Explica la función energética de carbohidratos, proteínas y lípidos en el metabolismo."},
+{id:"QU3-10",c:"Las reacciones químicas: manifestaciones, propiedades e interpretación de ecuaciones",p:"Representa reacciones químicas con base en la Ley de conservación de la materia."},
+{id:"QU3-11",c:"Propiedades de ácidos y bases, reacciones de neutralización y modelo de Arrhenius",p:"Identifica propiedades de ácidos y bases y explica las reacciones de neutralización."}]}},
+"Ética, Naturaleza y Sociedades":{
+"Formación Cívica y Ética":{"1":[
+{id:"FC1-1",c:"Grupos sociales y culturales en la conformación de las identidades juveniles",p:"Reconoce la diversidad de grupos sociales y culturales que conforman las identidades juveniles."},
+{id:"FC1-2",c:"Los derechos humanos en México y en el mundo como valores compartidos",p:"Propone acciones orientadas a fortalecer la igualdad y el respeto a los derechos humanos."},
+{id:"FC1-4",c:"Consecuencias de la desigualdad en la calidad de vida de las personas",p:"Analiza las causas de la desigualdad en la calidad de vida y las compara con el derecho a la igualdad."},
+{id:"FC1-6",c:"El conflicto en la convivencia humana desde la cultura de paz",p:"Analiza distintos tipos de conflictos y formas de solucionarlos desde la cultura de paz."},
+{id:"FC1-9",c:"Principios éticos como referente para un desarrollo sustentable",p:"Reflexiona éticamente sobre la relación de las comunidades con su contexto socionatural."},
+{id:"FC1-10",c:"Igualdad sustantiva en el marco de la interculturalidad, la inclusión y la perspectiva de género",p:"Aprecia la interculturalidad y el derecho a la igualdad sustantiva rechazando la discriminación."},
+{id:"FC1-11",c:"Medidas de protección y mecanismos de denuncia ante la violencia de género y la trata",p:"Analiza situaciones de violencia de género y demanda medidas de protección."},
+{id:"FC1-16",c:"El derecho a la salud y la prevención en el consumo de drogas",p:"Valora el derecho a la salud y propone estrategias de prevención del consumo de drogas."}],
+"2":[
+{id:"FC2-2",c:"Los derechos humanos en México y en el mundo como valores compartidos",p:"Propone acciones para fortalecer la igualdad y el respeto a los derechos humanos en poblaciones vulneradas."},
+{id:"FC2-9",c:"Principios éticos como referente para un desarrollo sustentable",p:"Evalúa la contribución de la ética en las prácticas de producción y consumo para generar alternativas sustentables."},
+{id:"FC2-11",c:"Medidas de protección y mecanismos de denuncia ante la violencia de género y la trata",p:"Compara tipos de violencia e identifica medidas de protección y mecanismos de denuncia."}],
+"3":[
+{id:"FC3-1",c:"Grupos sociales y culturales en la conformación de las identidades juveniles",p:"Promueve espacios de participación juvenil para construir comunidades que respeten derechos de adolescentes."},
+{id:"FC3-9",c:"Principios éticos como referente para un desarrollo sustentable",p:"Implementa acciones de colaboración, reciprocidad y participación igualitaria como valores para el desarrollo sustentable."},
+{id:"FC3-15",c:"Defensa del derecho al acceso a la protección de datos personales y transparencia",p:"Analiza el actuar de organizaciones y gobiernos mediante el acceso a la información y rendición de cuentas."},
+{id:"FC3-16",c:"El derecho a la salud y la prevención en el consumo de drogas",p:"Valora el derecho a la salud y propone estrategias de prevención del consumo de drogas en adolescentes."}]},
+"Historia":{"1":[
+{id:"HI1-1",c:"Los albores de la humanidad: los pueblos antiguos del mundo y su devenir",p:"Conoce los primeros pueblos del territorio nacional y los ubica en el espacio y tiempo."},
+{id:"HI1-6",c:"La construcción histórica de las ideas sobre las juventudes e infancias",p:"Analiza cómo las ideas sobre juventud e infancia han cambiado a lo largo de la historia."},
+{id:"HI1-7",c:"Las mujeres y sus historias",p:"Revisa fuentes históricas para identificar la participación de las mujeres en la sociedad."},
+{id:"HI1-8",c:"Las luchas de las mujeres por sus derechos",p:"Identifica los orígenes históricos de movimientos de mujeres en la lucha por la igualdad."},
+{id:"HI1-10",c:"Discriminación, racismo y prejuicios como construcciones históricas",p:"Comprende las causas históricas del racismo y propone acciones para combatirlo."}],
+"2":[
+{id:"HI2-2",c:"La conformación de las metrópolis y los sistemas de dominación",p:"Indaga las tensiones y alianzas políticas mesoamericanas previo al arribo de los colonizadores."},
+{id:"HI2-4",c:"Las revoluciones modernas y sus tendencias",p:"Analiza causas y consecuencias de la Revolución de Ayutla y las Leyes de Reforma."},
+{id:"HI2-5",c:"Las tensiones en el siglo XX",p:"Analiza la causalidad de la Revolución Mexicana de 1910 y sus heterogéneas demandas sociales."}],
+"3":[
+{id:"HI3-2",c:"La conformación de las metrópolis y los sistemas de dominación",p:"Analiza las colonizaciones en América, África y Asia y sus consecuencias históricas."},
+{id:"HI3-3",c:"Las gestas de resistencia y los movimientos independentistas",p:"Elabora cronología de las luchas de independencia latinoamericanas."},
+{id:"HI3-5",c:"Las tensiones en el siglo XX",p:"Analiza y comprende las causas y consecuencias de las guerras mundiales y la Guerra Fría."}]},
+"Geografía":{"1":[
+{id:"GE1-1",c:"El espacio geográfico como una construcción social y colectiva",p:"Explica cómo los grupos sociales y culturales construyen y transforman el espacio geográfico."},
+{id:"GE1-4",c:"La relación de las placas tectónicas con el relieve, la sismicidad y el vulcanismo",p:"Relaciona el movimiento de placas tectónicas con el relieve, la sismicidad y el vulcanismo."},
+{id:"GE1-5",c:"Los riesgos de desastre, su relación con los procesos naturales y la vulnerabilidad",p:"Identifica que los desastres pueden originarse por procesos naturales o actividades humanas."},
+{id:"GE1-6",c:"Crecimiento, distribución, composición y migración de la población",p:"Analiza las implicaciones del crecimiento y distribución de la población en diferentes países."},
+{id:"GE1-9",c:"Las desigualdades socioeconómicas en México y el mundo",p:"Analiza las desigualdades socioeconómicas y sus efectos en la calidad de vida."},
+{id:"GE1-14",c:"El reto del cambio climático",p:"Explica el reto del cambio climático y sus implicaciones para la vida en el planeta."}]}},
+"De lo Humano y lo Comunitario":{
+"Tecnología":{"1":[
+{id:"TE1-1",c:"Herramientas, máquinas e instrumentos como extensión corporal",p:"Describe los elementos que interactúan en los sistemas técnicos para comprender su vínculo con la sociedad."},
+{id:"TE1-5",c:"Procesos técnicos",p:"Describe los elementos que interactúan en los sistemas técnicos y su vínculo con la sociedad y la naturaleza."},
+{id:"TE1-8",c:"Evaluación de sistemas tecnológicos",p:"Comprende la importancia de la evaluación de procesos como parte de la innovación y mejora continua."}],
+"2":[
+{id:"TE2-4",c:"Factores que inciden en los procesos técnicos",p:"Analiza factores sociales, económicos y culturales en la definición de criterios para el desarrollo de soluciones técnicas."},
+{id:"TE2-5",c:"Procesos técnicos",p:"Analiza los diferentes sistemas técnicos artesanales, industriales y automatizados."},
+{id:"TE2-6",c:"Comunicación y representación técnica",p:"Elabora representaciones gráficas de ideas con respecto a la operación y diseño de producciones técnicas."}],
+"3":[
+{id:"TE3-2",c:"Materiales, procesos técnicos y comunidad",p:"Distingue el origen, transformación y características tecnológicas de materiales desde perspectiva sustentable."},
+{id:"TE3-3",c:"Usos e implicaciones de la energía en los procesos técnicos",p:"Comprende la función de la energía en los sistemas técnicos y sus implicaciones en el desarrollo tecnológico."},
+{id:"TE3-7",c:"Pensamiento estratégico y creativo en la resolución de problemas",p:"Analiza necesidades del entorno para plantear un problema e investigar alternativas de solución."}]},
+"Tutoría":{"1":[
+{id:"TU1-1",c:"Formas de ser, pensar, actuar y relacionarse",p:"Reconoce ideas, gustos, necesidades e intereses para favorecer el autoconocimiento."},
+{id:"TU1-2",c:"Los sentimientos y su influencia en la toma de decisiones",p:"Distingue entre emociones, estados de ánimo y sentimientos como elementos que contribuyen a relaciones afectivas inclusivas."},
+{id:"TU1-3",c:"Construcción del proyecto de vida",p:"Reconoce cambios en la adolescencia para definir metas personales y colectivas a corto, mediano y largo plazo."},
+{id:"TU1-4",c:"Prevención de situaciones de riesgo",p:"Incorpora prácticas que inciden en la prevención de situaciones de riesgo ante accidentes, adicciones y violencia."},
+{id:"TU1-5",c:"Educación integral en sexualidad",p:"Valora la identidad y la diversidad de formas de expresión de género para favorecer el desarrollo integral."}],
+"2":[
+{id:"TU2-1",c:"Formas de ser, pensar, actuar y relacionarse",p:"Analiza las formas de ser, pensar y actuar para comprender diversas maneras de vivenciar situaciones cotidianas."},
+{id:"TU2-2",c:"Los sentimientos y su influencia en la toma de decisiones",p:"Reflexiona sobre cómo los sentimientos se construyen a partir de ideas y experiencias para la toma de decisiones asertivas."},
+{id:"TU2-3",c:"Construcción del proyecto de vida",p:"Analiza intereses y necesidades, logros y metas personales para proponer ideas de un proyecto de vida."}],
+"3":[
+{id:"TU3-1",c:"Formas de ser, pensar, actuar y relacionarse",p:"Reconoce ideas, gustos y experiencias para favorecer el autoconocimiento y descubrimiento de nuevas potencialidades."},
+{id:"TU3-3",c:"Construcción del proyecto de vida",p:"Valora metas individuales y de otras personas para favorecer su logro y el bienestar colectivo."},
+{id:"TU3-4",c:"Prevención de situaciones de riesgo",p:"Incorpora prácticas de prevención de riesgos ante accidentes, adicciones y violencia para favorecer el desarrollo comunitario."},
+{id:"TU3-5",c:"Educación integral en sexualidad",p:"Identifica las dimensiones de la sexualidad en distintos momentos de la vida para establecer relaciones en favor del bienestar."}]},
+"Educación Física":{"1":[
+{id:"EF1-1",c:"Capacidades, habilidades y destrezas motrices",p:"Desarrolla capacidades, habilidades y destrezas motrices en actividades físicas variadas."},
+{id:"EF1-2",c:"Potencialidades cognitivas, expresivas, motrices, creativas y de relación",p:"Pone en práctica elementos de la condición física en actividades motrices y recreativas."},
+{id:"EF1-4",c:"Pensamiento lúdico, estratégico y creativo",p:"Toma decisiones individuales y colectivas en situaciones de juego para valorar su efectividad."},
+{id:"EF1-5",c:"Interacción motriz",p:"Pone a prueba la interacción motriz en situaciones de juego e iniciación deportiva."}],
+"2":[
+{id:"EF2-1",c:"Capacidades, habilidades y destrezas motrices",p:"Integra capacidades, habilidades y destrezas motrices para poner a prueba el potencial individual y de conjunto."},
+{id:"EF2-3",c:"Estilos de vida activos y saludables",p:"Reconoce la importancia de la actividad física regular para el mantenimiento de la salud."}],
+"3":[
+{id:"EF3-2",c:"Potencialidades cognitivas, expresivas, motrices, creativas y de relación",p:"Pone en práctica elementos de la condición física en actividades motrices y recreativas para el bienestar individual y colectivo."},
+{id:"EF3-3",c:"Estilos de vida activos y saludables",p:"Implementa acciones para mantenerse físicamente activo en diferentes momentos del día."}]}}
+};
+const PE=["1. Reconocen que son ciudadanas y ciudadanos que pueden ejercer su derecho a una vida digna, a decidir sobre su cuerpo, a construir su identidad personal y colectiva.","2. Viven, reconocen y valoran la diversidad étnica, cultural, lingüística, sexual, política, social y de género del país como rasgos que caracterizan a la nación mexicana.","3. Reconocen que mujeres y hombres son personas que gozan de los mismos derechos, con capacidad de acción, autonomía, decisión para vivir una vida digna, libre de violencia y discriminación.","4. Valoran sus potencialidades cognitivas, físicas y afectivas a partir de las cuales pueden mejorar sus capacidades personales y de la comunidad.","5. Desarrollan una forma de pensar propia que emplean para analizar y hacer juicios argumentados sobre su realidad familiar, escolar, comunitaria, nacional y mundial.","6. Se perciben como parte de la naturaleza y entienden la prioridad de relacionar el cuidado de su alimentación y salud física, mental, sexual y reproductiva con la salud planetaria.","7. Interpretan fenómenos, hechos y situaciones históricas, culturales, naturales y sociales a partir de temas diversos e indagan para explicarlos con razonamientos y fundamentos científicos.","8. Interactúan en procesos de diálogo con respeto y aprecio a la diversidad de capacidades, características, condiciones, necesidades, intereses y visiones al trabajar cooperativamente.","9. Intercambian ideas, cosmovisiones y perspectivas mediante distintos lenguajes, con el fin de establecer acuerdos en los que se respeten las ideas propias y las de otras y otros.","10. Desarrollan el pensamiento crítico que les permita valorar los conocimientos y saberes de las ciencias y humanidades, reconociendo la importancia de la historia y la cultura."];
+const EJE=["Inclusión","Pensamiento crítico","Interculturalidad crítica","Igualdad de género","Vida saludable","Apropiación de las culturas a través de la lectura y la escritura","Artes y experiencias estéticas","Fomento a la lectura y escritura"];
+let USERS=[{user:"admin",pass:"admin2025",role:"admin",nombre:"Administrador"},{user:"maestra01",pass:"123456",role:"docente",nombre:"Docente 01"},{user:"maestro02",pass:"123456",role:"docente",nombre:"Docente 02"},{user:"maestra03",pass:"123456",role:"docente",nombre:"Docente 03"}];
+let S={logged:false,user:null,step:1,campo:"",asig:"",grado:"",pdas:[],escuela:"",cct:"",municipio:"",turno:"",matricula:"",mnum:"",contexto:"",problematica:"",recursos:"",grupos:"",docTipo:"",trimestre:"",proyecto:"",sesiones:"",met:"Aprendizaje en proyectos comunitarios",pe:[],ejes:[],resultado:"",gen:false,at:"lista"};
+function R(){const r=document.getElementById("root");if(!S.logged){r.innerHTML=loginH();return;}if(S.user.role==="admin"){r.innerHTML=adminH();return;}r.innerHTML=docH();}
+function loginH(){return`<div class="login-wrap"><div class="login-box"><div style="text-align:center;margin-bottom:12px"><div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;background:var(--c1);border-radius:14px;margin-bottom:10px"><i class="ti ti-notebook" style="font-size:28px;color:white"></i></div><h1>Planeador Docente</h1><p>Nueva Escuela Mexicana — Fase 6<br>Educación Secundaria | Ciclo 2025-2026</p></div><div id="err-msg"></div><div class="fg"><label>Usuario</label><input id="iu" type="text" placeholder="Tu usuario asignado" autocomplete="username" onkeydown="if(event.key==='Enter')login()"/></div><div class="fg"><label>Contraseña</label><input id="ip" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"/></div><button class="btn btn-p" style="width:100%;justify-content:center;padding:12px;margin-top:6px" onclick="login()"><i class="ti ti-login"></i> Entrar al sistema</button><p style="font-size:11px;color:var(--text2);text-align:center;margin-top:14px">Acceso exclusivo para docentes autorizados.<br>Contacta al administrador para obtener tus credenciales.</p></div></div>`;}
+function login(){const u=document.getElementById("iu").value.trim().toLowerCase(),p=document.getElementById("ip").value,f=USERS.find(x=>x.user.toLowerCase()===u&&x.pass===p);if(f){S.logged=true;S.user=f;R();}else document.getElementById("err-msg").innerHTML=`<div class="err"><i class="ti ti-alert-circle"></i> Usuario o contraseña incorrectos.</div>`;}
+function logout(){S={...S,logged:false,user:null,step:1,campo:"",asig:"",grado:"",pdas:[],resultado:"",pe:[],ejes:[],docTipo:"",trimestre:"",proyecto:""};R();}
+function adminH(){return`<div class="app"><div class="header"><div class="header-logo"><i class="ti ti-shield-check" style="font-size:24px"></i></div><div style="flex:1"><h1>Panel de Administrador</h1><p>Gestión de usuarios — Planeador Docente NEM</p></div><button class="btn btn-s btn-sm" onclick="logout()"><i class="ti ti-logout"></i> Salir</button></div><div class="tab-bar"><div class="tab ${S.at==="lista"?"active":""}" onclick="S.at='lista';R()"><i class="ti ti-users"></i> Usuarios</div><div class="tab ${S.at==="add"?"active":""}" onclick="S.at='add';R()"><i class="ti ti-user-plus"></i> Agregar</div></div>${S.at==="lista"?aListaH():aAddH()}</div>`;}
+function aListaH(){const d=USERS.filter(u=>u.role==="docente");return`<div class="card"><h2><i class="ti ti-users"></i> Docentes con acceso (${d.length})</h2><table class="at"><thead><tr><th>#</th><th>Usuario</th><th>Nombre</th><th>Contraseña</th><th>Estado</th></tr></thead><tbody>${d.map((u,i)=>`<tr><td style="color:var(--text2)">${i+1}</td><td style="font-family:monospace;font-weight:700;color:var(--c1)">${u.user}</td><td>${u.nombre}</td><td style="font-family:monospace;font-size:12px;color:var(--text2)">${u.pass}</td><td><span style="background:var(--okbg);color:var(--ok);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px">Activo</span></td></tr>`).join("")}</tbody></table><p style="font-size:11px;color:var(--text2);margin-top:10px"><i class="ti ti-info-circle"></i> Comparte el usuario y contraseña con cada docente para que puedan ingresar al sistema.</p></div>`;}
+function aAddH(){return`<div class="card"><h2><i class="ti ti-user-plus"></i> Registrar nuevo usuario docente</h2><div id="amsg"></div><div class="fr3"><div class="fg"><label>Usuario (sin espacios)</label><input id="nu" placeholder="maestra04"/></div><div class="fg"><label>Contraseña</label><input id="np" placeholder="clave123"/></div><div class="fg"><label>Nombre completo</label><input id="nn" placeholder="Nombre Apellido Apellido"/></div></div><button class="btn btn-p" onclick="addU()"><i class="ti ti-plus"></i> Registrar usuario</button></div>`;}
+function addU(){const u=document.getElementById("nu").value.trim(),p=document.getElementById("np").value.trim(),n=document.getElementById("nn").value.trim(),m=document.getElementById("amsg");if(!u||!p||!n){m.innerHTML=`<div class="err">Completa los tres campos.</div>`;return;}if(USERS.find(x=>x.user.toLowerCase()===u.toLowerCase())){m.innerHTML=`<div class="err">Ese usuario ya existe.</div>`;return;}USERS.push({user:u,pass:p,role:"docente",nombre:n});m.innerHTML=`<div class="info-b"><i class="ti ti-check"></i> Usuario <strong>${u}</strong> registrado. Ya puede ingresar.</div>`;["nu","np","nn"].forEach(id=>document.getElementById(id).value="");}
+function docH(){const lb=["1. Escuela","2. Campo/PDA","3. Contexto","4. Documento","5. Generar"];const prog=Math.round(((S.step-1)/4)*100);return`<div class="app"><div class="header"><div class="header-logo"><i class="ti ti-notebook" style="font-size:24px"></i></div><div style="flex:1"><h1>Planeador Docente NEM — Fase 6</h1><p>Bienvenido/a, ${S.user.nombre} | Ciclo escolar 2025-2026</p></div><button class="btn btn-s btn-sm" onclick="logout()"><i class="ti ti-logout"></i> Salir</button></div><div class="prog-bar"><div class="prog-fill" style="width:${prog}%"></div></div><div class="steps">${lb.map((s,i)=>`<div class="step ${S.step===i+1?"active":S.step>i+1?"done":""}" onclick="if(${i+1}<${S.step}){S.step=${i+1};R();}">${S.step>i+1?"✓ ":""}${s}</div>`).join("")}</div>${S.step===1?s1H():S.step===2?s2H():S.step===3?s3H():S.step===4?s4H():s5H()}</div>`;}
+function s1H(){return`<div class="card"><h2><i class="ti ti-building-school"></i> Datos de la escuela</h2><div class="fr"><div class="fg"><label>Nombre del docente</label><input value="${S.user.nombre}" readonly style="background:#f3f4f6"/></div><div class="fg"><label>Nombre de la escuela</label><input id="e1" value="${S.escuela}" placeholder="Ej: Secundaria General 'Felipe Carrillo Puerto'"/></div></div><div class="fr3"><div class="fg"><label>CCT de la escuela</label><input id="e2" value="${S.cct}" placeholder="Ej: 31DES0008B"/></div><div class="fg"><label>Municipio / Localidad</label><input id="e3" value="${S.municipio}" placeholder="Ej: Ticul, Yucatán"/></div><div class="fg"><label>Turno</label><select id="e4"><option value="">Selecciona...</option>${["Matutino","Vespertino","Nocturno","Tiempo completo"].map(t=>`<option ${S.turno===t?"selected":""}>${t}</option>`).join("")}</select></div></div><div class="fr"><div class="fg"><label>Matrícula total</label><input id="e5" value="${S.matricula}" placeholder="Ej: 654 alumnos"/></div><div class="fg"><label>Total de docentes</label><input id="e6" value="${S.mnum}" placeholder="Ej: 37 maestros"/></div></div><div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn btn-p" onclick="g2()">Siguiente <i class="ti ti-arrow-right"></i></button></div></div>`;}
+function g2(){const e=document.getElementById("e1").value.trim(),m=document.getElementById("e3").value.trim(),t=document.getElementById("e4").value;if(!e||!m||!t){alert("Completa el nombre de la escuela, municipio y turno.");return;}S.escuela=e;S.cct=document.getElementById("e2").value.trim();S.municipio=m;S.turno=t;S.matricula=document.getElementById("e5").value.trim();S.mnum=document.getElementById("e6").value.trim();S.step=2;R();}
+function s2H(){const ca=Object.keys(CUR);const as=S.campo?Object.keys(CUR[S.campo]||{}):[]; const gr=S.asig&&S.campo?Object.keys(CUR[S.campo]?.[S.asig]||{}):[]; const it=S.grado&&S.asig&&S.campo?(CUR[S.campo]?.[S.asig]?.[S.grado]||[]):[];return`<div class="card"><h2><i class="ti ti-books"></i> Campo formativo, asignatura y PDA</h2><div class="fr3"><div class="fg"><label>Campo formativo</label><select onchange="S.campo=this.value;S.asig='';S.grado='';S.pdas=[];R()"><option value="">Selecciona...</option>${ca.map(c=>`<option value="${c}" ${S.campo===c?"selected":""}>${c}</option>`).join("")}</select></div><div class="fg"><label>Asignatura / Disciplina</label><select onchange="S.asig=this.value;S.grado='';S.pdas=[];R()" ${!S.campo?"disabled":""}><option value="">Selecciona...</option>${as.map(a=>`<option value="${a}" ${S.asig===a?"selected":""}>${a}</option>`).join("")}</select></div><div class="fg"><label>Grado escolar</label><select onchange="S.grado=this.value;S.pdas=[];R()" ${!S.asig?"disabled":""}><option value="">Selecciona...</option>${gr.map(g=>`<option value="${g}" ${S.grado===g?"selected":""}>${g}° grado</option>`).join("")}</select></div></div>${it.length>0?`<div class="slbl" style="margin-top:10px">Selecciona los PDA a trabajar en este documento</div><div>${it.map(p=>`<div class="pda-item ${S.pdas.includes(p.id)?"sel":""}" onclick="tP('${p.id}')"><input type="checkbox" ${S.pdas.includes(p.id)?"checked":""}/><div><strong style="color:var(--c1);display:block;margin-bottom:3px">${p.c}</strong><span style="font-size:11px;color:var(--text2)"><i class="ti ti-arrow-right" style="font-size:10px"></i> ${p.p}</span></div></div>`).join("")}</div>`:""}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px"><button class="btn btn-s" onclick="S.step=1;R()"><i class="ti ti-arrow-left"></i> Atrás</button><div style="display:flex;align-items:center;gap:10px">${S.pdas.length>0?`<span class="tag-g"><i class="ti ti-check"></i> ${S.pdas.length} PDA</span>`:""}<button class="btn btn-p" onclick="g3()" ${S.pdas.length===0?"disabled":""}>Siguiente <i class="ti ti-arrow-right"></i></button></div></div></div>`;}
+function tP(id){S.pdas.includes(id)?S.pdas=S.pdas.filter(x=>x!==id):S.pdas.push(id);R();}
+function g3(){if(S.pdas.length>0){S.step=3;R();}}
+function s3H(){return`<div class="card"><h2><i class="ti ti-map-pin"></i> Contexto socioeducativo (Plano Uno del Programa Analítico)</h2><p style="font-size:12px;color:var(--text2);margin-bottom:14px">Esta información alimentará el análisis del contexto y la problemática de tus documentos.</p><div class="fg"><label>Descripción del contexto socioeconómico y cultural de la escuela</label><textarea id="c1" placeholder="Ej: La escuela está ubicada en zona urbana. Las familias se ubican en clase media baja, con actividades económicas en maquila, zapatería y comercio. Algunas zonas presentan problemas de violencia intrafamiliar. El 100% de los alumnos tiene como lengua materna el español...">${S.contexto}</textarea></div><div class="fr"><div class="fg"><label>Problemática principal detectada</label><textarea id="c2" placeholder="Ej: Los estudiantes presentan dificultades en comprensión lectora y expresión escrita. La dependencia al celular reduce el hábito de la lectura reflexiva y el pensamiento crítico...">${S.problematica}</textarea></div><div class="fg"><label>Recursos disponibles en el aula</label><textarea id="c3" placeholder="Ej: Pizarrón, libros de texto gratuito, libretas, algunos celulares de alumnos, biblioteca escolar, sala de cómputo...">${S.recursos}</textarea></div></div><div class="fg"><label>Grupos y características del alumnado</label><textarea id="c4" placeholder="Ej: Se atienden 6 grupos de 3° con 34-36 alumnos. Rezago del 12%, 2 alumnos con NEE, alta deserción vinculada al trabajo familiar...">${S.grupos}</textarea></div><div style="display:flex;justify-content:space-between;margin-top:12px"><button class="btn btn-s" onclick="S.step=2;R()"><i class="ti ti-arrow-left"></i> Atrás</button><button class="btn btn-p" onclick="g4()">Siguiente <i class="ti ti-arrow-right"></i></button></div></div>`;}
+function g4(){const c1=document.getElementById("c1").value.trim();if(!c1){alert("Por favor describe el contexto socioeducativo.");return;}S.contexto=c1;S.problematica=document.getElementById("c2").value.trim();S.recursos=document.getElementById("c3").value.trim();S.grupos=document.getElementById("c4").value.trim();S.step=4;R();}
+function s4H(){return`<div class="card"><h2><i class="ti ti-file-description"></i> Tipo de documento y configuración del proyecto</h2><div class="slbl">¿Qué documento necesitas generar?</div><div class="dc ${S.docTipo==="analitico"?"sel":""}" onclick="S.docTipo='analitico';R()"><h3><i class="ti ti-file-analytics"></i> Programa Analítico Anual</h3><p>Incluye los 3 Planos: análisis del contexto socioeducativo, contextualización por los 3 trimestres (contenidos, PDA, proyectos, productos) y elementos curriculares (perfil de egreso, ejes articuladores, finalidades y especificidad del campo).</p></div><div class="dc ${S.docTipo==="plano"?"sel":""}" onclick="S.docTipo='plano';R()"><h3><i class="ti ti-calendar-event"></i> Plano Didáctico (Planeación por PDA)</h3><p>Planeación por PDA con datos del proyecto, tabla de interdisciplinariedad, fases F1/F2/F3 con sesiones detalladas (inicio-desarrollo-cierre con tiempos), materiales y evaluación sumativa completa con guía de evaluación.</p></div>${S.docTipo?`<div class="divider"></div><div class="fr3"><div class="fg"><label>Trimestre</label><select id="d1"><option value="">Selecciona...</option>${["Primer trimestre","Segundo trimestre","Tercer trimestre"].map(t=>`<option value="${t}" ${S.trimestre===t?"selected":""}>${t}</option>`).join("")}</select></div><div class="fg"><label>Sesiones por semana</label><select id="d2"><option value="">Selecciona...</option>${["1","2","3","4","5"].map(n=>`<option value="${n}" ${S.sesiones===n?"selected":""}>${n} sesión(es)</option>`).join("")}</select></div><div class="fg"><label>Modalidad</label><select id="d3"><option value="Aprendizaje en proyectos comunitarios">Proyectos comunitarios</option><option value="Secuencia Didáctica">Secuencia Didáctica</option><option value="ABP (Aprendizaje Basado en Problemas)">ABP</option></select></div></div><div class="fg"><label>Nombre del proyecto (si aplica)</label><input id="d4" value="${S.proyecto}" placeholder="Ej: El ayer y el ahora en México | Locura navideña | Activa y nutre tu cuerpo"/></div><div style="margin-bottom:14px"><div class="slbl">Perfiles de egreso que contribuye</div>${PE.map((p,i)=>`<label class="pe-item ${S.pe.includes(i)?"sel":""}"><input type="checkbox" ${S.pe.includes(i)?"checked":""} onchange="tPE(${i})"/><span>${p.substring(0,95)}...</span></label>`).join("")}</div><div style="margin-bottom:14px"><div class="slbl">Ejes articuladores</div><div style="display:flex;flex-wrap:wrap">${EJE.map((e,i)=>`<label class="eje-p ${S.ejes.includes(i)?"sel":""}"><input type="checkbox" ${S.ejes.includes(i)?"checked":""} onchange="tEje(${i})"/>${e}</label>`).join("")}</div></div>`:""}
+<div style="display:flex;justify-content:space-between;margin-top:14px"><button class="btn btn-s" onclick="S.step=3;R()"><i class="ti ti-arrow-left"></i> Atrás</button><button class="btn btn-p" onclick="g5()" ${!S.docTipo?"disabled":""}><i class="ti ti-sparkles"></i> Generar con IA</button></div></div>`;}
+function tPE(i){S.pe.includes(i)?S.pe=S.pe.filter(x=>x!==i):S.pe.push(i);}
+function tEje(i){S.ejes.includes(i)?S.ejes=S.ejes.filter(x=>x!==i):S.ejes.push(i);}
+function g5(){const t=document.getElementById("d1")?.value,ses=document.getElementById("d2")?.value;if(!t||!ses){alert("Selecciona el trimestre y el número de sesiones por semana.");return;}S.trimestre=t;S.sesiones=ses;S.met=document.getElementById("d3")?.value||"Aprendizaje en proyectos comunitarios";S.proyecto=document.getElementById("d4")?.value||"";S.step=5;S.resultado="";R();genIA();}
+function s5H(){const tl=S.docTipo==="analitico"?"Programa Analítico Anual":"Plano Didáctico";return`<div class="card"><h2><i class="ti ti-sparkles"></i> ${tl} — Generado con IA</h2>${S.gen?`<div style="text-align:center;padding:50px 20px"><div class="spin" style="margin:0 auto 16px"></div><p style="font-size:14px;color:var(--text2);font-weight:600">Generando tu documento con inteligencia artificial...</p><p style="font-size:12px;color:var(--text3);margin-top:6px">Puede tomar entre 20 y 40 segundos. Por favor espera.</p></div>`:`<div class="info-b" style="margin-bottom:12px"><strong>${S.asig} — ${S.grado}° grado — ${S.trimestre}</strong><br><span style="font-size:11px">${S.pdas.length} PDA | ${S.escuela} | Turno ${S.turno} | ${S.met}</span></div><div class="result-area" id="txt-res">${S.resultado||"El documento aparecerá aquí una vez generado."}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)"><button class="btn btn-s" onclick="S.step=4;R()"><i class="ti ti-arrow-left"></i> Modificar</button><button class="btn btn-g" onclick="descargar()"><i class="ti ti-download"></i> Descargar Word (.doc)</button><button class="btn btn-s" onclick="copiar()"><i class="ti ti-copy"></i> Copiar texto</button><button class="btn btn-p" onclick="nueva()"><i class="ti ti-plus"></i> Nuevo documento</button></div>`}</div>`;}
+function getPdas(){return S.pdas.map(id=>{const a=CUR[S.campo]?.[S.asig];const g=a?.[S.grado]||[];return g.find(p=>p.id===id);}).filter(Boolean);}
+async function genIA(){
+S.gen=true;R();
+const po=getPdas();
+const pt=po.map((p,i)=>`${i+1}. Contenido: ${p.c}\n   PDA: ${p.p}`).join("\n\n");
+const peT=S.pe.map(i=>PE[i]).join("\n")||"1. Reconocen que son ciudadanas y ciudadanos que pueden ejercer su derecho a una vida digna.\n8. Interactúan en procesos de diálogo con respeto y aprecio a la diversidad.\n9. Intercambian ideas, cosmovisiones y perspectivas mediante distintos lenguajes.";
+const ejT=S.ejes.map(i=>EJE[i]).join(", ")||"Inclusión, Pensamiento crítico, Interculturalidad crítica, Igualdad de género";
+const pA=`Eres un especialista pedagógico de la Nueva Escuela Mexicana (NEM). Genera un PROGRAMA ANALÍTICO completo, siguiendo la estructura oficial de documentos de secundaria en Yucatán (como el de la Sec. Felipe Carrillo Puerto, CCT 31DES0008B, de la maestra Yolanda Mireya Serralta Interián).
 
-    const PDA_POR_ASIGNATURA = {
-        "Español": ["Prácticas sociales del lenguaje: debates y diálogos argumentados", "Análisis de textos literarios", "Producción de textos expositivos"],
-        "Matemáticas": ["Resolución de problemas mediante modelación matemática", "Interpretación de datos estadísticos", "Pensamiento algebraico"],
-        "Biología": ["Ecosistemas locales y sustentabilidad", "Salud integral y prevención"],
-        "Historia": ["Identidad cultural y memoria histórica", "Pensamiento histórico"],
-        "Formación Cívica y Ética": ["Ejercicio de la ciudadanía", "Dilemas éticos y acuerdos en el aula"]
-    };
+DATOS:
+- Docente: ${S.user.nombre} | Escuela: ${S.escuela} | CCT: ${S.cct||"___"} | Municipio: ${S.municipio} | Turno: ${S.turno}
+- Matrícula: ${S.matricula||"___"} | Docentes: ${S.mnum||"___"} | Campo: ${S.campo} | Asignatura: ${S.asig} | Grado: ${S.grado}° | Ciclo: 2025-2026
+- Metodología: ${S.met}
 
-    function obtenerPDAs(asignatura) {
-        return PDA_POR_ASIGNATURA[asignatura] || ["Desarrollo de pensamiento crítico", "Fortalecimiento de saberes comunitarios"];
-    }
+CONTEXTO:
+${S.contexto}
+Problemática: ${S.problematica||"Por definir"}
+Recursos: ${S.recursos||"Materiales básicos de aula"}
+Alumnado: ${S.grupos||"Grupos de secundaria"}
 
-    // ======================= ESTADO =======================
-    let S = {
-        step: 1, user: null, escuela: "", cct: "", turno: "Matutino", municipio: "",
-        campo: "", asig: "", grado: "", trimestre: "Primer trimestre", met: "", contexto: "",
-        pdaSeleccionados: [], ejes: [], pe: [], proyecto: "", docTipo: "", resultado: "", gen: false
-    };
+PDA SELECCIONADOS:
+${pt}
 
-    function R() {
-        const app = document.getElementById("app");
-        if (!S.user) { app.innerHTML = renderLogin(); bindLogin(); return; }
-        if (S.step === 1) app.innerHTML = renderStep1();
-        else if (S.step === 2) app.innerHTML = renderStep2();
-        else if (S.step === 3) app.innerHTML = renderStep3();
-        else if (S.step === 4) app.innerHTML = renderStep4();
-        else if (S.step === 5) app.innerHTML = renderStep5();
-        else if (S.step === 6) app.innerHTML = renderResultado();
-        bindEvents();
-    }
+GENERA EL PROGRAMA ANALÍTICO CON ESTA ESTRUCTURA EXACTA:
 
-    function renderLogin() {
-        return `<div class="card"><div class="header"><h1>📘 Planeador Docente NEM — Fase 6</h1><p>Secundaria | Nueva Escuela Mexicana 2025-2026</p></div>
-        <div class="card"><h2>🔐 Acceso docente</h2>
-        <label>Usuario</label><input type="text" id="username" placeholder="Ej: maestra01">
-        <label>Contraseña</label><input type="password" id="password" placeholder="Contraseña">
-        <button id="btnLogin">Ingresar</button>
-        <p style="margin-top:16px;font-size:0.7rem;text-align:center;">Demo: maestra01 / 123456 | admin / admin2025</p></div></div>`;
-    }
+PROGRAMA ANALÍTICO
+Escuela: ${S.escuela} | CCT: ${S.cct||"___"} | Turno: ${S.turno} | Ciclo escolar: 2025-2026
+Campo formativo: ${S.campo} | Asignatura: ${S.asig} | Grado: ${S.grado}°
+Docente: ${S.user.nombre}
+Problemática / Situación de aprendizaje: [Problemática central articulada con el contexto]
+Metodología: ${S.met}
 
-    function bindLogin() {
-        document.getElementById("btnLogin")?.addEventListener("click", () => {
-            const u = document.getElementById("username").value;
-            const p = document.getElementById("password").value;
-            if ((u === "maestra01" || u === "maestro02" || u === "maestra03") && p === "123456") {
-                S.user = { nombre: u === "maestra01" ? "Docente 01" : (u === "maestro02" ? "Docente 02" : "Docente 03") };
-                S.step = 1; R();
-            } else if (u === "admin" && p === "admin2025") {
-                S.user = { nombre: "Administrador" }; S.step = 1; R();
-            } else alert("Credenciales incorrectas");
-        });
-    }
+══════════════════════════════════════
+PLANO UNO: ANÁLISIS DEL CONTEXTO SOCIOEDUCATIVO
+══════════════════════════════════════
 
-    function renderStep1() {
-        return `<div class="card"><div class="header"><h1>📌 Paso 1/5 — Datos de la escuela</h1></div>
-        <label>🏫 Nombre de la escuela</label><input type="text" id="escuela" value="${S.escuela}">
-        <label>📛 CCT</label><input type="text" id="cct" value="${S.cct}">
-        <label>⏰ Turno</label><select id="turno">${["Matutino","Vespertino"].map(t=>`<option ${S.turno===t?"selected":""}>${t}</option>`)}</select>
-        <label>📍 Municipio</label><input type="text" id="municipio" value="${S.municipio}">
-        <button id="next1">Continuar →</button></div>`;
-    }
+CONTEXTO SOCIOECONÓMICO
 
-    function renderStep2() {
-        return `<div class="card"><div class="header"><h1>📖 Paso 2/5 — Campo y asignatura</h1></div>
-        <label>🌿 Campo formativo</label><select id="campo">${CAMPOS.map(c=>`<option ${S.campo===c?"selected":""}>${c}</option>`)}</select>
-        <label>📚 Asignatura</label><select id="asig">${(ASIGNATURAS_POR_CAMPO[S.campo]||ASIGNATURAS_POR_CAMPO["Lenguajes"]).map(a=>`<option ${S.asig===a?"selected":""}>${a}</option>`)}</select>
-        <label>🎓 Grado</label><select id="grado">${GRADOS.map(g=>`<option ${S.grado===g?"selected":""}>${g}°</option>`)}</select>
-        <label>📅 Trimestre</label><select id="trimestre">${TRIMESTRES.map(t=>`<option ${S.trimestre===t?"selected":""}>${t}</option>`)}</select>
-        <button id="next2">Continuar →</button></div>`;
-    }
+• Datos de identificación:
+[Escuela con sus datos: nombre, CCT, ubicación en ${S.municipio}, matrícula, docentes]
 
-    function renderStep3() {
-        const pdas = obtenerPDAs(S.asig);
-        return `<div class="card"><div class="header"><h1>🎯 Paso 3/5 — PDA y ejes</h1></div>
-        <label>📌 PDA (selecciona al menos 2)</label>
-        ${pdas.map(p=>`<div><label><input type="checkbox" value="${p}" ${S.pdaSeleccionados.includes(p)?"checked":""}> ${p}</label></div>`).join("")}
-        <label>🧩 Ejes articuladores</label>
-        ${EJES_ARTICULADORES.map(e=>`<div><label><input type="checkbox" class="eje" value="${e}" ${S.ejes.includes(e)?"checked":""}> ${e}</label></div>`).join("")}
-        <label>🎯 Perfiles de egreso</label>
-        ${PERFILES_EGRESO.map(p=>`<div><label><input type="checkbox" class="pe" value="${p}" ${S.pe.includes(p)?"checked":""}> ${p}</label></div>`).join("")}
-        <button id="next3">Continuar →</button></div>`;
-    }
+• Descripción del contexto escolar:
+Características del centro escolar: [Horario, instalaciones, organización]
+Características del contexto familiar, sociocultural y lingüístico: [Basado en: ${S.contexto}]
 
-    function renderStep4() {
-        return `<div class="card"><div class="header"><h1>🌎 Paso 4/5 — Contexto</h1></div>
-        <label>📖 Contexto comunitario</label><textarea rows="3" id="contexto">${S.contexto}</textarea>
-        <label>🛠️ Metodología</label><select id="met">${METODOLOGIAS.map(m=>`<option ${S.met===m?"selected":""}>${m}</option>`)}</select>
-        <label>💡 Proyecto</label><input type="text" id="proyecto" value="${S.proyecto}">
-        <button id="next4">Continuar →</button></div>`;
-    }
+• Características y necesidades de los alumnos:
+[Basado en: ${S.grupos||"Alumnos de secundaria con características diversas"}]
 
-    function renderStep5() {
-        return `<div class="card"><div class="header"><h1>📄 Paso 5/5 — Generar</h1></div>
-        <button id="genAnalitico">📘 Programa Analítico Anual</button>
-        <button id="genDidactico">🗂️ Plano Didáctico (F1,F2,F3)</button>
-        <button id="backStep" class="btn-sec">◀ Regresar</button></div>`;
-    }
+• Características de los ambientes de aprendizaje:
+[Recursos: ${S.recursos||"Recursos básicos disponibles"}]
 
-    function renderResultado() {
-        return `<div class="card"><div class="header"><h1>✅ Documento generado</h1></div>
-        <div class="result-area" id="textoResultado">${S.resultado || "Generando..."}</div>
-        <div class="flex-btns"><button id="descargarWord">📎 Descargar Word</button><button id="copiarTexto">📋 Copiar</button><button id="nuevoDoc">🔄 Nuevo</button></div></div>`;
-    }
+• Resultados académicos y problemática detectada y jerarquizada:
+Problemática 1: ${S.problematica||"[Problemática pedagógica principal]"}
+[Amplía el impacto en el aprendizaje]
 
-    // ======================= GEMINI LLAMANDO AL BACKEND SEGURO =======================
-    async function generarConGemini(datosFormulario, tipoDocumento) {
-        const prompt = `Eres un experto en Nueva Escuela Mexicana (NEM), Fase 6 de secundaria.
-Genera un documento educativo oficial llamado "${tipoDocumento}" con estos datos:
-${JSON.stringify(datosFormulario, null, 2)}
-Requisitos: formato oficial NEM, lenguaje claro, incluye todos los planos y fases.`;
+══════════════════════════════════════
+SEGUNDO PLANO: CONTEXTUALIZACIÓN POR TRIMESTRES
+══════════════════════════════════════
 
-        try {
-            const response = await fetch('https://backend-planeador.netlify.app/.netlify/functions/gemini', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt })
-            });
-            
-            const data = await response.json();
-            
-            if (data.error) {
-                return "Error: " + data.error;
-            }
-            
-            return data.texto || "No se pudo generar el documento.";
-        } catch (error) {
-            return "Error de conexión: " + error.message;
-        }
-    }
+PRIMER TRIMESTRE (Septiembre - Noviembre 2025)
+Número de sesiones: ${parseInt(S.sesiones)*11} sesiones aproximadas
+Modalidad didáctica: ${S.met}
+Nombre del proyecto: [Propone nombre creativo vinculado a ${S.municipio} y Yucatán]
+Problematización de la realidad: [Problema comunitario real del primer trimestre]
+Propósitos del proyecto: [Qué lograrán los alumnos en el primer trimestre]
 
-    async function generarYMostrar() {
-        S.step = 6;
-        R();
-        const datos = {
-            escuela: S.escuela, cct: S.cct, turno: S.turno, municipio: S.municipio,
-            campo: S.campo, asignatura: S.asig, grado: S.grado, trimestre: S.trimestre,
-            metodologia: S.met, contexto: S.contexto, proyecto: S.proyecto,
-            pda: S.pdaSeleccionados, ejes: S.ejes, perfiles: S.pe
-        };
-        S.resultado = "Generando planeación... Esto puede tomar hasta 30 segundos.\n\n";
-        R();
-        const texto = await generarConGemini(datos, S.docTipo);
-        S.resultado = texto;
-        R();
-    }
+CONTENIDOS Y PDA (1er trimestre):
+${pt}
 
-    function bindEvents() {
-        if (S.step === 1) document.getElementById("next1")?.addEventListener("click", () => {
-            S.escuela = document.getElementById("escuela").value;
-            S.cct = document.getElementById("cct").value;
-            S.turno = document.getElementById("turno").value;
-            S.municipio = document.getElementById("municipio").value;
-            if (!S.escuela) { alert("Escribe el nombre de la escuela"); return; }
-            S.step = 2; R();
-        });
-        if (S.step === 2) document.getElementById("next2")?.addEventListener("click", () => {
-            S.campo = document.getElementById("campo").value;
-            S.asig = document.getElementById("asig").value;
-            S.grado = document.getElementById("grado").value.replace("°", "");
-            S.trimestre = document.getElementById("trimestre").value;
-            S.step = 3; R();
-        });
-        if (S.step === 3) document.getElementById("next3")?.addEventListener("click", () => {
-            S.pdaSeleccionados = Array.from(document.querySelectorAll("input[type='checkbox']:not(.eje):not(.pe)")).filter(c=>c.checked).map(c=>c.value);
-            S.ejes = Array.from(document.querySelectorAll(".eje:checked")).map(c=>c.value);
-            S.pe = Array.from(document.querySelectorAll(".pe:checked")).map(c=>c.value);
-            if (S.pdaSeleccionados.length < 1) { alert("Selecciona al menos un PDA"); return; }
-            S.step = 4; R();
-        });
-        if (S.step === 4) document.getElementById("next4")?.addEventListener("click", () => {
-            S.contexto = document.getElementById("contexto").value;
-            S.met = document.getElementById("met").value;
-            S.proyecto = document.getElementById("proyecto").value;
-            S.step = 5; R();
-        });
-        if (S.step === 5) {
-            document.getElementById("genAnalitico")?.addEventListener("click", () => { S.docTipo = "Programa Analítico Anual"; generarYMostrar(); });
-            document.getElementById("genDidactico")?.addEventListener("click", () => { S.docTipo = "Plano Didáctico"; generarYMostrar(); });
-            document.getElementById("backStep")?.addEventListener("click", () => { if(S.step>1) S.step--; R(); });
-        }
-        if (S.step === 6) {
-            document.getElementById("descargarWord")?.addEventListener("click", () => {
-                const blob = new Blob([S.resultado], {type: "application/msword"});
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(blob);
-                a.download = `${S.docTipo.replace(/\s/g,"_")}.doc`;
-                a.click();
-            });
-            document.getElementById("copiarTexto")?.addEventListener("click", () => { navigator.clipboard.writeText(S.resultado); alert("Copiado"); });
-            document.getElementById("nuevoDoc")?.addEventListener("click", () => { S.step = 1; S.resultado = ""; R(); });
-        }
-    }
+Productos o entregables — Primer trimestre:
+• ${S.asig}: [Producto concreto y contextualizado al entorno de ${S.municipio}]
 
-    R();
+---
+
+SEGUNDO TRIMESTRE (Diciembre 2025 - Marzo 2026)
+Número de sesiones: ${parseInt(S.sesiones)*14} sesiones aproximadas
+Nombre del proyecto: [Nombre diferente y creativo para el segundo trimestre]
+Problematización de la realidad: [Problema diferente al del primer trimestre]
+Propósitos del proyecto: [Propósito del segundo trimestre]
+
+CONTENIDOS Y PDA (2do trimestre):
+[Contenidos progresivos de ${S.asig} para este trimestre]
+
+Productos o entregables — Segundo trimestre:
+• ${S.asig}: [Producto del segundo trimestre]
+
+---
+
+TERCER TRIMESTRE (Abril - Junio 2026)
+Número de sesiones: ${parseInt(S.sesiones)*13} sesiones aproximadas
+Nombre del proyecto: [Nombre para el tercer trimestre, de cierre de ciclo]
+Problematización de la realidad: [Problema del tercer trimestre]
+Propósitos del proyecto: [Propósito del tercer trimestre]
+
+CONTENIDOS Y PDA (3er trimestre):
+[Contenidos de cierre y consolidación de ${S.asig}]
+
+Productos o entregables — Tercer trimestre:
+• ${S.asig}: [Producto del tercer trimestre]
+
+══════════════════════════════════════
+ELEMENTOS QUE SE DESARROLLAN CON EL CONTENIDO ABORDADO
+══════════════════════════════════════
+
+PERFIL DE EGRESO AL QUE CONTRIBUYE:
+${peT}
+
+EJES ARTICULADORES: ${ejT}
+
+FINALIDADES DEL CAMPO FORMATIVO:
+[2-3 finalidades específicas del campo ${S.campo} relacionadas con los contenidos y el contexto de ${S.municipio}]
+
+ESPECIFICIDAD DEL CAMPO FORMATIVO:
+[En qué consiste la especificidad pedagógica del campo ${S.campo} para la asignatura ${S.asig}: qué investigan, reflexionan, argumentan, interpretan y expresan los alumnos]
+
+INSTRUMENTO DE EVALUACIÓN:
+| Asignatura | Instrumento de evaluación |
+| ${S.asig} | Escala estimativa |
+
+El documento debe ser COMPLETO, contextualizado a ${S.municipio}, Yucatán y listo para entregar a las autoridades educativas.`;
+
+const pP=`Eres un especialista pedagógico de la Nueva Escuela Mexicana (NEM). Genera un PLANO DIDÁCTICO completo y detallado, siguiendo EXACTAMENTE la estructura oficial de la maestra Yolanda Mireya Serralta Interián de la Secundaria Felipe Carrillo Puerto.
+
+DATOS:
+- Escuela: ${S.escuela} | CCT: ${S.cct||"___"} | Campo: ${S.campo} | Disciplina: ${S.asig} | Grado: ${S.grado}°
+- Docente: ${S.user.nombre} | Periodo: ${S.trimestre} | Modalidad: ${S.met}
+- Proyecto: ${S.proyecto||"[Definir con el grupo]"} | Sesiones/semana: ${S.sesiones}
+- Contexto: ${S.contexto}
+- Problemática: ${S.problematica||"Dificultades en el proceso de aprendizaje"}
+- Recursos: ${S.recursos||"Libros de texto, pizarrón, libretas"}
+
+CONTENIDOS Y PDA:
+${pt}
+
+GENERA EL PLANO DIDÁCTICO CON ESTA ESTRUCTURA EXACTA:
+
+PLANO DIDÁCTICO
+ESCUELA SECUNDARIA: ${S.escuela} | CCT: ${S.cct||"___"} | CICLO: 2025-2026
+CAMPO FORMATIVO: ${S.campo} | DISCIPLINA: ${S.asig} | GRADO: ${S.grado}°
+DOCENTE(S): ${S.user.nombre} | PERIODO: ${S.trimestre.toUpperCase()}
+MODALIDAD: ${S.met.toUpperCase()} | PROYECTO: ${S.proyecto||"[Nombre del proyecto]"}
+
+| Problematización de la realidad o tema de interés | [Describe el problema real de los alumnos de ${S.municipio} vinculado a los PDA y que justifica trabajar este contenido] |
+| Propósito u Objetivo | [Qué lograrán los alumnos al trabajar este PDA, qué producirán y cómo lo difundirán] |
+
+PERFIL DE EGRESO AL QUE CONTRIBUYE:
+${peT}
+
+| Finalidades del campo formativo | [1-2 finalidades de ${S.campo} que se desarrollan con este contenido, del programa sintético] |
+| Especificidades del campo formativo | [Especificidad pedagógica de ${S.asig}: qué reflexionan, argumentan, interpretan y expresan los alumnos] |
+| Ejes Articuladores | ${ejT} |
+
+TABLA DE INTERDISCIPLINARIEDAD:
+| Disciplina | Contenidos | PDAS | Producto parcial o final |
+| ${S.asig} (Tu disciplina) | ${po[0]?.c||"Contenido principal"} | ${po[0]?.p||"PDA principal"} | [Producto parcial 1: entregable concreto y evaluable, contextualizado a ${S.municipio}] |
+${po.slice(1).map(p=>`| [Disciplina vinculada] | ${p.c} | ${p.p} | [Producto de la disciplina vinculada] |`).join("\n")||"| [Disciplina 2 si aplica] | [Contenido relacionado] | [PDA vinculado] | [Producto] |"}
+| | | PRODUCTO INTEGRADOR | ${S.proyecto||"[Producto integrador del proyecto]"} |
+
+══════════════════════════════════════
+SECUENCIA DIDÁCTICA — TABLA DE FASES
+══════════════════════════════════════
+
+| FASES / MOMENTOS | TEMPORALIDAD | ACTIVIDADES (del docente y del alumno) | MATERIALES Y RECURSOS | EVALUACIÓN FORMATIVA |
+| F1. PLANEACIÓN (Se identifica un problema y se negocia una ruta de acción) Momento 1. Identificación Momento 2. Recuperación Momento 3. Planificación | 3 sesiones de 50 minutos | Clase #1 Inicio: (10 minutos) Bienvenida, pase de lista. Presentación del contenido "${po[0]?.c}" y del PDA que se abordará en las siguientes sesiones. Se describe brevemente el producto final. Se explican los criterios de evaluación: Trabajos en clase 30%, Productos 30%, Participación 10%, Evaluación 20%, Pulcritud 10%. Desarrollo: (30 minutos) [Actividad detonadora creativa para activar conocimientos previos sobre "${po[0]?.c}". Usa una dinámica grupal apropiada para secundaria. Conecta con la realidad de ${S.municipio}. Describe paso a paso qué hace el docente y qué hacen los alumnos.] Cierre: (10 minutos) [Reflexión escrita en libreta sobre lo aprendido. Indicación del trabajo para la siguiente sesión.] Clase #2 Inicio: (10 minutos) [Recordatorio dinámico de la clase anterior con alguna dinámica motivadora.] Desarrollo: (30 minutos) [Profundización del contenido. Actividad individual o por equipos directamente vinculada al PDA: "${po[0]?.p}". Describe concretamente los pasos, incluyendo materiales a usar.] Cierre: (10 minutos) [Revisión en plenaria. Tarea para la siguiente sesión.] Clase #3 Inicio: (10 minutos) [Retroalimentación con pregunta al azar de la lista.] Desarrollo: (30 minutos) [Elaboración de borrador inicial del producto. Primeras producciones de los alumnos.] Cierre: (10 minutos) [Escritura en libreta: ¿qué aprendí hoy?] | Libreta, libro de texto Nuestro libro de proyectos, pizarrón, bolígrafo | Participación oral. Actividad 1: [Nombre de la actividad]. Actividad 2: [Investigación o tarea]. |
+| F2. ACCIÓN (Se realizan producciones que permiten atender el problema) Momento 4. Acercamiento Momento 5. Comprensión y producción Momento 6. Reconocimiento Momento 7. Concreción | 4 sesiones de 50 minutos | Clases #4 y 5 Inicio: (10 minutos por sesión) Pase de lista con dinámica rompehielos, retroalimentación breve de la sesión anterior. Desarrollo: (80 minutos en total) [Actividad central de producción vinculada directamente al PDA "${po[0]?.p}". Describe detalladamente: qué elaboran los alumnos, con qué materiales (usando: ${S.recursos||"libros de texto, libretas, pizarrón"}), en qué organización (individual, binas o equipos de 4), cómo acompaña el docente el proceso, qué observa y registra.] Cierre: (10 minutos por sesión) Revisión de avances. Coevaluación con lista de cotejo sencilla. Clases #6 y 7 Inicio: (10 minutos por sesión) Motivación y revisión de avances de la sesión anterior. Desarrollo: (80 minutos en total) [Corrección y enriquecimiento del trabajo. Versión mejorada. El docente revisa y da retroalimentación escrita. Énfasis en los aspectos específicos del PDA.] Cierre: (10 minutos por sesión) Autoevaluación con lista de cotejo. ¿Qué mejoré? ¿Qué me falta? | Libreta, trabajos de los alumnos, lista de cotejo, escala estimativa, ${S.recursos||"materiales del aula"} | Actividad 4: [Borrador del producto]. Actividad 5: [Versión revisada]. Autoevaluación. Participación. |
+| F3. INTERVENCIÓN (Se difunden producciones, se da seguimiento y se plantea cómo mejorar) Momento 8. Integración Momento 9. Difusión Momento 10. Consideraciones Momento 11. Avances | 4 sesiones de 50 minutos | Clases #8 y 9 Inicio: (10 minutos) Pase de lista. Se pregunta a los alumnos cómo se sienten. Se les informa que serán evaluados con escala estimativa. Desarrollo: (80 minutos) [Integración y presentación de productos finales al grupo. Los alumnos exponen, leen o presentan su trabajo al grupo. El resto escucha con respeto. Se hace retroalimentación entre pares.] Cierre: (10 minutos) Reflexión colectiva: ¿Qué aprendiste en este PDA? ¿Cómo lo aplicarías en tu vida cotidiana? Clases #10 y 11 Inicio: (10 minutos) Pase de lista. Presentación de la evaluación final. Desarrollo: (80 minutos) [Coevaluación entre pares con lista de cotejo: el alumno lee el trabajo de un compañero asignado al azar y lo evalúa según los criterios. Dinámica de retroalimentación final. Examen parcial escrito sobre los contenidos del PDA.] Cierre: (10 minutos) Preguntas orales al grupo: ¿qué fue lo más interesante? ¿qué fue lo más difícil? Se concluye el proceso del PDA. | Libreta, lista de cotejo, escala estimativa, trabajos de los alumnos, examen escrito | Actividad 8-10: Presentación de producto final. Coevaluación. Examen. Retroalimentación. Actividad 11: Cierre y reflexión. |
+
+| Observaciones y/o Ajustes razonables | De acuerdo a las fechas y necesidades de los alumnos podrá haber cambios en la secuencia. Los alumnos con NEE recibirán ajustes razonables según sus requerimientos. Las actividades podrán adaptarse al contexto específico del grupo. |
+
+══════════════════════════════════════
+EVALUACIÓN SUMATIVA
+══════════════════════════════════════
+
+| CRITERIOS DE EVALUACIÓN Y PONDERACIÓN |
+| Proceso (60%) | Modalidad | Técnica / Instrumento | Producto (40%) | Técnica / Instrumento |
+| 1. Actividades evaluativas (tareas) 30%: Actividad 1. [Descripción]. Actividad 2. [Descripción]. Actividad 3. [Descripción]. Actividad 4. [Descripción]. Actividad 5. [Descripción]. Actividad 6. [Descripción]. Actividad 7. [Descripción]. Actividad 8. [Descripción]. 2. Participaciones 10%. 3. Investigaciones realizadas 5%. 4. Valoración de actitudes y valores 5%. 5. Libreta 5%. 6. Portafolio de evidencias 5%. 7. Examen parcial 20%. | El maestro El alumno Autoevaluación Coevaluación Heteroevaluación | Observación. Desempeño del alumno. Análisis del desempeño. Interrogatorio. | 1. Evidencia entregable [producto específico del PDA] 20%. 2. Examen final 20%. | Técnica: Argumentación / Análisis del desempeño. Instrumento: Lista de cotejo, prueba escrita. |
+
+GUÍA DE EVALUACIÓN:
+
+| Agente y Modalidades | Técnicas | Instrumentos de evaluación |
+| El maestro El alumno Autoevaluación Coevaluación Heteroevaluación | Observación | Guía de observación. Escala de actitudes. |
+| | Desempeño del alumno | Preguntas sobre procedimiento. Cuadernos de los alumnos. Organizadores gráficos. |
+| | Análisis del desempeño | Escala estimativa. Lista de cotejo. |
+| | Interrogatorio | Tipos orales o escritos: Pruebas escritas. Tipos textuales: [Tipo de texto que producen los alumnos según el PDA]. |
+
+El documento debe estar completamente contextualizado a ${S.municipio}, Yucatán y ser coherente con la problemática: "${S.problematica||"problemática detectada en la escuela"}".`;
+
+try{const GEMINI_KEY="AIzaSyDALopmFHobLJkYsyHnQdx58641IqyMwb8";const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:S.docTipo==="analitico"?pA:pP}]}],generationConfig:{maxOutputTokens:4096,temperature:0.7}})});const d=await r.json();const t=d.candidates?.[0]?.content?.parts?.[0]?.text||"Error al generar el documento. Intenta de nuevo.";S.resultado=t;}catch(e){S.resultado="Error de conexión con el servidor de IA.\n\nVerifica que tu dispositivo tenga conexión a internet activa e intenta nuevamente.\n\nSi el problema persiste, contacta al administrador.";}
+S.gen=false;R();}
+function descargar(){if(!S.resultado){alert("Primero genera el documento.");return;}const ls=S.resultado.split("\n");let html=`<html><head><meta charset="UTF-8"><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;margin:2cm;line-height:1.45;color:#1f2937}h1{font-size:14pt;color:#1a4a7a;border-bottom:2pt solid #1a4a7a;padding-bottom:4pt;margin-top:16pt;margin-bottom:8pt}h2{font-size:13pt;color:#1a4a7a;margin-top:14pt;margin-bottom:6pt}h3{font-size:12pt;color:#2563a8;margin-top:12pt;margin-bottom:5pt}p{margin:3pt 0;line-height:1.5}table{border-collapse:collapse;width:100%;margin:8pt 0;font-size:10pt}th{background:#1a4a7a;color:white;padding:6pt 8pt;text-align:left;font-weight:bold;border:1pt solid #1a4a7a}td{border:0.5pt solid #9ca3af;padding:5pt 7pt;vertical-align:top}tr:nth-child(even) td{background:#f0f7ff}.enc{background:#e8f2fc;padding:10pt;margin-bottom:12pt;border-left:4pt solid #1a4a7a;font-size:10pt;line-height:1.6}.sep{border:none;border-top:1.5pt solid #1a4a7a;margin:12pt 0}</style></head><body>`;html+=`<div class="enc"><strong>ESCUELA:</strong> ${S.escuela}&nbsp;&nbsp;|&nbsp;&nbsp;<strong>CCT:</strong> ${S.cct||"—"}&nbsp;&nbsp;|&nbsp;&nbsp;<strong>TURNO:</strong> ${S.turno}<br><strong>CAMPO:</strong> ${S.campo}&nbsp;&nbsp;|&nbsp;&nbsp;<strong>ASIGNATURA:</strong> ${S.asig}&nbsp;&nbsp;|&nbsp;&nbsp;<strong>GRADO:</strong> ${S.grado}°<br><strong>DOCENTE:</strong> ${S.user.nombre}&nbsp;&nbsp;|&nbsp;&nbsp;<strong>PERIODO:</strong> ${S.trimestre}&nbsp;&nbsp;|&nbsp;&nbsp;<strong>CICLO:</strong> 2025-2026<br><strong>METODOLOGÍA:</strong> ${S.met}&nbsp;&nbsp;|&nbsp;&nbsp;<strong>MUNICIPIO:</strong> ${S.municipio}</div>`;let iT=false;const isR=l=>l.trim().startsWith("|")&&l.trim().endsWith("|");const isSep=l=>l.trim().match(/^\|[\s\-|]+\|$/)!==null;ls.forEach((l,idx)=>{const t=l.trim();if(!t){if(iT){html+=`</tbody></table>`;iT=false;}html+="<br>";return;}if(t.startsWith("══")||t==="---"){if(iT){html+=`</tbody></table>`;iT=false;}html+=`<hr class="sep">`;return;}if(isSep(l)){return;}if(isR(l)){const cs=t.split("|").slice(1,-1);if(!iT){html+=`<table><tbody>`;iT=true;const isH=ls[idx+1]&&isSep(ls[idx+1]);if(isH){html+=`<tr>${cs.map(c=>`<th>${c.trim().replace(/\*\*/g,"")}</th>`).join("")}</tr>`;return;}}html+=`<tr>${cs.map(c=>`<td>${c.trim().replace(/\*\*/g,"")}</td>`).join("")}</tr>`;return;}if(iT){html+=`</tbody></table>`;iT=false;}if(t.startsWith("# "))html+=`<h1>${t.slice(2).replace(/\*\*/g,"")}</h1>`;else if(t.startsWith("## "))html+=`<h2>${t.slice(3).replace(/\*\*/g,"")}</h2>`;else if(t.startsWith("### "))html+=`<h3>${t.slice(4).replace(/\*\*/g,"")}</h3>`;else if(t.startsWith("- ")||t.startsWith("• "))html+=`<p style="margin-left:14pt">• ${t.slice(2).replace(/\*\*/g,"")}</p>`;else html+=`<p>${t.replace(/\*\*/g,"")}</p>`;});if(iT)html+=`</tbody></table>`;html+="</body></html>";const b=new Blob(['\ufeff',html],{type:"application/msword"});const u=URL.createObjectURL(b);const a=document.createElement("a");const ti=S.docTipo==="analitico"?"Programa_Analitico":"Plano_Didactico";a.href=u;a.download=`${ti}_${S.asig.replace(/\s+/g,"_")}_${S.grado}o_${S.trimestre.replace(/\s+/g,"_")}.doc`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);}
+function copiar(){if(!S.resultado)return;const ta=document.createElement("textarea");ta.value=S.resultado;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");alert("Texto copiado al portapapeles.");}catch(e){alert("Selecciona el texto manualmente.");}document.body.removeChild(ta);}
+function nueva(){S.step=1;S.campo="";S.asig="";S.grado="";S.pdas=[];S.resultado="";S.docTipo="";S.trimestre="";S.pe=[];S.ejes=[];S.proyecto="";R();}
+R();
 </script>
 </body>
 </html>
