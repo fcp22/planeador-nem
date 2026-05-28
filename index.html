@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planeador Docente NEM</title>
+<style>
+  :root {
+    --azul-oscuro: #0d1b2a;
+    --azul-medio: #1b3a5c;
+    --azul-claro: #2e6da4;
+    --acento: #4fc3f7;
+    --blanco: #f0f4f8;
+    --gris: #8a9bb0;
+    --fondo: #0a1628;
+    --tarjeta: #112240;
+    --borde: #1e3a5f;
+    --exito: #4caf50;
+    --error: #ef5350;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--fondo); color: var(--blanco); min-height: 100vh; }
+
+  /* LOGIN */
+  #pantalla-login {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a1628 0%, #0d1b2a 50%, #0a1220 100%);
+  }
+  .login-caja {
+    background: var(--tarjeta); border: 1px solid var(--borde);
+    border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 420px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  .login-logo { text-align: center; margin-bottom: 32px; }
+  .login-logo .icono { font-size: 48px; margin-bottom: 12px; display: block; }
+  .login-logo h1 { font-size: 22px; font-weight: 700; }
+  .login-logo p { font-size: 13px; color: var(--gris); margin-top: 6px; }
+  .campo-grupo { margin-bottom: 20px; }
+  .campo-grupo label { display: block; font-size: 13px; color: var(--gris); margin-bottom: 8px; }
+  .campo-grupo input {
+    width: 100%; padding: 12px 16px; background: var(--azul-oscuro);
+    border: 1px solid var(--borde); border-radius: 8px; color: var(--blanco);
+    font-size: 15px; outline: none; transition: border-color 0.2s;
+  }
+  .campo-grupo input:focus { border-color: var(--acento); }
+  .btn-login {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--azul-claro), var(--acento));
+    border: none; border-radius: 8px; color: white; font-size: 16px;
+    font-weight: 600; cursor: pointer; margin-top: 8px;
+  }
+  .btn-login:hover { opacity: 0.9; }
+  .login-error {
+    background: rgba(239,83,80,0.15); border: 1px solid rgba(239,83,80,0.3);
+    border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #ef9a9a;
+    margin-top: 16px; display: none;
+  }
+
+  /* APP */
+  #app-principal { display: none; }
+  .header {
+    background: var(--azul-oscuro); border-bottom: 1px solid var(--borde);
+    padding: 0 24px; display: flex; align-items: center;
+    justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100;
+  }
+  .header-titulo { font-size: 16px; font-weight: 700; color: var(--acento); }
+  .header-usuario { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--gris); }
+  .avatar {
+    width: 32px; height: 32px; background: var(--azul-claro); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: white;
+  }
+  .btn-salir {
+    background: none; border: 1px solid var(--borde); border-radius: 6px;
+    color: var(--gris); padding: 4px 12px; font-size: 12px; cursor: pointer;
+  }
+  .btn-salir:hover { border-color: var(--acento); color: var(--acento); }
+
+  /* TABS */
+  .nav-tabs {
+    display: flex; gap: 4px; padding: 16px 24px 0;
+    border-bottom: 1px solid var(--borde); background: var(--azul-oscuro);
+  }
+  .nav-tab {
+    padding: 10px 20px; background: none; border: none;
+    border-bottom: 2px solid transparent; color: var(--gris);
+    font-size: 14px; cursor: pointer; font-weight: 500;
+  }
+  .nav-tab.activo { color: var(--acento); border-bottom-color: var(--acento); }
+  .nav-tab:hover { color: var(--blanco); }
+
+  /* CONTENIDO */
+  .contenido { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+  .tab-contenido { display: none; }
+  .tab-contenido.activo { display: block; }
+
+  /* PASOS */
+  .pasos-indicador { display: flex; align-items: center; margin-bottom: 24px; }
+  .paso-item { display: flex; align-items: center; flex: 1; }
+  .paso-circulo {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 2px solid var(--borde); display: flex; align-items: center;
+    justify-content: center; font-size: 14px; font-weight: 700;
+    color: var(--gris); background: var(--tarjeta); flex-shrink: 0;
+  }
+  .paso-circulo.activo { border-color: var(--acento); color: var(--acento); box-shadow: 0 0 0 4px rgba(79,195,247,0.15); }
+  .paso-circulo.completado { background: var(--acento); border-color: var(--acento); color: var(--azul-oscuro); }
+  .paso-linea { flex: 1; height: 2px; background: var(--borde); }
+  .paso-linea.completada { background: var(--acento); }
+  .pasos-etiquetas { display: flex; margin-bottom: 28px; }
+  .paso-etiqueta { flex: 1; text-align: center; font-size: 11px; color: var(--gris); line-height: 1.3; }
+  .paso-etiqueta.activo { color: var(--acento); font-weight: 600; }
+
+  /* SECCIONES */
+  .seccion-paso {
+    background: var(--tarjeta); border: 1px solid var(--borde);
+    border-radius: 12px; padding: 28px; margin-bottom: 20px;
+  }
+  .seccion-paso h3 {
+    font-size: 16px; font-weight: 700; color: var(--acento);
+    margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--borde);
+  }
+  .campo-form { margin-bottom: 18px; }
+  .campo-form label { display: block; font-size: 13px; color: var(--gris); margin-bottom: 7px; }
+  .campo-form input,
+  .campo-form select,
+  .campo-form textarea {
+    width: 100%; padding: 11px 14px; background: var(--azul-oscuro);
+    border: 1px solid var(--borde); border-radius: 8px; color: var(--blanco);
+    font-size: 14px; outline: none; font-family: inherit;
+  }
+  .campo-form input:focus,
+  .campo-form select:focus,
+  .campo-form textarea:focus { border-color: var(--acento); }
+  .campo-form select option { background: var(--azul-oscuro); }
+  .campo-form textarea { resize: vertical; min-height: 90px; }
+  .campo-form .nota { font-size: 12px; color: var(--gris); margin-top: 5px; font-style: italic; }
+  .fila-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .fila-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* BOTONES */
+  .nav-botones { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; }
+  .btn-anterior {
+    padding: 12px 24px; background: none; border: 1px solid var(--borde);
+    border-radius: 8px; color: var(--gris); font-size: 14px; cursor: pointer;
+  }
+  .btn-anterior:hover { border-color: var(--acento); color: var(--acento); }
+  .btn-siguiente {
+    padding: 12px 28px;
+    background: linear-gradient(135deg, var(--azul-claro), var(--acento));
+    border: none; border-radius: 8px; color: white; font-size: 14px;
+    font-weight: 600; cursor: pointer;
+  }
+  .btn-siguiente:hover { opacity: 0.9; }
+  .btn-generar {
+    padding: 14px 32px; background: linear-gradient(135deg, #1b5e20, #4caf50);
+    border: none; border-radius: 8px; color: white; font-size: 15px;
+    font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px;
+  }
+  .btn-generar:hover { opacity: 0.9; }
+  .btn-generar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* CHIPS */
+  .chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .chip {
+    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--borde);
+    background: var(--azul-oscuro); color: var(--gris); font-size: 13px;
+    cursor: pointer; user-select: none;
+  }
+  .chip.seleccionado { border-color: var(--acento); background: rgba(79,195,247,0.1); color: var(--acento); }
+
+  /* RESULTADO */
+  .resultado-caja {
+    display: none; background: var(--tarjeta);
+    border: 1px solid var(--exito); border-radius: 12px; padding: 28px; margin-top: 24px;
+  }
+  .resultado-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .resultado-header h3 { font-size: 16px; font-weight: 700; color: var(--exito); }
+  .btn-descargar {
+    padding: 10px 20px; background: linear-gradient(135deg, #1565c0, #1976d2);
+    border: none; border-radius: 8px; color: white; font-size: 13px;
+    font-weight: 600; cursor: pointer;
+  }
+  .resultado-contenido {
+    background: var(--azul-oscuro); border-radius: 8px; padding: 20px;
+    font-size: 14px; line-height: 1.7; white-space: pre-wrap;
+    max-height: 500px; overflow-y: auto; color: #cdd9e5;
+  }
+
+  /* GENERANDO */
+  .generando-overlay { display: none; text-align: center; padding: 40px; }
+  .spinner {
+    width: 48px; height: 48px; border: 3px solid var(--borde);
+    border-top-color: var(--acento); border-radius: 50%;
+    animation: girar 0.8s linear infinite; margin: 0 auto 20px;
+  }
+  @keyframes girar { to { transform: rotate(360deg); } }
+  .generando-texto { color: var(--gris); font-size: 15px; }
+
+  /* ADMIN */
+  .admin-tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .admin-tabla th {
+    background: var(--azul-oscuro); color: var(--gris); padding: 12px 16px;
+    text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .admin-tabla td { padding: 12px 16px; border-bottom: 1px solid var(--borde); }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge-admin { background: rgba(79,195,247,0.15); color: var(--acento); }
+  .badge-docente { background: rgba(76,175,80,0.15); color: #81c784; }
+
+  /* HISTORIAL */
+  .historial-item {
+    background: var(--tarjeta); border: 1px solid var(--borde);
+    border-radius: 8px; padding: 16px; margin-bottom: 12px; cursor: pointer;
+  }
+  .historial-item:hover { border-color: var(--acento); }
+  .historial-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--gris); margin-top: 8px; }
+
+  .seccion-titulo { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .seccion-sub { font-size: 14px; color: var(--gris); margin-bottom: 28px; }
+  .hidden { display: none !important; }
+
+  @media (max-width: 600px) {
+    .fila-2, .fila-3 { grid-template-columns: 1fr; }
+    .contenido { padding: 16px; }
+    .login-caja { padding: 32px 20px; }
+    .pasos-etiquetas { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="pantalla-login">
+  <div class="login-caja">
+    <div class="login-logo">
+      <span class="icono">📚</span>
+      <h1>Planeador Docente NEM</h1>
+      <p>Nueva Escuela Mexicana · SEP</p>
+    </div>
+    <div class="campo-grupo">
+      <label>Usuario</label>
+      <input type="text" id="login-usuario" placeholder="Ingresa tu usuario" autocomplete="username">
+    </div>
+    <div class="campo-grupo">
+      <label>Contraseña</label>
+      <input type="password" id="login-password" placeholder="Ingresa tu contraseña">
+    </div>
+    <button class="btn-login" onclick="iniciarSesion()">Entrar al sistema</button>
+    <div class="login-error" id="login-error">Usuario o contraseña incorrectos.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-principal">
+  <div class="header">
+    <div class="header-titulo">📚 Planeador Docente NEM</div>
+    <div class="header-usuario">
+      <div class="avatar" id="avatar-letra">M</div>
+      <span id="nombre-header">Maestra</span>
+      <button class="btn-salir" onclick="cerrarSesion()">Salir</button>
+    </div>
+  </div>
+
+  <div class="nav-tabs" id="nav-admin" style="display:none;">
+    <button class="nav-tab activo" onclick="cambiarTab(this,'tab-planeacion')">📝 Nueva Planeación</button>
+    <button class="nav-tab" onclick="cambiarTab(this,'tab-historial')">📋 Historial</button>
+    <button class="nav-tab" onclick="cambiarTab(this,'tab-usuarios')">👥 Usuarios</button>
+  </div>
+  <div class="nav-tabs" id="nav-docente" style="display:none;">
+    <button class="nav-tab activo" onclick="cambiarTab(this,'tab-planeacion')">📝 Nueva Planeación</button>
+    <button class="nav-tab" onclick="cambiarTab(this,'tab-historial')">📋 Mi Historial</button>
+  </div>
+
+  <div class="contenido">
+
+    <!-- TAB PLANEACIÓN -->
+    <div class="tab-contenido activo" id="tab-planeacion">
+      <div class="seccion-titulo">Nueva Planeación Didáctica</div>
+      <div class="seccion-sub">Completa los 5 pasos para generar tu planeación con IA</div>
+
+      <!-- Indicador -->
+      <div class="pasos-indicador">
+        <div class="paso-item"><div class="paso-circulo activo" id="c1">1</div><div class="paso-linea" id="l1"></div></div>
+        <div class="paso-item"><div class="paso-circulo" id="c2">2</div><div class="paso-linea" id="l2"></div></div>
+        <div class="paso-item"><div class="paso-circulo" id="c3">3</div><div class="paso-linea" id="l3"></div></div>
+        <div class="paso-item"><div class="paso-circulo" id="c4">4</div><div class="paso-linea" id="l4"></div></div>
+        <div class="paso-item"><div class="paso-circulo" id="c5">5</div><div class="paso-linea" style="background:transparent;"></div></div>
+      </div>
+      <div class="pasos-etiquetas">
+        <div class="paso-etiqueta activo" id="e1">Datos generales</div>
+        <div class="paso-etiqueta" id="e2">Contenido curricular</div>
+        <div class="paso-etiqueta" id="e3">Contexto escolar</div>
+        <div class="paso-etiqueta" id="e4">Estrategias</div>
+        <div class="paso-etiqueta" id="e5">Evaluación</div>
+      </div>
+
+      <!-- PASO 1 -->
+      <div id="paso-1">
+        <div class="seccion-paso">
+          <h3>📋 Paso 1 — Datos generales</h3>
+          <div class="fila-2">
+            <div class="campo-form"><label>Nombre del docente</label><input type="text" id="p1-docente" placeholder="Nombre completo"></div>
+            <div class="campo-form"><label>Nombre de la escuela</label><input type="text" id="p1-escuela" placeholder="Nombre oficial"></div>
+          </div>
+          <div class="fila-3">
+            <div class="campo-form">
+              <label>Grado escolar</label>
+              <select id="p1-grado">
+                <option value="">Selecciona</option>
+                <optgroup label="Preescolar"><option>1° Preescolar</option><option>2° Preescolar</option><option>3° Preescolar</option></optgroup>
+                <optgroup label="Primaria"><option>1° Primaria</option><option>2° Primaria</option><option>3° Primaria</option><option>4° Primaria</option><option>5° Primaria</option><option>6° Primaria</option></optgroup>
+                <optgroup label="Secundaria"><option>1° Secundaria</option><option>2° Secundaria</option><option>3° Secundaria</option></optgroup>
+              </select>
+            </div>
+            <div class="campo-form"><label>Grupo / Sección</label><input type="text" id="p1-grupo" placeholder="Ej. A, B, C"></div>
+            <div class="campo-form"><label>Número de alumnos</label><input type="number" id="p1-alumnos" placeholder="Ej. 28" min="1" max="60"></div>
+          </div>
+          <div class="fila-2">
+            <div class="campo-form">
+              <label>Período / Bloque</label>
+              <select id="p1-periodo">
+                <option value="">Selecciona</option>
+                <option>Bloque 1 (Sep - Oct)</option>
+                <option>Bloque 2 (Nov - Dic)</option>
+                <option>Bloque 3 (Ene - Feb)</option>
+                <option>Bloque 4 (Mar - Abr)</option>
+                <option>Bloque 5 (May - Jun)</option>
+              </select>
+            </div>
+            <div class="campo-form">
+              <label>Duración de la planeación</label>
+              <select id="p1-duracion">
+                <option value="">Selecciona</option>
+                <option>1 semana</option>
+                <option>2 semanas</option>
+                <option>3 semanas</option>
+                <option>1 mes</option>
+                <option>Bimestre completo</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="nav-botones"><div></div><button class="btn-siguiente" onclick="irPaso(2)">Siguiente →</button></div>
+      </div>
+
+      <!-- PASO 2 -->
+      <div id="paso-2" class="hidden">
+        <div class="seccion-paso">
+          <h3>📚 Paso 2 — Contenido curricular NEM</h3>
+          <div class="fila-2">
+            <div class="campo-form">
+              <label>Campo formativo</label>
+              <select id="p2-campo" onchange="actualizarAsignaturas()">
+                <option value="">Selecciona</option>
+                <option>Lenguajes</option>
+                <option>Saberes y pensamiento científico</option>
+                <option>Ética, naturaleza y sociedades</option>
+                <option>De lo humano y lo comunitario</option>
+              </select>
+            </div>
+            <div class="campo-form">
+              <label>Asignatura / Área</label>
+              <select id="p2-asignatura"><option value="">Primero elige el campo</option></select>
+            </div>
+          </div>
+          <div class="campo-form">
+            <label>Eje articulador</label>
+            <select id="p2-eje">
+              <option value="">Selecciona</option>
+              <option>Inclusión</option>
+              <option>Pensamiento crítico</option>
+              <option>Interculturalidad crítica</option>
+              <option>Igualdad de género</option>
+              <option>Vida saludable</option>
+              <option>Apropiación de las culturas a través de la lectura y la escritura</option>
+              <option>Artes y experiencias estéticas</option>
+            </select>
+          </div>
+          <div class="campo-form">
+            <label>Contenido o tema principal</label>
+            <input type="text" id="p2-tema" placeholder="Ej. La narración de cuentos, Fracciones, El ciclo del agua...">
+          </div>
+          <div class="campo-form">
+            <label>Proceso de Desarrollo de Aprendizaje (PDA)</label>
+            <textarea id="p2-pda" placeholder="Describe el PDA según tu programa analítico..."></textarea>
+            <div class="nota">Puedes copiar directamente del programa analítico de tu escuela</div>
+          </div>
+          <div class="campo-form">
+            <label>Libro de texto utilizado</label>
+            <select id="p2-libro">
+              <option value="">Selecciona</option>
+              <option>Nuestros Saberes — Libro Muestra</option>
+              <option>Proyectos Comunitarios</option>
+              <option>Proyectos Escolares</option>
+              <option>Proyectos de Aula</option>
+              <option>Libros de texto SEP (ediciones anteriores)</option>
+              <option>Material propio del docente</option>
+            </select>
+          </div>
+        </div>
+        <div class="nav-botones">
+          <button class="btn-anterior" onclick="irPaso(1)">← Anterior</button>
+          <button class="btn-siguiente" onclick="irPaso(3)">Siguiente →</button>
+        </div>
+      </div>
+
+      <!-- PASO 3 -->
+      <div id="paso-3" class="hidden">
+        <div class="seccion-paso">
+          <h3>🏫 Paso 3 — Contexto escolar y comunitario</h3>
+          <div class="fila-2">
+            <div class="campo-form">
+              <label>Tipo de escuela</label>
+              <select id="p3-tipo">
+                <option value="">Selecciona</option>
+                <option>Urbana general</option>
+                <option>Rural</option>
+                <option>Indígena</option>
+                <option>Multigrado</option>
+                <option>Telesecundaria</option>
+                <option>Comunitaria CONAFE</option>
+                <option>Privada incorporada</option>
+              </select>
+            </div>
+            <div class="campo-form"><label>Municipio / Localidad</label><input type="text" id="p3-municipio" placeholder="Ej. Mérida, Yucatán"></div>
+          </div>
+          <div class="campo-form">
+            <label>Características del grupo</label>
+            <textarea id="p3-caracteristicas" placeholder="Nivel de lectura, necesidades especiales, ritmos de aprendizaje, contexto familiar..."></textarea>
+          </div>
+          <div class="campo-form">
+            <label>Recursos disponibles en el aula</label>
+            <div class="chips-container" id="chips-recursos">
+              <span class="chip" onclick="toggleChip(this)">Pizarrón</span>
+              <span class="chip" onclick="toggleChip(this)">Computadora docente</span>
+              <span class="chip" onclick="toggleChip(this)">Proyector</span>
+              <span class="chip" onclick="toggleChip(this)">Tablets / iPads</span>
+              <span class="chip" onclick="toggleChip(this)">Libros de texto</span>
+              <span class="chip" onclick="toggleChip(this)">Internet</span>
+              <span class="chip" onclick="toggleChip(this)">Material manipulable</span>
+              <span class="chip" onclick="toggleChip(this)">Biblioteca escolar</span>
+              <span class="chip" onclick="toggleChip(this)">Espacio al aire libre</span>
+            </div>
+          </div>
+          <div class="campo-form">
+            <label>Vinculación comunitaria (opcional)</label>
+            <input type="text" id="p3-vinculacion" placeholder="Ej. Visita a milpa local, entrevistas a artesanos...">
+          </div>
+        </div>
+        <div class="nav-botones">
+          <button class="btn-anterior" onclick="irPaso(2)">← Anterior</button>
+          <button class="btn-siguiente" onclick="irPaso(4)">Siguiente →</button>
+        </div>
+      </div>
+
+      <!-- PASO 4 -->
+      <div id="paso-4" class="hidden">
+        <div class="seccion-paso">
+          <h3>🎯 Paso 4 — Estrategias didácticas</h3>
+          <div class="campo-form">
+            <label>Tipo de planeación / enfoque</label>
+            <select id="p4-tipo">
+              <option value="">Selecciona</option>
+              <option>Proyecto de aula</option>
+              <option>Proyecto comunitario</option>
+              <option>Proyecto escolar</option>
+              <option>Situación didáctica</option>
+              <option>Secuencia didáctica</option>
+              <option>Aprendizaje basado en problemas</option>
+            </select>
+          </div>
+          <div class="campo-form">
+            <label>Estrategias de enseñanza</label>
+            <div class="chips-container" id="chips-estrategias">
+              <span class="chip" onclick="toggleChip(this)">Trabajo colaborativo</span>
+              <span class="chip" onclick="toggleChip(this)">Juego didáctico</span>
+              <span class="chip" onclick="toggleChip(this)">Aprendizaje por descubrimiento</span>
+              <span class="chip" onclick="toggleChip(this)">Lectura compartida</span>
+              <span class="chip" onclick="toggleChip(this)">Experimentos</span>
+              <span class="chip" onclick="toggleChip(this)">Arte y creatividad</span>
+              <span class="chip" onclick="toggleChip(this)">Debates y diálogos</span>
+              <span class="chip" onclick="toggleChip(this)">Salidas de campo</span>
+              <span class="chip" onclick="toggleChip(this)">TIC y medios digitales</span>
+              <span class="chip" onclick="toggleChip(this)">Narrativa y cuentos</span>
+            </div>
+          </div>
+          <div class="campo-form">
+            <label>Adaptaciones para diversidad de aprendizajes</label>
+            <textarea id="p4-adaptaciones" placeholder="Necesidades educativas especiales, ritmos diversos, estrategias de inclusión..."></textarea>
+          </div>
+          <div class="fila-2">
+            <div class="campo-form">
+              <label>Sesiones por semana</label>
+              <select id="p4-sesiones">
+                <option value="">Selecciona</option>
+                <option>1 sesión</option><option>2 sesiones</option>
+                <option>3 sesiones</option><option>4 sesiones</option><option>5 sesiones (diario)</option>
+              </select>
+            </div>
+            <div class="campo-form">
+              <label>Duración por sesión</label>
+              <select id="p4-duracion">
+                <option value="">Selecciona</option>
+                <option>30 minutos</option><option>45 minutos</option><option>50 minutos</option>
+                <option>60 minutos</option><option>90 minutos</option><option>2 horas</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="nav-botones">
+          <button class="btn-anterior" onclick="irPaso(3)">← Anterior</button>
+          <button class="btn-siguiente" onclick="irPaso(5)">Siguiente →</button>
+        </div>
+      </div>
+
+      <!-- PASO 5 -->
+      <div id="paso-5" class="hidden">
+        <div class="seccion-paso">
+          <h3>✅ Paso 5 — Evaluación y cierre</h3>
+          <div class="campo-form">
+            <label>Tipo de evaluación</label>
+            <div class="chips-container" id="chips-eval-tipo">
+              <span class="chip" onclick="toggleChip(this)">Diagnóstica</span>
+              <span class="chip" onclick="toggleChip(this)">Formativa</span>
+              <span class="chip" onclick="toggleChip(this)">Sumativa</span>
+              <span class="chip" onclick="toggleChip(this)">Autoevaluación</span>
+              <span class="chip" onclick="toggleChip(this)">Coevaluación</span>
+            </div>
+          </div>
+          <div class="campo-form">
+            <label>Instrumentos de evaluación</label>
+            <div class="chips-container" id="chips-instrumentos">
+              <span class="chip" onclick="toggleChip(this)">Lista de cotejo</span>
+              <span class="chip" onclick="toggleChip(this)">Rúbrica</span>
+              <span class="chip" onclick="toggleChip(this)">Portafolio de evidencias</span>
+              <span class="chip" onclick="toggleChip(this)">Observación directa</span>
+              <span class="chip" onclick="toggleChip(this)">Diario del alumno</span>
+              <span class="chip" onclick="toggleChip(this)">Producto final</span>
+              <span class="chip" onclick="toggleChip(this)">Exposición oral</span>
+              <span class="chip" onclick="toggleChip(this)">Examen escrito</span>
+            </div>
+          </div>
+          <div class="campo-form">
+            <label>Indicadores de logro esperados</label>
+            <textarea id="p5-indicadores" placeholder="¿Qué evidencias concretas demuestran el aprendizaje? 2-3 indicadores observables."></textarea>
+          </div>
+          <div class="campo-form">
+            <label>Observaciones adicionales para la IA (opcional)</label>
+            <textarea id="p5-obs" placeholder="Formato específico, elementos que no deben faltar, estilo particular..."></textarea>
+          </div>
+        </div>
+
+        <div class="nav-botones">
+          <button class="btn-anterior" onclick="irPaso(4)">← Anterior</button>
+          <button class="btn-generar" onclick="generarPlaneacion()" id="btn-gen">
+            <span>✨</span> Generar planeación con IA
+          </button>
+        </div>
+
+        <div class="generando-overlay" id="generando-overlay">
+          <div class="spinner"></div>
+          <div class="generando-texto">Generando tu planeación didáctica...<br><small style="color:var(--gris);font-size:12px;">Esto puede tardar 20-40 segundos</small></div>
+        </div>
+
+        <div class="resultado-caja" id="resultado-caja">
+          <div class="resultado-header">
+            <h3>✅ Planeación generada exitosamente</h3>
+            <button class="btn-descargar" onclick="descargarWord()">⬇️ Descargar en Word</button>
+          </div>
+          <div class="resultado-contenido" id="resultado-texto"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB HISTORIAL -->
+    <div class="tab-contenido" id="tab-historial">
+      <div class="seccion-titulo">Historial de planeaciones</div>
+      <div class="seccion-sub">Planeaciones generadas en este dispositivo</div>
+      <div id="historial-lista"></div>
+    </div>
+
+    <!-- TAB USUARIOS (admin) -->
+    <div class="tab-contenido" id="tab-usuarios">
+      <div class="seccion-titulo">Gestión de usuarios</div>
+      <div class="seccion-sub">Docentes registrados en el sistema</div>
+      <div class="seccion-paso">
+        <table class="admin-tabla">
+          <thead>
+            <tr><th>#</th><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th></tr>
+          </thead>
+          <tbody id="tabla-usuarios-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ============================================================
+// USUARIOS
+// ============================================================
+const USUARIOS = [
+  { usuario: 'admin',      password: 'admin2025', nombre: 'Administrador',  rol: 'admin'   },
+  { usuario: 'maestra01',  password: '123456',    nombre: 'Maestra 01',     rol: 'docente' },
+  { usuario: 'maestro02',  password: '123456',    nombre: 'Maestro 02',     rol: 'docente' },
+  { usuario: 'maestra03',  password: '123456',    nombre: 'Maestra 03',     rol: 'docente' },
+  // --- AGREGAR AQUÍ LOS 45 DOCENTES ---
+  // { usuario: 'maestra04', password: '123456', nombre: 'Nombre Apellido', rol: 'docente' },
+];
+
+// ============================================================
+// GEMINI
+// ============================================================
+const GEMINI_KEY = 'AIzaSyCnFdgyoTpOh6g6SU2Mn5s0GTvxiFJylu0';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+
+// ============================================================
+// ESTADO
+// ============================================================
+let usuarioActual = null;
+let historial = JSON.parse(localStorage.getItem('nem_historial') || '[]');
+
+// ============================================================
+// LOGIN
+// ============================================================
+function iniciarSesion() {
+  const u = document.getElementById('login-usuario').value.trim();
+  const p = document.getElementById('login-password').value;
+  const usuario = USUARIOS.find(x => x.usuario === u && x.password === p);
+
+  if (!usuario) {
+    document.getElementById('login-error').style.display = 'block';
+    return;
+  }
+
+  usuarioActual = usuario;
+  document.getElementById('login-error').style.display = 'none';
+  document.getElementById('pantalla-login').style.display = 'none';
+  document.getElementById('app-principal').style.display = 'block';
+  document.getElementById('nombre-header').textContent = usuario.nombre;
+  document.getElementById('avatar-letra').textContent = usuario.nombre.charAt(0).toUpperCase();
+
+  if (usuario.rol === 'admin') {
+    document.getElementById('nav-admin').style.display = 'flex';
+    cargarTablaUsuarios();
+  } else {
+    document.getElementById('nav-docente').style.display = 'flex';
+    document.getElementById('p1-docente').value = usuario.nombre;
+  }
+  cargarHistorial();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('pantalla-login').style.display !== 'none') {
+    iniciarSesion();
+  }
+});
+
+function cerrarSesion() {
+  usuarioActual = null;
+  document.getElementById('pantalla-login').style.display = 'flex';
+  document.getElementById('app-principal').style.display = 'none';
+  document.getElementById('nav-admin').style.display = 'none';
+  document.getElementById('nav-docente').style.display = 'none';
+  document.getElementById('login-usuario').value = '';
+  document.getElementById('login-password').value = '';
+  irPaso(1);
+}
+
+// ============================================================
+// PASOS
+// ============================================================
+function irPaso(n) {
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById(`paso-${i}`).classList.add('hidden');
+    const c = document.getElementById(`c${i}`);
+    const e = document.getElementById(`e${i}`);
+    c.classList.remove('activo', 'completado');
+    if (e) e.classList.remove('activo');
+    if (i < 5 && document.getElementById(`l${i}`)) {
+      document.getElementById(`l${i}`).classList.remove('completada');
+    }
+    c.textContent = i;
+  }
+
+  document.getElementById(`paso-${n}`).classList.remove('hidden');
+  document.getElementById(`c${n}`).classList.add('activo');
+  if (document.getElementById(`e${n}`)) document.getElementById(`e${n}`).classList.add('activo');
+
+  for (let i = 1; i < n; i++) {
+    const c = document.getElementById(`c${i}`);
+    c.classList.add('completado');
+    c.textContent = '✓';
+    if (document.getElementById(`l${i}`)) document.getElementById(`l${i}`).classList.add('completada');
+  }
+
+  if (n < 5) {
+    document.getElementById('resultado-caja').style.display = 'none';
+    document.getElementById('generando-overlay').style.display = 'none';
+    document.getElementById('btn-gen').disabled = false;
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function cambiarTab(btn, tabId) {
+  document.querySelectorAll('.tab-contenido').forEach(t => t.classList.remove('activo'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('activo'));
+  document.getElementById(tabId).classList.add('activo');
+  btn.classList.add('activo');
+}
+
+// ============================================================
+// CHIPS
+// ============================================================
+function toggleChip(el) { el.classList.toggle('seleccionado'); }
+
+function leerChips(contenedorId) {
+  return Array.from(document.querySelectorAll(`#${contenedorId} .chip.seleccionado`))
+    .map(c => c.textContent).join(', ');
+}
+
+// ============================================================
+// ASIGNATURAS
+// ============================================================
+const ASIGNATURAS = {
+  'Lenguajes': ['Lengua Materna (Español)', 'Segunda Lengua (Inglés)', 'Lengua Indígena', 'Educación Artística'],
+  'Saberes y pensamiento científico': ['Matemáticas', 'Ciencias Naturales', 'Biología', 'Física', 'Química', 'Tecnología'],
+  'Ética, naturaleza y sociedades': ['Historia', 'Geografía', 'Formación Cívica y Ética', 'Educación Socioemocional'],
+  'De lo humano y lo comunitario': ['Educación Física', 'Artes', 'Vida saludable', 'Tutoría']
+};
+
+function actualizarAsignaturas() {
+  const campo = document.getElementById('p2-campo').value;
+  const sel = document.getElementById('p2-asignatura');
+  sel.innerHTML = '<option value="">Selecciona</option>';
+  (ASIGNATURAS[campo] || []).forEach(a => {
+    const o = document.createElement('option');
+    o.textContent = a;
+    sel.appendChild(o);
+  });
+}
+
+// ============================================================
+// DATOS DEL FORMULARIO
+// ============================================================
+function getDatos() {
+  return {
+    docente:          document.getElementById('p1-docente').value || usuarioActual.nombre,
+    escuela:          document.getElementById('p1-escuela').value,
+    grado:            document.getElementById('p1-grado').value,
+    grupo:            document.getElementById('p1-grupo').value,
+    alumnos:          document.getElementById('p1-alumnos').value,
+    periodo:          document.getElementById('p1-periodo').value,
+    duracion:         document.getElementById('p1-duracion').value,
+    campo:            document.getElementById('p2-campo').value,
+    asignatura:       document.getElementById('p2-asignatura').value,
+    eje:              document.getElementById('p2-eje').value,
+    tema:             document.getElementById('p2-tema').value,
+    pda:              document.getElementById('p2-pda').value,
+    libro:            document.getElementById('p2-libro').value,
+    tipoEscuela:      document.getElementById('p3-tipo').value,
+    municipio:        document.getElementById('p3-municipio').value,
+    caracteristicas:  document.getElementById('p3-caracteristicas').value,
+    recursos:         leerChips('chips-recursos'),
+    vinculacion:      document.getElementById('p3-vinculacion').value,
+    tipoPlaneacion:   document.getElementById('p4-tipo').value,
+    estrategias:      leerChips('chips-estrategias'),
+    adaptaciones:     document.getElementById('p4-adaptaciones').value,
+    sesiones:         document.getElementById('p4-sesiones').value,
+    duracionSesion:   document.getElementById('p4-duracion').value,
+    evalTipo:         leerChips('chips-eval-tipo'),
+    instrumentos:     leerChips('chips-instrumentos'),
+    indicadores:      document.getElementById('p5-indicadores').value,
+    obs:              document.getElementById('p5-obs').value,
+  };
+}
+
+// ============================================================
+// PROMPT
+// ============================================================
+function construirPrompt(d) {
+  return `Eres un experto pedagogo especializado en la Nueva Escuela Mexicana (NEM) de México. Genera una planeación didáctica completa, profesional y práctica, con el siguiente formato exacto:
+
+═══════════════════════════════════════════════════════════
+       PLANEACIÓN DIDÁCTICA — NUEVA ESCUELA MEXICANA
+═══════════════════════════════════════════════════════════
+
+DATOS GENERALES
+───────────────────────────────────────────────────────────
+Docente: ${d.docente}
+Escuela: ${d.escuela || 'Centro Escolar'}
+Grado y grupo: ${d.grado} ${d.grupo} | Número de alumnos: ${d.alumnos || 'No especificado'}
+Período: ${d.periodo || 'No especificado'} | Duración: ${d.duracion || 'No especificada'}
+
+CONTENIDO CURRICULAR
+───────────────────────────────────────────────────────────
+Campo formativo: ${d.campo || 'No especificado'}
+Asignatura: ${d.asignatura || 'No especificada'}
+Eje articulador: ${d.eje || 'No especificado'}
+Tema / Contenido: ${d.tema}
+Libro de texto: ${d.libro || 'Material del docente'}
+
+Proceso de Desarrollo de Aprendizaje (PDA):
+${d.pda || 'Según programa analítico del ciclo escolar vigente'}
+
+CONTEXTO ESCOLAR Y COMUNITARIO
+───────────────────────────────────────────────────────────
+Tipo de escuela: ${d.tipoEscuela || 'No especificado'} | Localidad: ${d.municipio || 'No especificada'}
+Características del grupo: ${d.caracteristicas || 'Grupo heterogéneo con ritmos diversos'}
+Recursos disponibles: ${d.recursos || 'Recursos básicos de aula'}
+Vinculación comunitaria: ${d.vinculacion || 'No especificada'}
+
+ENFOQUE DIDÁCTICO
+───────────────────────────────────────────────────────────
+Tipo de planeación: ${d.tipoPlaneacion || 'Secuencia didáctica'}
+Estrategias de enseñanza: ${d.estrategias || 'Diversificadas'}
+Sesiones: ${d.sesiones || 'No especificado'} de ${d.duracionSesion || 'No especificado'}
+
+═══════════════════════════════════════════════════════════
+
+PROPÓSITO GENERAL
+Redacta un propósito claro y específico (3-4 líneas), orientado a desarrollar habilidades para la vida, con lenguaje propio de la NEM, que sea relevante y significativo para el contexto indicado.
+
+═══════════════════════════════════════════════════════════
+
+SECUENCIA DIDÁCTICA
+
+Genera todas las sesiones que correspondan según la duración y frecuencia indicadas. Cada sesión debe tener esta estructura:
+
+📌 SESIÓN [N] — [TÍTULO DESCRIPTIVO]
+─────────────────────────────────────
+INICIO (aproximadamente 10-15% del tiempo):
+• [Actividad de apertura concreta: cómo activar conocimientos previos, pregunta detonadora, dinámica inicial]
+
+DESARROLLO (aproximadamente 60-70% del tiempo):
+• [Actividad principal detallada y aplicable]
+• [Actividad complementaria o continuación]
+• [Materiales y recursos específicos a usar]
+
+CIERRE (aproximadamente 15-20% del tiempo):
+• [Actividad de cierre: reflexión, plenaria, producto parcial]
+• [Pregunta metacognitiva o instrumento de seguimiento]
+
+Tarea sugerida (si aplica): [Actividad breve para casa o comunidad]
+
+═══════════════════════════════════════════════════════════
+
+EVALUACIÓN
+───────────────────────────────────────────────────────────
+Tipos de evaluación: ${d.evalTipo || 'Formativa y sumativa'}
+Instrumentos: ${d.instrumentos || 'Lista de cotejo, observación directa'}
+
+Indicadores de logro:
+${d.indicadores || '• Genera 3 indicadores de logro observables, medibles y acordes al PDA\n• Cada indicador debe describir una conducta o producto concreto\n• Los indicadores deben ser alcanzables en el tiempo planificado'}
+
+Evidencias de aprendizaje esperadas:
+• [Producto 1: descripción concreta del producto o evidencia]
+• [Producto 2]
+• [Producto 3]
+
+═══════════════════════════════════════════════════════════
+
+ADECUACIONES CURRICULARES
+───────────────────────────────────────────────────────────
+Para estudiantes con aprendizaje avanzado:
+• [2-3 actividades de ampliación o profundización]
+
+Para estudiantes que requieren apoyo adicional:
+• [2-3 estrategias de andamiaje, simplificación o apoyo entre pares]
+${d.adaptaciones ? '\nAdaptaciones específicas indicadas por el docente:\n' + d.adaptaciones : ''}
+
+═══════════════════════════════════════════════════════════
+
+REFERENCIAS Y MATERIALES
+───────────────────────────────────────────────────────────
+• ${d.libro || 'Libro de texto SEP'} — páginas sugeridas relacionadas con el tema
+• [Otros recursos: videos, sitios web educativos, materiales del entorno]
+• [Fuentes de información comunitaria o local relevantes]
+
+═══════════════════════════════════════════════════════════
+Elaboró: ${d.docente}
+Fecha: ${new Date().toLocaleDateString('es-MX', {year:'numeric', month:'long', day:'numeric'})}
+═══════════════════════════════════════════════════════════
+
+${d.obs ? 'INSTRUCCIONES ESPECIALES DEL DOCENTE: ' + d.obs : ''}
+
+INSTRUCCIONES PARA GENERAR: Completa TODA la información con contenido pedagógico real, específico y aplicable. NO uses corchetes en el resultado — rellena con contenido concreto. El lenguaje debe ser claro, práctico y alineado a la filosofía de la Nueva Escuela Mexicana: enfoque humanista, comunitario, inclusivo y basado en el desarrollo de competencias para la vida.`;
+}
+
+// ============================================================
+// GENERAR PLANEACIÓN
+// ============================================================
+async function generarPlaneacion() {
+  const d = getDatos();
+  if (!d.grado || !d.tema) {
+    alert('Por favor completa al menos el grado y el tema antes de generar.');
+    return;
+  }
+
+  document.getElementById('btn-gen').disabled = true;
+  document.getElementById('generando-overlay').style.display = 'block';
+  document.getElementById('resultado-caja').style.display = 'none';
+
+  try {
+    const res = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: construirPrompt(d) }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || `Error HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const texto = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!texto) throw new Error('La respuesta de Gemini llegó vacía');
+
+    document.getElementById('resultado-texto').textContent = texto;
+    document.getElementById('resultado-caja').style.display = 'block';
+    document.getElementById('generando-overlay').style.display = 'none';
+    document.getElementById('btn-gen').disabled = false;
+
+    // Guardar en historial
+    const entrada = { id: Date.now(), fecha: new Date().toLocaleDateString('es-MX'), docente: d.docente, grado: d.grado, asignatura: d.asignatura, tema: d.tema, contenido: texto };
+    historial.unshift(entrada);
+    localStorage.setItem('nem_historial', JSON.stringify(historial.slice(0, 50)));
+    cargarHistorial();
+
+    document.getElementById('resultado-caja').scrollIntoView({ behavior: 'smooth' });
+
+  } catch (err) {
+    document.getElementById('generando-overlay').style.display = 'none';
+    document.getElementById('btn-gen').disabled = false;
+    alert('Error al generar:\n\n' + err.message + '\n\nVerifica tu conexión a internet.');
+  }
+}
+
+// ============================================================
+// DESCARGAR WORD
+// ============================================================
+function descargarWord() {
+  const texto = document.getElementById('resultado-texto').textContent;
+  if (!texto) return;
+  const d = getDatos();
+  const nombre = `Planeacion_${(d.grado||'NEM').replace(/\s/g,'')}_${(d.tema||'Sin-tema').replace(/\s/g,'-').substring(0,30)}_${new Date().toLocaleDateString('es-MX').replace(/\//g,'-')}.doc`;
+
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8"><style>body{font-family:Calibri,sans-serif;font-size:11pt;margin:2cm;line-height:1.5;color:#1a1a2e;}pre{font-family:Calibri,sans-serif;font-size:11pt;white-space:pre-wrap;}</style></head>
+<body><pre>${texto}</pre></body></html>`;
+
+  const blob = new Blob([html], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nombre; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// HISTORIAL
+// ============================================================
+function cargarHistorial() {
+  const lista = document.getElementById('historial-lista');
+  if (!historial.length) {
+    lista.innerHTML = `<div style="text-align:center;padding:60px;color:var(--gris);"><div style="font-size:48px;margin-bottom:16px;">📋</div><div>Aún no tienes planeaciones guardadas.</div><div style="font-size:13px;margin-top:8px;">Genera tu primera planeación y aparecerá aquí.</div></div>`;
+    return;
+  }
+  lista.innerHTML = historial.map(h => `
+    <div class="historial-item" onclick="verPlaneacion(${h.id})">
+      <strong style="color:var(--blanco);">${h.tema || 'Sin tema'}</strong>
+      <div style="color:var(--gris);font-size:13px;margin-top:4px;">${h.asignatura || ''} · ${h.grado || ''}</div>
+      <div class="historial-meta">
+        <span>👤 ${h.docente}</span>
+        <span>📅 ${h.fecha}</span>
+        <span onclick="eliminarH(event,${h.id})" style="color:var(--error);cursor:pointer;">🗑 Eliminar</span>
+      </div>
+    </div>`).join('');
+}
+
+function verPlaneacion(id) {
+  const h = historial.find(x => x.id === id);
+  if (!h) return;
+  document.getElementById('resultado-texto').textContent = h.contenido;
+  document.getElementById('resultado-caja').style.display = 'block';
+  irPaso(5);
+  document.querySelectorAll('.tab-contenido').forEach(t => t.classList.remove('activo'));
+  document.getElementById('tab-planeacion').classList.add('activo');
+  document.getElementById('resultado-caja').scrollIntoView({ behavior: 'smooth' });
+}
+
+function eliminarH(e, id) {
+  e.stopPropagation();
+  if (!confirm('¿Eliminar esta planeación?')) return;
+  historial = historial.filter(h => h.id !== id);
+  localStorage.setItem('nem_historial', JSON.stringify(historial));
+  cargarHistorial();
+}
+
+// ============================================================
+// TABLA USUARIOS
+// ============================================================
+function cargarTablaUsuarios() {
+  document.getElementById('tabla-usuarios-body').innerHTML = USUARIOS.map((u, i) => `
+    <tr>
+      <td style="color:var(--gris);">${i+1}</td>
+      <td><code style="color:var(--acento);">${u.usuario}</code></td>
+      <td>${u.nombre}</td>
+      <td><span class="badge badge-${u.rol}">${u.rol === 'admin' ? '🔑 Admin' : '👩‍🏫 Docente'}</span></td>
+      <td><span style="color:var(--exito);">● Activo</span></td>
+    </tr>`).join('');
+}
+</script>
+</body>
+</html>
