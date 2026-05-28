@@ -175,7 +175,7 @@ input,select,textarea,button{font-family:inherit;font-size:14px;}
     </div>
     <div class="fg"><label>Usuario</label><input type="text" id="l-usr" placeholder="Tu usuario" autocomplete="username"></div>
     <div class="fg"><label>Contraseña</label><input type="password" id="l-pwd" placeholder="Tu contraseña"></div>
-    <button class="btn-p" onclick="doLogin()">Entrar al sistema</button>
+    <button class="btn-p" id="btn-login" onclick="doLogin()">Ingresar</button>
     <div class="l-err" id="l-err">Usuario o contraseña incorrectos.</div>
   </div>
 </div>
@@ -480,7 +480,7 @@ input,select,textarea,button{font-family:inherit;font-size:14px;}
       <div class="sec-sub">Docentes registrados en el sistema</div>
       <div class="card">
         <table class="tabla">
-          <thead><tr><th>#</th><th>Usuario</th><th>Nombre</th><th>Escuela</th><th>Rol</th></tr></thead>
+          <thead><tr><th>#</th><th>Usuario</th><th>Nombre</th><th>Docs este trimestre</th><th>Último acceso</th><th>Estado / Control</th></tr></thead>
           <tbody id="tb-usr"></tbody>
         </table>
       </div>
@@ -500,11 +500,28 @@ let cA={t1:[],t2:[],t3:[]}, cD=[];
 let historial=JSON.parse(localStorage.getItem('nem_hist')||'[]');
 
 // ── LOGIN ────────────────────────────────────────────────
-function doLogin(){
+async function doLogin(){
   const u=document.getElementById('l-usr').value.trim();
   const p=document.getElementById('l-pwd').value;
-  if(!autenticar(u,p)){document.getElementById('l-err').style.display='block';return;}
-  document.getElementById('l-err').style.display='none';
+  const errEl=document.getElementById('l-err');
+  const btnLogin=document.getElementById('btn-login');
+  
+  // Mostrar estado de carga
+  btnLogin.textContent='Verificando...';
+  btnLogin.disabled=true;
+  errEl.style.display='none';
+
+  const resultado = await autenticar(u,p);
+  
+  btnLogin.textContent='Ingresar';
+  btnLogin.disabled=false;
+
+  if(!resultado.ok){
+    errEl.textContent = resultado.mensaje || 'Usuario o contraseña incorrectos.';
+    errEl.style.display='block';
+    return;
+  }
+
   document.getElementById('pantalla-login').style.display='none';
   document.getElementById('app').style.display='block';
   const usr=getUsuario();
@@ -858,16 +875,48 @@ function delHist(e,id){
   renderHist();
 }
 
-// ── TABLA USUARIOS ────────────────────────────────────────
-function loadUsrTable(){
-  document.getElementById('tb-usr').innerHTML=USUARIOS_DB.map((u,i)=>`
-    <tr>
+// ── TABLA USUARIOS (ADMIN) ────────────────────────────────
+async function loadUsrTable(){
+  const tbody = document.getElementById('tb-usr');
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gris);padding:16px;">Cargando...</td></tr>';
+  
+  const estadosFirebase = await fbGetTodosUsuarios();
+  const trimestre = obtenerTrimestreActual();
+  
+  tbody.innerHTML = USUARIOS_DB.map((u,i) => {
+    const fb = estadosFirebase[u.usuario] || {};
+    const activo = fb.activo !== false; // por defecto activo
+    const docs = fb[`${trimestre}_docs`] || 0;
+    const ultimoAcceso = fb.ultimo_acceso 
+      ? new Date(fb.ultimo_acceso).toLocaleDateString('es-MX') 
+      : 'Sin acceso';
+    const estadoBadge = u.rol === 'admin' 
+      ? '<span class="badge badge-a">🔑 Admin</span>'
+      : activo 
+        ? '<span class="badge badge-d">✅ Activo</span>'
+        : '<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">🔒 Bloqueado</span>';
+    const btnControl = u.rol !== 'admin' 
+      ? activo 
+        ? `<button onclick="toggleUsuario('${u.usuario}',false)" style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">Bloquear</button>`
+        : `<button onclick="toggleUsuario('${u.usuario}',true)" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">Activar</button>`
+      : '';
+    return `<tr>
       <td style="color:var(--gris);">${i+1}</td>
       <td><code style="background:var(--fondo);padding:2px 6px;border-radius:4px;">${u.usuario}</code></td>
       <td>${u.nombre}</td>
-      <td style="font-size:12px;color:var(--gris);">${u.escuela}</td>
-      <td><span class="badge badge-${u.rol==='admin'?'a':'d'}">${u.rol==='admin'?'🔑 Admin':'👩‍🏫 Docente'}</span></td>
-    </tr>`).join('');
+      <td style="text-align:center;font-weight:600;color:var(--azul);">${docs}</td>
+      <td style="font-size:11px;color:var(--gris);">${ultimoAcceso}</td>
+      <td>${estadoBadge} ${btnControl}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function toggleUsuario(usuario, activar){
+  const accion = activar ? 'activar' : 'bloquear';
+  if(!confirm(`¿Deseas ${accion} al usuario "${usuario}"?`)) return;
+  if(activar) await desbloquearUsuario(usuario);
+  else await bloquearUsuario(usuario);
+  loadUsrTable();
 }
 
 // ── UTILS ─────────────────────────────────────────────────
