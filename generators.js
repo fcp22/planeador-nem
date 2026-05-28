@@ -7,7 +7,7 @@
 // ── GROQ CONFIG ───────────────────────────────────────────
 const GROQ_KEY = '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';
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama-3.3-70b-versatile';
+const GROQ_MODEL = 'llama-3.1-8b-instant';
 
 async function llamarGemini(prompt) {
   let intentos = 0;
