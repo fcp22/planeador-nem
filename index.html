@@ -3,1022 +3,876 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Planeador Docente NEM</title>
+<title>Planeador Docente NEM — Fase 6 Secundaria</title>
 <style>
-  :root {
-    --azul-oscuro: #0d1b2a;
-    --azul-medio: #1b3a5c;
-    --azul-claro: #2e6da4;
-    --acento: #4fc3f7;
-    --blanco: #f0f4f8;
-    --gris: #8a9bb0;
-    --fondo: #0a1628;
-    --tarjeta: #112240;
-    --borde: #1e3a5f;
-    --exito: #4caf50;
-    --error: #ef5350;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--fondo); color: var(--blanco); min-height: 100vh; }
+:root {
+  --azul:#1a3a5c; --azul-med:#2563a8; --azul-claro:#3b82c4;
+  --verde:#16a34a; --rojo:#dc2626; --fondo:#f1f5f9;
+  --blanco:#ffffff; --gris-claro:#e2e8f0; --gris:#64748b;
+  --gris-oscuro:#334155; --texto:#1e293b; --borde:#cbd5e1;
+  --sombra:0 2px 8px rgba(0,0,0,.10); --sombra-lg:0 8px 32px rgba(0,0,0,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--fondo);color:var(--texto);min-height:100vh;font-size:14px;}
+input,select,textarea,button{font-family:inherit;font-size:14px;}
 
-  /* LOGIN */
-  #pantalla-login {
-    display: flex; align-items: center; justify-content: center;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #0a1628 0%, #0d1b2a 50%, #0a1220 100%);
-  }
-  .login-caja {
-    background: var(--tarjeta); border: 1px solid var(--borde);
-    border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 420px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-  }
-  .login-logo { text-align: center; margin-bottom: 32px; }
-  .login-logo .icono { font-size: 48px; margin-bottom: 12px; display: block; }
-  .login-logo h1 { font-size: 22px; font-weight: 700; }
-  .login-logo p { font-size: 13px; color: var(--gris); margin-top: 6px; }
-  .campo-grupo { margin-bottom: 20px; }
-  .campo-grupo label { display: block; font-size: 13px; color: var(--gris); margin-bottom: 8px; }
-  .campo-grupo input {
-    width: 100%; padding: 12px 16px; background: var(--azul-oscuro);
-    border: 1px solid var(--borde); border-radius: 8px; color: var(--blanco);
-    font-size: 15px; outline: none; transition: border-color 0.2s;
-  }
-  .campo-grupo input:focus { border-color: var(--acento); }
-  .btn-login {
-    width: 100%; padding: 14px;
-    background: linear-gradient(135deg, var(--azul-claro), var(--acento));
-    border: none; border-radius: 8px; color: white; font-size: 16px;
-    font-weight: 600; cursor: pointer; margin-top: 8px;
-  }
-  .btn-login:hover { opacity: 0.9; }
-  .login-error {
-    background: rgba(239,83,80,0.15); border: 1px solid rgba(239,83,80,0.3);
-    border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #ef9a9a;
-    margin-top: 16px; display: none;
-  }
+/* LOGIN */
+#pantalla-login{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(160deg,var(--azul) 0%,#0f2744 60%,#1a3a5c 100%);}
+.login-card{background:var(--blanco);border-radius:16px;padding:48px 40px;width:100%;max-width:420px;box-shadow:var(--sombra-lg);}
+.login-logo{text-align:center;margin-bottom:32px;}
+.login-logo .escudo{font-size:52px;display:block;margin-bottom:10px;}
+.login-logo h1{font-size:20px;font-weight:700;color:var(--azul);line-height:1.3;}
+.login-logo p{font-size:12px;color:var(--gris);margin-top:5px;}
+.fg{margin-bottom:18px;}
+.fg label{display:block;font-size:12px;font-weight:600;color:var(--gris-oscuro);margin-bottom:7px;text-transform:uppercase;letter-spacing:.04em;}
+.fg input{width:100%;padding:12px 14px;border:1.5px solid var(--borde);border-radius:8px;color:var(--texto);background:var(--fondo);outline:none;transition:border-color .2s;}
+.fg input:focus{border-color:var(--azul-med);background:var(--blanco);}
+.btn-p{width:100%;padding:13px;background:var(--azul);border:none;border-radius:8px;color:var(--blanco);font-size:15px;font-weight:600;cursor:pointer;transition:background .2s;margin-top:4px;}
+.btn-p:hover{background:var(--azul-med);}
+.l-err{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--rojo);margin-top:14px;display:none;}
 
-  /* APP */
-  #app-principal { display: none; }
-  .header {
-    background: var(--azul-oscuro); border-bottom: 1px solid var(--borde);
-    padding: 0 24px; display: flex; align-items: center;
-    justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100;
-  }
-  .header-titulo { font-size: 16px; font-weight: 700; color: var(--acento); }
-  .header-usuario { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--gris); }
-  .avatar {
-    width: 32px; height: 32px; background: var(--azul-claro); border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700; color: white;
-  }
-  .btn-salir {
-    background: none; border: 1px solid var(--borde); border-radius: 6px;
-    color: var(--gris); padding: 4px 12px; font-size: 12px; cursor: pointer;
-  }
-  .btn-salir:hover { border-color: var(--acento); color: var(--acento); }
+/* APP */
+#app{display:none;min-height:100vh;}
+.header{background:var(--azul);color:var(--blanco);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.hbrand{display:flex;align-items:center;gap:10px;}
+.hbrand .ico{font-size:22px;}
+.hbrand h1{font-size:15px;font-weight:700;}
+.hbrand p{font-size:11px;opacity:.8;}
+.huser{display:flex;align-items:center;gap:10px;font-size:13px;}
+.avatar{width:32px;height:32px;background:var(--azul-claro);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;}
+.btn-salir{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:var(--blanco);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;}
+.btn-salir:hover{background:rgba(255,255,255,.2);}
 
-  /* TABS */
-  .nav-tabs {
-    display: flex; gap: 4px; padding: 16px 24px 0;
-    border-bottom: 1px solid var(--borde); background: var(--azul-oscuro);
-  }
-  .nav-tab {
-    padding: 10px 20px; background: none; border: none;
-    border-bottom: 2px solid transparent; color: var(--gris);
-    font-size: 14px; cursor: pointer; font-weight: 500;
-  }
-  .nav-tab.activo { color: var(--acento); border-bottom-color: var(--acento); }
-  .nav-tab:hover { color: var(--blanco); }
+/* NAV */
+.nav-bar{background:var(--blanco);border-bottom:2px solid var(--gris-claro);padding:0 24px;display:flex;gap:2px;overflow-x:auto;}
+.nav-tab{padding:14px 18px;background:none;border:none;border-bottom:3px solid transparent;color:var(--gris);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .2s;}
+.nav-tab.activo{color:var(--azul);border-bottom-color:var(--azul);font-weight:700;}
+.nav-tab:hover:not(.activo){color:var(--azul-med);}
 
-  /* CONTENIDO */
-  .contenido { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
-  .tab-contenido { display: none; }
-  .tab-contenido.activo { display: block; }
+/* MAIN */
+.main{max-width:960px;margin:0 auto;padding:28px 20px;}
+.tab-panel{display:none;}
+.tab-panel.activo{display:block;}
+.sec-title{font-size:20px;font-weight:700;color:var(--azul);margin-bottom:4px;}
+.sec-sub{font-size:13px;color:var(--gris);margin-bottom:24px;}
 
-  /* PASOS */
-  .pasos-indicador { display: flex; align-items: center; margin-bottom: 24px; }
-  .paso-item { display: flex; align-items: center; flex: 1; }
-  .paso-circulo {
-    width: 36px; height: 36px; border-radius: 50%;
-    border: 2px solid var(--borde); display: flex; align-items: center;
-    justify-content: center; font-size: 14px; font-weight: 700;
-    color: var(--gris); background: var(--tarjeta); flex-shrink: 0;
-  }
-  .paso-circulo.activo { border-color: var(--acento); color: var(--acento); box-shadow: 0 0 0 4px rgba(79,195,247,0.15); }
-  .paso-circulo.completado { background: var(--acento); border-color: var(--acento); color: var(--azul-oscuro); }
-  .paso-linea { flex: 1; height: 2px; background: var(--borde); }
-  .paso-linea.completada { background: var(--acento); }
-  .pasos-etiquetas { display: flex; margin-bottom: 28px; }
-  .paso-etiqueta { flex: 1; text-align: center; font-size: 11px; color: var(--gris); line-height: 1.3; }
-  .paso-etiqueta.activo { color: var(--acento); font-weight: 600; }
+/* CARD */
+.card{background:var(--blanco);border:1px solid var(--borde);border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:var(--sombra);}
+.card-title{font-size:14px;font-weight:700;color:var(--azul-med);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--gris-claro);display:flex;align-items:center;gap:8px;}
 
-  /* SECCIONES */
-  .seccion-paso {
-    background: var(--tarjeta); border: 1px solid var(--borde);
-    border-radius: 12px; padding: 28px; margin-bottom: 20px;
-  }
-  .seccion-paso h3 {
-    font-size: 16px; font-weight: 700; color: var(--acento);
-    margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--borde);
-  }
-  .campo-form { margin-bottom: 18px; }
-  .campo-form label { display: block; font-size: 13px; color: var(--gris); margin-bottom: 7px; }
-  .campo-form input,
-  .campo-form select,
-  .campo-form textarea {
-    width: 100%; padding: 11px 14px; background: var(--azul-oscuro);
-    border: 1px solid var(--borde); border-radius: 8px; color: var(--blanco);
-    font-size: 14px; outline: none; font-family: inherit;
-  }
-  .campo-form input:focus,
-  .campo-form select:focus,
-  .campo-form textarea:focus { border-color: var(--acento); }
-  .campo-form select option { background: var(--azul-oscuro); }
-  .campo-form textarea { resize: vertical; min-height: 90px; }
-  .campo-form .nota { font-size: 12px; color: var(--gris); margin-top: 5px; font-style: italic; }
-  .fila-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .fila-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+/* FORM */
+.campo{margin-bottom:16px;}
+.campo label{display:block;font-size:12px;font-weight:600;color:var(--gris-oscuro);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;}
+.campo input,.campo select,.campo textarea{width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;color:var(--texto);background:var(--blanco);outline:none;transition:border-color .2s;}
+.campo input:focus,.campo select:focus,.campo textarea:focus{border-color:var(--azul-med);}
+.campo textarea{resize:vertical;min-height:80px;}
+.campo .ayuda{font-size:11px;color:var(--gris);margin-top:4px;font-style:italic;}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.f3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
 
-  /* BOTONES */
-  .nav-botones { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; }
-  .btn-anterior {
-    padding: 12px 24px; background: none; border: 1px solid var(--borde);
-    border-radius: 8px; color: var(--gris); font-size: 14px; cursor: pointer;
-  }
-  .btn-anterior:hover { border-color: var(--acento); color: var(--acento); }
-  .btn-siguiente {
-    padding: 12px 28px;
-    background: linear-gradient(135deg, var(--azul-claro), var(--acento));
-    border: none; border-radius: 8px; color: white; font-size: 14px;
-    font-weight: 600; cursor: pointer;
-  }
-  .btn-siguiente:hover { opacity: 0.9; }
-  .btn-generar {
-    padding: 14px 32px; background: linear-gradient(135deg, #1b5e20, #4caf50);
-    border: none; border-radius: 8px; color: white; font-size: 15px;
-    font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px;
-  }
-  .btn-generar:hover { opacity: 0.9; }
-  .btn-generar:disabled { opacity: 0.5; cursor: not-allowed; }
+/* CONTENIDOS */
+.cnt-item{background:var(--fondo);border:1.5px solid var(--borde);border-radius:8px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .2s;}
+.cnt-item:hover{border-color:var(--azul-claro);}
+.cnt-item.on{border-color:var(--azul);background:#eff6ff;}
+.cnt-num{font-size:11px;font-weight:700;color:var(--gris);margin-bottom:4px;}
+.cnt-tit{font-size:13px;color:var(--texto);font-weight:500;}
+.cnt-pda{font-size:12px;color:var(--gris);margin-top:6px;padding-top:6px;border-top:1px solid var(--gris-claro);display:none;}
+.cnt-item.on .cnt-pda{display:block;color:var(--azul);}
 
-  /* CHIPS */
-  .chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-  .chip {
-    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--borde);
-    background: var(--azul-oscuro); color: var(--gris); font-size: 13px;
-    cursor: pointer; user-select: none;
-  }
-  .chip.seleccionado { border-color: var(--acento); background: rgba(79,195,247,0.1); color: var(--acento); }
+/* PROYECTOS */
+.proy-lista{display:none;}
+.proy-card{border:1.5px solid var(--borde);border-radius:8px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .2s;background:var(--blanco);}
+.proy-card:hover{border-color:var(--verde);}
+.proy-card.sel{border-color:var(--verde);background:#f0fdf4;}
+.proy-nom{font-size:13px;font-weight:600;color:var(--azul);}
+.proy-pag{font-size:11px;color:var(--gris);}
+.proy-desc{font-size:12px;color:var(--gris-oscuro);margin-top:4px;}
 
-  /* RESULTADO */
-  .resultado-caja {
-    display: none; background: var(--tarjeta);
-    border: 1px solid var(--exito); border-radius: 12px; padding: 28px; margin-top: 24px;
-  }
-  .resultado-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  .resultado-header h3 { font-size: 16px; font-weight: 700; color: var(--exito); }
-  .btn-descargar {
-    padding: 10px 20px; background: linear-gradient(135deg, #1565c0, #1976d2);
-    border: none; border-radius: 8px; color: white; font-size: 13px;
-    font-weight: 600; cursor: pointer;
-  }
-  .resultado-contenido {
-    background: var(--azul-oscuro); border-radius: 8px; padding: 20px;
-    font-size: 14px; line-height: 1.7; white-space: pre-wrap;
-    max-height: 500px; overflow-y: auto; color: #cdd9e5;
-  }
+/* TIPO SELECTOR */
+.tipo-sel{display:flex;gap:12px;margin-bottom:24px;}
+.tipo-btn{flex:1;padding:16px;border:2px solid var(--borde);border-radius:12px;background:var(--blanco);cursor:pointer;text-align:center;transition:all .2s;}
+.tipo-btn.on{border-color:var(--azul);background:#eff6ff;}
+.tipo-btn .ico{font-size:28px;display:block;margin-bottom:8px;}
+.tipo-btn .tit{font-size:13px;font-weight:700;color:var(--azul);}
+.tipo-btn .desc{font-size:11px;color:var(--gris);margin-top:3px;}
 
-  /* GENERANDO */
-  .generando-overlay { display: none; text-align: center; padding: 40px; }
-  .spinner {
-    width: 48px; height: 48px; border: 3px solid var(--borde);
-    border-top-color: var(--acento); border-radius: 50%;
-    animation: girar 0.8s linear infinite; margin: 0 auto 20px;
-  }
-  @keyframes girar { to { transform: rotate(360deg); } }
-  .generando-texto { color: var(--gris); font-size: 15px; }
+/* TRIM TABS */
+.ttabs{display:flex;gap:8px;margin-bottom:16px;}
+.ttab{padding:8px 16px;border:1.5px solid var(--borde);border-radius:8px;background:var(--blanco);cursor:pointer;font-size:13px;color:var(--gris);transition:all .2s;}
+.ttab.on{border-color:var(--azul);background:var(--azul);color:var(--blanco);font-weight:600;}
 
-  /* ADMIN */
-  .admin-tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
-  .admin-tabla th {
-    background: var(--azul-oscuro); color: var(--gris); padding: 12px 16px;
-    text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;
-  }
-  .admin-tabla td { padding: 12px 16px; border-bottom: 1px solid var(--borde); }
-  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-  .badge-admin { background: rgba(79,195,247,0.15); color: var(--acento); }
-  .badge-docente { background: rgba(76,175,80,0.15); color: #81c784; }
+/* SEMANAS */
+.sem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:8px;}
+.sem-btn{padding:10px;border:1.5px solid var(--borde);border-radius:8px;background:var(--blanco);cursor:pointer;text-align:center;font-size:12px;color:var(--gris);transition:all .2s;}
+.sem-btn.gen{border-color:var(--verde);background:#f0fdf4;color:var(--verde);}
+.sem-btn.act{border-color:var(--azul);background:var(--azul);color:var(--blanco);}
 
-  /* HISTORIAL */
-  .historial-item {
-    background: var(--tarjeta); border: 1px solid var(--borde);
-    border-radius: 8px; padding: 16px; margin-bottom: 12px; cursor: pointer;
-  }
-  .historial-item:hover { border-color: var(--acento); }
-  .historial-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--gris); margin-top: 8px; }
+/* BOTONES */
+.btn-gen{padding:13px 28px;background:var(--verde);border:none;border-radius:8px;color:var(--blanco);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .2s;}
+.btn-gen:hover{opacity:.9;}
+.btn-gen:disabled{opacity:.5;cursor:not-allowed;}
+.btn-sec{padding:10px 20px;background:var(--blanco);border:1.5px solid var(--borde);border-radius:8px;color:var(--gris-oscuro);font-size:13px;cursor:pointer;transition:all .2s;}
+.btn-sec:hover{border-color:var(--azul-med);color:var(--azul);}
+.btn-word{padding:10px 20px;background:var(--azul-med);border:none;border-radius:8px;color:var(--blanco);font-size:13px;font-weight:600;cursor:pointer;}
+.btns{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:20px;}
 
-  .seccion-titulo { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-  .seccion-sub { font-size: 14px; color: var(--gris); margin-bottom: 28px; }
-  .hidden { display: none !important; }
+/* GENERANDO */
+.generando{display:none;text-align:center;padding:40px 20px;}
+.spinner{width:48px;height:48px;border:3px solid var(--gris-claro);border-top-color:var(--azul);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.generando p{color:var(--gris);font-size:14px;}
 
-  @media (max-width: 600px) {
-    .fila-2, .fila-3 { grid-template-columns: 1fr; }
-    .contenido { padding: 16px; }
-    .login-caja { padding: 32px 20px; }
-    .pasos-etiquetas { display: none; }
-  }
+/* RESULTADO */
+.resultado{display:none;background:var(--blanco);border:2px solid var(--verde);border-radius:12px;padding:24px;margin-top:20px;}
+.res-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.res-hdr h3{font-size:15px;font-weight:700;color:var(--verde);}
+.res-txt{background:var(--fondo);border-radius:8px;padding:18px;font-size:13px;line-height:1.7;white-space:pre-wrap;max-height:520px;overflow-y:auto;color:var(--gris-oscuro);font-family:'Courier New',monospace;}
+.res-txt::-webkit-scrollbar{width:6px;}
+.res-txt::-webkit-scrollbar-thumb{background:var(--borde);border-radius:3px;}
+
+/* HISTORIAL */
+.hist-item{background:var(--blanco);border:1px solid var(--borde);border-radius:8px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .2s;}
+.hist-item:hover{border-color:var(--azul-claro);}
+.hist-nom{font-size:14px;font-weight:600;color:var(--texto);}
+.hist-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--gris);margin-top:6px;}
+.htipo{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+.htipo.analitico{background:#eff6ff;color:var(--azul);}
+.htipo.didactico{background:#f0fdf4;color:var(--verde);}
+
+/* ADMIN */
+.tabla{width:100%;border-collapse:collapse;}
+.tabla th{background:var(--fondo);color:var(--gris);padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;}
+.tabla td{padding:10px 14px;border-bottom:1px solid var(--gris-claro);font-size:13px;}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;}
+.badge-a{background:#eff6ff;color:var(--azul);}
+.badge-d{background:#f0fdf4;color:var(--verde);}
+
+/* ALERTA */
+.alerta{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;}
+.alerta-err{background:#fef2f2;border:1px solid #fecaca;color:var(--rojo);}
+
+.sep{border:none;border-top:1px solid var(--gris-claro);margin:20px 0;}
+.mt12{margin-top:12px;}
+.hidden{display:none!important;}
+
+@media(max-width:640px){
+  .f2,.f3{grid-template-columns:1fr;}
+  .main{padding:16px 12px;}
+  .login-card{padding:32px 20px;}
+  .tipo-sel{flex-direction:column;}
+}
 </style>
 </head>
 <body>
 
 <!-- LOGIN -->
 <div id="pantalla-login">
-  <div class="login-caja">
+  <div class="login-card">
     <div class="login-logo">
-      <span class="icono">📚</span>
+      <span class="escudo">📚</span>
       <h1>Planeador Docente NEM</h1>
-      <p>Nueva Escuela Mexicana · SEP</p>
+      <p>Programa Sintético Fase 6 · Secundaria · SEP</p>
     </div>
-    <div class="campo-grupo">
-      <label>Usuario</label>
-      <input type="text" id="login-usuario" placeholder="Ingresa tu usuario" autocomplete="username">
-    </div>
-    <div class="campo-grupo">
-      <label>Contraseña</label>
-      <input type="password" id="login-password" placeholder="Ingresa tu contraseña">
-    </div>
-    <button class="btn-login" onclick="iniciarSesion()">Entrar al sistema</button>
-    <div class="login-error" id="login-error">Usuario o contraseña incorrectos.</div>
+    <div class="fg"><label>Usuario</label><input type="text" id="l-usr" placeholder="Tu usuario" autocomplete="username"></div>
+    <div class="fg"><label>Contraseña</label><input type="password" id="l-pwd" placeholder="Tu contraseña"></div>
+    <button class="btn-p" onclick="doLogin()">Entrar al sistema</button>
+    <div class="l-err" id="l-err">Usuario o contraseña incorrectos.</div>
   </div>
 </div>
 
 <!-- APP -->
-<div id="app-principal">
+<div id="app">
+  <!-- HEADER -->
   <div class="header">
-    <div class="header-titulo">📚 Planeador Docente NEM</div>
-    <div class="header-usuario">
-      <div class="avatar" id="avatar-letra">M</div>
-      <span id="nombre-header">Maestra</span>
-      <button class="btn-salir" onclick="cerrarSesion()">Salir</button>
+    <div class="hbrand">
+      <span class="ico">📚</span>
+      <div><h1>Planeador Docente NEM</h1><p>Fase 6 · Secundaria · Programa Sintético</p></div>
+    </div>
+    <div class="huser">
+      <div class="avatar" id="av">M</div>
+      <span id="h-nom"></span>
+      <button class="btn-salir" onclick="doLogout()">Salir</button>
     </div>
   </div>
 
-  <div class="nav-tabs" id="nav-admin" style="display:none;">
-    <button class="nav-tab activo" onclick="cambiarTab(this,'tab-planeacion')">📝 Nueva Planeación</button>
-    <button class="nav-tab" onclick="cambiarTab(this,'tab-historial')">📋 Historial</button>
-    <button class="nav-tab" onclick="cambiarTab(this,'tab-usuarios')">👥 Usuarios</button>
-  </div>
-  <div class="nav-tabs" id="nav-docente" style="display:none;">
-    <button class="nav-tab activo" onclick="cambiarTab(this,'tab-planeacion')">📝 Nueva Planeación</button>
-    <button class="nav-tab" onclick="cambiarTab(this,'tab-historial')">📋 Mi Historial</button>
+  <!-- NAV -->
+  <div class="nav-bar">
+    <button class="nav-tab activo" onclick="showTab('nueva',this)">📝 Nueva Planeación</button>
+    <button class="nav-tab" onclick="showTab('historial',this)">📋 Historial</button>
+    <button class="nav-tab admin-only hidden" onclick="showTab('usuarios',this)">👥 Usuarios</button>
   </div>
 
-  <div class="contenido">
+  <div class="main">
 
-    <!-- TAB PLANEACIÓN -->
-    <div class="tab-contenido activo" id="tab-planeacion">
-      <div class="seccion-titulo">Nueva Planeación Didáctica</div>
-      <div class="seccion-sub">Completa los 5 pasos para generar tu planeación con IA</div>
+    <!-- TAB NUEVA -->
+    <div class="tab-panel activo" id="tab-nueva">
+      <div class="sec-title">Nueva Planeación</div>
+      <div class="sec-sub">Elige el tipo de documento que necesitas generar</div>
 
-      <!-- Indicador -->
-      <div class="pasos-indicador">
-        <div class="paso-item"><div class="paso-circulo activo" id="c1">1</div><div class="paso-linea" id="l1"></div></div>
-        <div class="paso-item"><div class="paso-circulo" id="c2">2</div><div class="paso-linea" id="l2"></div></div>
-        <div class="paso-item"><div class="paso-circulo" id="c3">3</div><div class="paso-linea" id="l3"></div></div>
-        <div class="paso-item"><div class="paso-circulo" id="c4">4</div><div class="paso-linea" id="l4"></div></div>
-        <div class="paso-item"><div class="paso-circulo" id="c5">5</div><div class="paso-linea" style="background:transparent;"></div></div>
-      </div>
-      <div class="pasos-etiquetas">
-        <div class="paso-etiqueta activo" id="e1">Datos generales</div>
-        <div class="paso-etiqueta" id="e2">Contenido curricular</div>
-        <div class="paso-etiqueta" id="e3">Contexto escolar</div>
-        <div class="paso-etiqueta" id="e4">Estrategias</div>
-        <div class="paso-etiqueta" id="e5">Evaluación</div>
+      <div class="tipo-sel">
+        <div class="tipo-btn on" id="tbtn-a" onclick="setTipo('a')">
+          <span class="ico">📋</span>
+          <div class="tit">Programa Analítico</div>
+          <div class="desc">Planeación anual con los 3 trimestres, contexto, contenidos y productos</div>
+        </div>
+        <div class="tipo-btn" id="tbtn-d" onclick="setTipo('d')">
+          <span class="ico">📝</span>
+          <div class="tit">Plano Didáctico</div>
+          <div class="desc">Planeación por trimestre con sesiones, actividades y evaluación</div>
+        </div>
       </div>
 
-      <!-- PASO 1 -->
-      <div id="paso-1">
-        <div class="seccion-paso">
-          <h3>📋 Paso 1 — Datos generales</h3>
-          <div class="fila-2">
-            <div class="campo-form"><label>Nombre del docente</label><input type="text" id="p1-docente" placeholder="Nombre completo"></div>
-            <div class="campo-form"><label>Nombre de la escuela</label><input type="text" id="p1-escuela" placeholder="Nombre oficial"></div>
+      <!-- ANALÍTICO -->
+      <div id="sec-a">
+        <div class="card">
+          <div class="card-title">📋 Datos generales</div>
+          <div class="f2">
+            <div class="campo"><label>Nombre del docente</label><input type="text" id="a-doc" placeholder="Nombre completo"></div>
+            <div class="campo"><label>Nombre de la escuela</label><input type="text" id="a-esc" placeholder="Nombre oficial"></div>
           </div>
-          <div class="fila-3">
-            <div class="campo-form">
-              <label>Grado escolar</label>
-              <select id="p1-grado">
+          <div class="f3">
+            <div class="campo"><label>CCT</label><input type="text" id="a-cct" placeholder="31DES0008B"></div>
+            <div class="campo"><label>Turno</label><select id="a-tur"><option>Matutino</option><option>Vespertino</option><option>Nocturno</option></select></div>
+            <div class="campo"><label>Ciclo escolar</label><input type="text" id="a-cic" value="2025-2026"></div>
+          </div>
+          <div class="f3">
+            <div class="campo"><label>Grado</label>
+              <select id="a-gra" onchange="updCampos('a')">
                 <option value="">Selecciona</option>
-                <optgroup label="Preescolar"><option>1° Preescolar</option><option>2° Preescolar</option><option>3° Preescolar</option></optgroup>
-                <optgroup label="Primaria"><option>1° Primaria</option><option>2° Primaria</option><option>3° Primaria</option><option>4° Primaria</option><option>5° Primaria</option><option>6° Primaria</option></optgroup>
-                <optgroup label="Secundaria"><option>1° Secundaria</option><option>2° Secundaria</option><option>3° Secundaria</option></optgroup>
+                <option value="1">1° Secundaria</option>
+                <option value="2">2° Secundaria</option>
+                <option value="3">3° Secundaria</option>
               </select>
             </div>
-            <div class="campo-form"><label>Grupo / Sección</label><input type="text" id="p1-grupo" placeholder="Ej. A, B, C"></div>
-            <div class="campo-form"><label>Número de alumnos</label><input type="number" id="p1-alumnos" placeholder="Ej. 28" min="1" max="60"></div>
+            <div class="campo"><label>Campo formativo</label>
+              <select id="a-cam" onchange="updDisc('a')"><option value="">Primero elige grado</option></select>
+            </div>
+            <div class="campo"><label>Disciplina</label>
+              <select id="a-dis" onchange="loadCntsA()"><option value="">Primero elige campo</option></select>
+            </div>
           </div>
-          <div class="fila-2">
-            <div class="campo-form">
-              <label>Período / Bloque</label>
-              <select id="p1-periodo">
+          <div class="f2">
+            <div class="campo"><label>Municipio / Localidad</label><input type="text" id="a-mun" placeholder="Ticul, Yucatán"></div>
+            <div class="campo"><label>Escuela indígena</label><select id="a-ind"><option value="no">No</option><option value="si">Sí</option></select></div>
+          </div>
+          <div class="campo"><label>Problemática detectada y jerarquizada</label><textarea id="a-prob" placeholder="Describe la problemática principal del centro escolar..."></textarea></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📚 Contenidos por trimestre</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:16px;">Selecciona los contenidos de cada trimestre. El PDA aparece al seleccionar.</p>
+          <div class="ttabs">
+            <button class="ttab on" onclick="showTrim(this,'at1','at2','at3')">1er Trimestre</button>
+            <button class="ttab" onclick="showTrim(this,'at2','at1','at3')">2do Trimestre</button>
+            <button class="ttab" onclick="showTrim(this,'at3','at1','at2')">3er Trimestre</button>
+          </div>
+          <div id="at1"></div>
+          <div id="at2" class="hidden"></div>
+          <div id="at3" class="hidden"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🎯 Proyectos del Libro NEM</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:12px;">Proyectos sugeridos del Libro de Proyectos NEM. Selecciona uno o escribe el tuyo.</p>
+          <div class="ttabs">
+            <button class="ttab on" onclick="showTrim(this,'apt1','apt2','apt3')">1er Trimestre</button>
+            <button class="ttab" onclick="showTrim(this,'apt2','apt1','apt3')">2do Trimestre</button>
+            <button class="ttab" onclick="showTrim(this,'apt3','apt1','apt2')">3er Trimestre</button>
+          </div>
+
+          <div id="apt1">
+            <div class="proy-lista" id="ps-a-t1"></div>
+            <div class="f2 mt12">
+              <div class="campo"><label>Nombre del proyecto (T1)</label><input type="text" id="a-pn1" placeholder="Escribe o elige arriba"></div>
+              <div class="campo"><label>Modalidad (T1)</label><select id="a-pm1"><option>Proyecto comunitario</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>ABP</option></select></div>
+            </div>
+            <div class="campo"><label>Propósito del proyecto (T1)</label><textarea id="a-pp1" placeholder="Propósito del primer trimestre..."></textarea></div>
+            <div class="campo"><label>Productos / evidencias (T1)</label><input type="text" id="a-pr1" placeholder="Ej. Cartel, ensayo, presentación..."></div>
+          </div>
+          <hr class="sep">
+          <div id="apt2" class="hidden">
+            <div class="proy-lista" id="ps-a-t2"></div>
+            <div class="f2 mt12">
+              <div class="campo"><label>Nombre del proyecto (T2)</label><input type="text" id="a-pn2" placeholder="Escribe o elige arriba"></div>
+              <div class="campo"><label>Modalidad (T2)</label><select id="a-pm2"><option>Proyecto comunitario</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>ABP</option></select></div>
+            </div>
+            <div class="campo"><label>Propósito del proyecto (T2)</label><textarea id="a-pp2" placeholder="Propósito del segundo trimestre..."></textarea></div>
+            <div class="campo"><label>Productos / evidencias (T2)</label><input type="text" id="a-pr2" placeholder="Ej. Maqueta, reportaje, dramatización..."></div>
+          </div>
+          <hr class="sep">
+          <div id="apt3" class="hidden">
+            <div class="proy-lista" id="ps-a-t3"></div>
+            <div class="f2 mt12">
+              <div class="campo"><label>Nombre del proyecto (T3)</label><input type="text" id="a-pn3" placeholder="Escribe o elige arriba"></div>
+              <div class="campo"><label>Modalidad (T3)</label><select id="a-pm3"><option>Proyecto comunitario</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>ABP</option></select></div>
+            </div>
+            <div class="campo"><label>Propósito del proyecto (T3)</label><textarea id="a-pp3" placeholder="Propósito del tercer trimestre..."></textarea></div>
+            <div class="campo"><label>Productos / evidencias (T3)</label><input type="text" id="a-pr3" placeholder="Ej. Podcast, documental, historieta..."></div>
+          </div>
+        </div>
+
+        <div class="alerta alerta-err" id="err-a"></div>
+        <div class="btns">
+          <button class="btn-gen" id="bga" onclick="genAnalitico()"><span>✨</span> Generar Programa Analítico</button>
+        </div>
+        <div class="generando" id="gen-a"><div class="spinner"></div><p>Generando Programa Analítico...<br><small>Esto puede tardar 30-60 segundos</small></p></div>
+        <div class="resultado" id="res-a">
+          <div class="res-hdr">
+            <h3>✅ Programa Analítico generado</h3>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-word" onclick="dlRes('a','Prog_Analitico')">⬇️ Descargar Word</button>
+              <button class="btn-sec" onclick="document.getElementById('res-a').style.display='none'">Cerrar</button>
+            </div>
+          </div>
+          <div class="res-txt" id="ra-txt"></div>
+        </div>
+      </div><!-- /sec-a -->
+
+      <!-- DIDÁCTICO -->
+      <div id="sec-d" class="hidden">
+        <div class="card">
+          <div class="card-title">📋 Datos del plano</div>
+          <div class="f2">
+            <div class="campo"><label>Nombre del docente</label><input type="text" id="d-doc" placeholder="Nombre completo"></div>
+            <div class="campo"><label>Nombre de la escuela</label><input type="text" id="d-esc" placeholder="Nombre oficial"></div>
+          </div>
+          <div class="f3">
+            <div class="campo"><label>CCT</label><input type="text" id="d-cct" placeholder="31DES0008B"></div>
+            <div class="campo"><label>Ciclo escolar</label><input type="text" id="d-cic" value="2025-2026"></div>
+            <div class="campo"><label>Grado y grupo</label><input type="text" id="d-grp" placeholder="Ej. 3° A, B, C"></div>
+          </div>
+          <div class="f3">
+            <div class="campo"><label>Grado</label>
+              <select id="d-gra" onchange="updCampos('d')">
                 <option value="">Selecciona</option>
-                <option>Bloque 1 (Sep - Oct)</option>
-                <option>Bloque 2 (Nov - Dic)</option>
-                <option>Bloque 3 (Ene - Feb)</option>
-                <option>Bloque 4 (Mar - Abr)</option>
-                <option>Bloque 5 (May - Jun)</option>
+                <option value="1">1° Secundaria</option>
+                <option value="2">2° Secundaria</option>
+                <option value="3">3° Secundaria</option>
               </select>
             </div>
-            <div class="campo-form">
-              <label>Duración de la planeación</label>
-              <select id="p1-duracion">
-                <option value="">Selecciona</option>
-                <option>1 semana</option>
-                <option>2 semanas</option>
-                <option>3 semanas</option>
-                <option>1 mes</option>
-                <option>Bimestre completo</option>
+            <div class="campo"><label>Campo formativo</label>
+              <select id="d-cam" onchange="updDisc('d')"><option value="">Primero elige grado</option></select>
+            </div>
+            <div class="campo"><label>Disciplina</label>
+              <select id="d-dis" onchange="loadCntsD()"><option value="">Primero elige campo</option></select>
+            </div>
+          </div>
+          <div class="f2">
+            <div class="campo"><label>Trimestre</label>
+              <select id="d-tri">
+                <option value="1">Primer Trimestre (Sep - Nov)</option>
+                <option value="2">Segundo Trimestre (Dic - Mar)</option>
+                <option value="3">Tercer Trimestre (Abr - Jun)</option>
+              </select>
+            </div>
+            <div class="campo"><label>Número de sesiones</label>
+              <select id="d-ses">
+                <option value="9">~9 sesiones</option>
+                <option value="15">~15 sesiones</option>
+                <option value="20">~20 sesiones</option>
+                <option value="25" selected>~25 sesiones</option>
+                <option value="36">~36 sesiones</option>
+                <option value="50">~50 sesiones</option>
+                <option value="64">~64 sesiones</option>
+              </select>
+            </div>
+          </div>
+          <div class="f2">
+            <div class="campo"><label>Duración por sesión</label>
+              <select id="d-dur">
+                <option value="45">45 minutos</option>
+                <option value="50" selected>50 minutos</option>
+                <option value="60">60 minutos</option>
+              </select>
+            </div>
+            <div class="campo"><label>Tipo de generación</label>
+              <select id="d-tgen" onchange="toggleSems()">
+                <option value="trimestre">Trimestre completo</option>
+                <option value="semanal">Por semana</option>
               </select>
             </div>
           </div>
         </div>
-        <div class="nav-botones"><div></div><button class="btn-siguiente" onclick="irPaso(2)">Siguiente →</button></div>
-      </div>
 
-      <!-- PASO 2 -->
-      <div id="paso-2" class="hidden">
-        <div class="seccion-paso">
-          <h3>📚 Paso 2 — Contenido curricular NEM</h3>
-          <div class="fila-2">
-            <div class="campo-form">
-              <label>Campo formativo</label>
-              <select id="p2-campo" onchange="actualizarAsignaturas()">
-                <option value="">Selecciona</option>
-                <option>Lenguajes</option>
-                <option>Saberes y pensamiento científico</option>
-                <option>Ética, naturaleza y sociedades</option>
-                <option>De lo humano y lo comunitario</option>
+        <div class="card">
+          <div class="card-title">📚 Contenidos y PDAs</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:12px;">Selecciona los contenidos del trimestre. El PDA aparece al seleccionar.</p>
+          <div id="d-cnt-lista"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🎯 Proyecto y datos pedagógicos</div>
+          <div class="proy-lista" id="ps-d"></div>
+          <div class="campo mt12"><label>Nombre del proyecto</label><input type="text" id="d-proy" placeholder="Escribe el nombre o selecciona de la lista"></div>
+          <div class="f2">
+            <div class="campo"><label>Modalidad / Metodología</label>
+              <select id="d-mod">
+                <option>Aprendizaje en proyectos comunitarios</option>
+                <option>Proyecto de aula</option>
+                <option>Proyecto escolar</option>
+                <option>Secuencia didáctica</option>
+                <option>Aprendizaje Basado en Problemas (ABP)</option>
+                <option>Aprendizaje servicio</option>
               </select>
             </div>
-            <div class="campo-form">
-              <label>Asignatura / Área</label>
-              <select id="p2-asignatura"><option value="">Primero elige el campo</option></select>
+            <div class="campo"><label>Ejes articuladores</label>
+              <input type="text" id="d-ejes" value="Inclusión, Pensamiento crítico, Igualdad de género, Vida saludable, Apropiación de las culturas a través de la lectura y la escritura">
             </div>
           </div>
-          <div class="campo-form">
-            <label>Eje articulador</label>
-            <select id="p2-eje">
-              <option value="">Selecciona</option>
-              <option>Inclusión</option>
-              <option>Pensamiento crítico</option>
-              <option>Interculturalidad crítica</option>
-              <option>Igualdad de género</option>
-              <option>Vida saludable</option>
-              <option>Apropiación de las culturas a través de la lectura y la escritura</option>
-              <option>Artes y experiencias estéticas</option>
+          <div class="campo"><label>Problematización de la realidad</label><textarea id="d-prob" placeholder="Describe la problemática o situación de aprendizaje..."></textarea></div>
+          <div class="campo"><label>Propósito u objetivo</label><textarea id="d-prop" placeholder="Propósito del plano didáctico..."></textarea></div>
+          <div class="campo"><label>Producto integrador</label><input type="text" id="d-prod" placeholder="Ej. Cartel con palabras mayas, Ensayo literario, Podcast..."></div>
+          <div class="campo"><label>Interdisciplinariedad (opcional)</label>
+            <textarea id="d-inter" placeholder="Ej. Inglés: Contenido X | PDA X | Producto: Texto en inglés"></textarea>
+            <div class="ayuda">Describe cómo se vinculan otras disciplinas del campo formativo</div>
+          </div>
+        </div>
+
+        <div class="card hidden" id="card-sems">
+          <div class="card-title">📅 Selecciona la semana a generar</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:12px;">Las semanas generadas aparecen en verde.</p>
+          <div class="sem-grid" id="sem-grid"></div>
+          <div class="campo mt12"><label>Sesiones en esta semana</label>
+            <select id="d-semsem">
+              <option value="1">1 sesión</option>
+              <option value="2">2 sesiones</option>
+              <option value="3" selected>3 sesiones</option>
+              <option value="4">4 sesiones</option>
+              <option value="5">5 sesiones</option>
             </select>
           </div>
-          <div class="campo-form">
-            <label>Contenido o tema principal</label>
-            <input type="text" id="p2-tema" placeholder="Ej. La narración de cuentos, Fracciones, El ciclo del agua...">
-          </div>
-          <div class="campo-form">
-            <label>Proceso de Desarrollo de Aprendizaje (PDA)</label>
-            <textarea id="p2-pda" placeholder="Describe el PDA según tu programa analítico..."></textarea>
-            <div class="nota">Puedes copiar directamente del programa analítico de tu escuela</div>
-          </div>
-          <div class="campo-form">
-            <label>Libro de texto utilizado</label>
-            <select id="p2-libro">
-              <option value="">Selecciona</option>
-              <option>Nuestros Saberes — Libro Muestra</option>
-              <option>Proyectos Comunitarios</option>
-              <option>Proyectos Escolares</option>
-              <option>Proyectos de Aula</option>
-              <option>Libros de texto SEP (ediciones anteriores)</option>
-              <option>Material propio del docente</option>
-            </select>
-          </div>
-        </div>
-        <div class="nav-botones">
-          <button class="btn-anterior" onclick="irPaso(1)">← Anterior</button>
-          <button class="btn-siguiente" onclick="irPaso(3)">Siguiente →</button>
-        </div>
-      </div>
-
-      <!-- PASO 3 -->
-      <div id="paso-3" class="hidden">
-        <div class="seccion-paso">
-          <h3>🏫 Paso 3 — Contexto escolar y comunitario</h3>
-          <div class="fila-2">
-            <div class="campo-form">
-              <label>Tipo de escuela</label>
-              <select id="p3-tipo">
-                <option value="">Selecciona</option>
-                <option>Urbana general</option>
-                <option>Rural</option>
-                <option>Indígena</option>
-                <option>Multigrado</option>
-                <option>Telesecundaria</option>
-                <option>Comunitaria CONAFE</option>
-                <option>Privada incorporada</option>
-              </select>
-            </div>
-            <div class="campo-form"><label>Municipio / Localidad</label><input type="text" id="p3-municipio" placeholder="Ej. Mérida, Yucatán"></div>
-          </div>
-          <div class="campo-form">
-            <label>Características del grupo</label>
-            <textarea id="p3-caracteristicas" placeholder="Nivel de lectura, necesidades especiales, ritmos de aprendizaje, contexto familiar..."></textarea>
-          </div>
-          <div class="campo-form">
-            <label>Recursos disponibles en el aula</label>
-            <div class="chips-container" id="chips-recursos">
-              <span class="chip" onclick="toggleChip(this)">Pizarrón</span>
-              <span class="chip" onclick="toggleChip(this)">Computadora docente</span>
-              <span class="chip" onclick="toggleChip(this)">Proyector</span>
-              <span class="chip" onclick="toggleChip(this)">Tablets / iPads</span>
-              <span class="chip" onclick="toggleChip(this)">Libros de texto</span>
-              <span class="chip" onclick="toggleChip(this)">Internet</span>
-              <span class="chip" onclick="toggleChip(this)">Material manipulable</span>
-              <span class="chip" onclick="toggleChip(this)">Biblioteca escolar</span>
-              <span class="chip" onclick="toggleChip(this)">Espacio al aire libre</span>
-            </div>
-          </div>
-          <div class="campo-form">
-            <label>Vinculación comunitaria (opcional)</label>
-            <input type="text" id="p3-vinculacion" placeholder="Ej. Visita a milpa local, entrevistas a artesanos...">
-          </div>
-        </div>
-        <div class="nav-botones">
-          <button class="btn-anterior" onclick="irPaso(2)">← Anterior</button>
-          <button class="btn-siguiente" onclick="irPaso(4)">Siguiente →</button>
-        </div>
-      </div>
-
-      <!-- PASO 4 -->
-      <div id="paso-4" class="hidden">
-        <div class="seccion-paso">
-          <h3>🎯 Paso 4 — Estrategias didácticas</h3>
-          <div class="campo-form">
-            <label>Tipo de planeación / enfoque</label>
-            <select id="p4-tipo">
-              <option value="">Selecciona</option>
-              <option>Proyecto de aula</option>
-              <option>Proyecto comunitario</option>
-              <option>Proyecto escolar</option>
-              <option>Situación didáctica</option>
-              <option>Secuencia didáctica</option>
-              <option>Aprendizaje basado en problemas</option>
-            </select>
-          </div>
-          <div class="campo-form">
-            <label>Estrategias de enseñanza</label>
-            <div class="chips-container" id="chips-estrategias">
-              <span class="chip" onclick="toggleChip(this)">Trabajo colaborativo</span>
-              <span class="chip" onclick="toggleChip(this)">Juego didáctico</span>
-              <span class="chip" onclick="toggleChip(this)">Aprendizaje por descubrimiento</span>
-              <span class="chip" onclick="toggleChip(this)">Lectura compartida</span>
-              <span class="chip" onclick="toggleChip(this)">Experimentos</span>
-              <span class="chip" onclick="toggleChip(this)">Arte y creatividad</span>
-              <span class="chip" onclick="toggleChip(this)">Debates y diálogos</span>
-              <span class="chip" onclick="toggleChip(this)">Salidas de campo</span>
-              <span class="chip" onclick="toggleChip(this)">TIC y medios digitales</span>
-              <span class="chip" onclick="toggleChip(this)">Narrativa y cuentos</span>
-            </div>
-          </div>
-          <div class="campo-form">
-            <label>Adaptaciones para diversidad de aprendizajes</label>
-            <textarea id="p4-adaptaciones" placeholder="Necesidades educativas especiales, ritmos diversos, estrategias de inclusión..."></textarea>
-          </div>
-          <div class="fila-2">
-            <div class="campo-form">
-              <label>Sesiones por semana</label>
-              <select id="p4-sesiones">
-                <option value="">Selecciona</option>
-                <option>1 sesión</option><option>2 sesiones</option>
-                <option>3 sesiones</option><option>4 sesiones</option><option>5 sesiones (diario)</option>
-              </select>
-            </div>
-            <div class="campo-form">
-              <label>Duración por sesión</label>
-              <select id="p4-duracion">
-                <option value="">Selecciona</option>
-                <option>30 minutos</option><option>45 minutos</option><option>50 minutos</option>
-                <option>60 minutos</option><option>90 minutos</option><option>2 horas</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <div class="nav-botones">
-          <button class="btn-anterior" onclick="irPaso(3)">← Anterior</button>
-          <button class="btn-siguiente" onclick="irPaso(5)">Siguiente →</button>
-        </div>
-      </div>
-
-      <!-- PASO 5 -->
-      <div id="paso-5" class="hidden">
-        <div class="seccion-paso">
-          <h3>✅ Paso 5 — Evaluación y cierre</h3>
-          <div class="campo-form">
-            <label>Tipo de evaluación</label>
-            <div class="chips-container" id="chips-eval-tipo">
-              <span class="chip" onclick="toggleChip(this)">Diagnóstica</span>
-              <span class="chip" onclick="toggleChip(this)">Formativa</span>
-              <span class="chip" onclick="toggleChip(this)">Sumativa</span>
-              <span class="chip" onclick="toggleChip(this)">Autoevaluación</span>
-              <span class="chip" onclick="toggleChip(this)">Coevaluación</span>
-            </div>
-          </div>
-          <div class="campo-form">
-            <label>Instrumentos de evaluación</label>
-            <div class="chips-container" id="chips-instrumentos">
-              <span class="chip" onclick="toggleChip(this)">Lista de cotejo</span>
-              <span class="chip" onclick="toggleChip(this)">Rúbrica</span>
-              <span class="chip" onclick="toggleChip(this)">Portafolio de evidencias</span>
-              <span class="chip" onclick="toggleChip(this)">Observación directa</span>
-              <span class="chip" onclick="toggleChip(this)">Diario del alumno</span>
-              <span class="chip" onclick="toggleChip(this)">Producto final</span>
-              <span class="chip" onclick="toggleChip(this)">Exposición oral</span>
-              <span class="chip" onclick="toggleChip(this)">Examen escrito</span>
-            </div>
-          </div>
-          <div class="campo-form">
-            <label>Indicadores de logro esperados</label>
-            <textarea id="p5-indicadores" placeholder="¿Qué evidencias concretas demuestran el aprendizaje? 2-3 indicadores observables."></textarea>
-          </div>
-          <div class="campo-form">
-            <label>Observaciones adicionales para la IA (opcional)</label>
-            <textarea id="p5-obs" placeholder="Formato específico, elementos que no deben faltar, estilo particular..."></textarea>
-          </div>
         </div>
 
-        <div class="nav-botones">
-          <button class="btn-anterior" onclick="irPaso(4)">← Anterior</button>
-          <button class="btn-generar" onclick="generarPlaneacion()" id="btn-gen">
-            <span>✨</span> Generar planeación con IA
-          </button>
+        <div class="alerta alerta-err" id="err-d"></div>
+        <div class="btns">
+          <button class="btn-gen" id="bgd" onclick="genDidactico()"><span>✨</span> Generar Plano Didáctico</button>
+          <button class="btn-sec" onclick="limpiarD()">🔄 Nuevo plano</button>
         </div>
-
-        <div class="generando-overlay" id="generando-overlay">
-          <div class="spinner"></div>
-          <div class="generando-texto">Generando tu planeación didáctica...<br><small style="color:var(--gris);font-size:12px;">Esto puede tardar 20-40 segundos</small></div>
-        </div>
-
-        <div class="resultado-caja" id="resultado-caja">
-          <div class="resultado-header">
-            <h3>✅ Planeación generada exitosamente</h3>
-            <button class="btn-descargar" onclick="descargarWord()">⬇️ Descargar en Word</button>
+        <div class="generando" id="gen-d"><div class="spinner"></div><p id="gen-d-msg">Generando Plano Didáctico...<br><small>Esto puede tardar 30-90 segundos</small></p></div>
+        <div class="resultado" id="res-d">
+          <div class="res-hdr">
+            <h3>✅ Plano Didáctico generado</h3>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn-word" onclick="dlRes('d','Plano_Didactico')">⬇️ Descargar Word</button>
+              <button class="btn-sec" onclick="document.getElementById('res-d').style.display='none'">Cerrar</button>
+            </div>
           </div>
-          <div class="resultado-contenido" id="resultado-texto"></div>
+          <div class="res-txt" id="rd-txt"></div>
         </div>
-      </div>
-    </div>
+      </div><!-- /sec-d -->
+    </div><!-- /tab-nueva -->
 
     <!-- TAB HISTORIAL -->
-    <div class="tab-contenido" id="tab-historial">
-      <div class="seccion-titulo">Historial de planeaciones</div>
-      <div class="seccion-sub">Planeaciones generadas en este dispositivo</div>
-      <div id="historial-lista"></div>
+    <div class="tab-panel" id="tab-historial">
+      <div class="sec-title">Historial de planeaciones</div>
+      <div class="sec-sub">Documentos generados en este dispositivo</div>
+      <div id="hist-lista">
+        <div style="text-align:center;padding:60px;color:var(--gris);">
+          <div style="font-size:48px;margin-bottom:12px;">📋</div>
+          <div>Aún no tienes planeaciones guardadas.</div>
+        </div>
+      </div>
     </div>
 
-    <!-- TAB USUARIOS (admin) -->
-    <div class="tab-contenido" id="tab-usuarios">
-      <div class="seccion-titulo">Gestión de usuarios</div>
-      <div class="seccion-sub">Docentes registrados en el sistema</div>
-      <div class="seccion-paso">
-        <table class="admin-tabla">
-          <thead>
-            <tr><th>#</th><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th></tr>
-          </thead>
-          <tbody id="tabla-usuarios-body"></tbody>
+    <!-- TAB USUARIOS -->
+    <div class="tab-panel" id="tab-usuarios">
+      <div class="sec-title">Gestión de usuarios</div>
+      <div class="sec-sub">Docentes registrados en el sistema</div>
+      <div class="card">
+        <table class="tabla">
+          <thead><tr><th>#</th><th>Usuario</th><th>Nombre</th><th>Escuela</th><th>Rol</th></tr></thead>
+          <tbody id="tb-usr"></tbody>
         </table>
       </div>
     </div>
 
-  </div>
-</div>
+  </div><!-- /main -->
+</div><!-- /app -->
 
+<script src="users.js"></script>
+<script src="curriculum.js"></script>
+<script src="projects.js"></script>
+<script src="generators.js"></script>
 <script>
-// ============================================================
-// USUARIOS
-// ============================================================
-const USUARIOS = [
-  { usuario: 'admin',      password: 'admin2025', nombre: 'Administrador',  rol: 'admin'   },
-  { usuario: 'maestra01',  password: '123456',    nombre: 'Maestra 01',     rol: 'docente' },
-  { usuario: 'maestro02',  password: '123456',    nombre: 'Maestro 02',     rol: 'docente' },
-  { usuario: 'maestra03',  password: '123456',    nombre: 'Maestra 03',     rol: 'docente' },
-  // --- AGREGAR AQUÍ LOS 45 DOCENTES ---
-  // { usuario: 'maestra04', password: '123456', nombre: 'Nombre Apellido', rol: 'docente' },
-];
+// ── ESTADO ──────────────────────────────────────────────
+let tipoActivo='a', semAct=1, semsGen=new Set();
+let cA={t1:[],t2:[],t3:[]}, cD=[];
+let historial=JSON.parse(localStorage.getItem('nem_hist')||'[]');
 
-// ============================================================
-// GEMINI
-// ============================================================
-const GEMINI_KEY = 'AIzaSyCnFdgyoTpOh6g6SU2Mn5s0GTvxiFJylu0';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
-
-// ============================================================
-// ESTADO
-// ============================================================
-let usuarioActual = null;
-let historial = JSON.parse(localStorage.getItem('nem_historial') || '[]');
-
-// ============================================================
-// LOGIN
-// ============================================================
-function iniciarSesion() {
-  const u = document.getElementById('login-usuario').value.trim();
-  const p = document.getElementById('login-password').value;
-  const usuario = USUARIOS.find(x => x.usuario === u && x.password === p);
-
-  if (!usuario) {
-    document.getElementById('login-error').style.display = 'block';
-    return;
+// ── LOGIN ────────────────────────────────────────────────
+function doLogin(){
+  const u=document.getElementById('l-usr').value.trim();
+  const p=document.getElementById('l-pwd').value;
+  if(!autenticar(u,p)){document.getElementById('l-err').style.display='block';return;}
+  document.getElementById('l-err').style.display='none';
+  document.getElementById('pantalla-login').style.display='none';
+  document.getElementById('app').style.display='block';
+  const usr=getUsuario();
+  document.getElementById('h-nom').textContent=usr.nombre;
+  document.getElementById('av').textContent=usr.nombre.charAt(0).toUpperCase();
+  document.getElementById('a-doc').value=usr.nombre;
+  document.getElementById('d-doc').value=usr.nombre;
+  document.getElementById('a-esc').value=usr.escuela||'';
+  document.getElementById('d-esc').value=usr.escuela||'';
+  if(esAdmin()){
+    document.querySelectorAll('.admin-only').forEach(el=>el.classList.remove('hidden'));
+    loadUsrTable();
   }
-
-  usuarioActual = usuario;
-  document.getElementById('login-error').style.display = 'none';
-  document.getElementById('pantalla-login').style.display = 'none';
-  document.getElementById('app-principal').style.display = 'block';
-  document.getElementById('nombre-header').textContent = usuario.nombre;
-  document.getElementById('avatar-letra').textContent = usuario.nombre.charAt(0).toUpperCase();
-
-  if (usuario.rol === 'admin') {
-    document.getElementById('nav-admin').style.display = 'flex';
-    cargarTablaUsuarios();
-  } else {
-    document.getElementById('nav-docente').style.display = 'flex';
-    document.getElementById('p1-docente').value = usuario.nombre;
-  }
-  cargarHistorial();
+  renderHist();
 }
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('pantalla-login').style.display !== 'none') {
-    iniciarSesion();
-  }
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.getElementById('pantalla-login').style.display!=='none') doLogin();
 });
-
-function cerrarSesion() {
-  usuarioActual = null;
-  document.getElementById('pantalla-login').style.display = 'flex';
-  document.getElementById('app-principal').style.display = 'none';
-  document.getElementById('nav-admin').style.display = 'none';
-  document.getElementById('nav-docente').style.display = 'none';
-  document.getElementById('login-usuario').value = '';
-  document.getElementById('login-password').value = '';
-  irPaso(1);
+function doLogout(){
+  usuarioActivo=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('pantalla-login').style.display='flex';
+  document.getElementById('l-usr').value='';
+  document.getElementById('l-pwd').value='';
 }
 
-// ============================================================
-// PASOS
-// ============================================================
-function irPaso(n) {
-  for (let i = 1; i <= 5; i++) {
-    document.getElementById(`paso-${i}`).classList.add('hidden');
-    const c = document.getElementById(`c${i}`);
-    const e = document.getElementById(`e${i}`);
-    c.classList.remove('activo', 'completado');
-    if (e) e.classList.remove('activo');
-    if (i < 5 && document.getElementById(`l${i}`)) {
-      document.getElementById(`l${i}`).classList.remove('completada');
-    }
-    c.textContent = i;
-  }
-
-  document.getElementById(`paso-${n}`).classList.remove('hidden');
-  document.getElementById(`c${n}`).classList.add('activo');
-  if (document.getElementById(`e${n}`)) document.getElementById(`e${n}`).classList.add('activo');
-
-  for (let i = 1; i < n; i++) {
-    const c = document.getElementById(`c${i}`);
-    c.classList.add('completado');
-    c.textContent = '✓';
-    if (document.getElementById(`l${i}`)) document.getElementById(`l${i}`).classList.add('completada');
-  }
-
-  if (n < 5) {
-    document.getElementById('resultado-caja').style.display = 'none';
-    document.getElementById('generando-overlay').style.display = 'none';
-    document.getElementById('btn-gen').disabled = false;
-  }
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// ============================================================
-// TABS
-// ============================================================
-function cambiarTab(btn, tabId) {
-  document.querySelectorAll('.tab-contenido').forEach(t => t.classList.remove('activo'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('activo'));
-  document.getElementById(tabId).classList.add('activo');
+// ── TABS ─────────────────────────────────────────────────
+function showTab(id,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('activo'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('activo'));
+  document.getElementById('tab-'+id).classList.add('activo');
   btn.classList.add('activo');
 }
 
-// ============================================================
-// CHIPS
-// ============================================================
-function toggleChip(el) { el.classList.toggle('seleccionado'); }
-
-function leerChips(contenedorId) {
-  return Array.from(document.querySelectorAll(`#${contenedorId} .chip.seleccionado`))
-    .map(c => c.textContent).join(', ');
+// ── TIPO ─────────────────────────────────────────────────
+function setTipo(t){
+  tipoActivo=t;
+  document.getElementById('tbtn-a').classList.toggle('on',t==='a');
+  document.getElementById('tbtn-d').classList.toggle('on',t==='d');
+  document.getElementById('sec-a').classList.toggle('hidden',t!=='a');
+  document.getElementById('sec-d').classList.toggle('hidden',t!=='d');
 }
 
-// ============================================================
-// ASIGNATURAS
-// ============================================================
-const ASIGNATURAS = {
-  'Lenguajes': ['Lengua Materna (Español)', 'Segunda Lengua (Inglés)', 'Lengua Indígena', 'Educación Artística'],
-  'Saberes y pensamiento científico': ['Matemáticas', 'Ciencias Naturales', 'Biología', 'Física', 'Química', 'Tecnología'],
-  'Ética, naturaleza y sociedades': ['Historia', 'Geografía', 'Formación Cívica y Ética', 'Educación Socioemocional'],
-  'De lo humano y lo comunitario': ['Educación Física', 'Artes', 'Vida saludable', 'Tutoría']
-};
-
-function actualizarAsignaturas() {
-  const campo = document.getElementById('p2-campo').value;
-  const sel = document.getElementById('p2-asignatura');
-  sel.innerHTML = '<option value="">Selecciona</option>';
-  (ASIGNATURAS[campo] || []).forEach(a => {
-    const o = document.createElement('option');
-    o.textContent = a;
-    sel.appendChild(o);
+// ── TRIM TABS ─────────────────────────────────────────────
+function showTrim(btn,show,h1,h2){
+  const card=btn.closest('.card');
+  card.querySelectorAll('.ttab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  [show,h1,h2].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('hidden',i!==0);
   });
 }
 
-// ============================================================
-// DATOS DEL FORMULARIO
-// ============================================================
-function getDatos() {
-  return {
-    docente:          document.getElementById('p1-docente').value || usuarioActual.nombre,
-    escuela:          document.getElementById('p1-escuela').value,
-    grado:            document.getElementById('p1-grado').value,
-    grupo:            document.getElementById('p1-grupo').value,
-    alumnos:          document.getElementById('p1-alumnos').value,
-    periodo:          document.getElementById('p1-periodo').value,
-    duracion:         document.getElementById('p1-duracion').value,
-    campo:            document.getElementById('p2-campo').value,
-    asignatura:       document.getElementById('p2-asignatura').value,
-    eje:              document.getElementById('p2-eje').value,
-    tema:             document.getElementById('p2-tema').value,
-    pda:              document.getElementById('p2-pda').value,
-    libro:            document.getElementById('p2-libro').value,
-    tipoEscuela:      document.getElementById('p3-tipo').value,
-    municipio:        document.getElementById('p3-municipio').value,
-    caracteristicas:  document.getElementById('p3-caracteristicas').value,
-    recursos:         leerChips('chips-recursos'),
-    vinculacion:      document.getElementById('p3-vinculacion').value,
-    tipoPlaneacion:   document.getElementById('p4-tipo').value,
-    estrategias:      leerChips('chips-estrategias'),
-    adaptaciones:     document.getElementById('p4-adaptaciones').value,
-    sesiones:         document.getElementById('p4-sesiones').value,
-    duracionSesion:   document.getElementById('p4-duracion').value,
-    evalTipo:         leerChips('chips-eval-tipo'),
-    instrumentos:     leerChips('chips-instrumentos'),
-    indicadores:      document.getElementById('p5-indicadores').value,
-    obs:              document.getElementById('p5-obs').value,
-  };
+// ── CAMPOS/DISCIPLINAS ────────────────────────────────────
+function updCampos(pfx){
+  const g=document.getElementById(pfx+'-gra').value;
+  const s=document.getElementById(pfx+'-cam');
+  s.innerHTML='<option value="">Selecciona</option>';
+  document.getElementById(pfx+'-dis').innerHTML='<option value="">Primero elige campo</option>';
+  if(!g) return;
+  Object.keys(CAMPOS_POR_GRADO[g]||{}).forEach(c=>{
+    const o=document.createElement('option');o.value=c;o.textContent=c;s.appendChild(o);
+  });
+}
+function updDisc(pfx){
+  const g=document.getElementById(pfx+'-gra').value;
+  const c=document.getElementById(pfx+'-cam').value;
+  const s=document.getElementById(pfx+'-dis');
+  s.innerHTML='<option value="">Selecciona</option>';
+  if(!g||!c) return;
+  (CAMPOS_POR_GRADO[g]?.[c]||[]).forEach(d=>{
+    const o=document.createElement('option');o.value=d;o.textContent=d;s.appendChild(o);
+  });
 }
 
-// ============================================================
-// PROMPT
-// ============================================================
-function construirPrompt(d) {
-  return `Eres un experto pedagogo especializado en la Nueva Escuela Mexicana (NEM) de México. Genera una planeación didáctica completa, profesional y práctica, con el siguiente formato exacto:
-
-═══════════════════════════════════════════════════════════
-       PLANEACIÓN DIDÁCTICA — NUEVA ESCUELA MEXICANA
-═══════════════════════════════════════════════════════════
-
-DATOS GENERALES
-───────────────────────────────────────────────────────────
-Docente: ${d.docente}
-Escuela: ${d.escuela || 'Centro Escolar'}
-Grado y grupo: ${d.grado} ${d.grupo} | Número de alumnos: ${d.alumnos || 'No especificado'}
-Período: ${d.periodo || 'No especificado'} | Duración: ${d.duracion || 'No especificada'}
-
-CONTENIDO CURRICULAR
-───────────────────────────────────────────────────────────
-Campo formativo: ${d.campo || 'No especificado'}
-Asignatura: ${d.asignatura || 'No especificada'}
-Eje articulador: ${d.eje || 'No especificado'}
-Tema / Contenido: ${d.tema}
-Libro de texto: ${d.libro || 'Material del docente'}
-
-Proceso de Desarrollo de Aprendizaje (PDA):
-${d.pda || 'Según programa analítico del ciclo escolar vigente'}
-
-CONTEXTO ESCOLAR Y COMUNITARIO
-───────────────────────────────────────────────────────────
-Tipo de escuela: ${d.tipoEscuela || 'No especificado'} | Localidad: ${d.municipio || 'No especificada'}
-Características del grupo: ${d.caracteristicas || 'Grupo heterogéneo con ritmos diversos'}
-Recursos disponibles: ${d.recursos || 'Recursos básicos de aula'}
-Vinculación comunitaria: ${d.vinculacion || 'No especificada'}
-
-ENFOQUE DIDÁCTICO
-───────────────────────────────────────────────────────────
-Tipo de planeación: ${d.tipoPlaneacion || 'Secuencia didáctica'}
-Estrategias de enseñanza: ${d.estrategias || 'Diversificadas'}
-Sesiones: ${d.sesiones || 'No especificado'} de ${d.duracionSesion || 'No especificado'}
-
-═══════════════════════════════════════════════════════════
-
-PROPÓSITO GENERAL
-Redacta un propósito claro y específico (3-4 líneas), orientado a desarrollar habilidades para la vida, con lenguaje propio de la NEM, que sea relevante y significativo para el contexto indicado.
-
-═══════════════════════════════════════════════════════════
-
-SECUENCIA DIDÁCTICA
-
-Genera todas las sesiones que correspondan según la duración y frecuencia indicadas. Cada sesión debe tener esta estructura:
-
-📌 SESIÓN [N] — [TÍTULO DESCRIPTIVO]
-─────────────────────────────────────
-INICIO (aproximadamente 10-15% del tiempo):
-• [Actividad de apertura concreta: cómo activar conocimientos previos, pregunta detonadora, dinámica inicial]
-
-DESARROLLO (aproximadamente 60-70% del tiempo):
-• [Actividad principal detallada y aplicable]
-• [Actividad complementaria o continuación]
-• [Materiales y recursos específicos a usar]
-
-CIERRE (aproximadamente 15-20% del tiempo):
-• [Actividad de cierre: reflexión, plenaria, producto parcial]
-• [Pregunta metacognitiva o instrumento de seguimiento]
-
-Tarea sugerida (si aplica): [Actividad breve para casa o comunidad]
-
-═══════════════════════════════════════════════════════════
-
-EVALUACIÓN
-───────────────────────────────────────────────────────────
-Tipos de evaluación: ${d.evalTipo || 'Formativa y sumativa'}
-Instrumentos: ${d.instrumentos || 'Lista de cotejo, observación directa'}
-
-Indicadores de logro:
-${d.indicadores || '• Genera 3 indicadores de logro observables, medibles y acordes al PDA\n• Cada indicador debe describir una conducta o producto concreto\n• Los indicadores deben ser alcanzables en el tiempo planificado'}
-
-Evidencias de aprendizaje esperadas:
-• [Producto 1: descripción concreta del producto o evidencia]
-• [Producto 2]
-• [Producto 3]
-
-═══════════════════════════════════════════════════════════
-
-ADECUACIONES CURRICULARES
-───────────────────────────────────────────────────────────
-Para estudiantes con aprendizaje avanzado:
-• [2-3 actividades de ampliación o profundización]
-
-Para estudiantes que requieren apoyo adicional:
-• [2-3 estrategias de andamiaje, simplificación o apoyo entre pares]
-${d.adaptaciones ? '\nAdaptaciones específicas indicadas por el docente:\n' + d.adaptaciones : ''}
-
-═══════════════════════════════════════════════════════════
-
-REFERENCIAS Y MATERIALES
-───────────────────────────────────────────────────────────
-• ${d.libro || 'Libro de texto SEP'} — páginas sugeridas relacionadas con el tema
-• [Otros recursos: videos, sitios web educativos, materiales del entorno]
-• [Fuentes de información comunitaria o local relevantes]
-
-═══════════════════════════════════════════════════════════
-Elaboró: ${d.docente}
-Fecha: ${new Date().toLocaleDateString('es-MX', {year:'numeric', month:'long', day:'numeric'})}
-═══════════════════════════════════════════════════════════
-
-${d.obs ? 'INSTRUCCIONES ESPECIALES DEL DOCENTE: ' + d.obs : ''}
-
-INSTRUCCIONES PARA GENERAR: Completa TODA la información con contenido pedagógico real, específico y aplicable. NO uses corchetes en el resultado — rellena con contenido concreto. El lenguaje debe ser claro, práctico y alineado a la filosofía de la Nueva Escuela Mexicana: enfoque humanista, comunitario, inclusivo y basado en el desarrollo de competencias para la vida.`;
-}
-
-// ============================================================
-// GENERAR PLANEACIÓN
-// ============================================================
-async function generarPlaneacion() {
-  const d = getDatos();
-  if (!d.grado || !d.tema) {
-    alert('Por favor completa al menos el grado y el tema antes de generar.');
-    return;
-  }
-
-  document.getElementById('btn-gen').disabled = true;
-  document.getElementById('generando-overlay').style.display = 'block';
-  document.getElementById('resultado-caja').style.display = 'none';
-
-  try {
-    const res = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: construirPrompt(d) }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
-      })
+// ── CONTENIDOS ANALÍTICO ──────────────────────────────────
+function loadCntsA(){
+  const g=document.getElementById('a-gra').value;
+  const c=document.getElementById('a-cam').value;
+  const d=document.getElementById('a-dis').value;
+  if(!g||!c||!d) return;
+  const cnts=obtenerContenidos(c,d,g);
+  cA={t1:[],t2:[],t3:[]};
+  ['t1','t2','t3'].forEach(t=>{
+    const lista=document.getElementById('a'+t);
+    lista.innerHTML='';
+    cnts.forEach(cnt=>{
+      const pda=obtenerPDA(cnt,g);
+      const div=document.createElement('div');
+      div.className='cnt-item';
+      div.innerHTML=`<div class="cnt-num">Contenido ${cnt.num}</div><div class="cnt-tit">${cnt.titulo}</div><div class="cnt-pda">📌 PDA: ${pda}</div>`;
+      div.onclick=()=>togCntA(div,cnt,t);
+      lista.appendChild(div);
     });
+  });
+  updProysA();
+}
+function togCntA(el,cnt,t){
+  el.classList.toggle('on');
+  if(el.classList.contains('on')){if(!cA[t].find(x=>x.id===cnt.id)) cA[t].push(cnt);}
+  else cA[t]=cA[t].filter(x=>x.id!==cnt.id);
+  updProysA();
+}
+function updProysA(){
+  const g=document.getElementById('a-gra').value;
+  const cam=document.getElementById('a-cam').value;
+  const d=document.getElementById('a-dis').value;
+  if(!g||!cam||!d) return;
+  ['t1','t2','t3'].forEach((t,i)=>{
+    const ids=cA[t].map(c=>c.id);
+    const proys=obtenerProyectosSugeridos(g,cam,d,ids);
+    const cont=document.getElementById('ps-a-'+t);
+    if(!cont) return;
+    if(!proys.length){cont.style.display='none';return;}
+    cont.style.display='block';
+    cont.innerHTML='<p style="font-size:12px;color:var(--gris);margin-bottom:8px;"><strong>Proyectos sugeridos del Libro NEM:</strong></p>'+
+      proys.slice(0,4).map(p=>`<div class="proy-card" onclick="elejirProyA(this,'${t}','${p.nombre.replace(/'/g,"\\'")}')">
+        <div class="proy-nom">${p.nombre}</div>
+        <div class="proy-pag">📄 Pág. ${p.pagina} — Libro de Proyectos NEM</div>
+        <div class="proy-desc">${p.descripcion}</div></div>`).join('');
+  });
+}
+function elejirProyA(el,t,nom){
+  el.closest('.proy-lista').querySelectorAll('.proy-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('a-pn'+t.slice(-1)).value=nom;
+}
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error?.message || `Error HTTP ${res.status}`);
-    }
+// ── CONTENIDOS DIDÁCTICO ──────────────────────────────────
+function loadCntsD(){
+  const g=document.getElementById('d-gra').value;
+  const c=document.getElementById('d-cam').value;
+  const d=document.getElementById('d-dis').value;
+  if(!g||!c||!d) return;
+  const cnts=obtenerContenidos(c,d,g);
+  cD=[];
+  const lista=document.getElementById('d-cnt-lista');
+  lista.innerHTML='';
+  cnts.forEach(cnt=>{
+    const pda=obtenerPDA(cnt,g);
+    const div=document.createElement('div');
+    div.className='cnt-item';
+    div.innerHTML=`<div class="cnt-num">Contenido ${cnt.num}</div><div class="cnt-tit">${cnt.titulo}</div><div class="cnt-pda">📌 PDA: ${pda}</div>`;
+    div.onclick=()=>togCntD(div,cnt);
+    lista.appendChild(div);
+  });
+  updProysD();
+}
+function togCntD(el,cnt){
+  el.classList.toggle('on');
+  if(el.classList.contains('on')){if(!cD.find(x=>x.id===cnt.id)) cD.push(cnt);}
+  else cD=cD.filter(x=>x.id!==cnt.id);
+  updProysD();
+}
+function updProysD(){
+  const g=document.getElementById('d-gra').value;
+  const cam=document.getElementById('d-cam').value;
+  const d=document.getElementById('d-dis').value;
+  if(!g||!cam||!d) return;
+  const ids=cD.map(c=>c.id);
+  const proys=obtenerProyectosSugeridos(g,cam,d,ids);
+  const cont=document.getElementById('ps-d');
+  if(!proys.length){cont.style.display='none';return;}
+  cont.style.display='block';
+  cont.innerHTML='<p style="font-size:12px;color:var(--gris);margin-bottom:8px;"><strong>Proyectos sugeridos del Libro NEM:</strong></p>'+
+    proys.slice(0,5).map(p=>`<div class="proy-card" onclick="elejirProyD(this,'${p.nombre.replace(/'/g,"\\'")}')">
+      <div class="proy-nom">${p.nombre}</div>
+      <div class="proy-pag">📄 Pág. ${p.pagina} — Libro de Proyectos NEM</div>
+      <div class="proy-desc">${p.descripcion}</div></div>`).join('');
+}
+function elejirProyD(el,nom){
+  document.getElementById('ps-d').querySelectorAll('.proy-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('d-proy').value=nom;
+}
 
-    const data = await res.json();
-    const texto = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!texto) throw new Error('La respuesta de Gemini llegó vacía');
-
-    document.getElementById('resultado-texto').textContent = texto;
-    document.getElementById('resultado-caja').style.display = 'block';
-    document.getElementById('generando-overlay').style.display = 'none';
-    document.getElementById('btn-gen').disabled = false;
-
-    // Guardar en historial
-    const entrada = { id: Date.now(), fecha: new Date().toLocaleDateString('es-MX'), docente: d.docente, grado: d.grado, asignatura: d.asignatura, tema: d.tema, contenido: texto };
-    historial.unshift(entrada);
-    localStorage.setItem('nem_historial', JSON.stringify(historial.slice(0, 50)));
-    cargarHistorial();
-
-    document.getElementById('resultado-caja').scrollIntoView({ behavior: 'smooth' });
-
-  } catch (err) {
-    document.getElementById('generando-overlay').style.display = 'none';
-    document.getElementById('btn-gen').disabled = false;
-    alert('Error al generar:\n\n' + err.message + '\n\nVerifica tu conexión a internet.');
+// ── SEMANAS ───────────────────────────────────────────────
+function toggleSems(){
+  const t=document.getElementById('d-tgen').value;
+  document.getElementById('card-sems').classList.toggle('hidden',t!=='semanal');
+  if(t==='semanal') buildSemGrid();
+}
+function buildSemGrid(){
+  const n=Math.ceil((parseInt(document.getElementById('d-ses').value)||25)/3);
+  const g=document.getElementById('sem-grid');
+  g.innerHTML='';
+  for(let i=1;i<=n;i++){
+    const b=document.createElement('button');
+    b.className='sem-btn'+(semsGen.has(i)?' gen':'')+(i===semAct?' act':'');
+    b.textContent='Semana '+i;
+    b.onclick=()=>{semAct=i;buildSemGrid();};
+    g.appendChild(b);
   }
 }
 
-// ============================================================
-// DESCARGAR WORD
-// ============================================================
-function descargarWord() {
-  const texto = document.getElementById('resultado-texto').textContent;
-  if (!texto) return;
-  const d = getDatos();
-  const nombre = `Planeacion_${(d.grado||'NEM').replace(/\s/g,'')}_${(d.tema||'Sin-tema').replace(/\s/g,'-').substring(0,30)}_${new Date().toLocaleDateString('es-MX').replace(/\//g,'-')}.doc`;
-
-  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta charset="UTF-8"><style>body{font-family:Calibri,sans-serif;font-size:11pt;margin:2cm;line-height:1.5;color:#1a1a2e;}pre{font-family:Calibri,sans-serif;font-size:11pt;white-space:pre-wrap;}</style></head>
-<body><pre>${texto}</pre></body></html>`;
-
-  const blob = new Blob([html], { type: 'application/msword' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = nombre; a.click();
-  URL.revokeObjectURL(url);
+// ── GENERAR ANALÍTICO ─────────────────────────────────────
+async function genAnalitico(){
+  const doc=document.getElementById('a-doc').value;
+  const g=document.getElementById('a-gra').value;
+  const cam=document.getElementById('a-cam').value;
+  const dis=document.getElementById('a-dis').value;
+  if(!doc||!g||!cam||!dis){showErr('err-a','Completa: docente, grado, campo y disciplina.');return;}
+  hideErr('err-a');
+  document.getElementById('bga').disabled=true;
+  document.getElementById('gen-a').style.display='block';
+  document.getElementById('res-a').style.display='none';
+  const d={
+    docente:doc,grado:g,campo:cam,disciplina:dis,
+    escuela:document.getElementById('a-esc').value,
+    cct:document.getElementById('a-cct').value,
+    turno:document.getElementById('a-tur').value,
+    cicloEscolar:document.getElementById('a-cic').value,
+    municipio:document.getElementById('a-mun').value,
+    problematica:document.getElementById('a-prob').value,
+    t1:{contenidos:cA.t1,modalidad:document.getElementById('a-pm1').value,nombreProyecto:document.getElementById('a-pn1').value,proposito:document.getElementById('a-pp1').value,productos:document.getElementById('a-pr1').value},
+    t2:{contenidos:cA.t2,modalidad:document.getElementById('a-pm2').value,nombreProyecto:document.getElementById('a-pn2').value,proposito:document.getElementById('a-pp2').value,productos:document.getElementById('a-pr2').value},
+    t3:{contenidos:cA.t3,modalidad:document.getElementById('a-pm3').value,nombreProyecto:document.getElementById('a-pn3').value,proposito:document.getElementById('a-pp3').value,productos:document.getElementById('a-pr3').value},
+  };
+  try{
+    const txt=await llamarGemini(buildPromptAnalitico(d));
+    document.getElementById('ra-txt').textContent=txt;
+    document.getElementById('res-a').style.display='block';
+    document.getElementById('gen-a').style.display='none';
+    document.getElementById('bga').disabled=false;
+    document.getElementById('res-a').scrollIntoView({behavior:'smooth'});
+    saveHist('analitico',`Prog. Analítico — ${dis} ${g}° — ${d.t1.nombreProyecto||''}`,txt,d);
+  }catch(err){
+    document.getElementById('gen-a').style.display='none';
+    document.getElementById('bga').disabled=false;
+    showErr('err-a','Error: '+err.message);
+  }
 }
 
-// ============================================================
-// HISTORIAL
-// ============================================================
-function cargarHistorial() {
-  const lista = document.getElementById('historial-lista');
-  if (!historial.length) {
-    lista.innerHTML = `<div style="text-align:center;padding:60px;color:var(--gris);"><div style="font-size:48px;margin-bottom:16px;">📋</div><div>Aún no tienes planeaciones guardadas.</div><div style="font-size:13px;margin-top:8px;">Genera tu primera planeación y aparecerá aquí.</div></div>`;
+// ── GENERAR DIDÁCTICO ─────────────────────────────────────
+async function genDidactico(){
+  const doc=document.getElementById('d-doc').value;
+  const g=document.getElementById('d-gra').value;
+  const cam=document.getElementById('d-cam').value;
+  const dis=document.getElementById('d-dis').value;
+  if(!doc||!g||!cam||!dis){showErr('err-d','Completa: docente, grado, campo y disciplina.');return;}
+  if(!cD.length){showErr('err-d','Selecciona al menos un contenido.');return;}
+  hideErr('err-d');
+  document.getElementById('bgd').disabled=true;
+  document.getElementById('gen-d').style.display='block';
+  document.getElementById('res-d').style.display='none';
+  const tgen=document.getElementById('d-tgen').value;
+  const d={
+    docente:doc,grado:g,campo:cam,disciplina:dis,
+    escuela:document.getElementById('d-esc').value,
+    cct:document.getElementById('d-cct').value,
+    cicloEscolar:document.getElementById('d-cic').value,
+    grupo:document.getElementById('d-grp').value,
+    trimestre:document.getElementById('d-tri').value,
+    numSesiones:document.getElementById('d-ses').value,
+    duracionSesion:document.getElementById('d-dur').value,
+    nombreProyecto:document.getElementById('d-proy').value||'Proyecto del trimestre',
+    modalidad:document.getElementById('d-mod').value,
+    ejes:document.getElementById('d-ejes').value,
+    problematizacion:document.getElementById('d-prob').value,
+    proposito:document.getElementById('d-prop').value,
+    productoIntegrador:document.getElementById('d-prod').value,
+    disciplinasAdicionales:document.getElementById('d-inter').value,
+    contenidos:cD,
+  };
+  try{
+    let prompt,nomDoc;
+    if(tgen==='semanal'){
+      const ses=parseInt(document.getElementById('d-semsem').value)||3;
+      document.getElementById('gen-d-msg').innerHTML=`Generando — Semana ${semAct}...<br><small>20-40 segundos</small>`;
+      prompt=buildPromptPlanDidacticoSemanal(d,semAct,ses);
+      nomDoc=`Plano_Sem${semAct}_${dis}_${g}`;
+      semsGen.add(semAct);
+    }else{
+      document.getElementById('gen-d-msg').innerHTML=`Generando Plano Didáctico...<br><small>40-90 segundos</small>`;
+      prompt=buildPromptPlanDidacticoTrimestre(d);
+      nomDoc=`Plano_T${d.trimestre}_${dis}_${g}`;
+    }
+    const txt=await llamarGemini(prompt);
+    document.getElementById('rd-txt').textContent=txt;
+    document.getElementById('res-d').style.display='block';
+    document.getElementById('gen-d').style.display='none';
+    document.getElementById('bgd').disabled=false;
+    document.getElementById('res-d').scrollIntoView({behavior:'smooth'});
+    if(tgen==='semanal') buildSemGrid();
+    saveHist('didactico',`Plano Didáctico — ${dis} ${g}° T${d.trimestre}${tgen==='semanal'?' Sem'+semAct:''}`,txt,d);
+  }catch(err){
+    document.getElementById('gen-d').style.display='none';
+    document.getElementById('bgd').disabled=false;
+    showErr('err-d','Error: '+err.message);
+  }
+}
+
+// ── DESCARGA ──────────────────────────────────────────────
+function dlRes(pfx,nom){
+  const txt=document.getElementById('r'+pfx+'-txt').textContent;
+  if(!txt) return;
+  const g=document.getElementById(pfx+'-gra').value;
+  const d=document.getElementById(pfx+'-dis').value;
+  const f=new Date().toLocaleDateString('es-MX').replace(/\//g,'-');
+  descargarWord(txt,`${nom}_${d}_${g}grado_${f}.doc`);
+}
+
+function limpiarD(){
+  cD=[];
+  document.getElementById('d-cnt-lista').innerHTML='';
+  document.getElementById('ps-d').style.display='none';
+  document.getElementById('res-d').style.display='none';
+  ['d-proy','d-prob','d-prop','d-prod','d-inter'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ── HISTORIAL ─────────────────────────────────────────────
+function saveHist(tipo,nombre,contenido,datos){
+  const h={id:Date.now(),tipo,nombre,contenido,docente:datos.docente,grado:datos.grado,disciplina:datos.disciplina,fecha:new Date().toLocaleDateString('es-MX')};
+  historial.unshift(h);
+  localStorage.setItem('nem_hist',JSON.stringify(historial.slice(0,60)));
+  renderHist();
+}
+function renderHist(){
+  const el=document.getElementById('hist-lista');
+  if(!historial.length){
+    el.innerHTML='<div style="text-align:center;padding:60px;color:var(--gris);"><div style="font-size:48px;margin-bottom:12px;">📋</div><div>Aún no tienes planeaciones guardadas.</div></div>';
     return;
   }
-  lista.innerHTML = historial.map(h => `
-    <div class="historial-item" onclick="verPlaneacion(${h.id})">
-      <strong style="color:var(--blanco);">${h.tema || 'Sin tema'}</strong>
-      <div style="color:var(--gris);font-size:13px;margin-top:4px;">${h.asignatura || ''} · ${h.grado || ''}</div>
-      <div class="historial-meta">
-        <span>👤 ${h.docente}</span>
-        <span>📅 ${h.fecha}</span>
-        <span onclick="eliminarH(event,${h.id})" style="color:var(--error);cursor:pointer;">🗑 Eliminar</span>
+  el.innerHTML=historial.map(h=>`
+    <div class="hist-item" onclick="verHist(${h.id})">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="htipo ${h.tipo}">${h.tipo==='analitico'?'📋 Analítico':'📝 Didáctico'}</span>
+        <div class="hist-nom">${h.nombre}</div>
+      </div>
+      <div class="hist-meta">
+        <span>👤 ${h.docente}</span><span>📅 ${h.fecha}</span>
+        <span onclick="delHist(event,${h.id})" style="color:var(--rojo);cursor:pointer;">🗑 Eliminar</span>
       </div>
     </div>`).join('');
 }
-
-function verPlaneacion(id) {
-  const h = historial.find(x => x.id === id);
-  if (!h) return;
-  document.getElementById('resultado-texto').textContent = h.contenido;
-  document.getElementById('resultado-caja').style.display = 'block';
-  irPaso(5);
-  document.querySelectorAll('.tab-contenido').forEach(t => t.classList.remove('activo'));
-  document.getElementById('tab-planeacion').classList.add('activo');
-  document.getElementById('resultado-caja').scrollIntoView({ behavior: 'smooth' });
+function verHist(id){
+  const h=historial.find(x=>x.id===id);
+  if(!h) return;
+  const pfx=h.tipo==='analitico'?'a':'d';
+  setTipo(pfx);
+  document.getElementById('r'+pfx+'-txt').textContent=h.contenido;
+  document.getElementById('res-'+pfx).style.display='block';
+  document.querySelector('.nav-tab').click();
 }
-
-function eliminarH(e, id) {
+function delHist(e,id){
   e.stopPropagation();
-  if (!confirm('¿Eliminar esta planeación?')) return;
-  historial = historial.filter(h => h.id !== id);
-  localStorage.setItem('nem_historial', JSON.stringify(historial));
-  cargarHistorial();
+  if(!confirm('¿Eliminar esta planeación del historial?')) return;
+  historial=historial.filter(h=>h.id!==id);
+  localStorage.setItem('nem_hist',JSON.stringify(historial));
+  renderHist();
 }
 
-// ============================================================
-// TABLA USUARIOS
-// ============================================================
-function cargarTablaUsuarios() {
-  document.getElementById('tabla-usuarios-body').innerHTML = USUARIOS.map((u, i) => `
+// ── TABLA USUARIOS ────────────────────────────────────────
+function loadUsrTable(){
+  document.getElementById('tb-usr').innerHTML=USUARIOS_DB.map((u,i)=>`
     <tr>
       <td style="color:var(--gris);">${i+1}</td>
-      <td><code style="color:var(--acento);">${u.usuario}</code></td>
+      <td><code style="background:var(--fondo);padding:2px 6px;border-radius:4px;">${u.usuario}</code></td>
       <td>${u.nombre}</td>
-      <td><span class="badge badge-${u.rol}">${u.rol === 'admin' ? '🔑 Admin' : '👩‍🏫 Docente'}</span></td>
-      <td><span style="color:var(--exito);">● Activo</span></td>
+      <td style="font-size:12px;color:var(--gris);">${u.escuela}</td>
+      <td><span class="badge badge-${u.rol==='admin'?'a':'d'}">${u.rol==='admin'?'🔑 Admin':'👩‍🏫 Docente'}</span></td>
     </tr>`).join('');
 }
+
+// ── UTILS ─────────────────────────────────────────────────
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+function hideErr(id){document.getElementById(id).style.display='none';}
 </script>
 </body>
 </html>
