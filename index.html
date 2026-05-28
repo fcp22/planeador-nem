@@ -742,8 +742,8 @@ async function genAnalitico(){
     t3:{contenidos:cA.t3,modalidad:document.getElementById('a-pm3').value,nombreProyecto:document.getElementById('a-pn3').value,proposito:document.getElementById('a-pp3').value,productos:document.getElementById('a-pr3').value},
   };
   try{
-    const txt=await llamarGemini(buildPromptAnalitico(d));
-    document.getElementById('ra-txt').textContent=txt;
+    const txt=await generarAnalitico(d);
+    document.getElementById('ra-txt').innerHTML=txt;
     document.getElementById('res-a').style.display='block';
     document.getElementById('gen-a').style.display='none';
     document.getElementById('bga').disabled=false;
@@ -800,8 +800,8 @@ async function genDidactico(){
       prompt=buildPromptPlanDidacticoTrimestre(d);
       nomDoc=`Plano_T${d.trimestre}_${dis}_${g}`;
     }
-    const txt=await llamarGemini(prompt);
-    document.getElementById('rd-txt').textContent=txt;
+    const txt=await (tgen==='semanal' ? llamarGemini(prompt) : generarPlanDidacticoTrimestre(d));
+    document.getElementById('rd-txt').innerHTML=txt;
     document.getElementById('res-d').style.display='block';
     document.getElementById('gen-d').style.display='none';
     document.getElementById('bgd').disabled=false;
@@ -817,7 +817,7 @@ async function genDidactico(){
 
 // ── DESCARGA ──────────────────────────────────────────────
 function dlRes(pfx,nom){
-  const txt=document.getElementById('r'+pfx+'-txt').textContent;
+  const txt=document.getElementById('r'+pfx+'-txt').innerHTML;
   if(!txt) return;
   const g=document.getElementById(pfx+'-gra').value;
   const d=document.getElementById(pfx+'-dis').value;
@@ -863,7 +863,7 @@ function verHist(id){
   if(!h) return;
   const pfx=h.tipo==='analitico'?'a':'d';
   setTipo(pfx);
-  document.getElementById('r'+pfx+'-txt').textContent=h.contenido;
+  document.getElementById('r'+pfx+'-txt').innerHTML=h.contenido;
   document.getElementById('res-'+pfx).style.display='block';
   document.querySelector('.nav-tab').click();
 }
