@@ -1,31 +1,53 @@
 // ============================================================
-// GENERADORES DE PROMPTS PARA GEMINI
+// GENERADORES DE PROMPTS — PLANEADOR NEM
 // Genera Programa Analítico y Plano Didáctico
 // en el formato exacto de la Escuela Felipe Carrillo Puerto
 // ============================================================
 
-// ── GEMINI CONFIG ─────────────────────────────────────────
-const GEMINI_KEY = 'AIzaSyBRhi8NSVAB0oLE8d7xOhHyAKDuAe3zWrk';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+// ── GROQ CONFIG ───────────────────────────────────────────
+const GROQ_KEY = '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';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
 async function llamarGemini(prompt) {
-  const res = await fetch(GEMINI_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
-    })
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error?.message || `Error HTTP ${res.status}`);
+  let intentos = 0;
+  const maxIntentos = 3;
+  while (intentos < maxIntentos) {
+    try {
+      const res = await fetch(GROQ_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GROQ_KEY}`
+        },
+        body: JSON.stringify({
+          model: GROQ_MODEL,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+          max_tokens: 8192
+        })
+      });
+      if (res.status === 429) {
+        intentos++;
+        if (intentos < maxIntentos) { await new Promise(r => setTimeout(r, 3000 * intentos)); continue; }
+        throw new Error('El servicio está ocupado. Por favor espera unos segundos e intenta de nuevo.');
+      }
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error?.message || `Error HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      const texto = data.choices?.[0]?.message?.content;
+      if (!texto) throw new Error('Respuesta vacía del servicio de IA');
+      return texto;
+    } catch (e) {
+      if (intentos >= maxIntentos - 1) throw e;
+      intentos++;
+      await new Promise(r => setTimeout(r, 2000));
+    }
   }
-  const data = await res.json();
-  const texto = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!texto) throw new Error('Respuesta vacía de Gemini');
-  return texto;
 }
+
 
 // ============================================================
 // GENERADOR 1: PROGRAMA ANALÍTICO
