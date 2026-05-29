@@ -135,6 +135,7 @@ input,select,textarea,button{font-family:inherit;font-size:14px;}
 .res-txt{background:var(--fondo);border-radius:8px;padding:18px;font-size:13px;line-height:1.7;white-space:pre-wrap;max-height:520px;overflow-y:auto;color:var(--gris-oscuro);font-family:'Courier New',monospace;}
 .res-txt::-webkit-scrollbar{width:6px;}
 .res-txt::-webkit-scrollbar-thumb{background:var(--borde);border-radius:3px;}
+.res-txt{user-select:none;-webkit-user-select:none;-moz-user-select:none;}
 
 /* HISTORIAL */
 .hist-item{background:var(--blanco);border:1px solid var(--borde);border-radius:8px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .2s;}
@@ -467,11 +468,12 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
           <div class="res-hdr">
             <h3>✅ Programa Analítico generado</h3>
             <div style="display:flex;gap:8px;">
-              <button class="btn-word" onclick="dlRes('a','Prog_Analitico')">⬇️ Descargar Word</button>
+              <button class="btn-word" id="btn-dl-a" onclick="dlRes('a','Prog_Analitico')">⬇️ Descargar Word</button>
+              <span id="badge-dl-a" style="font-size:12px;color:var(--gris);"></span>
               <button class="btn-sec" onclick="document.getElementById('res-a').style.display='none'">Cerrar</button>
             </div>
           </div>
-          <div class="res-txt" id="ra-txt"></div>
+          <div class="res-txt" id="ra-txt" oncontextmenu="return false;"></div>
         </div>
       </div><!-- /sec-a -->
 
@@ -643,11 +645,12 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
           <div class="res-hdr">
             <h3>✅ Plano Didáctico generado</h3>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button class="btn-word" onclick="dlRes('d','Plano_Didactico')">⬇️ Descargar Word</button>
+              <button class="btn-word" id="btn-dl-d" onclick="dlRes('d','Plano_Didactico')">⬇️ Descargar Word</button>
+              <span id="badge-dl-d" style="font-size:12px;color:var(--gris);"></span>
               <button class="btn-sec" onclick="document.getElementById('res-d').style.display='none'">Cerrar</button>
             </div>
           </div>
-          <div class="res-txt" id="rd-txt"></div>
+          <div class="res-txt" id="rd-txt" oncontextmenu="return false;"></div>
         </div>
       </div><!-- /sec-d -->
     </div><!-- /tab-nueva -->
@@ -1226,6 +1229,7 @@ async function genAnalitico(){
     document.getElementById('gen-a').style.display='none';
     document.getElementById('bga').disabled=false;
     document.getElementById('res-a').scrollIntoView({behavior:'smooth'});
+    actualizarBadgeDescarga('a');
     saveHist('analitico',`Prog. Analítico — ${dis} ${g}° — ${d.t1.nombreProyecto||''}`,txt,d);
   }catch(err){
     document.getElementById('gen-a').style.display='none';
@@ -1298,6 +1302,7 @@ async function genDidactico(){
     document.getElementById('gen-d').style.display='none';
     document.getElementById('bgd').disabled=false;
     document.getElementById('res-d').scrollIntoView({behavior:'smooth'});
+    actualizarBadgeDescarga('d');
     if(tgen==='semanal') buildSemGrid();
     saveHist('didactico',`Plano Didáctico — ${dis} ${g}° T${d.trimestre}${tgen==='semanal'?' Sem'+semAct:''}`,txt,d);
   }catch(err){
@@ -1308,13 +1313,85 @@ async function genDidactico(){
 }
 
 // ── DESCARGA ──────────────────────────────────────────────
-function dlRes(pfx,nom){
-  const txt=document.getElementById('r'+pfx+'-txt').innerHTML;
+// ── CONTROL DE DESCARGAS POR TRIMESTRE ───────────────────
+const LIMITE_DESCARGAS = 3;
+
+function claveDescarga(pfx) {
+  const trim = obtenerTrimestreActual();
+  const usr = getUsuario();
+  const id = usr?.curp || usr?.usuario || 'local';
+  return `ndl_${id}_${pfx}_${trim}`;
+}
+
+function contarDescargas(pfx) {
+  return parseInt(localStorage.getItem(claveDescarga(pfx)) || '0');
+}
+
+function incrementarDescarga(pfx) {
+  const n = contarDescargas(pfx) + 1;
+  localStorage.setItem(claveDescarga(pfx), n);
+  return n;
+}
+
+function actualizarBadgeDescarga(pfx) {
+  const badge = document.getElementById('badge-dl-'+pfx);
+  const btn = document.getElementById('btn-dl-'+pfx);
+  if(!badge || !btn) return;
+  const usr = getUsuario();
+  // Admin no tiene límite
+  if(usr?.rol === 'admin') {
+    badge.textContent = '';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    return;
+  }
+  const n = contarDescargas(pfx);
+  const restantes = Math.max(0, LIMITE_DESCARGAS - n);
+  if(restantes === 0) {
+    badge.textContent = '🔒 Límite alcanzado este trimestre';
+    badge.style.color = 'var(--rojo)';
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+  } else {
+    badge.textContent = `${restantes} descarga${restantes===1?'':'s'} disponible${restantes===1?'':'s'} este trimestre`;
+    badge.style.color = 'var(--gris)';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+async function dlRes(pfx, nom) {
+  const txt = document.getElementById('r'+pfx+'-txt').innerHTML;
   if(!txt) return;
-  const g=document.getElementById(pfx+'-gra').value;
-  const d=document.getElementById(pfx+'-dis').value;
-  const f=new Date().toLocaleDateString('es-MX').replace(/\//g,'-');
-  descargarWord(txt,`${nom}_${d}_${g}grado_${f}.doc`);
+
+  const usr = getUsuario();
+  const esAdmin = usr?.rol === 'admin';
+
+  // Verificar límite (solo para docentes)
+  if(!esAdmin) {
+    const n = contarDescargas(pfx);
+    if(n >= LIMITE_DESCARGAS) {
+      alert('Has alcanzado el límite de ' + LIMITE_DESCARGAS + ' descargas de este tipo por trimestre.\n\nContacta al director para solicitar una descarga adicional.');
+      return;
+    }
+  }
+
+  const g = document.getElementById(pfx+'-gra').value;
+  const d = document.getElementById(pfx+'-dis').value;
+  const f = new Date().toLocaleDateString('es-MX').replace(/\//g,'-');
+  descargarWord(txt, `${nom}_${d}_${g}grado_${f}.doc`);
+
+  // Registrar descarga
+  if(!esAdmin) {
+    const total = incrementarDescarga(pfx);
+    actualizarBadgeDescarga(pfx);
+    // Registrar en Firebase
+    const curp = usr?.curp || usr?.usuario || '';
+    if(curp) {
+      const tipo = pfx === 'a' ? 'analitico' : 'didactico';
+      await fbRegistrarDocumento(curp, tipo);
+    }
+  }
 }
 
 function limpiarD(){
@@ -1398,9 +1475,13 @@ async function loadUsrTable(){
       <td style="padding:10px 14px;border-bottom:1px solid var(--gris-claro);font-size:13px;">${acceso}</td>
       <td style="padding:10px 14px;border-bottom:1px solid var(--gris-claro);">
         ${estaAdmin ? '<span style="font-size:12px;color:var(--gris);">Admin</span>' :
-          activo
-          ? `<button onclick="toggleUsuario('${curp}',false,this)" style="padding:4px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;color:var(--rojo);font-size:12px;cursor:pointer;">Desactivar</button>`
-          : `<button onclick="toggleUsuario('${curp}',true,this)" style="padding:4px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;color:var(--verde);font-size:12px;cursor:pointer;">Activar</button>`
+          `<div style="display:flex;flex-direction:column;gap:4px;">
+            ${activo
+              ? `<button onclick="toggleUsuario('${curp}',false,this)" style="padding:4px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;color:var(--rojo);font-size:11px;cursor:pointer;">🔴 Desactivar</button>`
+              : `<button onclick="toggleUsuario('${curp}',true,this)" style="padding:4px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;color:var(--verde);font-size:11px;cursor:pointer;">🟢 Activar</button>`
+            }
+            <button onclick="resetearDescargas('${curp}',this)" style="padding:4px 10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;color:var(--azul-med);font-size:11px;cursor:pointer;">🔓 Resetear descargas</button>
+          </div>`
         }
       </td>
     </tr>`;
@@ -1415,6 +1496,22 @@ async function toggleUsuario(curp, activar, btn){
   if(activar) await desbloquearUsuario(curp);
   else await bloquearUsuario(curp);
   await loadUsrTable();
+}
+
+async function resetearDescargas(curp, btn){
+  if(!confirm('¿Resetear el contador de descargas de este trimestre para este maestro?\nPodrá volver a descargar 3 documentos de cada tipo.')) return;
+  btn.disabled = true;
+  btn.textContent = '...';
+  const trim = obtenerTrimestreActual();
+  // Resetear en Firebase
+  await fbSetUsuario(curp, {
+    [`${trim}_docs`]: 0,
+    [`${trim}_dl_reset`]: new Date().toISOString()
+  });
+  // Resetear en localStorage del admin (por si acaso)
+  btn.textContent = '✓';
+  setTimeout(()=>{ btn.textContent='🔓 Resetear'; btn.disabled=false; }, 2000);
+  alert('Descargas reseteadas. El maestro podrá descargar nuevamente al iniciar su próxima sesión.');
 }
 
 
