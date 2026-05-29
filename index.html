@@ -469,9 +469,23 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
         </div>
 
         <div class="card">
-          <div class="card-title">🎯 Proyecto y datos pedagógicos</div>
-          <div class="proy-lista" id="ps-d"></div>
-          <div class="campo mt12"><label>Nombre del proyecto</label><input type="text" id="d-proy" placeholder="Escribe el nombre o selecciona de la lista"></div>
+          <div class="card-title">🎯 Modalidad y datos pedagógicos</div>
+
+          <!-- SELECTOR PRINCIPAL: Proyecto o Secuencia Didáctica -->
+          <div style="display:flex;gap:12px;margin-bottom:20px;">
+            <div class="tipo-btn on" id="mbtn-p" onclick="setModalidadD('proyecto')" style="flex:1;padding:14px;">
+              <span class="ico" style="font-size:22px;">📋</span>
+              <div class="tit">Proyecto</div>
+              <div class="desc">F1 Planeación · F2 Acción · F3 Intervención</div>
+            </div>
+            <div class="tipo-btn" id="mbtn-s" onclick="setModalidadD('secuencia')" style="flex:1;padding:14px;">
+              <span class="ico" style="font-size:22px;">📝</span>
+              <div class="tit">Secuencia Didáctica</div>
+              <div class="desc">Inicio · Desarrollo · Cierre por sesión</div>
+            </div>
+          </div>
+
+          <!-- CAMPOS COMUNES -->
           <div class="f2">
             <div class="campo"><label>Modalidad / Metodología</label>
               <select id="d-mod">
@@ -487,12 +501,32 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
               <input type="text" id="d-ejes" value="Inclusión, Pensamiento crítico, Igualdad de género, Vida saludable, Apropiación de las culturas a través de la lectura y la escritura">
             </div>
           </div>
-          <div class="campo"><label>Problematización de la realidad</label><textarea id="d-prob" placeholder="Describe la problemática o situación de aprendizaje..."></textarea></div>
-          <div class="campo"><label>Propósito u objetivo</label><textarea id="d-prop" placeholder="Propósito del plano didáctico..."></textarea></div>
-          <div class="campo"><label>Producto integrador</label><input type="text" id="d-prod" placeholder="Ej. Cartel con palabras mayas, Ensayo literario, Podcast..."></div>
+          <div class="campo"><label>Propósito u objetivo</label><textarea id="d-prop" placeholder="¿Qué lograrán los alumnos al finalizar este trimestre?"></textarea></div>
           <div class="campo"><label>Interdisciplinariedad (opcional)</label>
             <textarea id="d-inter" placeholder="Ej. Inglés: Contenido X | PDA X | Producto: Texto en inglés"></textarea>
             <div class="ayuda">Describe cómo se vinculan otras disciplinas del campo formativo</div>
+          </div>
+
+          <!-- SOLO PROYECTO -->
+          <div id="campos-proyecto">
+            <div class="proy-lista" id="ps-d"></div>
+            <div class="campo mt12"><label>Nombre del proyecto</label><input type="text" id="d-proy" placeholder="Escribe el nombre o selecciona de la lista"></div>
+            <div class="campo"><label>Problematización de la realidad</label><textarea id="d-prob" placeholder="Describe la problemática o situación de aprendizaje que da origen al proyecto..."></textarea></div>
+            <div class="campo"><label>Producto integrador</label><input type="text" id="d-prod" placeholder="Ej. Cartel, Ensayo literario, Podcast, Maqueta..."></div>
+          </div>
+
+          <!-- SOLO SECUENCIA DIDÁCTICA -->
+          <div id="campos-secuencia" class="hidden">
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#1e40af;">
+              <strong>Modo Secuencia Didáctica:</strong> La IA diseñará todas las sesiones del trimestre con Inicio, Desarrollo y Cierre, incluyendo tiempos, actividades, materiales y rúbrica de evaluación. Solo necesitas indicar el propósito y elegir los contenidos arriba.
+            </div>
+            <div class="campo"><label>Situación o contexto de aprendizaje (opcional)</label>
+              <textarea id="d-situacion" rows="3" placeholder="Ej: Los alumnos han mostrado dificultades en comprensión lectora. Esta secuencia busca desarrollar estrategias de lectura activa a partir de textos del entorno comunitario..."></textarea>
+              <div class="ayuda">Puedes describir el contexto o dejar que la IA lo plantee a partir de los contenidos</div>
+            </div>
+            <div class="campo"><label>Evidencia o producto esperado al final de la secuencia</label>
+              <input type="text" id="d-prod-sec" placeholder="Ej. Antología de textos, Mapa conceptual, Exposición oral, Texto argumentativo...">
+            </div>
           </div>
         </div>
 
@@ -631,6 +665,20 @@ function setTipo(t){
   document.getElementById('tbtn-d').classList.toggle('on',t==='d');
   document.getElementById('sec-a').classList.toggle('hidden',t!=='a');
   document.getElementById('sec-d').classList.toggle('hidden',t!=='d');
+}
+
+// ── MODALIDAD DIDÁCTICO: Proyecto vs Secuencia ────────────
+let modalidadD = 'proyecto';
+function setModalidadD(m){
+  modalidadD = m;
+  document.getElementById('mbtn-p').classList.toggle('on', m==='proyecto');
+  document.getElementById('mbtn-s').classList.toggle('on', m==='secuencia');
+  document.getElementById('campos-proyecto').classList.toggle('hidden', m!=='proyecto');
+  document.getElementById('campos-secuencia').classList.toggle('hidden', m!=='secuencia');
+  // Sincronizar el select de modalidad
+  const sel = document.getElementById('d-mod');
+  if(m==='secuencia') sel.value = 'Secuencia didáctica';
+  else if(sel.value==='Secuencia didáctica') sel.value = 'Aprendizaje en proyectos comunitarios';
 }
 
 // ── TRIM TABS ─────────────────────────────────────────────
@@ -956,9 +1004,15 @@ async function genDidactico(){
     ejes:document.getElementById('d-ejes').value,
     problematizacion:document.getElementById('d-prob').value,
     proposito:document.getElementById('d-prop').value,
-    productoIntegrador:document.getElementById('d-prod').value,
+    productoIntegrador: modalidadD==='secuencia'
+      ? (document.getElementById('d-prod-sec').value||'')
+      : (document.getElementById('d-prod').value||''),
+    problematizacion: modalidadD==='proyecto'
+      ? (document.getElementById('d-prob')?.value||'')
+      : (document.getElementById('d-situacion')?.value||''),
     disciplinasAdicionales:document.getElementById('d-inter').value,
     contenidos:cD,
+    tipoPlano: modalidadD,
   };
   try{
     let prompt,nomDoc;
@@ -969,11 +1023,18 @@ async function genDidactico(){
       nomDoc=`Plano_Sem${semAct}_${dis}_${g}`;
       semsGen.add(semAct);
     }else{
-      document.getElementById('gen-d-msg').innerHTML=`Generando Plano Didáctico...<br><small>40-90 segundos</small>`;
-      prompt=buildPromptPlanDidacticoTrimestre(d);
+      if(modalidadD==='secuencia'){
+        document.getElementById('gen-d-msg').innerHTML=`Generando Secuencia Didáctica...<br><small>Diseñando sesiones con Inicio/Desarrollo/Cierre...</small>`;
+      } else {
+        document.getElementById('gen-d-msg').innerHTML=`Generando Plano Didáctico...<br><small>40-90 segundos</small>`;
+      }
       nomDoc=`Plano_T${d.trimestre}_${dis}_${g}`;
     }
-    const txt=await (tgen==='semanal' ? llamarGemini(prompt) : generarPlanDidacticoTrimestre(d));
+    const txt=await (tgen==='semanal'
+      ? llamarGemini(prompt)
+      : modalidadD==='secuencia'
+        ? generarSecuenciaDidactica(d)
+        : generarPlanDidacticoTrimestre(d));
     document.getElementById('rd-txt').innerHTML=txt;
     document.getElementById('res-d').style.display='block';
     document.getElementById('gen-d').style.display='none';
