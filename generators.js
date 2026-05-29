@@ -160,6 +160,9 @@ function construirHTMLAnalitico(d, ia) {
     const tKey = 't'+tNum;
     const tData = d[tKey] || {};
     const iaT = ia['t'+tNum] || {};
+    // Usar ejes y perfil del maestro si los seleccionó; si no, los de la IA
+    const ejesDoc = d.ejesSeleccionados || iaT.ejes || '';
+    const perfilDoc = d.perfilSeleccionado || iaT.perfil || '';
     return `
 <p style="font-weight:bold;">${nomTrim.toUpperCase()}</p>
 ${tablaSesiones(tNum)}
@@ -173,8 +176,8 @@ ${tabla(
 ${tablaContenidos(tNum)}
 <p style="font-weight:bold;">ELEMENTOS QUE SE DESARROLLAN CON EL CONTENIDO ABORDADO:</p>
 <p style="font-weight:bold;">PERFIL DE EGRESO:</p>
-<p>${iaT.perfil||''}</p>
-<p style="font-weight:bold;">EJES ARTICULADORES: ${iaT.ejes||''}</p>
+<p>${perfilDoc.replace(/\n/g,'<br><br>')}</p>
+<p style="font-weight:bold;">EJES ARTICULADORES: ${ejesDoc}</p>
 <p style="font-weight:bold;">FINALIDADES DEL CAMPO FORMATIVO:</p>
 <p>${iaT.finalidades||''}</p>
 <p style="font-weight:bold;">ESPECIFICIDAD DEL CAMPO FORMATIVO:</p>
@@ -670,7 +673,7 @@ ${tabla(
 ${tabla(
   tr(th('Situación de aprendizaje / Problematización'), td(ia.situacion||d.problematizacion||'')) +
   tr(th('Propósito u Objetivo'), td(d.proposito||'')) +
-  tr(th('Perfil de egreso'), td(ia.perfil||'')) +
+  tr(th('Perfil de egreso'), td((d.perfil||ia.perfil||'').replace(/\n/g,'<br><br>'))) +
   tr(th('Finalidades del campo formativo'), td(ia.finalidades||'')) +
   tr(th('Especificidades del campo formativo'), td(ia.especificidad||'')) +
   tr(th('Ejes Articuladores'), td(d.ejes||''))
