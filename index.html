@@ -255,7 +255,75 @@ input,select,textarea,button{font-family:inherit;font-size:14px;}
             <div class="campo"><label>Municipio / Localidad</label><input type="text" id="a-mun" placeholder="Ticul, Yucatán"></div>
             <div class="campo"><label>Escuela indígena</label><select id="a-ind"><option value="no">No</option><option value="si">Sí</option></select></div>
           </div>
-          <div class="campo"><label>Problemática detectada y jerarquizada</label><textarea id="a-prob" placeholder="Describe la problemática principal del centro escolar..."></textarea></div>
+          <div class="campo"><label>Problemática detectada y jerarquizada</label><textarea id="a-prob" placeholder="Ej: Problemática 1: Expresión escrita y comprensión lectora..." rows="3"></textarea></div>
+        </div>
+
+        <!-- CARD DOCENTES POR DISCIPLINA -->
+        <div class="card">
+          <div class="card-title">👥 Docentes por disciplina del campo</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:16px;">Escribe el nombre de cada docente según su disciplina. Se imprimirá tal como lo escribas.</p>
+          <div id="tabla-docentes-campo">
+            <p style="font-size:13px;color:var(--gris);">Primero selecciona el campo formativo arriba.</p>
+          </div>
+        </div>
+
+        <!-- CARD CONTEXTO SOCIOEDUCATIVO -->
+        <div class="card">
+          <div class="card-title">🏫 Contexto socioeducativo — PLANO UNO</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:16px;">&#9888;&#65039; Este texto lo escribe el maestro. La IA <strong>no</strong> lo genera. Se imprimirá exactamente como lo capturas aquí.</p>
+
+          <div class="campo">
+            <label>1. Datos de identificación de la escuela</label>
+            <textarea id="ctx-1" rows="4" placeholder="Ej: La escuela secundaria general Felipe Carrillo Puerto, CCT 31DES0008B, está ubicada en la calle 9 entre 24 y 26 de Ticul, Yucatán, C.P. 97860. La matrícula es de 654 alumnos atendidos por 37 maestros."></textarea>
+            <div class="ayuda">Dirección, CCT, matrícula, número de maestros</div>
+          </div>
+
+          <div class="campo">
+            <label>2. Descripción del contexto escolar</label>
+            <textarea id="ctx-2" rows="4" placeholder="Ej: Funciona de 07:00 a.m. a 13:10 p.m. con 7 módulos de 50 minutos. Consta de 18 aulas, 1 biblioteca, 2 sanitarios, 1 plaza cívica..."></textarea>
+            <div class="ayuda">Horario, aulas, instalaciones, plantilla docente, ambiente de trabajo</div>
+          </div>
+
+          <div class="campo">
+            <label>3. Contexto familiar, sociocultural y lingüístico</label>
+            <textarea id="ctx-3" rows="4" placeholder="Ej: La encuesta socioeconómica indica clase media baja y baja. Actividad económica: maquila de artesanías y zapatería. 100% habla español como lengua materna."></textarea>
+            <div class="ayuda">Nivel económico, actividades de los padres, lengua materna, riesgos sociales</div>
+          </div>
+
+          <div class="campo">
+            <label>4. Características y necesidades de los alumnos</label>
+            <textarea id="ctx-4" rows="4" placeholder="Ej: La reprobación es del 12%, rezago del 2%, deserción del 5%. Se atenderán alumnos con NEE. La principal barrera es la situación económica."></textarea>
+            <div class="ayuda">Reprobación, rezago, deserción, NEE, barreras de aprendizaje</div>
+          </div>
+
+          <div class="campo">
+            <label>5. Características de los ambientes de aprendizaje</label>
+            <textarea id="ctx-5" rows="3" placeholder="Ej: Se planean clases para todos los estilos de aprendizaje. Se detectó incremento en uso de dispositivos móviles que afecta atención y pensamiento crítico."></textarea>
+            <div class="ayuda">Estilos de aprendizaje, uso de tecnología, estrategias compensatorias</div>
+          </div>
+
+          <div class="campo">
+            <label>6. Resultados de evaluaciones internas y externas (IDAESY u otras)</label>
+            <textarea id="ctx-6" rows="4" placeholder="Ej: IDAESY — Español: Inicial 22.3%, Básico 16.3%, Intermedio 42.1%, Avanzado 19.3%. Matemáticas: Inicial 40.1%, Básico 16.8%, Intermedio 21.8%, Avanzado 21.3%."></textarea>
+            <div class="ayuda">Porcentajes por nivel de logro en cada materia evaluada</div>
+          </div>
+
+          <div class="campo">
+            <label>7. Problemática detectada y jerarquizada</label>
+            <textarea id="ctx-7" rows="5" placeholder="Problemática 1: Expresión escrita y comprensión lectora. Los estudiantes presentan dificultades para redactar textos...
+
+Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textarea>
+            <div class="ayuda">Lista y describe las problemáticas en orden de prioridad</div>
+          </div>
+        </div>
+
+        <!-- CARD SESIONES POR DISCIPLINA -->
+        <div class="card">
+          <div class="card-title">&#128197; Sesiones por disciplina y evaluación</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:16px;">Indica cuántas sesiones tiene cada disciplina en cada trimestre y el instrumento de evaluación al cierre.</p>
+          <div id="tabla-sesiones-disciplinas">
+            <p style="font-size:13px;color:var(--gris);">Primero selecciona el campo formativo arriba.</p>
+          </div>
         </div>
 
         <div class="card">
@@ -596,6 +664,104 @@ function updDisc(pfx){
   (CAMPOS_POR_GRADO[g]?.[c]||[]).forEach(d=>{
     const o=document.createElement('option');o.value=d;o.textContent=d;s.appendChild(o);
   });
+  if(pfx==='a') { renderTablaDocentes(c,g); renderTablaSesiones(c,g); }
+}
+
+// ── TABLA DOCENTES DINAMICA ───────────────────────────────
+function renderTablaDocentes(campo, grado){
+  const cont = document.getElementById('tabla-docentes-campo');
+  if(!cont) return;
+  const disciplinas = CAMPOS_POR_GRADO[grado]?.[campo] || [];
+  if(!disciplinas.length){ cont.innerHTML='<p style="font-size:13px;color:var(--gris);">Sin disciplinas detectadas.</p>'; return; }
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">';
+  disciplinas.forEach(d=>{
+    const id = 'doc-'+d.toLowerCase().replace(/[^a-z0-9]/g,'');
+    html += `<div class="campo">
+      <label>Docente(s) de ${d}</label>
+      <textarea id="${id}" rows="3" data-disc="${d}" placeholder="Nombre completo del docente de ${d}"></textarea>
+    </div>`;
+  });
+  html += '</div>';
+  cont.innerHTML = html;
+}
+
+// ── TABLA SESIONES POR DISCIPLINA ────────────────────────
+function renderTablaSesiones(campo, grado){
+  const cont = document.getElementById('tabla-sesiones-disciplinas');
+  if(!cont) return;
+  const disciplinas = CAMPOS_POR_GRADO[grado]?.[campo] || [];
+  if(!disciplinas.length){ cont.innerHTML='<p style="font-size:13px;color:var(--gris);">Sin disciplinas detectadas.</p>'; return; }
+  let html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">';
+  html += '<thead><tr>';
+  html += '<th style="border:1px solid #cbd5e1;padding:8px;background:#f1f5f9;font-size:12px;text-align:left;">Trimestre</th>';
+  disciplinas.forEach(d=>{
+    html += `<th style="border:1px solid #cbd5e1;padding:8px;background:#f1f5f9;font-size:12px;">${d}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+  const trims = ['Primero (Sep-Nov)','Segundo (Dic-Mar)','Tercero (Abr-Jun)'];
+  trims.forEach((tnom,ti)=>{
+    html += `<tr><td style="border:1px solid #cbd5e1;padding:8px;font-size:12px;font-weight:600;background:#f8fafc;">${tnom}</td>`;
+    disciplinas.forEach(d=>{
+      const id = `ses-t${ti+1}-`+d.toLowerCase().replace(/[^a-z0-9]/g,'');
+      html += `<td style="border:1px solid #cbd5e1;padding:4px;"><input type="number" id="${id}" data-trim="${ti+1}" data-disc="${d}" min="1" max="100" placeholder="0" style="width:100%;padding:6px;border:1.5px solid #cbd5e1;border-radius:6px;text-align:center;"></td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '<div style="margin-top:14px;" class="campo"><label>Instrumento de evaluación</label>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:6px;">';
+  disciplinas.forEach(d=>{
+    const id = 'instr-'+d.toLowerCase().replace(/[^a-z0-9]/g,'');
+    html += `<div class="campo" style="margin:0;">
+      <label style="font-size:11px;">${d}</label>
+      <select id="${id}" data-disc="${d}" style="width:100%;padding:8px;border:1.5px solid #cbd5e1;border-radius:6px;">
+        <option>Escala estimativa</option>
+        <option>Lista de cotejo</option>
+        <option>Rúbrica</option>
+        <option>Guía de observación</option>
+        <option>Portafolio</option>
+        <option>Prueba escrita</option>
+        <option>Registro anecdótico</option>
+      </select>
+    </div>`;
+  });
+  html += '</div></div>';
+  cont.innerHTML = html;
+}
+
+// ── LEER DATOS DOCENTES Y SESIONES ───────────────────────
+function getDatosDisciplinas(grado, campo){
+  const disciplinas = CAMPOS_POR_GRADO[grado]?.[campo] || [];
+  const docentes = {};
+  const sesiones = { t1:{}, t2:{}, t3:{} };
+  const instrumentos = {};
+  disciplinas.forEach(d=>{
+    const idDoc = 'doc-'+d.toLowerCase().replace(/[^a-z0-9]/g,'');
+    const elDoc = document.getElementById(idDoc);
+    docentes[d] = elDoc ? elDoc.value.trim() : '';
+    [1,2,3].forEach(ti=>{
+      const idSes = `ses-t${ti}-`+d.toLowerCase().replace(/[^a-z0-9]/g,'');
+      const elSes = document.getElementById(idSes);
+      sesiones['t'+ti][d] = elSes ? (elSes.value||'') : '';
+    });
+    const idInstr = 'instr-'+d.toLowerCase().replace(/[^a-z0-9]/g,'');
+    const elInstr = document.getElementById(idInstr);
+    instrumentos[d] = elInstr ? elInstr.value : 'Escala estimativa';
+  });
+  return { disciplinas, docentes, sesiones, instrumentos };
+}
+
+// ── LEER CONTEXTO SOCIOEDUCATIVO ─────────────────────────
+function getContexto(){
+  return {
+    c1: document.getElementById('ctx-1')?.value?.trim()||'',
+    c2: document.getElementById('ctx-2')?.value?.trim()||'',
+    c3: document.getElementById('ctx-3')?.value?.trim()||'',
+    c4: document.getElementById('ctx-4')?.value?.trim()||'',
+    c5: document.getElementById('ctx-5')?.value?.trim()||'',
+    c6: document.getElementById('ctx-6')?.value?.trim()||'',
+    c7: document.getElementById('ctx-7')?.value?.trim()||''
+  };
 }
 
 // ── CONTENIDOS ANALÍTICO ──────────────────────────────────
@@ -729,6 +895,8 @@ async function genAnalitico(){
   document.getElementById('bga').disabled=true;
   document.getElementById('gen-a').style.display='block';
   document.getElementById('res-a').style.display='none';
+  const datosDisciplinas = getDatosDisciplinas(g, cam);
+  const contexto = getContexto();
   const d={
     docente:doc,grado:g,campo:cam,disciplina:dis,
     escuela:document.getElementById('a-esc').value,
@@ -737,6 +905,11 @@ async function genAnalitico(){
     cicloEscolar:document.getElementById('a-cic').value,
     municipio:document.getElementById('a-mun').value,
     problematica:document.getElementById('a-prob').value,
+    disciplinasDelCampo: datosDisciplinas.disciplinas,
+    docentesPorDisc: datosDisciplinas.docentes,
+    sesionesPorDisc: datosDisciplinas.sesiones,
+    instrumentosPorDisc: datosDisciplinas.instrumentos,
+    contexto: contexto,
     t1:{contenidos:cA.t1,modalidad:document.getElementById('a-pm1').value,nombreProyecto:document.getElementById('a-pn1').value,proposito:document.getElementById('a-pp1').value,productos:document.getElementById('a-pr1').value},
     t2:{contenidos:cA.t2,modalidad:document.getElementById('a-pm2').value,nombreProyecto:document.getElementById('a-pn2').value,proposito:document.getElementById('a-pp2').value,productos:document.getElementById('a-pr2').value},
     t3:{contenidos:cA.t3,modalidad:document.getElementById('a-pm3').value,nombreProyecto:document.getElementById('a-pn3').value,proposito:document.getElementById('a-pp3').value,productos:document.getElementById('a-pr3').value},
