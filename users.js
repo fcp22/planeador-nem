@@ -1,76 +1,62 @@
 // ============================================================
 // USUARIOS Y AUTENTICACIÓN - PLANEADOR NEM
-// Versión con Firebase Realtime Database
+// Sistema híbrido: Admin local + Maestros en Firebase con CURP
 // ============================================================
 
-// ── CONFIGURACIÓN FIREBASE ───────────────────────────────
 const FIREBASE_URL = 'https://planeador-nem-fcp-default-rtdb.firebaseio.com';
 
-// ── BASE DE USUARIOS LOCAL (credenciales) ────────────────
-const USUARIOS_DB = [
-  { usuario: 'admin',     password: 'admin2025', nombre: 'Administrador',  rol: 'admin',   escuela: 'Sec. Felipe Carrillo Puerto' },
-  { usuario: 'maestra01', password: '123456',    nombre: 'Maestra 01',     rol: 'docente', escuela: 'Sec. Felipe Carrillo Puerto' },
-  { usuario: 'maestro02', password: '123456',    nombre: 'Maestro 02',     rol: 'docente', escuela: 'Sec. Felipe Carrillo Puerto' },
-  { usuario: 'maestra03', password: '123456',    nombre: 'Maestra 03',     rol: 'docente', escuela: 'Sec. Felipe Carrillo Puerto' },
-  // ── AGREGAR AQUÍ LOS 45 DOCENTES ──────────────────────
-  // { usuario: 'maestra04', password: '123456', nombre: 'Nombre Apellido', rol: 'docente', escuela: 'Sec. Felipe Carrillo Puerto' },
+// ── ADMIN LOCAL (nunca va a Firebase para su contraseña) ──
+const ADMIN_DB = [
+  { curp: 'ADMIN', password: 'admin2025', nombre: 'Mtro. Manuel Uitzil', rol: 'admin', escuela: 'Sec. Felipe Carrillo Puerto' },
 ];
 
 let usuarioActivo = null;
 
-// ── FIREBASE: LEER ESTADO DE USUARIO ────────────────────
-async function fbGetUsuario(usuario) {
+// ── FIREBASE: LEER USUARIO ────────────────────────────────
+async function fbGetUsuario(curp) {
   try {
-    const res = await fetch(`${FIREBASE_URL}/usuarios/${usuario}.json`);
+    const key = curp.replace(/[^A-Z0-9]/g, '');
+    const res = await fetch(`${FIREBASE_URL}/usuarios/${key}.json`);
     if (!res.ok) return null;
-    return await res.json();
-  } catch (e) {
-    return null;
-  }
+    const data = await res.json();
+    return data;
+  } catch (e) { return null; }
 }
 
-// ── FIREBASE: CREAR/ACTUALIZAR ESTADO DE USUARIO ────────
-async function fbSetUsuario(usuario, datos) {
+// ── FIREBASE: ESCRIBIR/ACTUALIZAR USUARIO ─────────────────
+async function fbSetUsuario(curp, datos) {
   try {
-    await fetch(`${FIREBASE_URL}/usuarios/${usuario}.json`, {
+    const key = curp.replace(/[^A-Z0-9]/g, '');
+    await fetch(`${FIREBASE_URL}/usuarios/${key}.json`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(datos)
     });
-  } catch (e) {
-    console.warn('Firebase no disponible:', e);
-  }
+  } catch (e) { console.warn('Firebase no disponible:', e); }
 }
 
-// ── FIREBASE: OBTENER TODOS LOS USUARIOS ────────────────
+// ── FIREBASE: TODOS LOS USUARIOS ─────────────────────────
 async function fbGetTodosUsuarios() {
   try {
     const res = await fetch(`${FIREBASE_URL}/usuarios.json`);
     if (!res.ok) return {};
     return await res.json() || {};
-  } catch (e) {
-    return {};
-  }
+  } catch (e) { return {}; }
 }
 
-// ── FIREBASE: REGISTRAR DOCUMENTO GENERADO ──────────────
-async function fbRegistrarDocumento(usuario, tipoDoc) {
-  const ahora = new Date();
-  const trimestre = obtenerTrimestreActual();
-  const key = `${trimestre}_docs`;
-  
-  // Obtener estado actual
-  const estado = await fbGetUsuario(usuario) || {};
-  const docsActuales = estado[key] || 0;
-  
-  await fbSetUsuario(usuario, {
-    [key]: docsActuales + 1,
-    ultimo_acceso: ahora.toISOString(),
+// ── FIREBASE: REGISTRAR DOCUMENTO ────────────────────────
+async function fbRegistrarDocumento(curp, tipoDoc) {
+  const trim = obtenerTrimestreActual();
+  const estado = await fbGetUsuario(curp) || {};
+  const key = `${trim}_docs`;
+  await fbSetUsuario(curp, {
+    [key]: (estado[key] || 0) + 1,
+    ultimo_acceso: new Date().toISOString(),
     ultimo_doc: tipoDoc
   });
 }
 
-// ── UTILIDAD: TRIMESTRE ACTUAL ───────────────────────────
+// ── UTILIDAD ─────────────────────────────────────────────
 function obtenerTrimestreActual() {
   const mes = new Date().getMonth() + 1;
   if (mes >= 9 && mes <= 11) return 't1_2025';
@@ -78,61 +64,54 @@ function obtenerTrimestreActual() {
   return 't3_2026';
 }
 
-// ── AUTENTICACIÓN PRINCIPAL ──────────────────────────────
-async function autenticar(usuario, password) {
-  // 1. Verificar credenciales locales
-  const u = USUARIOS_DB.find(x => x.usuario === usuario && x.password === password);
-  if (!u) return { ok: false, mensaje: 'Usuario o contraseña incorrectos.' };
+// ── AUTENTICACIÓN PRINCIPAL ───────────────────────────────
+async function autenticar(curp, password) {
 
-  // 2. Admin siempre pasa sin bloqueo
-  if (u.rol === 'admin') {
-    usuarioActivo = u;
-    await fbSetUsuario(usuario, { ultimo_acceso: new Date().toISOString(), rol: 'admin' });
+  // 1. ¿Es admin local?
+  const admin = ADMIN_DB.find(x => x.curp === curp && x.password === password);
+  if (admin) {
+    usuarioActivo = admin;
+    await fbSetUsuario('ADMIN', { ultimo_acceso: new Date().toISOString(), rol: 'admin', nombre: admin.nombre });
     return { ok: true };
   }
 
-  // 3. Verificar estado en Firebase
-  const estado = await fbGetUsuario(usuario);
-  
-  if (estado === null) {
-    // Primera vez — crear registro en Firebase
-    await fbSetUsuario(usuario, {
-      nombre: u.nombre,
-      rol: u.rol,
-      activo: true,
-      ultimo_acceso: new Date().toISOString(),
-      t1_2025_docs: 0,
-      t2_2025_docs: 0,
-      t3_2026_docs: 0
-    });
-    usuarioActivo = u;
-    return { ok: true };
+  // 2. Buscar en Firebase por CURP
+  const datos = await fbGetUsuario(curp);
+
+  if (!datos) {
+    return { ok: false, mensaje: 'CURP no registrada. ¿Ya creaste tu cuenta?' };
   }
 
-  // 4. Verificar si está bloqueado
-  if (estado.activo === false) {
-    return { 
-      ok: false, 
-      mensaje: 'Tu cuenta está desactivada. Contacta al administrador.' 
-    };
+  // 3. Verificar contraseña
+  if (datos.password !== password) {
+    return { ok: false, mensaje: 'Contraseña incorrecta.' };
   }
 
-  // 5. Todo bien
-  usuarioActivo = u;
-  await fbSetUsuario(usuario, { ultimo_acceso: new Date().toISOString() });
+  // 4. Verificar si está activo
+  if (datos.activo === false) {
+    return { ok: false, mensaje: 'Tu cuenta está desactivada. Contacta al director.' };
+  }
+
+  // 5. Login exitoso
+  usuarioActivo = {
+    curp: curp,
+    nombre: datos.nombre,
+    rol: datos.rol || 'docente',
+    escuela: datos.escuela || 'Sec. Felipe Carrillo Puerto'
+  };
+  await fbSetUsuario(curp, { ultimo_acceso: new Date().toISOString() });
   return { ok: true };
 }
 
-// ── CONTROL DE USUARIOS (solo admin) ────────────────────
-async function bloquearUsuario(usuario) {
-  await fbSetUsuario(usuario, { activo: false });
+// ── CONTROL ADMIN ─────────────────────────────────────────
+async function bloquearUsuario(curp) {
+  await fbSetUsuario(curp, { activo: false });
+}
+async function desbloquearUsuario(curp) {
+  await fbSetUsuario(curp, { activo: true });
 }
 
-async function desbloquearUsuario(usuario) {
-  await fbSetUsuario(usuario, { activo: true });
-}
-
-// ── GETTERS ──────────────────────────────────────────────
+// ── GETTERS ───────────────────────────────────────────────
 function cerrarSesion() { usuarioActivo = null; }
 function esAdmin() { return usuarioActivo?.rol === 'admin'; }
 function getUsuario() { return usuarioActivo; }
