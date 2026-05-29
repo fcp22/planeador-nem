@@ -476,4 +476,4 @@ ${htmlContenido}
   a.click();
   URL.revokeObjectURL(url);
 }
-}
+
