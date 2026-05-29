@@ -540,3 +540,168 @@ ${htmlContenido}
   URL.revokeObjectURL(url);
 }
 
+// ============================================================
+// GENERADOR: SECUENCIA DIDÁCTICA COMPLETA CON INICIO/DESARROLLO/CIERRE
+// ============================================================
+function buildPromptSecuenciaDidactica(d) {
+  const contenidosTexto = d.contenidos.map(c =>
+    `- Contenido: ${c.titulo}\n  PDA: ${obtenerPDA(c, d.grado)}`
+  ).join('\n');
+  const trimNom = d.trimestre==='1'?'Primer':d.trimestre==='2'?'Segundo':'Tercer';
+  const numSes = parseInt(d.numSesiones)||11;
+  const durMin = parseInt(d.duracionSesion)||50;
+  const esSesDoble = durMin >= 90;
+  const durInicio = 10;
+  const durDesarrollo = esSesDoble ? 80 : 30;
+  const durCierre = 10;
+
+  return `Eres experto en didáctica NEM México. Diseña una Secuencia Didáctica completa para secundaria.
+Responde SOLO con JSON válido, sin markdown ni texto extra.
+Lenguaje: español formal, humanista, Plan 2022 NEM.
+
+DATOS:
+- Disciplina: ${d.disciplina} | Campo: ${d.campo} | Grado: ${d.grado}° | ${trimNom} trimestre
+- Docente: ${d.docente} | Escuela: ${d.escuela}
+- Número de sesiones: ${numSes} | Duración por sesión: ${durMin} minutos
+- Propósito: ${d.proposito || 'desarrollar las competencias del contenido'}
+- Evidencia esperada: ${d.productoIntegrador || 'por determinar'}
+- Contexto: ${d.problematizacion || ''}
+
+CONTENIDOS Y PDAs A TRABAJAR:
+${contenidosTexto}
+
+ESTRUCTURA DE CADA SESIÓN (${durMin} min):
+- Inicio: ${durInicio} min (recuperación, motivación, presentación del propósito)
+- Desarrollo: ${durDesarrollo} min (actividad central, trabajo con contenido)
+- Cierre: ${durCierre} min (sistematización, retroalimentación, tarea si aplica)
+
+Genera este JSON:
+{
+  "perfil": "Párrafos completos de rasgos del perfil de egreso NEM Plan 2022 relevantes, con número: 1. Reconocen que... 5. Desarrollan...",
+  "finalidades": "2-3 finalidades del campo ${d.campo} para ${d.disciplina}",
+  "especificidad": "Especificidad del campo para esta secuencia, 1 párrafo",
+  "situacion": "Situación o problematización de aprendizaje que da origen a la secuencia, 2-3 oraciones",
+  "sesiones": [
+    {
+      "num": 1,
+      "titulo": "título breve de la sesión",
+      "inicio": "Descripción detallada del Inicio (${durInicio} min): qué hace el docente, qué hacen los alumnos",
+      "desarrollo": "Descripción detallada del Desarrollo (${durDesarrollo} min): actividad central paso a paso",
+      "cierre": "Descripción detallada del Cierre (${durCierre} min): cómo se sistematiza y qué se pide para la siguiente",
+      "materiales": "Lista de materiales y recursos necesarios",
+      "evaluacion_formativa": "Qué se observa o registra en esta sesión como evidencia de aprendizaje"
+    }
+  ],
+  "observaciones": "Ajustes razonables para alumnos con NEE o barreras de aprendizaje",
+  "rubrica": [
+    {
+      "criterio": "nombre del criterio de evaluación",
+      "ponderacion": "porcentaje (todos deben sumar 100%)",
+      "excelente": "descripción nivel 4 — excelente",
+      "satisfactorio": "descripción nivel 3 — satisfactorio",
+      "suficiente": "descripción nivel 2 — suficiente",
+      "insuficiente": "descripción nivel 1 — insuficiente"
+    }
+  ]
+}
+
+IMPORTANTE: Genera exactamente ${numSes} sesiones en el arreglo "sesiones". La rúbrica debe tener entre 4 y 6 criterios con ponderaciones que sumen 100%.`;
+}
+
+// ── CONSTRUCTOR HTML SECUENCIA DIDÁCTICA ─────────────────
+function construirHTMLSecuenciaDidactica(d, ia) {
+  const C = '#BDD7EE';
+  const CG = '#E2EFDA';
+  const CV = '#E2EFDA';
+  const th = (txt, w, bg) => `<td style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${bg||C};${w?'width:'+w+';':''}vertical-align:top;">${txt}</td>`;
+  const td = (txt, w, bg) => `<td style="border:1px solid #000;padding:5px 8px;vertical-align:top;${w?'width:'+w+';':''}${bg?'background:'+bg+';':''}">${txt||'&nbsp;'}</td>`;
+  const tr = (...c) => `<tr>${c.join('')}</tr>`;
+  const tabla = (filas) => `<table style="width:100%;border-collapse:collapse;margin-bottom:10px;">${filas}</table>`;
+
+  const trimNom = d.trimestre==='1'?'Primer trimestre':d.trimestre==='2'?'Segundo trimestre':'Tercer trimestre';
+  const periodoMes = d.trimestre==='1'?'Septiembre - Noviembre':d.trimestre==='2'?'Diciembre - Marzo':'Abril - Junio 2026';
+
+  // Tabla de sesiones con Inicio/Desarrollo/Cierre
+  const sesionesHTML = (ia.sesiones||[]).map((s,i) => `
+<p style="font-weight:bold;margin-top:10px;">Sesión ${s.num||i+1}${s.titulo ? ' — '+s.titulo : ''}</p>
+${tabla(
+  tr(th('INICIO (10 min)','15%','#FFF3CD'), td(s.inicio||'','85%')) +
+  tr(th('DESARROLLO','15%','#D4EDDA'), td(s.desarrollo||'','85%')) +
+  tr(th('CIERRE (10 min)','15%','#D1ECF1'), td(s.cierre||'','85%')) +
+  tr(th('Materiales','15%'), td(s.materiales||'','85%')) +
+  tr(th('Evaluación formativa','15%'), td(s.evaluacion_formativa||'','85%'))
+)}`).join('');
+
+  // Rúbrica
+  const rubricaHTML = () => {
+    if(!ia.rubrica||!ia.rubrica.length) return '';
+    const encabezado = tr(
+      th('Criterio','20%'), th('Ponderación','8%'),
+      th('Nivel 4 — Excelente','18%',CG), th('Nivel 3 — Satisfactorio','18%','#FFF3CD'),
+      th('Nivel 2 — Suficiente','18%','#FFE5B4'), th('Nivel 1 — Insuficiente','18%','#F8D7DA')
+    );
+    const filas = ia.rubrica.map(r =>
+      tr(td(r.criterio,'20%'), td(r.ponderacion,'8%'),
+         td(r.excelente,'18%'), td(r.satisfactorio,'18%'),
+         td(r.suficiente,'18%'), td(r.insuficiente,'18%'))
+    ).join('');
+    return `<p style="font-weight:bold;font-size:12pt;margin-top:16px;">RÚBRICA DE EVALUACIÓN</p>
+${tabla(encabezado + filas)}`;
+  };
+
+  return `
+<h2 style="text-align:center;font-weight:bold;">Plano Didáctico — Secuencia Didáctica</h2>
+<h3 style="text-align:center;">${d.grado}° grado · ${trimNom}</h3>
+
+${tabla(
+  tr(th('Escuela:','30%'), td(`<strong>${d.escuela||''}</strong>`)) +
+  tr(th('CCT:'), td(d.cct||'')) +
+  tr(th('Ciclo escolar:'), td(d.cicloEscolar||'2025-2026')) +
+  tr(th('Campo formativo:'), td(d.campo||'')) +
+  tr(th('Disciplina:'), td(d.disciplina||'')) +
+  tr(th('Grado y grupo:'), td(d.grupo||'')) +
+  tr(th('Docente(s):'), td(d.docente||'')) +
+  tr(th('Periodo:'), td(periodoMes)) +
+  tr(th('Modalidad:'), td('Secuencia Didáctica')) +
+  tr(th('Número de sesiones:'), td(d.numSesiones||'')) +
+  tr(th('Duración por sesión:'), td((d.duracionSesion||50)+' minutos'))
+)}
+
+${tabla(
+  tr(th('Situación de aprendizaje / Problematización'), td(ia.situacion||d.problematizacion||'')) +
+  tr(th('Propósito u Objetivo'), td(d.proposito||'')) +
+  tr(th('Perfil de egreso'), td(ia.perfil||'')) +
+  tr(th('Finalidades del campo formativo'), td(ia.finalidades||'')) +
+  tr(th('Especificidades del campo formativo'), td(ia.especificidad||'')) +
+  tr(th('Ejes Articuladores'), td(d.ejes||''))
+)}
+
+${d.disciplinasAdicionales ? `
+<p style="font-weight:bold;">INTERDISCIPLINARIEDAD</p>
+${tabla(tr(td(d.disciplinasAdicionales)))}` : ''}
+
+<p style="font-weight:bold;font-size:12pt;margin-top:16px;">SECUENCIA DE SESIONES</p>
+<p style="font-size:12px;color:#555;">Total: ${d.numSesiones} sesiones · ${d.duracionSesion} minutos cada una</p>
+${sesionesHTML}
+
+${ia.observaciones ? `
+<p style="font-weight:bold;">Observaciones y/o Ajustes razonables</p>
+${tabla(tr(td(ia.observaciones)))}` : ''}
+
+<p style="font-weight:bold;font-size:12pt;margin-top:16px;">EVALUACIÓN SUMATIVA</p>
+${tabla(
+  tr(th('Evidencia / Producto esperado'), td(d.productoIntegrador||'')) +
+  tr(th('Contenidos trabajados'), td((ia.sesiones||[]).length + ' sesiones — ' + d.contenidos.map(c=>c.titulo).join(', ')))
+)}
+
+${rubricaHTML()}
+`;
+}
+
+// ── FUNCIÓN PRINCIPAL SECUENCIA ──────────────────────────
+async function generarSecuenciaDidactica(d) {
+  const prompt = buildPromptSecuenciaDidactica(d);
+  const respuesta = await llamarGemini(prompt);
+  const ia = parsearJSON(respuesta);
+  return construirHTMLSecuenciaDidactica(d, ia);
+}
