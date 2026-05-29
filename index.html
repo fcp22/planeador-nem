@@ -649,8 +649,13 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
 
     <!-- TAB HISTORIAL -->
     <div class="tab-panel" id="tab-historial">
-      <div class="sec-title">Historial de planeaciones</div>
-      <div class="sec-sub">Documentos generados en este dispositivo</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div class="sec-title">Historial de planeaciones</div>
+          <div class="sec-sub">Documentos generados en este dispositivo</div>
+        </div>
+        <button onclick="borrarTodoHistorial()" style="padding:8px 16px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;color:var(--rojo);font-size:13px;font-weight:600;cursor:pointer;">🗑 Borrar todo</button>
+      </div>
       <div id="hist-lista">
         <div style="text-align:center;padding:60px;color:var(--gris);">
           <div style="font-size:48px;margin-bottom:12px;">📋</div>
@@ -663,15 +668,52 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
     <div class="tab-panel" id="tab-usuarios">
       <div class="sec-title">Gestión de usuarios</div>
       <div class="sec-sub">Docentes registrados en el sistema</div>
+
+      <!-- CARD AVISO A MAESTROS -->
+      <div class="card" style="border-left:4px solid var(--azul-med);">
+        <div class="card-title">📢 Enviar aviso a un maestro</div>
+        <p style="font-size:13px;color:var(--gris);margin-bottom:14px;">El maestro verá este mensaje al iniciar su siguiente sesión. Puedes usarlo para notificar una falta, un recordatorio o cualquier comunicado.</p>
+        <div class="f2">
+          <div class="campo">
+            <label>CURP del maestro</label>
+            <input type="text" id="aviso-curp" placeholder="CURP del maestro destinatario" maxlength="18" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="campo">
+            <label>Asunto breve</label>
+            <input type="text" id="aviso-asunto" placeholder="Ej. Revisión de planeación, Reunión pendiente...">
+          </div>
+        </div>
+        <div class="campo">
+          <label>Mensaje</label>
+          <textarea id="aviso-msg" rows="4" placeholder="Escribe aquí el aviso o comunicado para el maestro. Sé claro y específico."></textarea>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button onclick="enviarAviso()" style="padding:10px 22px;background:var(--azul);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;">📨 Enviar aviso</button>
+          <span id="aviso-status" style="font-size:13px;color:var(--gris);"></span>
+        </div>
+      </div>
+
+      <!-- TABLA USUARIOS -->
       <div class="card">
         <table class="tabla">
-          <thead><tr><th>#</th><th>Usuario</th><th>Nombre</th><th>Docs este trimestre</th><th>Último acceso</th><th>Estado / Control</th></tr></thead>
+          <thead><tr><th>#</th><th>Nombre / CURP</th><th>Escuela</th><th>Docs este trimestre</th><th>Último acceso</th><th>Estado / Control</th></tr></thead>
           <tbody id="tb-usr"></tbody>
         </table>
       </div>
     </div>
 
   </div><!-- /main -->
+  <!-- MODAL AVISO ADMIN → MAESTRO -->
+  <div id="modal-aviso" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:36px 32px;max-width:480px;width:90%;box-shadow:0 16px 48px rgba(0,0,0,.2);">
+      <div style="font-size:36px;text-align:center;margin-bottom:12px;">⚠️</div>
+      <h2 style="text-align:center;color:#1a3a5c;font-size:17px;margin-bottom:16px;">Aviso importante</h2>
+      <div id="aviso-texto" style="font-size:14px;color:#334155;line-height:1.7;background:#fef9ec;border:1px solid #fde68a;border-radius:8px;padding:16px;margin-bottom:20px;white-space:pre-wrap;"></div>
+      <p style="font-size:12px;color:#64748b;text-align:center;margin-bottom:16px;">Este mensaje fue enviado por la dirección escolar.</p>
+      <button onclick="cerrarAviso()" style="width:100%;padding:12px;background:#1a3a5c;border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">Entendido</button>
+    </div>
+  </div>
+
 </div><!-- /app -->
 
 <script src="users.js"></script>
@@ -820,6 +862,8 @@ async function doLogin(){
     loadUsrTable();
   }
   renderHist();
+  // Revisar si hay aviso pendiente del admin
+  setTimeout(revisarAvisoPendiente, 1200);
 }
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'){
@@ -1360,6 +1404,69 @@ function delHist(e,id){
   historial=historial.filter(h=>h.id!==id);
   localStorage.setItem('nem_hist',JSON.stringify(historial));
   renderHist();
+}
+
+function borrarTodoHistorial(){
+  if(!historial.length) return;
+  if(!confirm('¿Borrar TODO el historial? Esta acción no se puede deshacer.')) return;
+  historial=[];
+  localStorage.setItem('nem_hist','[]');
+  renderHist();
+}
+
+// ── SISTEMA DE AVISOS ADMIN → MAESTRO ────────────────────
+async function enviarAviso(){
+  const curp = document.getElementById('aviso-curp').value.trim();
+  const asunto = document.getElementById('aviso-asunto').value.trim();
+  const msg = document.getElementById('aviso-msg').value.trim();
+  const status = document.getElementById('aviso-status');
+
+  if(!curp || !msg){ status.textContent='Completa CURP y mensaje.'; status.style.color='var(--rojo)'; return; }
+
+  status.textContent='Enviando...'; status.style.color='var(--gris)';
+
+  try {
+    const aviso = {
+      asunto: asunto || 'Aviso de dirección',
+      mensaje: msg,
+      fecha: new Date().toLocaleDateString('es-MX', {day:'2-digit',month:'long',year:'numeric'}),
+      leido: false,
+      enviado_por: getUsuario()?.nombre || 'Administración'
+    };
+    await fbSetUsuario(curp, { aviso_pendiente: aviso });
+    status.textContent='✓ Aviso enviado. El maestro lo verá al iniciar sesión.';
+    status.style.color='#16a34a';
+    document.getElementById('aviso-msg').value='';
+    document.getElementById('aviso-asunto').value='';
+    document.getElementById('aviso-curp').value='';
+    setTimeout(()=>{ status.textContent=''; }, 4000);
+  } catch(e) {
+    status.textContent='Error al enviar. Intenta de nuevo.';
+    status.style.color='var(--rojo)';
+  }
+}
+
+function cerrarAviso(){
+  document.getElementById('modal-aviso').style.display='none';
+  // Marcar como leído en Firebase
+  const usr = getUsuario();
+  if(usr?.curp) fbSetUsuario(usr.curp, { aviso_pendiente: null });
+}
+
+async function revisarAvisoPendiente(){
+  const usr = getUsuario();
+  if(!usr || usr.rol==='admin') return;
+  const curp = usr.curp;
+  if(!curp) return;
+  const datos = await fbGetUsuario(curp);
+  if(!datos?.aviso_pendiente || datos.aviso_pendiente.leido===true) return;
+  const av = datos.aviso_pendiente;
+  document.getElementById('aviso-texto').textContent =
+    (av.asunto ? av.asunto + '\n\n' : '') + av.mensaje +
+    '\n\n— ' + (av.enviado_por||'Dirección') + ' · ' + (av.fecha||'');
+  document.getElementById('modal-aviso').style.display='flex';
+  // Marcar como leído
+  await fbSetUsuario(curp, { aviso_pendiente: { ...av, leido: true } });
 }
 
 // ── TABLA USUARIOS (ADMIN) ────────────────────────────────
