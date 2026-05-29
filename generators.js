@@ -62,151 +62,214 @@ function parsearJSON(texto) {
 // Arma las tablas sin depender de la IA para el HTML
 // ============================================================
 function construirHTMLAnalitico(d, ia) {
-  const C = '#BDD7EE'; // color encabezado tabla
-  const th = (txt) => `<td style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${C};">${txt}</td>`;
-  const td = (txt) => `<td style="border:1px solid #000;padding:5px 8px;">${txt||''}</td>`;
+  const C = '#BDD7EE';
+  const th = (txt, w) => `<td style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${C};${w?'width:'+w+';':''}vertical-align:top;">${txt}</td>`;
+  const td = (txt, w) => `<td style="border:1px solid #000;padding:5px 8px;vertical-align:top;${w?'width:'+w+';':''}">${txt||''}</td>`;
   const tr = (...celdas) => `<tr>${celdas.join('')}</tr>`;
-  const tabla = (filas) => `<table style="width:100%;border-collapse:collapse;margin-bottom:10px;">${filas}</table>`;
+  const tabla = (filas, extra) => `<table style="width:100%;border-collapse:collapse;margin-bottom:10px;${extra||''}">${filas}</table>`;
 
-  const bloqueTrimestre = (num, nombre, meses, datos, contenidos, pdas) => `
-<p style="font-weight:bold;">${nombre.toUpperCase()}</p>
+  const ctx = d.contexto || {};
+  const discs = d.disciplinasDelCampo || [d.disciplina];
+  const numDiscs = discs.length;
+  const anchoDisc = Math.floor(100/numDiscs) + '%';
+
+  // ── TABLA DOCENTES POR DISCIPLINA ─────────────────────
+  const filasDocentes = () => {
+    const headerCells = discs.map(disc => th(`Docentes ${disc}`, anchoDisc)).join('');
+    const dataCells = discs.map(disc => {
+      const val = (d.docentesPorDisc||{})[disc] || (disc === d.disciplina ? d.docente : '');
+      return td(val ? val.replace(/\n/g,'<br>') : '&nbsp;', anchoDisc);
+    }).join('');
+    return tr(headerCells) + tr(dataCells);
+  };
+
+  // ── TABLA SESIONES POR TRIMESTRE ─────────────────────
+  const tablaSesiones = (numTrim) => {
+    const nomTrim = ['Primer trimestre','Segundo trimestre','Tercer trimestre'][numTrim-1];
+    const meses = ['Septiembre - Noviembre','Diciembre - Marzo','Abril - Junio 2026'][numTrim-1];
+    const tKey = 't'+numTrim;
+    const headerCells = discs.map(disc => th(disc, anchoDisc)).join('');
+    const dataCells = discs.map(disc => {
+      const ses = ((d.sesionesPorDisc||{})[tKey]||{})[disc] || '';
+      return td(ses ? `${disc} ${ses}` : '&nbsp;', anchoDisc);
+    }).join('');
+    return tabla(
+      tr(th('Periodo de evaluación','30%'), td(nomTrim,'70%')) +
+      tr(th('Mes/año:'), td(`${meses} &nbsp;&nbsp; Ciclo: ${d.cicloEscolar||'2025-2026'}`)) +
+      tr(th('Número de sesiones')) +
+      tr(headerCells) +
+      tr(dataCells)
+    );
+  };
+
+  // ── TABLA CONTENIDOS POR DISCIPLINA ──────────────────
+  const tablaContenidos = (tNum) => {
+    const tKey = 't'+tNum;
+    const tData = d[tKey] || {};
+    const contenidosPrinc = (tData.contenidos||[]).map(x=>`• ${x.titulo}`).join('<br>');
+    const pdasPrinc = (tData.contenidos||[]).map(x=>`• ${obtenerPDA(x,d.grado)}`).join('<br>');
+    const headerCells = discs.map(disc => th('CONTENIDOS — ' + disc, anchoDisc)).join('');
+    const dataCells = discs.map(disc => {
+      if(disc === d.disciplina) return td(contenidosPrinc||'&nbsp;', anchoDisc);
+      const iaCont = (ia['contenidos_'+disc.toLowerCase().replace(/[^a-z]/g,'')])||'';
+      return td(iaCont || '&nbsp;', anchoDisc);
+    }).join('');
+    const headerPda = discs.map(disc => th('PDA — ' + disc, anchoDisc)).join('');
+    const dataPda = discs.map(disc => {
+      if(disc === d.disciplina) return td(pdasPrinc||'&nbsp;', anchoDisc);
+      const iaPda = (ia['pda_'+disc.toLowerCase().replace(/[^a-z]/g,'')])||'';
+      return td(iaPda || '&nbsp;', anchoDisc);
+    }).join('');
+    return tabla(tr(headerCells) + tr(dataCells) + tr(headerPda) + tr(dataPda));
+  };
+
+  // ── TABLA PRODUCTOS POR DISCIPLINA ────────────────────
+  const tablaProductos = (tNum, nomTrim) => {
+    const tKey = 't'+tNum;
+    const tData = d[tKey] || {};
+    const headerCells = discs.map(disc => th(disc, anchoDisc)).join('');
+    const dataCells = discs.map(disc => {
+      if(disc === d.disciplina) return td(tData.productos||'&nbsp;', anchoDisc);
+      const iaProd = (ia['productos_'+disc.toLowerCase().replace(/[^a-z]/g,'')+'_t'+tNum])||'';
+      return td(iaProd || '&nbsp;', anchoDisc);
+    }).join('');
+    return tabla(
+      tr(th(`Productos o entregables / evidencias — ${nomTrim.toUpperCase()}`, '100%')) +
+      tr(headerCells) +
+      tr(dataCells)
+    );
+  };
+
+  // ── TABLA INSTRUMENTO EVALUACIÓN ─────────────────────
+  const tablaInstrumento = () => {
+    const headerCells = discs.map(disc => th(disc, anchoDisc)).join('');
+    const dataCells = discs.map(disc => {
+      const instr = (d.instrumentosPorDisc||{})[disc] || 'Escala estimativa';
+      return td(instr, anchoDisc);
+    }).join('');
+    return tabla(
+      tr(th('Instrumento de evaluación', '100%')) +
+      tr(headerCells) +
+      tr(dataCells)
+    );
+  };
+
+  // ── BLOQUE TRIMESTRE COMPLETO ─────────────────────────
+  const bloqueTrimestre = (tNum) => {
+    const nomTrim = ['Primer trimestre','Segundo trimestre','Tercer trimestre'][tNum-1];
+    const tKey = 't'+tNum;
+    const tData = d[tKey] || {};
+    const iaT = ia['t'+tNum] || {};
+    return `
+<p style="font-weight:bold;">${nomTrim.toUpperCase()}</p>
+${tablaSesiones(tNum)}
 ${tabla(
-  tr(th('Periodo de evaluación'), td(nombre)) +
-  tr(th('Mes/año:'), td(`${meses} &nbsp;&nbsp; Ciclo: ${d.cicloEscolar||'2025-2026'}`)) +
-  tr(th('Número de sesiones'), td(datos.sesiones||''))
+  tr(th(`Modalidad didáctica: ${tData.modalidad||'Proyectos comunitarios'}`)) +
+  tr(td(`<strong>Tipo de proyecto:</strong> ${iaT.tipo||'ABP'}`)) +
+  tr(td(`<strong>Nombre del proyecto:</strong> ${tData.nombreProyecto||''}`)) +
+  tr(td(`<strong>Problematización de la realidad:</strong><br>${iaT.problematizacion||''}`)) +
+  tr(td(`<strong>Propósitos del proyecto:</strong><br>${tData.proposito||''}`))
 )}
-${tabla(
-  tr(th(`Modalidad: ${datos.modalidad||'Proyectos comunitarios'}`)) +
-  tr(td(`<strong>Tipo:</strong> ${datos.tipo||'ABP'}`)) +
-  tr(td(`<strong>Nombre del proyecto:</strong> ${datos.nombreProyecto||''}`)) +
-  tr(td(`<strong>Problematización:</strong><br>${datos.problematizacion||''}`)) +
-  tr(td(`<strong>Propósitos:</strong><br>${datos.proposito||''}`))
-)}
-${tabla(
-  tr(th('CONTENIDOS')) +
-  tr(td(`<strong>${d.disciplina}:</strong><br>${contenidos}`)) +
-  tr(th('PDA')) +
-  tr(td(pdas))
-)}
+${tablaContenidos(tNum)}
+<p style="font-weight:bold;">ELEMENTOS QUE SE DESARROLLAN CON EL CONTENIDO ABORDADO:</p>
 <p style="font-weight:bold;">PERFIL DE EGRESO:</p>
-<p>${datos.perfil||''}</p>
-<p style="font-weight:bold;">EJES ARTICULADORES: ${datos.ejes||''}</p>
+<p>${iaT.perfil||''}</p>
+<p style="font-weight:bold;">EJES ARTICULADORES: ${iaT.ejes||''}</p>
 <p style="font-weight:bold;">FINALIDADES DEL CAMPO FORMATIVO:</p>
-<p>${datos.finalidades||''}</p>
+<p>${iaT.finalidades||''}</p>
 <p style="font-weight:bold;">ESPECIFICIDAD DEL CAMPO FORMATIVO:</p>
-<p>${datos.especificidad||''}</p>
-${tabla(
-  tr(th(`Productos/evidencias ${d.grado}° — ${nombre.toUpperCase()}`)) +
-  tr(td(`<strong>${d.disciplina}:</strong> ${datos.productos||''}`))
-)}`;
+<p>${iaT.especificidad||''}</p>
+${tablaProductos(tNum, nomTrim)}`;
+  };
 
-  const c = (arr) => arr.map(x=>`• ${x.titulo}`).join('<br>');
-  const p = (arr, g) => arr.map(x=>`• ${obtenerPDA(x,g)}`).join('<br>');
-
+  // ── DOCUMENTO COMPLETO ────────────────────────────────
   return `
 <h2 style="text-align:center;font-weight:bold;">Programa Analítico</h2>
 <h3 style="text-align:center;">${d.grado}° grado</h3>
 ${tabla(
-  tr(th('Escuela:'), td(`<strong>${d.escuela}</strong>`)) +
+  tr(th('Escuela:','30%'), td(`<strong>${d.escuela}</strong>`,'70%')) +
   tr(th('Turno/horario:'), td(`<strong>${d.turno||'Matutino'}</strong>`)) +
   tr(th('Campo formativo:'), td(`<strong>${d.campo}</strong>`)) +
-  tr(th('Asignatura/Disciplina:'), td(`<strong>${d.disciplina}</strong>`)) +
+  tr(th('Asignatura/Disciplina:'), td(`<strong>${discs.join(', ')}</strong>`)) +
   tr(th('Grado:'), td(`<strong>${d.grado}°</strong>`)) +
-  tr(th('Problemática/Situación:'), td(ia.situacion||'')) +
+  tr(th('Problemática/Situación de aprendizaje:'), td(ia.situacion||d.problematica||'')) +
   tr(th('Metodología:'), td('ABP')) +
   tr(th('Curso escolar:'), td(d.cicloEscolar||'2025-2026'))
 )}
-${tabla(
-  tr(th(`Docentes de ${d.disciplina}`)) +
-  tr(td(d.docente))
-)}
-<p style="font-weight:bold;font-size:12pt;">PLANO UNO: Análisis del contexto socioeducativo</p>
-${tabla(tr(td(`<strong>Datos de identificación:</strong><br>${ia.identificacion||''}<br><br><strong>Contexto escolar:</strong><br>${ia.contextoEscolar||''}<br><br><strong>Contexto familiar y sociocultural:</strong><br>${ia.contextoFamiliar||''}`)))}
-${tabla(tr(td(`<strong>Características y necesidades de los alumnos:</strong><br>${ia.necesidades||''}`)))}
-${tabla(tr(td(`<strong>Ambientes de aprendizaje:</strong><br>${ia.ambientes||''}`)))}
-<p style="font-weight:bold;">Resultados académicos:</p>
-${tabla(tr(td(ia.resultados||'')))}
+
+${tabla(filasDocentes())}
+
+<p style="font-weight:bold;font-size:12pt;">PLANO UNO: Análisis del contexto socioeducativo de la Escuela</p>
+<p style="font-weight:bold;">Contexto Socioeconómico:</p>
+
+${ctx.c1 ? `<p><strong>• Datos de identificación:</strong></p><p>${ctx.c1}</p>` : ''}
+${ctx.c2 ? `<p>Descripción del contexto escolar</p><p>${ctx.c2}</p>` : ''}
+${ctx.c3 ? `<p>Características del contexto familiar, sociocultural y lingüístico del centro escolar: ${ctx.c3}</p>` : ''}
+${ctx.c4 ? `<p><strong>• Características y necesidades de los alumnos del centro escolar</strong></p><p>${ctx.c4}</p>` : ''}
+${ctx.c5 ? `<p><strong>• Características de los ambientes de aprendizaje</strong></p><p>${ctx.c5}</p>` : ''}
+${ctx.c6 ? `<p style="font-weight:bold;">Resultados académicos:</p><p><strong>• Resultados de las evaluaciones internas y externas</strong></p><p>${ctx.c6}</p>` : ''}
+
 <p style="font-weight:bold;">Problemática detectada y jerarquizada:</p>
-${tabla(tr(td(ia.problematica||d.problematica||'')))}
-<p style="font-weight:bold;font-size:12pt;">SEGUNDO PLANO: CONTEXTUALIZACIÓN</p>
-${bloqueTrimestre(1,'Primer trimestre','Septiembre - Noviembre',ia.t1||{},c(d.t1?.contenidos||[]),p(d.t1?.contenidos||[],d.grado))}
-${bloqueTrimestre(2,'Segundo trimestre','Diciembre - Marzo',ia.t2||{},c(d.t2?.contenidos||[]),p(d.t2?.contenidos||[],d.grado))}
-${bloqueTrimestre(3,'Tercer trimestre','Abril - Junio 2026',ia.t3||{},c(d.t3?.contenidos||[]),p(d.t3?.contenidos||[],d.grado))}
+${ctx.c7 ? tabla(tr(td(ctx.c7.replace(/\n/g,'<br>')))) : tabla(tr(td(d.problematica||'')))}
+
+<p style="font-weight:bold;font-size:12pt;">SEGUNDO PLANO: CONTEXTUALIZACIÓN.</p>
+
+${bloqueTrimestre(1)}
+${bloqueTrimestre(2)}
+${bloqueTrimestre(3)}
+
+${tablaInstrumento()}
 `;
 }
 
 // ============================================================
-// GENERADOR 1: PROGRAMA ANALÍTICO — PROMPT CORTO → JSON
+// PROMPT ANALÍTICO — Solo pide contenido curricular, NO contexto
+// El contexto lo escribe el maestro en el formulario
 // ============================================================
 function buildPromptAnalitico(d) {
   const resumir = (arr) => arr.map(c=>c.titulo).join(' | ');
-  return `Eres experto en NEM México. Genera contenido para un Programa Analítico de secundaria.
-Responde SOLO con JSON válido, sin texto adicional ni markdown.
+  const discs = d.disciplinasDelCampo || [d.disciplina];
+  return `Eres experto en currículum NEM México. Genera contenido pedagógico para un Programa Analítico.
+Responde SOLO con JSON válido, sin markdown ni texto extra.
+Lenguaje: español formal, humanista, Plan 2022 NEM.
 
-DATOS:
-- Escuela: ${d.escuela}, Ticul, Yucatán
-- Campo: ${d.campo}, Disciplina: ${d.disciplina}, Grado: ${d.grado}°
-- Docente: ${d.docente}
-- T1 contenidos: ${resumir(d.t1?.contenidos||[])}
-- T2 contenidos: ${resumir(d.t2?.contenidos||[])}
-- T3 contenidos: ${resumir(d.t3?.contenidos||[])}
+Campo: ${d.campo} | Disciplina: ${d.disciplina} | Grado: ${d.grado}°
+T1: ${resumir(d.t1?.contenidos||[])}
+T2: ${resumir(d.t2?.contenidos||[])}
+T3: ${resumir(d.t3?.contenidos||[])}
 
-Genera este JSON (todas las cadenas en español, lenguaje NEM humanista):
+JSON requerido:
 {
-  "situacion": "situación de aprendizaje central del ciclo para ${d.disciplina}",
-  "identificacion": "datos de la escuela secundaria en Ticul Yucatán, matrícula, CCT, ubicación",
-  "contextoEscolar": "horarios, infraestructura, plantilla docente, comunicación entre academias",
-  "contextoFamiliar": "nivel socioeconómico, actividades económicas, lengua materna, situaciones de riesgo",
-  "necesidades": "reprobación, rezago, deserción, NEE, barreras para el aprendizaje",
-  "ambientes": "estilos de aprendizaje, uso de tecnología, actividades compensatorias",
-  "resultados": "resultados IDAESY u otras evaluaciones con porcentajes por nivel de logro en ${d.disciplina}",
-  "problematica": "${d.problematica || 'dos problemáticas relevantes para ' + d.disciplina}",
+  "situacion": "situación de aprendizaje del ciclo para ${d.disciplina} (1 oración)",
   "t1": {
-    "sesiones": "${d.t1?.sesiones || 'por determinar'}",
-    "modalidad": "${d.t1?.modalidad || 'Proyectos comunitarios'}",
     "tipo": "ABP",
-    "nombreProyecto": "${d.t1?.nombreProyecto || 'nombre creativo para T1'}",
-    "problematizacion": "${d.t1?.problematizacion || 'problematización para T1 de ' + d.disciplina}",
-    "proposito": "${d.t1?.proposito || 'propósitos NEM para T1'}",
-    "perfil": "3 rasgos del perfil de egreso NEM pertinentes al T1",
-    "ejes": "Inclusión, Pensamiento crítico, Igualdad de género, Apropiación de la lectura y escritura",
-    "finalidades": "2 finalidades del campo ${d.campo} para T1",
-    "especificidad": "especificidad del campo para ${d.disciplina} T1",
-    "productos": "${d.t1?.productos || 'producto concreto para T1'}"
+    "problematizacion": "problematización pedagógica real para T1 de ${d.disciplina}, 2-3 oraciones",
+    "perfil": "Rasgos del perfil de egreso NEM Plan 2022 para T1. Escribe párrafos completos con número: 1. Reconocen que son ciudadanas... 5. Desarrollan una forma de pensar propia...",
+    "ejes": "Ejes articuladores NEM pertinentes: Inclusión, Pensamiento crítico, Igualdad de género, etc.",
+    "finalidades": "2-3 finalidades del campo ${d.campo} para T1, estilo NEM",
+    "especificidad": "Especificidad del campo para T1, 1 párrafo"
   },
   "t2": {
-    "sesiones": "${d.t2?.sesiones || 'por determinar'}",
-    "modalidad": "${d.t2?.modalidad || 'Proyectos comunitarios'}",
     "tipo": "ABP",
-    "nombreProyecto": "${d.t2?.nombreProyecto || 'nombre creativo para T2'}",
-    "problematizacion": "${d.t2?.problematizacion || 'problematización para T2'}",
-    "proposito": "${d.t2?.proposito || 'propósitos NEM para T2'}",
-    "perfil": "3 rasgos del perfil de egreso NEM pertinentes al T2",
-    "ejes": "Inclusión, Igualdad de género, Artes y experiencias estéticas",
-    "finalidades": "2 finalidades del campo ${d.campo} para T2",
-    "especificidad": "especificidad para ${d.disciplina} T2",
-    "productos": "${d.t2?.productos || 'producto concreto para T2'}"
+    "problematizacion": "problematización pedagógica para T2",
+    "perfil": "Rasgos del perfil de egreso NEM para T2",
+    "ejes": "Ejes articuladores para T2",
+    "finalidades": "Finalidades del campo para T2",
+    "especificidad": "Especificidad del campo para T2"
   },
   "t3": {
-    "sesiones": "${d.t3?.sesiones || 'por determinar'}",
-    "modalidad": "${d.t3?.modalidad || 'Proyectos comunitarios'}",
     "tipo": "ABP",
-    "nombreProyecto": "${d.t3?.nombreProyecto || 'nombre creativo para T3'}",
-    "problematizacion": "${d.t3?.problematizacion || 'problematización para T3'}",
-    "proposito": "${d.t3?.proposito || 'propósitos NEM para T3'}",
-    "perfil": "3 rasgos del perfil de egreso NEM pertinentes al T3",
-    "ejes": "Inclusión, Vida saludable, Pensamiento crítico",
-    "finalidades": "2 finalidades del campo ${d.campo} para T3",
-    "especificidad": "especificidad para ${d.disciplina} T3",
-    "productos": "${d.t3?.productos || 'producto concreto para T3'}"
+    "problematizacion": "problematización pedagógica para T3",
+    "perfil": "Rasgos del perfil de egreso NEM para T3",
+    "ejes": "Ejes articuladores para T3",
+    "finalidades": "Finalidades del campo para T3",
+    "especificidad": "Especificidad del campo para T3"
   }
 }`;
 }
 
 // ============================================================
-// GENERADOR 1 — FUNCIÓN PRINCIPAL (llama IA y arma HTML)
-// Esta función reemplaza la lógica anterior que solo mandaba prompt
-// Se llama desde index.html en lugar de llamarGemini directamente
+// GENERADOR 1 — FUNCIÓN PRINCIPAL
 // ============================================================
 async function generarAnalitico(d) {
   const prompt = buildPromptAnalitico(d);
