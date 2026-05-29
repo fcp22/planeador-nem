@@ -30,6 +30,12 @@ input,select,textarea,button{font-family:inherit;font-size:14px;}
 .btn-p{width:100%;padding:13px;background:var(--azul);border:none;border-radius:8px;color:var(--blanco);font-size:15px;font-weight:600;cursor:pointer;transition:background .2s;margin-top:4px;}
 .btn-p:hover{background:var(--azul-med);}
 .l-err{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--rojo);margin-top:14px;display:none;}
+.l-ok{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;font-size:13px;color:#16a34a;margin-top:14px;display:none;}
+.auth-tabs{display:flex;gap:0;margin-bottom:28px;border-radius:10px;overflow:hidden;border:1.5px solid var(--gris-claro);}
+.auth-tab{flex:1;padding:11px;border:none;background:var(--fondo);color:var(--gris);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.auth-tab.on{background:var(--azul);color:var(--blanco);}
+.curp-hint{font-size:11px;color:var(--gris);margin-top:4px;font-style:italic;}
+.req{color:var(--rojo);margin-left:2px;}
 
 /* APP */
 #app{display:none;min-height:100vh;}
@@ -187,12 +193,48 @@ input,select,textarea,button{font-family:inherit;font-size:14px;}
     <div class="login-logo">
       <span class="escudo">📚</span>
       <h1>Planeador Docente NEM</h1>
-      <p>Programa Sintético Fase 6 · Secundaria · SEP</p>
+      <p>Sec. Felipe Carrillo Puerto · Ticul, Yucatán</p>
     </div>
-    <div class="fg"><label>Usuario</label><input type="text" id="l-usr" placeholder="Tu usuario" autocomplete="username"></div>
-    <div class="fg"><label>Contraseña</label><input type="password" id="l-pwd" placeholder="Tu contraseña"></div>
-    <button class="btn-p" id="btn-login" onclick="doLogin()">Ingresar</button>
-    <div class="l-err" id="l-err">Usuario o contraseña incorrectos.</div>
+
+    <!-- TABS -->
+    <div class="auth-tabs">
+      <button class="auth-tab on" id="tab-login-btn" onclick="showAuthTab('login')">Iniciar sesión</button>
+      <button class="auth-tab" id="tab-reg-btn" onclick="showAuthTab('registro')">Registrarme</button>
+    </div>
+
+    <!-- PANEL LOGIN -->
+    <div id="panel-login">
+      <div class="fg"><label>CURP</label><input type="text" id="l-usr" placeholder="Tu CURP (18 caracteres)" autocomplete="username" maxlength="18" oninput="this.value=this.value.toUpperCase()"></div>
+      <div class="fg"><label>Contraseña</label><input type="password" id="l-pwd" placeholder="Tu contraseña"></div>
+      <button class="btn-p" id="btn-login" onclick="doLogin()">Ingresar</button>
+      <div class="l-err" id="l-err"></div>
+    </div>
+
+    <!-- PANEL REGISTRO -->
+    <div id="panel-registro" style="display:none;">
+      <div class="fg">
+        <label>Nombre completo <span class="req">*</span></label>
+        <input type="text" id="r-nom" placeholder="Nombre(s) Apellido Paterno Apellido Materno">
+      </div>
+      <div class="fg">
+        <label>CURP <span class="req">*</span></label>
+        <input type="text" id="r-curp" placeholder="CURP (18 caracteres)" maxlength="18"
+          oninput="this.value=this.value.toUpperCase();validarCURPInput(this)">
+        <div class="curp-hint" id="curp-hint">Aparece en tu credencial de elector o recibo de nómina</div>
+      </div>
+      <div class="fg">
+        <label>Contraseña <span class="req">*</span></label>
+        <input type="password" id="r-pwd" placeholder="Mínimo 6 caracteres">
+      </div>
+      <div class="fg">
+        <label>Confirmar contraseña <span class="req">*</span></label>
+        <input type="password" id="r-pwd2" placeholder="Repite tu contraseña">
+      </div>
+      <button class="btn-p" id="btn-reg" onclick="doRegistro()">Crear mi cuenta</button>
+      <div class="l-err" id="r-err"></div>
+      <div class="l-ok" id="r-ok"></div>
+    </div>
+
   </div>
 </div>
 
@@ -643,13 +685,111 @@ let cA={t1:[],t2:[],t3:[]}, cD=[];
 let historial=JSON.parse(localStorage.getItem('nem_hist')||'[]');
 
 // ── LOGIN ────────────────────────────────────────────────
+// ── TABS LOGIN/REGISTRO ───────────────────────────────────
+function showAuthTab(tab){
+  document.getElementById('panel-login').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('panel-registro').style.display = tab==='registro' ? 'block' : 'none';
+  document.getElementById('tab-login-btn').classList.toggle('on', tab==='login');
+  document.getElementById('tab-reg-btn').classList.toggle('on', tab==='registro');
+}
+
+// ── VALIDAR CURP ──────────────────────────────────────────
+function validarCURPInput(input){
+  const curp = input.value;
+  const hint = document.getElementById('curp-hint');
+  const regex = /^[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z\d]\d$/;
+  if(curp.length === 0){
+    hint.style.color = 'var(--gris)';
+    hint.textContent = 'Aparece en tu credencial de elector o recibo de nómina';
+  } else if(curp.length < 18){
+    hint.style.color = 'var(--gris)';
+    hint.textContent = `${curp.length}/18 caracteres`;
+  } else if(regex.test(curp)){
+    hint.style.color = '#16a34a';
+    hint.textContent = '✓ CURP válida';
+  } else {
+    hint.style.color = 'var(--rojo)';
+    hint.textContent = 'Formato inválido. Verifica tu CURP';
+  }
+}
+
+function esCURPValida(curp){
+  return /^[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z\d]\d$/.test(curp);
+}
+
+// ── REGISTRO ─────────────────────────────────────────────
+async function doRegistro(){
+  const nom = document.getElementById('r-nom').value.trim();
+  const curp = document.getElementById('r-curp').value.trim();
+  const pwd = document.getElementById('r-pwd').value;
+  const pwd2 = document.getElementById('r-pwd2').value;
+  const errEl = document.getElementById('r-err');
+  const okEl = document.getElementById('r-ok');
+  const btn = document.getElementById('btn-reg');
+
+  errEl.style.display='none';
+  okEl.style.display='none';
+
+  if(!nom){ errEl.textContent='Escribe tu nombre completo.'; errEl.style.display='block'; return; }
+  if(!esCURPValida(curp)){ errEl.textContent='La CURP no tiene el formato correcto. Verifica los 18 caracteres.'; errEl.style.display='block'; return; }
+  if(pwd.length < 6){ errEl.textContent='La contraseña debe tener al menos 6 caracteres.'; errEl.style.display='block'; return; }
+  if(pwd !== pwd2){ errEl.textContent='Las contraseñas no coinciden.'; errEl.style.display='block'; return; }
+
+  btn.textContent='Verificando...';
+  btn.disabled=true;
+
+  // Verificar si la CURP ya existe en Firebase
+  const existe = await fbGetUsuario(curp);
+  if(existe !== null){
+    errEl.textContent='Ya existe una cuenta con esta CURP. Si olvidaste tu contraseña, contacta al administrador.';
+    errEl.style.display='block';
+    btn.textContent='Crear mi cuenta';
+    btn.disabled=false;
+    return;
+  }
+
+  // Crear cuenta en Firebase
+  const nuevaCuenta = {
+    nombre: nom,
+    curp: curp,
+    password: pwd,
+    rol: 'docente',
+    escuela: 'Sec. Felipe Carrillo Puerto',
+    activo: true,
+    fecha_registro: new Date().toISOString(),
+    ultimo_acceso: new Date().toISOString(),
+    t1_docs: 0, t2_docs: 0, t3_docs: 0
+  };
+
+  try {
+    await fbSetUsuario(curp, nuevaCuenta);
+    okEl.textContent='✓ Cuenta creada exitosamente. Ya puedes iniciar sesión.';
+    okEl.style.display='block';
+    btn.textContent='Crear mi cuenta';
+    btn.disabled=false;
+    // Limpiar formulario y cambiar a login
+    setTimeout(()=>{
+      document.getElementById('r-nom').value='';
+      document.getElementById('r-curp').value='';
+      document.getElementById('r-pwd').value='';
+      document.getElementById('r-pwd2').value='';
+      document.getElementById('l-usr').value=curp;
+      showAuthTab('login');
+    }, 2000);
+  } catch(e) {
+    errEl.textContent='Error al crear la cuenta. Intenta de nuevo.';
+    errEl.style.display='block';
+    btn.textContent='Crear mi cuenta';
+    btn.disabled=false;
+  }
+}
+
 async function doLogin(){
-  const u=document.getElementById('l-usr').value.trim();
+  const u=document.getElementById('l-usr').value.trim().toUpperCase();
   const p=document.getElementById('l-pwd').value;
   const errEl=document.getElementById('l-err');
   const btnLogin=document.getElementById('btn-login');
   
-  // Mostrar estado de carga
   btnLogin.textContent='Verificando...';
   btnLogin.disabled=true;
   errEl.style.display='none';
@@ -660,7 +800,7 @@ async function doLogin(){
   btnLogin.disabled=false;
 
   if(!resultado.ok){
-    errEl.textContent = resultado.mensaje || 'Usuario o contraseña incorrectos.';
+    errEl.textContent = resultado.mensaje || 'CURP o contraseña incorrectos.';
     errEl.style.display='block';
     return;
   }
@@ -682,7 +822,10 @@ async function doLogin(){
   renderHist();
 }
 document.addEventListener('keydown',e=>{
-  if(e.key==='Enter'&&document.getElementById('pantalla-login').style.display!=='none') doLogin();
+  if(e.key==='Enter'){
+    if(document.getElementById('panel-registro').style.display!=='none') doRegistro();
+    else if(document.getElementById('pantalla-login').style.display!=='none') doLogin();
+  }
 });
 function doLogout(){
   usuarioActivo=null;
@@ -690,6 +833,7 @@ function doLogout(){
   document.getElementById('pantalla-login').style.display='flex';
   document.getElementById('l-usr').value='';
   document.getElementById('l-pwd').value='';
+  showAuthTab('login');
 }
 
 // ── TABS ─────────────────────────────────────────────────
@@ -1221,38 +1365,53 @@ function delHist(e,id){
 // ── TABLA USUARIOS (ADMIN) ────────────────────────────────
 async function loadUsrTable(){
   const tbody = document.getElementById('tb-usr');
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gris);padding:16px;">Cargando...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gris);padding:16px;">Cargando usuarios...</td></tr>';
   
-  const estadosFirebase = await fbGetTodosUsuarios();
+  const todos = await fbGetTodosUsuarios();
   const trimestre = obtenerTrimestreActual();
   
-  tbody.innerHTML = USUARIOS_DB.map((u,i) => {
-    const fb = estadosFirebase[u.usuario] || {};
-    const activo = fb.activo !== false; // por defecto activo
-    const docs = fb[`${trimestre}_docs`] || 0;
-    const ultimoAcceso = fb.ultimo_acceso 
-      ? new Date(fb.ultimo_acceso).toLocaleDateString('es-MX') 
-      : 'Sin acceso';
-    const estadoBadge = u.rol === 'admin' 
-      ? '<span class="badge badge-a">🔑 Admin</span>'
-      : activo 
-        ? '<span class="badge badge-d">✅ Activo</span>'
-        : '<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">🔒 Bloqueado</span>';
-    const btnControl = u.rol !== 'admin' 
-      ? activo 
-        ? `<button onclick="toggleUsuario('${u.usuario}',false)" style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">Bloquear</button>`
-        : `<button onclick="toggleUsuario('${u.usuario}',true)" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">Activar</button>`
-      : '';
+  if(!todos || Object.keys(todos).length === 0){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gris);padding:20px;">Sin usuarios registrados aún.</td></tr>';
+    return;
+  }
+
+  const filas = Object.entries(todos).map(([curp, u], i) => {
+    const activo = u.activo !== false;
+    const docs = u[`${trimestre}_docs`] || 0;
+    const acceso = u.ultimo_acceso ? new Date(u.ultimo_acceso).toLocaleDateString('es-MX') : '—';
+    const estaAdmin = u.rol === 'admin';
     return `<tr>
-      <td style="color:var(--gris);">${i+1}</td>
-      <td><code style="background:var(--fondo);padding:2px 6px;border-radius:4px;">${u.usuario}</code></td>
-      <td>${u.nombre}</td>
-      <td style="text-align:center;font-weight:600;color:var(--azul);">${docs}</td>
-      <td style="font-size:11px;color:var(--gris);">${ultimoAcceso}</td>
-      <td>${estadoBadge} ${btnControl}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid var(--gris-claro);font-size:13px;">${i+1}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid var(--gris-claro);font-size:13px;">
+        <strong>${u.nombre||'—'}</strong><br>
+        <span style="font-size:11px;color:var(--gris);">${curp}</span>
+      </td>
+      <td style="padding:10px 14px;border-bottom:1px solid var(--gris-claro);font-size:13px;">${u.escuela||'—'}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid var(--gris-claro);font-size:13px;text-align:center;">
+        <span style="font-size:16px;font-weight:700;color:var(--azul);">${docs}</span>
+      </td>
+      <td style="padding:10px 14px;border-bottom:1px solid var(--gris-claro);font-size:13px;">${acceso}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid var(--gris-claro);">
+        ${estaAdmin ? '<span style="font-size:12px;color:var(--gris);">Admin</span>' :
+          activo
+          ? `<button onclick="toggleUsuario('${curp}',false,this)" style="padding:4px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;color:var(--rojo);font-size:12px;cursor:pointer;">Desactivar</button>`
+          : `<button onclick="toggleUsuario('${curp}',true,this)" style="padding:4px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;color:var(--verde);font-size:12px;cursor:pointer;">Activar</button>`
+        }
+      </td>
     </tr>`;
   }).join('');
+  
+  tbody.innerHTML = filas || '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--gris);">Sin usuarios.</td></tr>';
 }
+
+async function toggleUsuario(curp, activar, btn){
+  btn.disabled = true;
+  btn.textContent = '...';
+  if(activar) await desbloquearUsuario(curp);
+  else await bloquearUsuario(curp);
+  await loadUsrTable();
+}
+
 
 async function toggleUsuario(usuario, activar){
   const accion = activar ? 'activar' : 'bloquear';
