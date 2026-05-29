@@ -8,34 +8,32 @@ const CURRICULUM = {
 
   // ============================================================
   // CAMPO 1: LENGUAJES
+  // Fuente: Programa Sintético Fase 6, SEP 2022 — páginas 33-56
   // ============================================================
   "Lenguajes": {
 
     "Español": {
       contenidos: [
         {
-          id: "ES01",
-          num: 1,
+          id: "ES01", num: 1,
           titulo: "La diversidad de lenguas y su uso en la comunicación familiar, escolar y comunitaria.",
           pdas: {
             "1": "Reconoce la riqueza lingüística de México y el mundo, a partir de obras literarias procedentes de distintas culturas.",
-            "2": "Analiza y reconoce algunas variantes lingüísticas de la lengua española, para valorarla como riqueza cultural.",
+            "2": "Comprende las características y recursos lingüísticos de la lengua española, para usarlos y valorarlos como parte de la riqueza pluricultural de México y del mundo.",
             "3": "Analiza y reconoce algunas variantes lingüísticas de la lengua española, para valorarla como riqueza cultural."
           }
         },
         {
-          id: "ES02",
-          num: 2,
+          id: "ES02", num: 2,
           titulo: "La diversidad étnica, cultural y lingüística de México a favor de una sociedad intercultural.",
           pdas: {
             "1": "Comprende las ideas centrales y secundarias de textos relacionados con la diversidad étnica, cultural y lingüística, que favorecen una sociedad intercultural, para comentarlas en forma oral y escrita.",
-            "2": "Elabora textos argumentativos acerca de la interculturalidad crítica, para reconocer el valor de las lenguas, a fin de promoverlas y fortalecerlas.",
+            "2": "Compara y contrasta textos sobre las tensiones y conflictos en las sociedades contemporáneas y manifiesta, de manera oral o escrita, la necesidad de practicar la comunicación asertiva. Analiza textos sobre las sociedades multiculturales y expresa la función que tiene el diálogo intercultural para la construcción democrática y la interacción en sociedad.",
             "3": "Practica la comunicación asertiva y el diálogo intercultural en interacción con otras personas. Comparte una propuesta creativa propia en la que valore y promueva textos en español a favor de una sociedad intercultural."
           }
         },
         {
-          id: "ES03",
-          num: 3,
+          id: "ES03", num: 3,
           titulo: "Las lenguas como manifestación de la identidad y del sentido de pertenencia.",
           pdas: {
             "1": "Describe en un texto cómo el lenguaje oral manifiesta las identidades personal y colectiva, para reconocer lo común y lo diferente.",
@@ -44,115 +42,104 @@ const CURRICULUM = {
           }
         },
         {
-          id: "ES04",
-          num: 4,
+          id: "ES04", num: 4,
           titulo: "El dinamismo de las lenguas y su relevancia como patrimonio cultural.",
           pdas: {
             "1": "Identifica y expresa la relevancia de valorar las lenguas como legado de la comunidad.",
-            "2": "Identifica y expresa la relevancia de valorar las lenguas como legado de la comunidad.",
+            "2": "Reconoce cambios temporales y geográficos del español en la comunidad, el país o el mundo hispano.",
             "3": "Analiza en textos literarios neologismos, juegos de lenguajes, caló, jerga, préstamos lingüísticos y extranjerismos como parte del dinamismo de la lengua española."
           }
         },
         {
-          id: "ES05",
-          num: 5,
+          id: "ES05", num: 5,
           titulo: "La función creativa del español en la expresión de necesidades e intereses comunitarios.",
           pdas: {
-            "1": "Usa intencionalmente recursos creativos del español para expresar necesidades e intereses de la comunidad.",
-            "2": "Crea textos literarios de distintos géneros para ofrecer una propuesta de solución a problemas de la comunidad.",
+            "1": "Identifica una situación problemática de la comunidad, haciendo uso del pensamiento crítico, para plantear diversas formas creativas de resolverla, por ejemplo, con un cuento.",
+            "2": "Expresa, mediante un ensayo, una postura crítica sobre necesidades, intereses y problemas de la comunidad.",
             "3": "Crea textos literarios de distintos géneros para ofrecer una propuesta de solución a problemas de la comunidad."
           }
         },
         {
-          id: "ES06",
-          num: 6,
+          id: "ES06", num: 6,
           titulo: "Los elementos y los recursos estéticos de la lengua española en la literatura oral y escrita.",
           pdas: {
-            "1": "Reconoce los recursos estéticos en textos literarios líricos, orales y escritos, y disfruta de poemas, canciones, juegos de palabras, entre otros.",
+            "1": "Reconoce los recursos estéticos en textos literarios líricos, orales y escritos, y disfruta de poemas, canciones y juegos de palabras, entre otros.",
             "2": "Analiza las características y recursos estéticos de los textos narrativos, e interpreta y disfruta de cuentos y novelas.",
             "3": "Usa creativa e intencionalmente las características y los recursos estéticos de textos dramáticos, para escenificar situaciones vinculadas con la comunidad."
           }
         },
         {
-          id: "ES07",
-          num: 7,
+          id: "ES07", num: 7,
           titulo: "Textos literarios escritos en español o traducidos.",
           pdas: {
-            "1": "Recupera y clasifica creaciones literarias de la comunidad: mitos, leyendas, fábulas, corridos, canciones, juegos de palabras, para promover de manera creativa su lectura.",
-            "2": "Analiza diversos textos literarios de su libre elección para expresar un juicio estético y lo comparte en la comunidad.",
-            "3": "Elabora un ensayo acerca del tratamiento de un tema de su elección, con base en un género literario de su preferencia, para argumentar un juicio estético sobre éste."
+            "1": "Reconoce el valor estético de diversos géneros literarios en textos de su elección, para elaborar comentarios y promover su lectura.",
+            "2": "Analiza diversos textos literarios de su elección para expresar un juicio estético y lo comparte en la comunidad.",
+            "3": "Elabora un ensayo acerca del tratamiento de un tema de su elección, con base en algún género literario de su preferencia, para argumentar un juicio estético sobre éste."
           }
         },
         {
-          id: "ES08",
-          num: 8,
+          id: "ES08", num: 8,
           titulo: "Creaciones literarias tradicionales y contemporáneas.",
           pdas: {
-            "1": "Recupera y clasifica creaciones literarias de la comunidad o de un lugar de interés, como mitos, leyendas, fábulas, epopeyas, cantares de gesta, refranes, coplas, canciones, corridos, juegos de palabras, entre otras, para promover de manera creativa su lectura.",
-            "2": "Valora textos literarios tradicionales y contemporáneos, como cuentos, novelas, poemas, textos dramáticos; los adapta a otros lenguajes para sensibilizar a la comunidad.",
+            "1": "Recupera y clasifica creaciones literarias de la comunidad o de un lugar de interés, como mitos, leyendas, fábulas, epopeyas, cantares de gesta, refranes, coplas, canciones, corridos y juegos de palabras, para promover de manera creativa su lectura.",
+            "2": "Valora textos literarios tradicionales y contemporáneos, como cuentos, novelas, poemas y textos dramáticos; los adapta a otros lenguajes para sensibilizar a la comunidad acerca de la relevancia social y cultural de la literatura.",
             "3": "Crea textos narrativos, poéticos, dramáticos y guiones para audiovisuales, entre otros, a partir del uso de recursos literarios, para exponer una situación real o ficticia."
           }
         },
         {
-          id: "ES09",
-          num: 9,
+          id: "ES09", num: 9,
           titulo: "Recursos literarios en lengua española para expresar sensaciones, emociones, sentimientos e ideas vinculados con las familias, la escuela y la comunidad.",
           pdas: {
-            "1": "Identifica recursos literarios en lengua española y los emplea en la elaboración de cartas personales y biografías, para expresar sensaciones, emociones, sentimientos e ideas.",
-            "2": "Recupera recursos literarios de la lengua española para crear un texto libre que describa los vínculos con el entorno familiar, escolar o comunitario.",
+            "1": "Identifica recursos literarios en lengua española y los emplea en la elaboración de cartas personales y biografías, para expresar sensaciones, emociones, sentimientos e ideas que experimenta en su entorno familiar, escolar o comunitario.",
+            "2": "Analiza recursos literarios en lengua española para expresar sensaciones, emociones, sentimientos e ideas al elaborar una autobiografía con respecto a los vínculos consigo mismo y con el entorno familiar, escolar o comunitario.",
             "3": "Recupera recursos literarios de la lengua española para crear un texto libre que describa los vínculos con el entorno familiar, escolar o comunitario."
           }
         },
         {
-          id: "ES10",
-          num: 10,
+          id: "ES10", num: 10,
           titulo: "Los géneros periodísticos y sus recursos para comunicar sucesos significativos familiares, escolares, comunitarios y sociales.",
           pdas: {
-            "1": "Identifica las características y recursos de los géneros periodísticos para comunicar sucesos de la comunidad.",
-            "2": "Analiza los sucesos más significativos de la comunidad y los comunica empleando características de los géneros periodísticos.",
+            "1": "Identifica sucesos significativos familiares, escolares, comunitarios y sociales que forman parte de la memoria colectiva y los comunica haciendo uso de las características de los géneros periodísticos informativos.",
+            "2": "Investiga un evento familiar, escolar o comunitario significativo de la memoria colectiva, para comunicarlo utilizando las características de los géneros periodísticos de opinión.",
             "3": "Analiza los sucesos más significativos de la comunidad y los comunica empleando las características de los géneros periodísticos de interpretación, para preservar la memoria colectiva."
           }
         },
         {
-          id: "ES11",
-          num: 11,
+          id: "ES11", num: 11,
           titulo: "Comunicación asertiva y dialógica para erradicar expresiones de violencia.",
           pdas: {
-            "1": "Practica la comunicación asertiva para identificar y erradicar expresiones de violencia en la escuela y la comunidad.",
-            "2": "Discute de forma colectiva y diseña una estrategia sobre la importancia de sensibilizar a la comunidad acerca de la violencia.",
-            "3": "Redacta un texto informativo acerca de la importancia de erradicar la violencia y realiza de manera formal las gestiones necesarias para compartirlo con la comunidad."
+            "1": "Realiza, de manera colectiva, una propuesta oral o por escrito, para promover acciones que posibiliten erradicar la violencia en las familias y la escuela. Elabora solicitudes de gestión de espacios y recursos para dar a conocer la propuesta.",
+            "2": "Participa en un debate acerca de algunas expresiones de violencia —como la de género y la sexual— para argumentar una postura de rechazo. Elabora invitaciones a expertos y redacta oficios de gestión para obtener recursos y espacios donde tendrá lugar el encuentro.",
+            "3": "Discute de forma colectiva y diseña una estrategia sobre la importancia de sensibilizar a la comunidad acerca de la violencia. Redacta un texto informativo acerca de la importancia de erradicar la violencia y realiza de manera formal las gestiones necesarias para compartirlo con la comunidad."
           }
         },
         {
-          id: "ES12",
-          num: 12,
+          id: "ES12", num: 12,
           titulo: "Mensajes para promover una vida saludable, expresados en medios comunitarios o masivos de comunicación.",
           pdas: {
-            "1": "Identifica las características y recursos de mensajes que promueven una vida saludable a través de diferentes medios de comunicación.",
-            "2": "Construye narrativas acerca de una vida saludable, haciendo uso del lenguaje audiovisual.",
-            "3": "Construye narrativas acerca de una vida saludable, haciendo uso del lenguaje audiovisual y la transmite por medios comunitarios o masivos de comunicación."
+            "1": "Identifica las características y recursos de mensajes que promueven una vida saludable a través de los diferentes medios comunitarios o masivos de comunicación impresos o audiovisuales.",
+            "2": "Elabora un mensaje impreso empleando imágenes, textos, colores y otros recursos gráficos, para favorecer una vida saludable, y lo comparte en la comunidad.",
+            "3": "Construye narrativas acerca de una vida saludable, haciendo uso del lenguaje audiovisual y las transmite por medios comunitarios o masivos de comunicación."
           }
         },
         {
-          id: "ES13",
-          num: 13,
+          id: "ES13", num: 13,
           titulo: "Textos de divulgación científica.",
           pdas: {
             "1": "Identifica las características del texto de divulgación científica y elabora uno.",
-            "2": "Elabora una propuesta de divulgación científica con la participación de la comunidad escolar.",
+            "2": "Analiza las características del texto de divulgación científica, para elaborar y dar a conocer diversos textos científicos orales o escritos que traten sobre un tema de interés personal o colectivo.",
             "3": "Elabora una propuesta de divulgación científica, con la participación de la comunidad escolar, para fomentar el conocimiento de las ciencias."
           }
         },
         {
-          id: "ES14",
-          num: 14,
+          id: "ES14", num: 14,
           titulo: "Manifestaciones culturales y artísticas que favorecen una sociedad incluyente.",
           pdas: {
-            "1": "Reconoce manifestaciones culturales y artísticas creadas o ejecutadas por personas con alguna discapacidad, para distinguir sus valores estéticos y creativos.",
-            "2": "Elabora un texto oral o escrito acerca de las manifestaciones culturales y artísticas, que promuevan una sociedad incluyente.",
-            "3": "Crea textos literarios que aborden un tema que promueva una sociedad incluyente."
+            "1": "Reconoce manifestaciones culturales y artísticas creadas o ejecutadas por personas con alguna discapacidad, para distinguir sus valores estéticos y creativos y las comparte en forma oral o escrita con la comunidad.",
+            "2": "Elabora un texto oral o escrito acerca de las manifestaciones culturales y artísticas que promuevan una sociedad incluyente.",
+            "3": "Crea un texto literario que aborde un tema que promueva una sociedad incluyente."
           }
-        }
+        },
       ]
     },
 
@@ -162,9 +149,9 @@ const CURRICULUM = {
           id: "IN01", num: 1,
           titulo: "La diversidad lingüística y sus formas de expresión en México y el mundo.",
           pdas: {
-            "1": "Realiza una lectura crítica y emite su opinión en inglés sobre diversas manifestaciones culturales y artísticas de pueblos de habla inglesa.",
-            "2": "Comprende textos narrativos y biográficos en inglés sobre la vida cotidiana, formas de interacción y comportamiento de hablantes de diversas lenguas.",
-            "3": "Construye una propuesta de comunicación en inglés, oral y escrita, donde contraste, valora y promueva rasgos de una sociedad intercultural."
+            "1": "Hace uso del alfabeto, los números y las expresiones básicas en inglés, para nombrar y recuperar datos factuales y características básicas de lenguas reconocidas en México y el mundo.",
+            "2": "Comprende textos narrativos y biográficos en inglés sobre la vida cotidiana, formas de interacción y comportamiento de hablantes de diversas lenguas de México y el mundo en el pasado, y lo expresa en organizadores gráficos, infografías u otras formas de presentación escrita y oral.",
+            "3": "Utiliza diversos tipos de texto y medios de comunicación para expresar y difundir en inglés prácticas culturales y lingüísticas diversas de sociedades en México y el mundo."
           }
         },
         {
@@ -172,34 +159,34 @@ const CURRICULUM = {
           titulo: "La identidad y cultura de pueblos de habla inglesa.",
           pdas: {
             "1": "Recupera información para llevar a cabo presentaciones en inglés, orales y escritas, que describan rasgos étnicos, culturales e identitarios de hablantes de lengua inglesa.",
-            "2": "Comprende y redacta textos narrativos sobre la construcción de la identidad y el sentido de pertenencia.",
-            "3": "Construye una propuesta de comunicación en inglés donde contraste y promueva rasgos de una sociedad intercultural identificados en pueblos de habla inglesa."
+            "2": "Elabora fichas informativas en inglés sobre rasgos identitarios de pueblos de habla inglesa (acento, grafía, vestimenta, comida, tradiciones, costumbres, entre otros).",
+            "3": "Construye una propuesta de comunicación en inglés, oral y escrita, donde contraste, valore y promueva rasgos de una sociedad intercultural identificados en pueblos de habla inglesa."
           }
         },
         {
           id: "IN03", num: 3,
-          titulo: "Las manifestaciones culturales, lingüísticas y artísticas en inglés, a favor de la interculturalidad.",
+          titulo: "Las manifestaciones culturales, lingüísticas y artísticas en inglés a favor de la interculturalidad.",
           pdas: {
-            "1": "Interpreta juegos de roles en inglés, sobre situaciones que favorezcan la comunicación asertiva.",
-            "2": "Interpreta juegos de roles en inglés, sobre situaciones que favorezcan la comunicación asertiva.",
-            "3": "Practica la comunicación asertiva y el diálogo intercultural en inglés en interacción con otras personas."
+            "1": "Elabora un cómic o manga en inglés donde se rescata la importancia de la interculturalidad.",
+            "2": "Interpreta juegos de roles en inglés sobre situaciones que favorezcan la comunicación asertiva.",
+            "3": "Elabora guiones en inglés que aborden situaciones de conflicto resueltas mediante la comunicación asertiva e intercultural, y los dramatiza."
           }
         },
         {
           id: "IN04", num: 4,
           titulo: "Uso de diversos textos en inglés que promueven la preservación y conservación de las lenguas.",
           pdas: {
-            "1": "Recupera textos informativos y científicos en inglés, que refieran formas de conservación y preservación de las lenguas, y las difunde.",
-            "2": "Recupera textos informativos en inglés sobre formas de conservación de las lenguas.",
-            "3": "Recupera y difunde textos en inglés sobre la preservación de las lenguas."
+            "1": "Recupera estrategias acerca de la conservación y preservación de las lenguas, planteadas en textos informativos y científicos en inglés, y las difunde.",
+            "2": "Indaga y construye propuestas en inglés para conservar y preservar las lenguas, como legado y sentido de pertenencia, y las difunde por algún medio de comunicación.",
+            "3": "Participa en un debate en inglés sobre los cambios lingüísticos y culturales de las lenguas en el transcurso del tiempo, y su impacto en la conformación de nuevas prácticas sociales."
           }
         },
         {
           id: "IN05", num: 5,
           titulo: "El uso del inglés para expresar necesidades, intereses y problemas de la comunidad.",
           pdas: {
-            "1": "Organiza una campaña en inglés sobre soluciones a problemas de la comunidad.",
-            "2": "Organiza una campaña en inglés sobre soluciones a problemas de la comunidad.",
+            "1": "Investiga en textos en inglés soluciones implementadas sobre problemas de una comunidad, e informa de manera oral o escrita sus hallazgos.",
+            "2": "Elabora escritos argumentativos en inglés sobre acciones colectivas que posibiliten la solución de problemas de una comunidad.",
             "3": "Organiza una campaña en inglés sobre soluciones a problemas de la comunidad."
           }
         },
@@ -208,8 +195,8 @@ const CURRICULUM = {
           titulo: "Elementos y recursos estéticos del inglés.",
           pdas: {
             "1": "Recupera de distintos tipos de textos literarios en inglés, expresiones, elementos y recursos estéticos y elabora un glosario.",
-            "2": "Emplea algunas figuras retóricas, elementos y recursos estéticos, para construir un texto literario corto en inglés.",
-            "3": "Usa intencionalmente figuras retóricas como metáforas, hipérboles, aliteraciones, en creaciones artísticas en inglés."
+            "2": "Identifica y explica el uso de expresiones, elementos y recursos estéticos en manifestaciones culturales y artísticas de países de habla inglesa.",
+            "3": "Emplea algunas figuras retóricas, elementos y recursos estéticos, para construir un texto literario corto, oral y escrito, para difundirlo en la comunidad escolar."
           }
         },
         {
@@ -217,16 +204,16 @@ const CURRICULUM = {
           titulo: "Manifestaciones artísticas y culturales del inglés.",
           pdas: {
             "1": "Realiza una lectura crítica y emite su opinión en inglés sobre diversas manifestaciones culturales y artísticas de pueblos de habla inglesa.",
-            "2": "Investiga y recupera manifestaciones culturales y artísticas de su comunidad, para difundirlas en inglés.",
-            "3": "Investiga y recupera manifestaciones culturales y artísticas de su comunidad, para difundirlas en inglés."
+            "2": "Selecciona alguna manifestación artística o cultural y la difunde en inglés, mediante diversos elementos y recursos artísticos.",
+            "3": "Crea poemas cortos a partir del uso de recursos estéticos del inglés en producciones orales y escritas, para difundirse en la comunidad escolar."
           }
         },
         {
           id: "IN08", num: 8,
           titulo: "Creaciones literarias tradicionales y contemporáneas en inglés.",
           pdas: {
-            "1": "Selecciona textos literarios en inglés que aborden temas de la comunidad, los resume y difunde por distintos medios.",
-            "2": "Crea poemas cortos a partir del uso de recursos estéticos del inglés en producciones orales y escritas.",
+            "1": "Selecciona textos literarios en inglés que aborden temas de la comunidad o de algún lugar de interés, los resume y difunde por distintos medios.",
+            "2": "Investiga en textos literarios en inglés sobre pueblos indígenas y/o afrodescendientes de México o el mundo. Elabora por escrito una apreciación sobre la relevancia y el valor social y cultural de los pueblos indígenas y/o afrodescendientes de México o el mundo.",
             "3": "Crea textos breves en inglés para exponer una situación o tema de interés, con recursos narrativos, poéticos, visuales, escénicos o musicales."
           }
         },
@@ -234,17 +221,17 @@ const CURRICULUM = {
           id: "IN09", num: 9,
           titulo: "El inglés para expresar sensaciones, emociones, sentimientos e ideas vinculados con las familias, la escuela y la comunidad.",
           pdas: {
-            "1": "Expresa en inglés sensaciones, emociones y sentimientos vinculados con su entorno familiar, escolar y comunitario.",
-            "2": "Expresa en inglés sensaciones, emociones y sentimientos vinculados con su entorno.",
-            "3": "Expresa en inglés sensaciones, emociones y sentimientos vinculados con su entorno."
+            "1": "Lleva a cabo juegos del lenguaje en inglés para expresar sensaciones, emociones, sentimientos e ideas sobre las familias y la escuela.",
+            "2": "Realiza entrevistas en inglés para recuperar opiniones acerca de emociones, sentimientos e ideas sobre la escuela y la comunidad.",
+            "3": "Investiga y recupera manifestaciones culturales y artísticas de su comunidad, para difundirlas en inglés."
           }
         },
         {
           id: "IN10", num: 10,
           titulo: "Relatos en inglés para expresar sucesos significativos familiares, escolares, comunitarios y sociales.",
           pdas: {
-            "1": "Recupera un acontecimiento histórico comunitario y elabora un texto oral y escrito en inglés para expresar su postura.",
-            "2": "Recupera un acontecimiento histórico comunitario y elabora un texto oral y escrito en inglés.",
+            "1": "Entrevista y narra en inglés sucesos significativos familiares, escolares, comunitarios o sociales recuperados de la memoria colectiva.",
+            "2": "Investiga un acontecimiento familiar, escolar o comunitario significativo, recuperado de la memoria colectiva, para redactar una reflexión en inglés.",
             "3": "Recupera un acontecimiento histórico comunitario y elabora un texto oral y escrito en inglés, para expresar su postura, haciendo uso de recursos visuales o auditivos."
           }
         },
@@ -252,8 +239,8 @@ const CURRICULUM = {
           id: "IN11", num: 11,
           titulo: "Comunicación asertiva y dialógica en inglés, para sensibilizar sobre la erradicación de la violencia en las familias y la escuela.",
           pdas: {
-            "1": "Diseña y difunde en inglés propuestas escritas para sensibilizar a la comunidad acerca de la importancia de erradicar la violencia.",
-            "2": "Diseña y difunde en inglés propuestas escritas para sensibilizar a la comunidad acerca de la importancia de erradicar la violencia.",
+            "1": "Recupera de distintos textos en inglés, expresiones de violencia presentes en las familias y las escuelas. Reflexiona y comunica de forma oral y escrita una postura de rechazo a la violencia, mediante la comunicación asertiva y dialógica.",
+            "2": "Participa en un panel o debate en inglés, sobre la importancia de la comunicación asertiva y dialógica, a fin de consensuar propuestas de acción para sensibilizar sobre la erradicación de la violencia en las familias y la escuela.",
             "3": "Diseña y difunde en inglés propuestas escritas para sensibilizar a la comunidad acerca de la importancia de erradicar la violencia."
           }
         },
@@ -261,8 +248,8 @@ const CURRICULUM = {
           id: "IN12", num: 12,
           titulo: "Mensajes en inglés en medios de comunicación masiva, que promuevan una vida saludable.",
           pdas: {
-            "1": "Recupera en lengua inglesa mensajes que promuevan una vida saludable y los difunde de manera oral o escrita.",
-            "2": "Cuenta historias en inglés sobre ejemplos de vida saludable y las difunde mediante el uso de medios de comunicación.",
+            "1": "Recupera en inglés mensajes que promueven una vida saludable y los difunde de manera oral o escrita, a través de distintos medios de comunicación.",
+            "2": "Investiga en diversas fuentes en inglés sobre una vida saludable, para construir un texto informativo y difundirlo a través de medios de comunicación.",
             "3": "Cuenta historias en inglés sobre ejemplos de vida saludable y las difunde mediante el uso de medios de comunicación, para sensibilizar a la comunidad."
           }
         },
@@ -270,20 +257,20 @@ const CURRICULUM = {
           id: "IN13", num: 13,
           titulo: "El uso del inglés en la construcción de mensajes a favor de la inclusión.",
           pdas: {
-            "1": "Investiga en diversas fuentes en inglés sobre mensajes que presentan información a favor de la interacción, sensibilización y empatía con la diversidad.",
-            "2": "Investiga en diversas fuentes en inglés sobre mensajes a favor de la inclusión.",
-            "3": "Crea mensajes en inglés que promuevan la inclusión en la comunidad escolar."
+            "1": "Investiga en diversas fuentes en inglés las características de los mensajes que presentan información a favor de la interacción, sensibilización y empatía con la diversidad y expone su punto de vista.",
+            "2": "Analiza las características y recursos empleados en la comunicación asertiva en inglés, y sugiere su uso para favorecer una sociedad incluyente.",
+            "3": "Construye un proyecto en inglés para valorar la diversidad y fomentar la inclusión social en su entorno."
           }
         },
         {
           id: "IN14", num: 14,
           titulo: "El uso del inglés en las manifestaciones culturales y artísticas que favorecen la construcción de una sociedad incluyente.",
           pdas: {
-            "1": "Realiza una lectura crítica y emite su opinión en inglés sobre diversas manifestaciones culturales y artísticas de pueblos de habla inglesa.",
-            "2": "Realiza una lectura crítica y emite su opinión en inglés sobre manifestaciones culturales y artísticas que favorecen la inclusión.",
-            "3": "Presenta una propuesta artística en inglés que favorezca la construcción de una sociedad incluyente."
+            "1": "Elabora semblanzas en inglés sobre personas en condición de discapacidad, destacadas por contribuir a la cultura, las artes y las difunde.",
+            "2": "Investiga, reflexiona y expone en inglés acerca de los sistemas alternativos y aumentativos que favorecen el tránsito a una sociedad incluyente.",
+            "3": "Crea en inglés alguna manifestación artística que aborde cómo los sistemas alternativos y aumentativos favorecen sociedades incluyentes."
           }
-        }
+        },
       ]
     },
 
@@ -293,8 +280,8 @@ const CURRICULUM = {
           id: "AR01", num: 1,
           titulo: "Diversidad de lenguajes artísticos en la riqueza pluricultural de México y del mundo.",
           pdas: {
-            "1": "Reconoce en manifestaciones artísticas de México y del mundo el uso del cuerpo, del espacio y del tiempo, para valorarlas como parte de la riqueza pluricultural.",
-            "2": "Explora la creación de secuencias y patrones al identificar el uso de formas, colores, movimientos y sonidos en manifestaciones artísticas de México y del mundo.",
+            "1": "Reconoce en manifestaciones artísticas de México y el mundo el uso del cuerpo, del espacio y del tiempo, para valorarlas como parte de la riqueza pluricultural.",
+            "2": "Explora la creación de secuencias y patrones al identificar el uso de formas, colores, movimientos y sonidos, entre otros elementos de las artes, en manifestaciones artísticas de México y del mundo, para apreciar la riqueza pluricultural.",
             "3": "Experimenta con características de algunos estilos de los lenguajes artísticos, para representar la riqueza pluricultural de México y del mundo."
           }
         },
@@ -302,26 +289,26 @@ const CURRICULUM = {
           id: "AR02", num: 2,
           titulo: "Manifestaciones culturales y artísticas que conforman la diversidad étnica, cultural y lingüística.",
           pdas: {
-            "1": "Identifica diferentes manifestaciones culturales y artísticas de pueblos indígenas y afrodescendientes de México y del mundo.",
-            "2": "Adapta textos literarios provenientes de culturas indígenas o afrodescendientes, experimentando con elementos de las artes.",
-            "3": "Presenta una propuesta creativa usando intencionalmente el cuerpo, espacio y tiempo, para valorar y promover la diversidad étnica, cultural y lingüística."
+            "1": "Identifica diferentes manifestaciones culturales y artísticas de pueblos indígenas y afrodescendientes de México y del mundo, para interpretar significados que permitan fomentar una sociedad intercultural.",
+            "2": "Compara el uso de formas, colores, movimientos y sonidos, entre otros elementos de las artes, en manifestaciones culturales y artísticas de diferentes épocas y orígenes culturales, para fomentar una sociedad intercultural.",
+            "3": "Presenta una propuesta creativa, usando intencionalmente el cuerpo, espacio y tiempo, entre otros elementos de las artes, para valorar y promover la diversidad étnica, cultural y lingüística, a favor de una sociedad intercultural."
           }
         },
         {
           id: "AR03", num: 3,
           titulo: "Identidad y sentido de pertenencia en manifestaciones artísticas.",
           pdas: {
-            "1": "Interpreta manifestaciones artísticas del patrimonio cultural de la comunidad, para fomentar la identidad personal y colectiva.",
-            "2": "Interpreta manifestaciones artísticas del patrimonio cultural de la comunidad, para fomentar la identidad personal y colectiva.",
-            "3": "Crea propuestas artísticas utilizando intencionalmente características de algunos estilos artísticos, a favor de la interculturalidad crítica."
+            "1": "Aprecia la intención expresiva en diversas manifestaciones artísticas, para la construcción crítica de las identidades personal y colectiva.",
+            "2": "Reflexiona sobre la manera en que las artes fortalecen la identidad, dan sentido de pertenencia y resultan esenciales para favorecer la interculturalidad crítica.",
+            "3": "Crea propuestas artísticas utilizando intencionalmente características de algunos estilos artísticos, a favor de la interculturalidad crítica, para fortalecer las identidades personal y colectiva."
           }
         },
         {
           id: "AR04", num: 4,
           titulo: "Patrimonio cultural de la comunidad en manifestaciones artísticas que fomentan la identidad y el sentido de pertenencia.",
           pdas: {
-            "1": "Interpreta manifestaciones artísticas del patrimonio cultural de la comunidad y de México, para fomentar la identidad personal y colectiva, así como el sentido de pertenencia.",
-            "2": "Interpreta manifestaciones artísticas del patrimonio cultural de la comunidad y de México.",
+            "1": "Interpreta manifestaciones artísticas del patrimonio cultural de la comunidad y de México, para fomentar las identidades personal y colectiva, así como el sentido de pertenencia.",
+            "2": "Expresa, mediante lenguajes artísticos, la relevancia de valorar, conservar y preservar el patrimonio cultural, como legado que le otorga identidad y sentido de pertenencia.",
             "3": "Reinterpreta de manera respetuosa manifestaciones artísticas del patrimonio cultural, para valorar su identidad y sentido de pertenencia."
           }
         },
@@ -329,35 +316,35 @@ const CURRICULUM = {
           id: "AR05", num: 5,
           titulo: "Los lenguajes artísticos en la expresión de problemas de la comunidad.",
           pdas: {
-            "1": "Usa elementos artísticos para expresar problemas y proponer soluciones en la comunidad.",
-            "2": "Experimenta con técnicas artísticas y elige una que implemente en un proyecto escolar creativo, para imaginar posibles soluciones a problemas de la comunidad.",
-            "3": "Experimenta con técnicas artísticas para imaginar y expresar posibles soluciones a problemas de la comunidad."
+            "1": "Usa intencionalmente formas, colores, movimientos y sonidos, entre otros elementos de las artes, para recrear una situación problemática de su contexto y manifestar una postura crítica.",
+            "2": "Investiga propuestas artísticas colectivas de entornos rurales y urbanos a favor de la inclusión, para presentar una postura crítica sobre un problema de la comunidad.",
+            "3": "Experimenta con técnicas artísticas y elige una que implemente en un proyecto escolar creativo, para imaginar y proponer posibles soluciones a problemas de la comunidad."
           }
         },
         {
           id: "AR06", num: 6,
           titulo: "Elementos de las artes y recursos estéticos apreciados en el entorno natural y social, así como en diversas manifestaciones artísticas.",
           pdas: {
-            "1": "Identifica el uso intencional del cuerpo, del espacio y del tiempo en manifestaciones artísticas, para apreciar e interpretar sus sentidos y significados.",
-            "2": "Analiza el uso intencional de elementos de las artes y recursos estéticos como ritmo, repetición, armonía, contraste y variación, en manifestaciones artísticas.",
-            "3": "Usa intencionalmente figuras retóricas como metáforas, hipérboles, sinécdoques, aliteraciones, en creaciones artísticas colectivas."
+            "1": "Identifica el uso intencional del cuerpo, del espacio y del tiempo en manifestaciones artísticas, para apreciar e interpretar sus sentidos y significados. Percibe cualidades estéticas en el entorno natural y social, para interpretar sus sentidos y significados.",
+            "2": "Analiza el uso intencional de elementos de las artes y recursos estéticos como ritmo, repetición, armonía, contraste y variación, en manifestaciones artísticas, para emplearlos en una creación personal. Reinterpreta los sentidos y significados de las cualidades estéticas del entorno natural y social en creaciones artísticas personales.",
+            "3": "Usa intencionalmente figuras retóricas como metáforas, hipérboles, sinécdoques, aliteraciones, en creaciones artísticas colectivas, para representar situaciones vinculadas a la comunidad. Interviene el entorno natural y social, mediante el uso de los lenguajes artísticos, para expresar un mensaje a favor del cuidado del medioambiente."
           }
         },
         {
           id: "AR07", num: 7,
           titulo: "Valor estético de la naturaleza, de la vida cotidiana y de diferentes manifestaciones culturales y artísticas.",
           pdas: {
-            "1": "Disfruta de manifestaciones culturales y artísticas de la comunidad y de otros lugares, para reconocer sus gustos e intereses estéticos.",
-            "2": "Identifica algunas categorías estéticas como lo bello, lo sublime, lo grotesco, lo trágico, lo cómico, al apreciarlas en manifestaciones culturales y artísticas.",
-            "3": "Identifica algunas categorías estéticas como lo bello, lo sublime, lo grotesco, lo trágico, lo cómico, al apreciarlas en manifestaciones culturales y artísticas, para argumentar sus juicios estéticos."
+            "1": "Disfruta de manifestaciones culturales y artísticas de la comunidad y de otros lugares, para reconocer sus gustos e intereses estéticos. Disfruta los valores estéticos presentes en la naturaleza para apreciarla y expresarla.",
+            "2": "Investiga diversas manifestaciones culturales y artísticas para expresar un juicio estético y lo difunde en la comunidad escolar. Emite un juicio estético sobre un episodio significativo de la vida cotidiana y lo difunde en la comunidad escolar.",
+            "3": "Identifica algunas categorías estéticas como lo bello, lo sublime, lo grotesco, lo trágico, lo cómico y lo siniestro, al apreciarlas en manifestaciones culturales y artísticas, para argumentar sus juicios estéticos y difundirlos en la comunidad. Identifica algunas categorías estéticas como lo bello, lo sublime, lo grotesco, lo trágico, lo cómico y lo siniestro, al apreciarlas en la naturaleza y en la vida cotidiana, para compartir sus juicios estéticos y difundirlos en la comunidad."
           }
         },
         {
           id: "AR08", num: 8,
           titulo: "Creaciones artísticas que tienen su origen en textos literarios.",
           pdas: {
-            "1": "Explora con formas, colores, movimientos, sonidos, para reinterpretar textos literarios de la comunidad u otros lugares, haciendo uso de diversos lenguajes artísticos.",
-            "2": "Adapta textos literarios provenientes de culturas indígenas o afrodescendientes, experimentando con elementos de las artes y recursos estéticos.",
+            "1": "Explora con formas, colores, movimientos, sonidos, entre otros elementos de las artes, para reinterpretar textos literarios de la comunidad u otros lugares, haciendo uso de diversos lenguajes artísticos.",
+            "2": "Adapta textos literarios provenientes de culturas indígenas o afrodescendientes, experimentando con elementos de las artes y recursos estéticos como la repetición, ritmo, armonía, contraste y variación, para sensibilizar a la comunidad sobre las formas de expresión de los pueblos originarios.",
             "3": "Construye una narrativa personal o colectiva, a partir de un texto literario de su interés, empleando en forma artística cuerpo, espacio y tiempo."
           }
         },
@@ -365,8 +352,8 @@ const CURRICULUM = {
           id: "AR09", num: 9,
           titulo: "Expresión artística de sensaciones, emociones, sentimientos e ideas, a partir de experiencias familiares, escolares o comunitarias.",
           pdas: {
-            "1": "Usa intencionalmente elementos de las artes para representar experiencias familiares, escolares o comunitarias.",
-            "2": "Usa intencionalmente figuras retóricas para representar situaciones vinculadas a la comunidad.",
+            "1": "Recrea lúdicamente sensaciones, emociones, sentimientos e ideas, mediante el uso del cuerpo, del espacio y del tiempo, para expresar la relación con su entorno familiar.",
+            "2": "Explora con técnicas artísticas y elige una para apreciar, simbolizar y compartir sensaciones, emociones, sentimientos e ideas relacionados con el entorno escolar.",
             "3": "Usa intencionalmente características y funciones de algunos géneros artísticos, para crear una obra original que simbolice sus vínculos con la comunidad."
           }
         },
@@ -374,8 +361,8 @@ const CURRICULUM = {
           id: "AR10", num: 10,
           titulo: "Memoria colectiva representada por medios artísticos, para registrar experiencias comunitarias.",
           pdas: {
-            "1": "Representa mediante lenguajes artísticos experiencias significativas de la comunidad.",
-            "2": "Registra mediante lenguajes artísticos experiencias significativas de la comunidad.",
+            "1": "Recupera de la memoria colectiva acontecimientos significativos de las familias, escuela o comunidad, para representarlos de manera creativa.",
+            "2": "Reinterpreta, mediante características de algunos géneros artísticos, un acontecimiento familiar, escolar o comunitario significativo de la memoria colectiva.",
             "3": "Manifiesta una postura crítica sobre la memoria colectiva, acerca de un acontecimiento relevante para la comunidad, al hacer uso de los lenguajes artísticos."
           }
         },
@@ -383,17 +370,17 @@ const CURRICULUM = {
           id: "AR11", num: 11,
           titulo: "Procesos creativos que ponen en práctica la comunicación dialógica, como estrategia para erradicar expresiones de violencia.",
           pdas: {
-            "1": "Expresa, mediante elementos de las artes como las formas, colores, movimientos, sonidos, la relevancia del diálogo como alternativa a las manifestaciones de violencia.",
-            "2": "Interviene el entorno natural y social, mediante el uso de los lenguajes artísticos, para expresar un mensaje a favor del cuidado del medioambiente.",
-            "3": "Presenta al público una propuesta artística respetuosa y empática con la diversidad, para sensibilizar a la comunidad acerca de la importancia del diálogo para erradicar la violencia."
+            "1": "Expresa, mediante elementos de las artes como las formas, colores, movimientos y sonidos, la relevancia del diálogo como una alternativa a las manifestaciones de violencia presentes en la familia, escuela y comunidad.",
+            "2": "Imagina y comparte propuestas artísticas de acción para contribuir en la erradicación de la violencia en la familia, escuela y comunidad, haciendo uso de una comunicación abierta, respetuosa y empática con la diversidad.",
+            "3": "Presenta al público una propuesta artística respetuosa y empática con la diversidad, a fin de sensibilizar a la comunidad acerca de la importancia del diálogo para erradicar la violencia en el entorno."
           }
         },
         {
           id: "AR12", num: 12,
           titulo: "Vida saludable expresada a través de mensajes construidos con elementos de las artes, para difundirlos por distintos medios de comunicación.",
           pdas: {
-            "1": "Emplea intencionalmente formas, colores, movimientos, sonidos, para representar una vida saludable y la difunde por un medio de comunicación escolar.",
-            "2": "Construye una narrativa a favor de una vida saludable, mediante el uso artístico de distintos formatos.",
+            "1": "Emplea intencionalmente formas, colores, movimientos, sonidos, entre otros elementos de las artes, para representar una vida saludable y la difunde por un medio de comunicación escolar.",
+            "2": "Crea mensajes que promuevan una vida saludable, utilizando artísticamente formas, colores, movimientos y sonidos, entre otros elementos de las artes, para difundirlos por distintos medios de comunicación.",
             "3": "Construye una narrativa a favor de una vida saludable, mediante el uso artístico de distintos formatos como fotografía, historieta, secuencia corporal, secuencia sonora, entre otros, y la difunde por distintos medios de comunicación."
           }
         },
@@ -401,22 +388,13 @@ const CURRICULUM = {
           id: "AR13", num: 13,
           titulo: "Sistemas alternativos y aumentativos de comunicación, como herramientas creativas que favorecen la inclusión.",
           pdas: {
-            "1": "Identifica algunas características sensoriales de la Lengua de Señas Mexicana, el código Braille, los tableros de comunicación y otros sistemas alternativos y aumentativos.",
-            "2": "Crea códigos que favorezcan la inclusión, a través del uso artístico de formas, colores, texturas, movimientos, gestos, sonidos.",
-            "3": "Crea códigos que favorezcan la inclusión, a través del uso artístico de formas, colores, texturas, movimientos, gestos, sonidos, entre otros recursos."
+            "1": "Identifica algunas características sensoriales de la Lengua de Señas Mexicana, el código Braille, los tableros de comunicación y otros sistemas alternativos y aumentativos, para fomentar la interacción, sensibilización y empatía con la diversidad.",
+            "2": "Experimenta con sistemas alternativos y aumentativos de comunicación al usar artísticamente el cuerpo, espacio, tiempo, entre otros elementos de las artes, en una propuesta comunitaria que visibilice la diversidad y fomente la inclusión social.",
+            "3": "Crea códigos que favorezcan la inclusión, a través del uso artístico de formas, colores, texturas, movimientos, gestos, sonidos, entre otros recursos que incorporen características de los sistemas alternativos y aumentativos."
           }
         },
-        {
-          id: "AR14", num: 14,
-          titulo: "Manifestaciones artísticas que emplean sistemas alternativos y aumentativos de comunicación, elaboradas por personas en condición de discapacidad y/o diseñadas para ellas.",
-          pdas: {
-            "1": "Identifica diferentes manifestaciones culturales y artísticas creadas o ejecutadas por personas con alguna discapacidad.",
-            "2": "Presenta una creación artística en la que experimente con sistemas alternativos y aumentativos de comunicación.",
-            "3": "Presenta una creación artística en la que experimente con sistemas alternativos y aumentativos de comunicación, para favorecer el tránsito a una sociedad incluyente."
-          }
-        }
       ]
-    }
+    },
   },
 
   // ============================================================
