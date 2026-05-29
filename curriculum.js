@@ -1245,6 +1245,32 @@ const CURRICULUM = {
 };
 
 // ============================================================
+// CAMPOS POR GRADO — necesario para poblar los selectores del formulario
+// Matemáticas aplica a los 3 grados; Biología=1°, Física=2°, Química=3°
+// Geografía=1°, Historia y FCE=todos; Tecnología/EF/SE=todos
+// ============================================================
+const CAMPOS_POR_GRADO = {
+  "1": {
+    "Lenguajes":                     ["Español", "Inglés", "Artes"],
+    "Saberes y Pensamiento Científico": ["Matemáticas", "Biología"],
+    "Ética, Naturaleza y Sociedades": ["Geografía", "Historia", "Formación Cívica y Ética"],
+    "De lo Humano y lo Comunitario":  ["Tecnología", "Educación Socioemocional", "Educación Física"]
+  },
+  "2": {
+    "Lenguajes":                     ["Español", "Inglés", "Artes"],
+    "Saberes y Pensamiento Científico": ["Matemáticas", "Física"],
+    "Ética, Naturaleza y Sociedades": ["Historia", "Formación Cívica y Ética"],
+    "De lo Humano y lo Comunitario":  ["Tecnología", "Educación Socioemocional", "Educación Física"]
+  },
+  "3": {
+    "Lenguajes":                     ["Español", "Inglés", "Artes"],
+    "Saberes y Pensamiento Científico": ["Matemáticas", "Química"],
+    "Ética, Naturaleza y Sociedades": ["Historia", "Formación Cívica y Ética"],
+    "De lo Humano y lo Comunitario":  ["Tecnología", "Educación Socioemocional", "Educación Física"]
+  }
+};
+
+// ============================================================
 // EJES ARTICULADORES
 // ============================================================
 const EJES_ARTICULADORES = [
