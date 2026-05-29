@@ -399,22 +399,27 @@ const CURRICULUM = {
 
   // ============================================================
   // CAMPO 2: SABERES Y PENSAMIENTO CIENTÍFICO
+  // Fuente: Programa Sintético Fase 6, SEP 2022 — páginas 58-72
   // ============================================================
-  "Saberes y pensamiento científico": {
+  "Saberes y Pensamiento Científico": {
 
     "Matemáticas": {
       contenidos: [
         {
           id: "MA01", num: 1,
           titulo: "Expresión de fracciones como decimales y de decimales como fracciones.",
-          pdas: { "1": "Convierte fracciones a decimales y decimales a fracciones, comprendiendo su equivalencia y aplicándola en contextos cotidianos.", "2": "N/A", "3": "N/A" }
+          pdas: {
+            "1": "Usa diversas estrategias al convertir números fraccionarios a decimales y viceversa.",
+            "2": "N/A",
+            "3": "N/A"
+          }
         },
         {
           id: "MA02", num: 2,
           titulo: "Extensión de los números a positivos y negativos y su orden.",
           pdas: {
-            "1": "Reconoce la necesidad de los números negativos a partir de usar cantidades que tienen al cero como referencia. Compara y ordena números con signo en la recta numérica.",
-            "2": "Usa la notación científica al realizar cálculos con cantidades muy grandes o muy pequeñas.",
+            "1": "Reconoce la necesidad de los números negativos a partir de usar cantidades que tienen al cero como referencia. Compara y ordena números con signo (enteros, fracciones y decimales) en la recta numérica y analiza en qué casos se cumple la propiedad de densidad.",
+            "2": "N/A",
             "3": "N/A"
           }
         },
@@ -422,17 +427,17 @@ const CURRICULUM = {
           id: "MA03", num: 3,
           titulo: "Extensión del significado de las operaciones y sus relaciones inversas.",
           pdas: {
-            "1": "Reconoce el significado de las cuatro operaciones básicas y sus relaciones inversas al resolver problemas con números con signo. Comprueba si las operaciones cumplen las propiedades conmutativa, asociativa y distributiva.",
-            "2": "Usa la notación científica al realizar cálculos con cantidades muy grandes o muy pequeñas.",
+            "1": "Reconoce el significado de las cuatro operaciones básicas y sus relaciones inversas al resolver problemas que impliquen el uso de números con signo. Comprueba y argumenta si cada una de estas operaciones cumple las propiedades: conmutativa, asociativa y distributiva. Identifica y aplica la jerarquía de operaciones y símbolos de agrupación al realizar cálculos.",
+            "2": "Usa criterios de divisibilidad y números primos al resolver problemas que implican calcular el máximo común divisor y el mínimo común múltiplo. Calcula potencias con exponente entero y la raíz cuadrada. Usa la notación científica. Usa la notación científica al realizar cálculos con cantidades muy grandes o muy pequeñas.",
             "3": "N/A"
           }
         },
         {
           id: "MA04", num: 4,
-          titulo: "Regularidades y patrones.",
+          titulo: "Regularidades y Patrones.",
           pdas: {
-            "1": "Identifica, describe y construye regularidades y patrones numéricos y geométricos.",
-            "2": "Identifica, describe y construye regularidades y patrones numéricos y geométricos.",
+            "1": "Representa algebraicamente una sucesión con progresión aritmética de figuras y números.",
+            "2": "Representa algebraicamente una sucesión con progresión cuadrática de figuras y números.",
             "3": "N/A"
           }
         },
@@ -440,35 +445,35 @@ const CURRICULUM = {
           id: "MA05", num: 5,
           titulo: "Introducción al álgebra.",
           pdas: {
-            "1": "Usa expresiones algebraicas sencillas para representar situaciones y problemas.",
-            "2": "Usa expresiones algebraicas para representar y resolver situaciones.",
-            "3": "Usa el álgebra como lenguaje para representar y resolver problemas complejos."
+            "1": "Interpreta y plantea diversas situaciones del lenguaje común al lenguaje algebraico y viceversa. Representa algebraicamente perímetros de figuras.",
+            "2": "Representa algebraicamente áreas que generan una expresión cuadrática. Identifica y usa las propiedades de los exponentes al resolver distintas operaciones algebraicas.",
+            "3": "Representa algebraicamente áreas y volúmenes de cuerpos geométricos y calcula el valor de una variable en función de las otras."
           }
         },
         {
           id: "MA06", num: 6,
           titulo: "Ecuaciones lineales y cuadráticas.",
           pdas: {
-            "1": "Plantea y resuelve ecuaciones lineales con una incógnita en contextos variados.",
-            "2": "Plantea y resuelve ecuaciones lineales y sistemas de ecuaciones lineales con dos incógnitas.",
-            "3": "Plantea y resuelve ecuaciones cuadráticas en contextos variados."
+            "1": "Resuelve ecuaciones de la forma Ax=B, Ax+B=C, Ax+B=Cx+D con el uso de las propiedades de la igualdad. Modela y resuelve problemas cuyo planteamiento es una ecuación lineal. Resuelve problemas de porcentajes en diversas situaciones.",
+            "2": "Resuelve desigualdades con expresiones algebraicas. Modela y soluciona sistemas de dos ecuaciones lineales con dos incógnitas por algún método para dar respuesta a un problema.",
+            "3": "Resuelve ecuaciones de la forma Ax²+Bx+C=0 por factorización y fórmula general. Resuelve problemas cuyo planteamiento es una ecuación cuadrática."
           }
         },
         {
           id: "MA07", num: 7,
           titulo: "Funciones.",
           pdas: {
-            "1": "Relaciona e interpreta relaciones proporcional y no proporcional a partir de su representación tabular, gráfica y con diagramas.",
-            "2": "Relaciona e interpreta funciones lineales y sus representaciones.",
-            "3": "Interpreta y representa funciones cuadráticas en sus diferentes formas."
+            "1": "Relaciona e interpreta relaciones proporcional y no proporcional a partir de su representación tabular, gráfica y con diagramas. Modela y resuelve diversas situaciones a través de ecuaciones proporcionales con constante positiva y negativa.",
+            "2": "Relaciona e interpreta la proporcionalidad inversa de dos magnitudes o cantidades, además usa una tabla, gráfica o representación algebraica en diversos contextos.",
+            "3": "Relaciona e interpreta la variación de dos cantidades a partir de su representación tabular, gráfica y algebraica. Explora diversos procedimientos para resolver problemas de reparto proporcional."
           }
         },
         {
           id: "MA08", num: 8,
           titulo: "Rectas y ángulos.",
           pdas: {
-            "1": "Introduce la idea de distancia entre dos puntos. Encuentra la distancia de un punto a una recta y la distancia entre dos rectas paralelas.",
-            "2": "Identifica y usa las relaciones entre los ángulos, lados y diagonales para construir triángulos, cuadriláteros y polígonos.",
+            "1": "Explora las figuras básicas como rectas y ángulos y su notación. Encuentra y calcula los ángulos que se forman al intersecar dos segmentos.",
+            "2": "Identifica y usa las relaciones entre los ángulos, lados y diagonales para construir a escala triángulos, cuadriláteros y polígonos regulares o irregulares.",
             "3": "N/A"
           }
         },
@@ -476,27 +481,27 @@ const CURRICULUM = {
           id: "MA09", num: 9,
           titulo: "Construcción y propiedades de las figuras planas y cuerpos.",
           pdas: {
-            "1": "Obtiene y aplica fórmulas para calcular el perímetro y el área de polígonos regulares e irregulares y del círculo.",
-            "2": "Construye con regla y compás polígonos regulares. Identifica y usa las relaciones entre figuras en la construcción de teselados.",
-            "3": "Reconoce las propiedades de los sólidos. Explora la generación de sólidos de revolución. Explora y construye desarrollos planos de diferentes figuras tridimensionales."
+            "1": "Utiliza la regla y el compás para trazar: punto medio, mediatriz de un segmento, segmentos y ángulos congruentes, bisectriz de un ángulo, rectas perpendiculares y rectas paralelas. Identifica y traza las rectas notables en triángulos y cuadriláteros. Construye y clasifica triángulos y cuadriláteros a partir del análisis de distinta información.",
+            "2": "Construye con regla y compás polígonos regulares con distinta información. Identifica y usa las relaciones entre figuras en la construcción de teselados.",
+            "3": "Aplica las propiedades de la congruencia y semejanza de triángulos al construir y resolver problemas. Reconoce las propiedades de los sólidos. Explora la generación de sólidos de revolución a partir de figuras planas. Explora y construye desarrollos planos de diferentes figuras tridimensionales, cilindros, pirámides y conos."
           }
         },
         {
           id: "MA10", num: 10,
           titulo: "Circunferencia, círculo y esfera.",
           pdas: {
-            "1": "Calcula longitud de circunferencia y área del círculo. Reconoce propiedades de la esfera.",
-            "2": "Calcula longitudes y áreas relacionadas con circunferencia y círculo en contextos variados.",
-            "3": "Aplica propiedades de circunferencia, círculo y esfera en resolución de problemas."
+            "1": "Identifica y traza las rectas notables en la circunferencia y las relaciones entre ellas. Investiga figuras relacionadas con círculos y propiedades de los círculos. Construye circunferencias a partir de distinta información.",
+            "2": "Determina la medida de ángulos inscritos y centrales, así como de arcos de circunferencia. Explora las intersecciones entre círculos y figuras al calcular perímetros y áreas.",
+            "3": "Explora y construye desarrollos planos de esferas. Indaga la generación de esferas a partir de figuras planas. Encuentra relaciones de volumen de la esfera, el cono y el cilindro."
           }
         },
         {
           id: "MA11", num: 11,
           titulo: "Medición y cálculo en diferentes contextos.",
           pdas: {
-            "1": "Resuelve problemas que implican calcular medidas en contextos geométricos y de la vida cotidiana.",
-            "2": "Resuelve problemas que implican calcular medidas en contextos geométricos y de la vida cotidiana.",
-            "3": "Resuelve problemas que implican calcular medidas en contextos complejos."
+            "1": "Introduce la idea de distancia entre dos puntos como la longitud del segmento que los une. Encuentra la distancia de un punto a una recta y la distancia entre dos rectas paralelas. Explora la desigualdad del triángulo. Obtiene y aplica fórmulas o usa otras estrategias para calcular el perímetro y el área de polígonos regulares e irregulares y del círculo.",
+            "2": "Resuelve problemas que implican conversiones en múltiplos y submúltiplos del metro, litro, kilogramo y de unidades del sistema inglés (yarda, pulgada, galón, onza y libra). Utiliza estrategias diversas para determinar el perímetro y el área de figuras compuestas.",
+            "3": "Usa diferentes estrategias para calcular el volumen de prismas, pirámides y cilindros. Formula, justifica y usa el teorema de Pitágoras al resolver problemas. Resuelve problemas utilizando las razones trigonométricas seno, coseno y tangente."
           }
         },
         {
@@ -504,16 +509,16 @@ const CURRICULUM = {
           titulo: "Obtención y representación de información.",
           pdas: {
             "1": "Usa tablas, gráficas de barras y circulares para el análisis de información.",
-            "2": "Usa tablas y gráficas para analizar e interpretar información estadística.",
-            "3": "Obtiene y representa información estadística usando diversas gráficas."
+            "2": "Recolecta, registra, lee y comunica información mediante histogramas, gráficas poligonales y de línea.",
+            "3": "Lee, interpreta y comunica información de cualquier tipo de gráficas."
           }
         },
         {
           id: "MA13", num: 13,
           titulo: "Interpretación de la información a través de medidas de tendencia central y de dispersión.",
           pdas: {
-            "1": "Determina e interpreta la frecuencia absoluta, la frecuencia relativa, la media, la mediana y la moda en un conjunto de datos.",
-            "2": "Determina e interpreta medidas de tendencia central y de dispersión en un conjunto de datos.",
+            "1": "Determina e interpreta la frecuencia absoluta, la frecuencia relativa, la media, la mediana y la moda en un conjunto de datos. Usa e interpreta las medidas de tendencia central (moda, media aritmética y mediana) y el rango de un conjunto de datos, y justifica con base en ellas sus decisiones.",
+            "2": "Usa e interpreta las medidas de tendencia central (moda, media aritmética y mediana) y de dispersión (rango y la desviación media) de un conjunto de datos, y justifica con base en ellas sus decisiones. Identifica tendencias en los datos centrándose en sus valores representativos y sus variaciones.",
             "3": "Determina y compara las medidas de tendencia central (media, mediana y moda) y de dispersión (rango y desviación media) de dos conjuntos de datos para tomar decisiones."
           }
         },
@@ -521,11 +526,11 @@ const CURRICULUM = {
           id: "MA14", num: 14,
           titulo: "Azar y probabilidad.",
           pdas: {
-            "1": "Compara cualitativamente dos o más eventos a partir de sus resultados posibles. Identifica eventos en los que interviene el azar, determina el espacio muestral y experimenta.",
-            "2": "Calcula probabilidades de eventos simples y compuestos.",
-            "3": "Resuelve problemas donde se calcule la posibilidad de ocurrencia de dos eventos independientes (regla del producto)."
+            "1": "Compara cualitativamente dos o más eventos a partir de sus resultados posibles, usa relaciones como: es más probable que..., es menos probable que... Identifica eventos en los que interviene el azar, determina el espacio muestral y experimenta. Identifica diversos procedimientos de conteo y resuelve problemas.",
+            "2": "Realiza experimentos aleatorios y registra los resultados en una tabla de frecuencia como la transición de la probabilidad frecuencial a la teórica. Analiza las características de la medida de la probabilidad y su equivalencia y representación en números decimales, fraccionarios y porcentajes.",
+            "3": "Resuelve problemas donde se analicen las características de eventos complementarios y eventos mutuamente excluyentes e independientes. Resuelve problemas donde se calcule la probabilidad de ocurrencia de dos eventos mutuamente excluyentes y de eventos complementarios (regla de la suma). Resuelve problemas donde se calcule la probabilidad de ocurrencia de dos eventos independientes (regla del producto). Indaga las condiciones necesarias para que un juego de azar sea justo, con base en la noción de resultados equiprobables y no equiprobables."
           }
-        }
+        },
       ]
     },
 
@@ -535,48 +540,66 @@ const CURRICULUM = {
         {
           id: "BI01", num: 1,
           titulo: "Funcionamiento del cuerpo humano coordinado por los sistemas nervioso y endocrino.",
-          pdas: { "1": "Describe la función de coordinación de los sistemas nervioso y endocrino en el organismo humano, relacionándola con situaciones de la vida cotidiana." }
+          pdas: {
+            "1": "Explica la participación de los sistemas nervioso y endocrino en la coordinación de las funciones del cuerpo humano; reconoce el papel general de las hormonas y sus efectos en la maduración sexual y en la reproducción. Explica los efectos del consumo de sustancias adictivas en el sistema nervioso y en el funcionamiento integral del cuerpo humano; argumenta la importancia de evitar su consumo a partir del análisis de sus implicaciones en la salud, la sexualidad, la economía y la sociedad; comparte sus aprendizajes por distintos medios."
+          }
         },
         {
           id: "BI02", num: 2,
           titulo: "Salud sexual y reproductiva: prevención de infecciones de transmisión sexual y del embarazo en adolescentes.",
-          pdas: { "1": "Compara las maneras en que la cultura influye en el concepto de sexualidad. Valora el uso consistente del condón para disminuir el riesgo de infecciones de transmisión sexual." }
+          pdas: {
+            "1": "Compara las maneras en que la cultura influye en el concepto de sexualidad; reconoce que todas las culturas tienen maneras distintas de comprender el género, la sexualidad y la reproducción; y reflexiona acerca de que el inicio de la actividad sexual debe ser de manera consensuada. Cuestiona creencias, estereotipos y costumbres que impactan negativamente la salud sexual y reproductiva de niñas y mujeres; reconoce la importancia de la igualdad de género y la responsabilidad compartida del hombre y la mujer en la prevención del embarazo en la adolescencia como base para la toma de decisiones. Compara la efectividad de los métodos anticonceptivos como apoyo para planificar el embarazo desde la perspectiva del proyecto de vida, con acompañamiento de los servicios amigables; valora la efectividad del condón por su doble protección."
+          }
         },
         {
           id: "BI03", num: 3,
           titulo: "Prevención de enfermedades relacionadas con la alimentación y el consumo de alimentos ultraprocesados.",
-          pdas: { "1": "Analiza la relación entre la alimentación, los alimentos ultraprocesados y las enfermedades, para proponer hábitos saludables en su comunidad." }
+          pdas: {
+            "1": "Identifica causas de la obesidad y la diabetes relacionadas con la dieta y el sedentarismo, a fin de formular su proyecto de vida saludable; incluye factores protectores y propone acciones para reducir factores de riesgo, incluyendo su entorno familiar y comunitario. Formula hipótesis acerca de las consecuencias de carencia o exceso de nutrimentos en la dieta; interpreta datos que muestran la correlación entre la incidencia de enfermedades como la caries e hipertensión y el consumo de exceso de sal, azúcar y grasas saturadas."
+          }
         },
         {
           id: "BI04", num: 4,
           titulo: "La diversidad de saberes e intercambio de conocimientos acerca de los seres vivos y las relaciones con el medio ambiente.",
-          pdas: { "1": "Reconoce la importancia de los conocimientos, prácticas e innovaciones de los pueblos originarios acerca de los seres vivos." }
+          pdas: {
+            "1": "Reconoce la importancia de los conocimientos, prácticas e innovaciones de los pueblos originarios acerca de los seres vivos; intercambia vivencias y experiencias asociadas al aprovechamiento y la protección como el uso de la herbolaria, la milpa o la conservación de los bosques. Explica por qué los saberes de los pueblos originarios han aportado al aprovechamiento de los recursos naturales en el ecosistema local; analiza sus contribuciones a la agricultura, el pastoreo y la pesca sustentables; comunica sus hallazgos usando diferentes lenguajes y representaciones."
+          }
         },
         {
           id: "BI05", num: 5,
           titulo: "Los procesos vitales de los seres vivos: nutrición, relación con el medio y reproducción.",
-          pdas: { "1": "Describe y compara los procesos vitales de nutrición, relación con el medio y reproducción en distintos tipos de seres vivos." }
+          pdas: {
+            "1": "Compara las características comunes de los seres vivos; identifica que todos tienen estructuras especializadas asociadas a la nutrición, la relación con el medio y la reproducción y los distingue como rasgos adaptativos que favorecen la sobrevivencia de las especies. Clasifica organismos de acuerdo con características comunes asociadas a la nutrición y reproducción; propone hipótesis en torno a posibles relaciones de parentesco entre ellos y las contrasta con fuentes de consulta; reconoce que todas las clasificaciones tienen alcances y limitaciones."
+          }
         },
         {
           id: "BI06", num: 6,
           titulo: "La biodiversidad como expresión del cambio de los seres vivos en el tiempo.",
-          pdas: { "1": "Analiza información acerca del estado de la biodiversidad local. Indaga las principales aportaciones de Darwin y Wallace sobre el origen de la biodiversidad." }
+          pdas: {
+            "1": "Analiza información acerca del estado de la biodiversidad local a partir de fuentes directas, orales, escritas, audiovisuales o Internet, expone razones sobre su importancia cultural, biológica, estética y ética; propone acciones para su cuidado. Indaga las principales aportaciones de Darwin y Wallace, las identifica como una de las explicaciones más fundamentadas acerca del origen de la biodiversidad y reflexiona acerca de cómo han cambiado; reconoce que los conocimientos científicos son un proceso en construcción permanente."
+          }
         },
         {
           id: "BI07", num: 7,
           titulo: "El calentamiento global como una consecuencia de la alteración de los ciclos biogeoquímicos en los ecosistemas.",
-          pdas: { "1": "Explica la relación entre el calentamiento global y la alteración de los ciclos biogeoquímicos, proponiendo acciones para mitigar sus efectos en la comunidad." }
+          pdas: {
+            "1": "Representa la transferencia de materia y energía entre los organismos de un ecosistema mediante redes y pirámides tróficas; elabora explicaciones, inferencias y predicciones consistentes con los modelos generados acerca de la pérdida o incremento de organismos en los eslabones. Identifica interacciones de competencia e interdependencia en el ecosistema local y explica cómo regulan el funcionamiento y mantenimiento en la dinámica general del ecosistema. Analiza las prácticas de consumo que han alterado los ciclos biogeoquímicos del carbono y el nitrógeno, sus efectos asociados al calentamiento global y sus impactos en el medio ambiente y la salud."
+          }
         },
         {
           id: "BI08", num: 8,
           titulo: "Importancia del microscopio para el conocimiento de la unidad y la diversidad de los seres vivos.",
-          pdas: { "1": "Compara cómo han cambiado las primeras observaciones microscópicas respecto a las actuales. Describe las estructuras y funciones básicas de la célula." }
+          pdas: {
+            "1": "Compara cómo han cambiado las primeras observaciones microscópicas respecto de las actuales; valora el avance en el conocimiento de las bacterias, las células y los virus. Describe las estructuras y funciones básicas de la célula a partir de modelos; explica la participación de la membrana y el citoplasma en las funciones de nutrición y relación, y del núcleo en la reproducción y la herencia. Formula preguntas y contrasta explicaciones acerca de la manipulación genética; comparte sus hallazgos respecto de sus beneficios y riesgos en los ámbitos de la salud y el medio ambiente; participa en debates en los que defiende su postura."
+          }
         },
         {
           id: "BI09", num: 9,
           titulo: "Las vacunas: su relevancia en el control de algunas enfermedades infecciosas.",
-          pdas: { "1": "Valora la importancia y la necesidad de proteger la salud a partir del uso de las vacunas para el control de algunas enfermedades infecciosas." }
-        }
+          pdas: {
+            "1": "Describe las características generales de las bacterias y los virus; formula hipótesis en torno al por qué de la rápida propagación de las enfermedades infecciosas que causan, y las contrasta con evidencias reportadas en fuentes con sustento científico. Valora la importancia y la necesidad de proteger la salud con el uso de las vacunas para el control de algunas enfermedades infecciosas; evalúa sus riesgos y beneficios sociales y económicos; reconoce la interacción de los conocimientos científicos y tecnológicos, sus alcances y limitaciones."
+          }
+        },
       ]
     },
 
@@ -586,53 +609,73 @@ const CURRICULUM = {
         {
           id: "FI01", num: 1,
           titulo: "El pensamiento científico, una forma de plantear y solucionar problemas y su incidencia en la transformación de la sociedad.",
-          pdas: { "2": "Analiza situaciones cotidianas usando el método científico para plantear y resolver problemas." }
+          pdas: {
+            "2": "Describe problemas comunes de la vida cotidiana explicando cómo se procede para buscarles solución; conoce y caracteriza el pensamiento científico para plantearse y resolver problemas en la escuela y su cotidianeidad. Indaga en diferentes fuentes de consulta las aportaciones de mujeres y hombres en el desarrollo de la Física y su contribución al conocimiento científico y tecnológico a nivel nacional e internacional para valorar su influencia en la sociedad actual."
+          }
         },
         {
           id: "FI02", num: 2,
           titulo: "Unidades y medidas utilizados en Física.",
-          pdas: { "2": "Identifica las unidades básicas y derivadas del Sistema Internacional, conoce los instrumentos de medición y realiza conversiones." }
+          pdas: {
+            "2": "Identifica las unidades de medición que se ocupan en su entorno escolar, familiar y en su comunidad. Identifica cuáles son, cómo se definen y cuál es la simbología de las unidades básicas y derivadas del Sistema Internacional de Unidades. Conoce los instrumentos de medición y realiza conversiones con los múltiplos y submúltiplos al referirse a una magnitud."
+          }
         },
         {
           id: "FI03", num: 3,
           titulo: "Estructura, propiedades y características de la materia.",
-          pdas: { "2": "Describe la estructura de la materia y sus propiedades, relacionándolas con fenómenos cotidianos." }
+          pdas: {
+            "2": "Indaga sobre los saberes y prácticas del uso de materiales y sus propiedades y características para construcción, vestimenta y artefactos de uso común. Relaciona e interpreta las teorías sobre estructura de la materia, a partir de los modelos atómicos y de partículas y los fenómenos que les dieron origen. Explora algunos avances recientes en la comprensión de la constitución de la materia y reconoce el proceso histórico de construcción de nuevas teorías."
+          }
         },
         {
           id: "FI04", num: 4,
           titulo: "Estados de agregación de la materia.",
-          pdas: { "2": "Explica las características de los estados sólido, líquido y gaseoso de la materia y los cambios de estado en situaciones cotidianas." }
+          pdas: {
+            "2": "Experimenta e interpreta los modelos atómicos y de partículas al proponer hipótesis que expliquen los tres estados de la materia, sus propiedades físicas como la temperatura de fusión, ebullición, densidad, entre otros. Interpreta la temperatura y el equilibrio térmico con base en el modelo de partículas."
+          }
         },
         {
           id: "FI05", num: 5,
           titulo: "Interacciones en fenómenos relacionados con la fuerza y el movimiento.",
-          pdas: { "2": "Analiza fenómenos de movimiento y fuerza en situaciones cotidianas, aplicando conceptos de velocidad, aceleración y fricción." }
+          pdas: {
+            "2": "Experimenta e interpreta las interacciones de la fuerza y el movimiento relacionados con las Leyes de Newton para explicar actividades cotidianas. Identifica los elementos y los diferentes tipos de movimiento relacionados con la velocidad y aceleración y realiza experimentos sencillos. Identifica y describe la presencia de fuerzas en interacciones cotidianas (fricción y fuerzas en equilibrio)."
+          }
         },
         {
           id: "FI06", num: 6,
           titulo: "Principios de Pascal y de Arquímedes.",
-          pdas: { "2": "Explica los principios de Pascal y Arquímedes y los relaciona con situaciones cotidianas y tecnológicas." }
+          pdas: {
+            "2": "Experimenta e interpreta las interacciones de la fuerza y el movimiento relacionados con los principios de Pascal y de Arquímedes, para explicar actividades cotidianas. Identifica algunos dispositivos de uso cotidiano en los cuales se aplica el Principio de Pascal (sistemas de frenos hidráulicos, elevadores y gatos hidráulicos) y de Arquímedes (flotación de barcos, submarinos y globos aerostáticos, entre otros); colabora en equipo para proponer actividades experimentales y resolver problemas sencillos relativos a las propiedades de los fluidos."
+          }
         },
         {
           id: "FI07", num: 7,
           titulo: "Saberes y prácticas para el aprovechamiento de energías y la sustentabilidad.",
-          pdas: { "2": "Identifica saberes, prácticas y artefactos sobre el aprovechamiento de las diversas formas de energía renovables y no renovables. Analiza las características de la energía mecánica." }
+          pdas: {
+            "2": "Analiza las características de la energía mecánica (cinética y potencial) y describe casos donde se conserva. Relaciona el calor como una forma de energía y describe los motores que funcionan con energía calorífica, los efectos del calor disipado y los gases expelidos y valora sus efectos en la atmósfera. Identifica saberes, prácticas y artefactos sobre el aprovechamiento de las diversas formas de energía renovables y no renovables, su empleo y origen en su comunidad (solar, eólica, hidráulica, geológica, mareomotriz y nuclear) y valora sus beneficios. Realiza experimentos en donde se aproveche la energía del Sol ya sea considerando las propiedades de la luz (energía solar) o las de la materia (convección)."
+          }
         },
         {
           id: "FI08", num: 8,
           titulo: "Interacciones de la electricidad y el magnetismo.",
-          pdas: { "2": "Explica fenómenos eléctricos y magnéticos básicos, identificando sus aplicaciones tecnológicas en la vida cotidiana." }
+          pdas: {
+            "2": "Experimenta e interpreta algunas manifestaciones y aplicaciones de la electricidad e identifica los cuidados que requiere su uso al revisar protocolos de seguridad. Relaciona e interpreta fenómenos comunes del magnetismo y experimenta con la interacción entre imanes. Experimenta e interpreta el comportamiento de la luz como resultado de la interacción entre electricidad y magnetismo. Explica el funcionamiento de aparatos tecnológicos de comunicación, a partir de las ondas electromagnéticas."
+          }
         },
         {
           id: "FI09", num: 9,
           titulo: "Composición del Universo y el Sistema Solar.",
-          pdas: { "2": "Describe la composición del Universo y el Sistema Solar, relacionando fenómenos astronómicos con la vida en la Tierra." }
+          pdas: {
+            "2": "Indaga algunos avances recientes en la comprensión sobre la evolución del Universo y su composición. Indaga cómo se lleva a cabo la exploración de los cuerpos celestes, por medio de la detección y procesamiento de las ondas electromagnéticas que emiten. Relaciona e interpreta las características y dinámica del Sistema Solar con la gravitación y el movimiento de los planetas, en particular el caso de la Tierra y la Luna."
+          }
         },
         {
           id: "FI10", num: 10,
           titulo: "Fenómenos, procesos y factores asociados al cambio climático.",
-          pdas: { "2": "Formula hipótesis que relacionan la actividad humana con el aumento de temperatura en el planeta. Propone medidas de mitigación y adaptación al cambio climático." }
-        }
+          pdas: {
+            "2": "Formula hipótesis que relacionan la actividad humana con el aumento de temperatura en el planeta y la emisión de gases de efecto invernadero; diferencia entre calor, radiación y temperatura al explicar los procesos que lo originan. Indaga sobre fenómenos meteorológicos extremos como olas de calor, ciclones tropicales, sequías y lluvias torrenciales; representa y explica su distribución en el mundo. Propone medidas de mitigación y adaptación, encaminadas al cuidado del medio ambiente y el bienestar común, viables para su aplicación en su escuela y comunidad."
+          }
+        },
       ]
     },
 
@@ -641,72 +684,145 @@ const CURRICULUM = {
       contenidos: [
         {
           id: "QU01", num: 1,
-          titulo: "Los hitos que contribuyeron al avance del conocimiento científico y tecnológico en el ámbito nacional e internacional.",
-          pdas: { "3": "Analiza hitos científicos y tecnológicos nacionales e internacionales, relacionando su impacto en la satisfacción de necesidades humanas y sus implicaciones en la naturaleza." }
+          titulo: "Los hitos que contribuyeron al avance del conocimiento científico y tecnológico en el ámbito nacional e internacional, así como su relación en la satisfacción de necesidades humanas y sus implicaciones en la naturaleza.",
+          pdas: {
+            "3": "Reconoce los aportes de saberes de diferentes pueblos y culturas en la satisfacción de necesidades humanas en diversos ámbitos (medicina, construcción, artesanías, textiles y alimentos). Indaga en fuentes de consulta orales y escritas las aportaciones de mujeres y hombres en el desarrollo del conocimiento científico y tecnológico, para valorar su influencia en la sociedad actual. Reflexiona acerca de los hábitos de consumo responsable a partir del análisis de las actividades relacionadas con el cuidado del medio ambiente a nivel personal, familiar y social, como base para la toma de decisiones orientadas a la sustentabilidad."
+          }
         },
         {
           id: "QU02", num: 2,
           titulo: "Las propiedades extensivas e intensivas, como una forma de identificar sustancias y materiales de uso común.",
-          pdas: { "3": "Formula hipótesis para diferenciar propiedades extensivas e intensivas, mediante actividades experimentales." }
+          pdas: {
+            "3": "Formula hipótesis para diferenciar propiedades extensivas e intensivas mediante actividades experimentales y, con base en el análisis de resultados, elabora conclusiones. Reconoce la importancia del uso de instrumentos de medición para identificar y diferenciar propiedades de sustancias y materiales."
+          }
         },
         {
           id: "QU03", num: 3,
-          titulo: "Composición de las mezclas y su clasificación en homogéneas y heterogéneas, así como métodos de separación aplicados en diferentes contextos.",
-          pdas: { "3": "Describe los componentes de una mezcla mediante actividades experimentales de uso cotidiano. Deduce métodos para separar mezclas (evaporación, decantación, filtración, extracción, sublimación, cromatografía, cristalización)." }
+          titulo: "Presencia de contaminantes y su concentración, relacionada con la degradación y contaminación ambiental en la comunidad.",
+          pdas: {
+            "3": "Indaga situaciones problemáticas relacionadas con la degradación y contaminación en la comunidad, vinculadas con el uso de productos y procesos químicos. Sistematiza la información de diferentes fuentes de consulta, orales y escritas, acerca de la concentración de contaminantes (partes por millón <ppm>) en aire, agua y suelo. Diseña y lleva a cabo proyectos comunitarios con la intención de proponer medidas preventivas o alternativas de solución, factibles y sustentables para el cuidado de la salud y el medio ambiente."
+          }
         },
         {
           id: "QU04", num: 4,
-          titulo: "Importancia de la concentración de sustancias en mezclas de productos de uso cotidiano.",
-          pdas: { "3": "Analiza la concentración de sustancias de una mezcla expresadas en porcentaje en masa y en volumen de distintos productos, orientadas al cuidado de la salud y al consumo responsable." }
+          titulo: "Mezclas, compuestos y elementos representados con el modelo corpuscular de la materia en sólidos, líquidos y gases, así como su caracterización.",
+          pdas: {
+            "3": "Explica semejanzas y diferencias de mezclas, compuestos y elementos, a partir de actividades experimentales y los clasifica en materiales de uso cotidiano. Construye modelos corpusculares de mezclas, compuestos y elementos, a fin de comprender la estructura interna de los materiales en diferentes estados de agregación."
+          }
         },
         {
           id: "QU05", num: 5,
-          titulo: "Presencia de contaminantes y su concentración, relacionada con la degradación y contaminación ambiental en la comunidad.",
-          pdas: { "3": "Identifica y analiza la presencia de contaminantes en el ambiente, relacionando su concentración con la degradación ambiental en la comunidad." }
+          titulo: "Los compuestos iónicos y moleculares: propiedades y estructura, así como su importancia en diferentes ámbitos.",
+          pdas: {
+            "3": "Experimenta y diferencia los compuestos iónicos y moleculares, a partir de las propiedades identificadas en actividades experimentales; elabora conclusiones, inferencias y predicciones con base en la evidencia obtenida. Analiza la formación y estructura de compuestos iónicos y moleculares, a partir de las propiedades de la Tabla periódica. Valora el aprovechamiento de propiedades de compuestos iónicos y moleculares en el cuerpo humano y en diferentes ámbitos."
+          }
         },
         {
           id: "QU06", num: 6,
-          titulo: "Mezclas, compuestos y elementos representados con el modelo corpuscular de la materia.",
-          pdas: { "3": "Representa y caracteriza mezclas, compuestos y elementos usando el modelo corpuscular de la materia en sólidos, líquidos y gases." }
+          titulo: "Los alimentos como fuente de energía química: carbohidratos, proteínas y lípidos.",
+          pdas: {
+            "3": "Reconoce los saberes de pueblos y culturas acerca de la diversidad de los alimentos y su importancia en el diseño de menús orientados a una dieta saludable acorde al contexto. Explica cómo obtiene la energía el cuerpo humano a partir de los nutrimentos e identifica los alimentos que los contienen. Valora la importancia de vitaminas, minerales y agua simple potable, para el adecuado funcionamiento del cuerpo humano e identifica los impactos de su deficiencia."
+          }
         },
         {
           id: "QU07", num: 7,
-          titulo: "La Tabla periódica: criterios de clasificación de los elementos químicos y sus propiedades.",
-          pdas: { "3": "Analiza los criterios de clasificación de los elementos químicos en la Tabla Periódica y sus propiedades (electronegatividad, energía de ionización y radio atómico)." }
+          titulo: "Propiedades de ácidos y bases, reacciones de neutralización y modelo de Arrhenius.",
+          pdas: {
+            "3": "Distingue las propiedades de ácidos y bases en su entorno a partir de indicadores e interpreta la escala de acidez y basicidad. Deduce los productos de reacciones de neutralización sencillas con base en el modelo de Arrhenius, mediante actividades experimentales. Diseña y lleva a cabo reacciones de neutralización a fin de obtener productos útiles en la vida cotidiana, así como para el tratamiento de residuos. Evalúa los beneficios y riesgos a la salud y al medio ambiente de ácidos y bases, en diversos ámbitos a través del pensamiento crítico."
+          }
         },
         {
           id: "QU08", num: 8,
-          titulo: "Los compuestos iónicos y moleculares: propiedades y estructura, así como su importancia en diferentes ámbitos.",
-          pdas: { "3": "Describe las propiedades y estructura de los compuestos iónicos y moleculares, y su importancia en contextos científicos, tecnológicos y cotidianos." }
-        },
-        {
-          id: "QU09", num: 9,
-          titulo: "Los alimentos como fuente de energía química: carbohidratos, proteínas y lípidos.",
-          pdas: { "3": "Analiza la función energética de carbohidratos, proteínas y lípidos en el organismo, relacionando su consumo con hábitos alimenticios saludables." }
-        },
-        {
-          id: "QU10", num: 10,
-          titulo: "Las reacciones químicas: manifestaciones, propiedades e interpretación de las ecuaciones químicas con base en la Ley de conservación de la materia.",
-          pdas: { "3": "Reconoce distintas reacciones químicas en su entorno. Representa reacciones mediante modelos y ecuaciones químicas, con base en la Ley de conservación de la materia." }
-        },
-        {
-          id: "QU11", num: 11,
-          titulo: "Propiedades de ácidos y bases, reacciones de neutralización y modelo de Arrhenius.",
-          pdas: { "3": "Identifica las propiedades de ácidos y bases, explica las reacciones de neutralización usando el modelo de Arrhenius y las relaciona con situaciones cotidianas." }
-        },
-        {
-          id: "QU12", num: 12,
           titulo: "Las reacciones de óxido-reducción (redox): identificación del número de oxidación y de agentes oxidantes y reductores.",
-          pdas: { "3": "Identifica el número de oxidación en compuestos y reconoce agentes oxidantes y reductores en reacciones redox cotidianas e industriales." }
-        }
+          pdas: {
+            "3": "Identifica reacciones de redox en su entorno y comprende su importancia en diferentes ámbitos. Analiza la transferencia de electrones entre reactivos y productos en reacciones de redox con base en el cambio del número de oxidación, a partir de actividades experimentales."
+          }
+        },
       ]
-    }
+    },
   },
 
   // ============================================================
   // CAMPO 3: ÉTICA, NATURALEZA Y SOCIEDADES
+  // Fuente: Programa Sintético Fase 6, SEP 2022 — páginas 79-107
   // ============================================================
-  "Ética, naturaleza y sociedades": {
+  "Ética, Naturaleza y Sociedades": {
+
+    "Geografía": {
+      grado: "1",
+      contenidos: [
+        {
+          id: "GE01", num: 1,
+          titulo: "Los riesgos de desastre, su relación con los procesos naturales y la vulnerabilidad de la población en lugares específicos.",
+          pdas: {
+            "1": "Identifica que los desastres pueden ser originados por procesos naturales o por las actividades humanas. Relaciona los efectos ambientales, sociales y económicos de los desastres recientes en México y el mundo, tomando en cuenta la vulnerabilidad de la población. Valora la importancia de consolidar una cultura de prevención de desastres con la participación de instituciones, organismos y la sociedad."
+          }
+        },
+        {
+          id: "GE02", num: 2,
+          titulo: "Crecimiento, distribución, composición y migración de la población.",
+          pdas: {
+            "1": "Analiza las implicaciones sociales, ambientales y económicas del crecimiento, distribución y composición de la población en diferentes países, con base en información estadística y cartográfica. Emplea las nociones de concentración y dispersión de la población para explicar los rasgos y problemas del espacio urbano y el rural. Distingue la movilidad como un derecho humano, los tipos de migración y principales flujos migratorios para comprender los efectos socioeconómicos y culturales en los lugares de atracción y expulsión de población."
+          }
+        },
+        {
+          id: "GE03", num: 3,
+          titulo: "Los procesos productivos y sus consecuencias ambientales y sociales en la comunidad, México y el mundo.",
+          pdas: {
+            "1": "Compara procesos productivos y espacios económicos en México y el mundo, para reconocer sus implicaciones sociales, económicas y ambientales. Analiza y relaciona distintos procesos productivos sustantivos en la conformación social, económica y espacial de las sociedades a nivel mundial, para identificar sus contradicciones y desigualdades."
+          }
+        },
+        {
+          id: "GE04", num: 4,
+          titulo: "Las prácticas de producción, distribución y consumo sustentables como alternativas para preservar el medio ambiente y asegurar el bienestar de las generaciones presentes y futuras.",
+          pdas: {
+            "1": "Comprende qué es la sustentabilidad e identifica prácticas de producción, distribución y consumo sustentables. Argumenta sobre prácticas sustentables de producción, distribución y consumo que pueden contribuir al bienestar de la comunidad y de México. Propone alternativas sustentables de desarrollo social para la preservación del medio ambiente y el bienestar de las generaciones presentes y futuras."
+          }
+        },
+        {
+          id: "GE05", num: 5,
+          titulo: "Las desigualdades socioeconómicas en México y el mundo, y sus efectos en la calidad de vida de las personas.",
+          pdas: {
+            "1": "Comprende qué son las desigualdades socioeconómicas e identifica sus efectos y repercusiones en la vida de las personas. Argumenta las desigualdades socioeconómicas en México y el mundo, mediante la interpretación del Índice de Desarrollo Humano (IDH) y el Índice para una vida mejor, para explicar sus efectos en la calidad de vida. Propone acciones para reducir las desigualdades socioeconómicas en la comunidad, México y el mundo."
+          }
+        },
+        {
+          id: "GE06", num: 6,
+          titulo: "Los conflictos territoriales actuales en México y el mundo, y sus implicaciones ambientales y sociales.",
+          pdas: {
+            "1": "Debate acerca de la multicausalidad de los conflictos territoriales en México y el mundo, la importancia de la ubicación geográfica de las partes involucradas y las consecuencias ambientales, sociales, económicas y políticas en México y el mundo. Promueve alternativas de resolución justas y pacíficas a los conflictos territoriales que afectan a la comunidad, a México y al mundo."
+          }
+        },
+        {
+          id: "GE07", num: 7,
+          titulo: "Los retos sociales y ambientales en la comunidad, en México y el mundo.",
+          pdas: {
+            "1": "Reconoce cómo las problemáticas sociales y ambientales afectan a la comunidad. Asume responsabilidad como agente de cambio para encontrar soluciones a las problemáticas sociales y ambientales de la comunidad."
+          }
+        },
+        {
+          id: "GE08", num: 8,
+          titulo: "La diversidad de grupos sociales y culturales en México.",
+          pdas: {
+            "1": "Reconoce la diversidad de pueblos originarios, afromexicanos, migrantes, grupos urbanos, grupos sociales en México, como parte de la identidad nacional pluricultural y la compara con la diversidad social y cultural en el mundo. Valora la importancia del espacio en la conformación de las identidades juveniles."
+          }
+        },
+        {
+          id: "GE09", num: 9,
+          titulo: "El suelo, recurso estratégico para la seguridad alimentaria y la vida en el planeta.",
+          pdas: {
+            "1": "Indaga sobre el origen, los usos y los problemas del suelo en la localidad. Reflexiona acerca de la contradicción que existe entre los países con suelo de vocación agrícola y la poca productividad asociada con los problemas del suelo (sobreexplotación, degradación, pérdida, entre otros). Comparte alternativas para la protección y recuperación del suelo y colabora de manera organizada y solidaria en acciones comunitarias orientadas a ese fin en la localidad donde vive."
+          }
+        },
+        {
+          id: "GE10", num: 10,
+          titulo: "El reto del cambio climático.",
+          pdas: {
+            "1": "Reconoce las relaciones e interacciones entre los elementos y los factores del clima como base para comprender, de manera general, la distribución de las regiones naturales en la Tierra y analizar la biodiversidad en el mundo. Indaga y analiza de manera crítica los cambios ocurridos en el clima, sus causas y consecuencias en México y el mundo. Asume una postura crítica y activa ante los fenómenos derivados del calentamiento global y el cambio climático."
+          }
+        },
+      ]
+    },
 
     "Historia": {
       contenidos: [
@@ -714,27 +830,26 @@ const CURRICULUM = {
           id: "HI01", num: 1,
           titulo: "Los albores de la humanidad: los pueblos antiguos del mundo y su devenir.",
           pdas: {
-            "1": "Conoce sistemas para abordar la historia de los primeros pueblos. Emplea sistemas para ubicar en el espacio y en el tiempo aspectos de la vida cotidiana de los pueblos antiguos de Mesoamérica, Aridoamérica y Oasisamérica.",
-            "2": "N/A",
-            "3": "N/A"
+            "1": "Busca, localiza y estudia con sus pares fuentes que dan cuenta de mitos fundacionales de pueblos antiguos. Reflexiona acerca de la importancia de las fuentes históricas para la interpretación de hechos y procesos. Compara y encuentra lo común y lo diverso entre mitos fundacionales de pueblos antiguos de México y de otras partes del mundo. Reflexiona y toma postura en torno a las teorías que explican el poblamiento original de América. Distingue y clasifica evidencias históricas que le permiten acercarse al conocimiento del poblamiento original de América. Investiga acerca de restos fósiles humanos encontrados en lo que hoy es el territorio de nuestro país. Reflexiona en torno al caso del llamado Hombre de Tepexpan y la necesidad de una historia inclusiva que recupere las aportaciones de las mujeres.",
+            "3": "Recupera las explicaciones de Charles Darwin acerca del origen y evolución de la biodiversidad y particulariza en el caso del ser humano. Investiga acerca de restos fósiles de homínidos encontrados en todo el mundo y organiza la información. Explica cómo se construye la representación de la prehistoria a través de la manufactura de artefactos o estructuras. Aplica el eje organizador uso y gestión del agua y su impacto para analizar el desarrollo histórico de las antiguas civilizaciones mesopotámica, egipcia, hindú y china. Indaga a partir de la noción de espacio ecúmene aplicada a los antiguos pueblos fenicio, egipcio, cretense, cartaginés, griego y romano en la cuenca del mar mediterráneo."
           }
         },
         {
           id: "HI02", num: 2,
           titulo: "La conformación de las metrópolis y los sistemas de dominación.",
           pdas: {
-            "1": "Formula preguntas, recopila información y comparte hallazgos en torno a los pueblos originarios de México. Indaga los orígenes de la población afromexicana y sus aportaciones a la cultura del país.",
-            "2": "Indaga acerca de las tensiones y alianzas políticas entre los señoríos mesoamericanos previo al arribo de los colonizadores. Revisa y contextualiza las campañas militares de Hernán Cortés.",
-            "3": "Analiza la disputa entre países hegemónicos por la posesión de territorios en América, África y Asia. Caracteriza las colonizaciones realizadas por españoles, portugueses, ingleses, franceses y holandeses."
+            "1": "Formula preguntas, recopila información y comparte sus hallazgos en torno a los primeros pueblos en el territorio de lo que ahora es nuestro país.",
+            "2": "Indaga acerca del desarrollo del comercio y su impacto en la geografía y la navegación.",
+            "3": "Indaga sobre el desarrollo de las ciudades en Italia y Flandes durante los siglos XIV y XV, como expresión temprana de integración de la economía, la sociedad, la cultura y la política. Analiza el proceso de integración de los antiguos pueblos de la Cuenca del Mar Mediterráneo para explicarse las tensiones y conflictos entre persas y griegos."
           }
         },
         {
           id: "HI03", num: 3,
           titulo: "Las gestas de resistencia y los movimientos independentistas.",
           pdas: {
-            "1": "Identifica las gestas de resistencia de los pueblos ante los sistemas de dominación.",
-            "2": "N/A",
-            "3": "Elabora una cronología de las luchas de independencia de los países de Latinoamérica, incorporando datos, fechas, nombres, lugares y personajes históricos."
+            "1": "Indaga sobre rebeliones y levantamientos de pueblos indígenas y afromexicanos en el periodo colonial.",
+            "2": "Relaciona la Revolución de Independencia de 1810 en nuestro país con el contexto internacional.",
+            "3": "Elabora una cronología de las luchas de independencia de los países de América Latina."
           }
         },
         {
@@ -742,8 +857,8 @@ const CURRICULUM = {
           titulo: "Las revoluciones modernas y sus tendencias.",
           pdas: {
             "1": "N/A",
-            "2": "Establece las características y el contexto en que se desarrolla la dictadura de Antonio López de Santa Anna. Analiza las Leyes de Reforma expedidas entre 1859 y 1861.",
-            "3": "N/A"
+            "2": "Establece las características y el contexto en que surgieron las revoluciones modernas.",
+            "3": "Ubica la confluencia de causas para que la primera guerra mundial ocurriera."
           }
         },
         {
@@ -751,130 +866,82 @@ const CURRICULUM = {
           titulo: "Las tensiones en el siglo XX.",
           pdas: {
             "1": "N/A",
-            "2": "Analiza y comprende la causalidad de la revolución mexicana de 1910. Pondera las demandas sociales que la orientaron y la participación de los diferentes grupos sociales.",
-            "3": "Analiza y comprende las causas y consecuencias de la Segunda Revolución Industrial. Explica las causas de la Primera y Segunda Guerra Mundial. Analiza las causas de la desintegración del bloque socialista."
+            "2": "Analiza y comprende la causalidad de la segunda guerra mundial.",
+            "3": "Analiza y comprende las causas y efectos de la guerra fría."
           }
         },
         {
           id: "HI06", num: 6,
           titulo: "La construcción histórica de las ideas sobre las juventudes e infancias.",
-          pdas: { "1": "Analiza cómo han cambiado históricamente las concepciones sobre la juventud y la infancia.", "2": "N/A", "3": "N/A" }
+          pdas: {
+            "1": "Identifica las ideas y representaciones de las personas de acuerdo con su edad en diversos momentos históricos.",
+            "2": "N/A",
+            "3": "N/A"
+          }
         },
         {
           id: "HI07", num: 7,
           titulo: "Las mujeres y sus historias.",
           pdas: {
-            "1": "Revisa fuentes históricas para identificar la participación de las mujeres en la sociedad en diversos momentos históricos.",
-            "2": "N/A", "3": "N/A"
+            "1": "Revisa fuentes históricas para identificar el papel de las mujeres en distintos momentos históricos.",
+            "2": "N/A",
+            "3": "N/A"
           }
         },
         {
           id: "HI08", num: 8,
           titulo: "Las luchas de las mujeres por sus derechos.",
           pdas: {
-            "1": "Identifica los orígenes históricos de movimientos y organizaciones de mujeres en la lucha por la igualdad y el reconocimiento de sus derechos.",
-            "2": "N/A", "3": "N/A"
+            "1": "Identifica los orígenes históricos de movimientos y organizaciones de mujeres en México y el mundo.",
+            "2": "N/A",
+            "3": "N/A"
           }
         },
         {
           id: "HI09", num: 9,
           titulo: "Relaciones de poder y lucha por los derechos de grupos históricamente discriminados o subrepresentados.",
-          pdas: { "1": "Analiza las relaciones de poder y la lucha histórica de grupos discriminados por sus derechos.", "2": "N/A", "3": "N/A" }
+          pdas: {
+            "1": "Identifica las problemáticas de violencia hacia pueblos originarios, afrodescendientes, migrantes y comunidad LGBTTTIQ+ en distintos procesos históricos.",
+            "2": "N/A",
+            "3": "N/A"
+          }
         },
         {
           id: "HI10", num: 10,
-          titulo: "Discriminación, racismo y prejuicios como construcciones históricas.",
+          titulo: "Discriminación, racismo, sexismo y prejuicios como construcciones históricas.",
           pdas: {
-            "1": "Comprende las causas y consecuencias históricas del racismo y propone acciones en su vida cotidiana para combatirlo.",
-            "2": "N/A", "3": "N/A"
+            "1": "Identifica las causas históricas del racismo y la xenofobia y las relaciona críticamente con sus manifestaciones en el presente.",
+            "2": "N/A",
+            "3": "N/A"
           }
         },
         {
           id: "HI11", num: 11,
           titulo: "Movilidades humanas, migraciones y nuevos escenarios para la vida.",
-          pdas: { "1": "Comprende procesos históricos relevantes en los que grupos humanos se desplazaron por los territorios a lo largo del tiempo.", "2": "N/A", "3": "N/A" }
+          pdas: {
+            "1": "Comprende procesos históricos relevantes en los que grupos humanos se desplazaron por los territorios a lo largo de la historia.",
+            "2": "N/A",
+            "3": "N/A"
+          }
         },
         {
           id: "HI12", num: 12,
-          titulo: "Amor, amistad, familias y relaciones entre las personas.",
-          pdas: { "1": "Analiza cómo han cambiado históricamente las concepciones sobre el amor, la amistad y las relaciones familiares.", "2": "N/A", "3": "N/A" }
-        }
-      ]
-    },
-
-    "Geografía": {
-      grado: "1",
-      contenidos: [
-        {
-          id: "GE01", num: 1,
-          titulo: "El espacio geográfico como una construcción social y colectiva.",
-          pdas: { "1": "Analiza el espacio geográfico como resultado de la interacción entre la sociedad y la naturaleza." }
+          titulo: "Amor, amistad, familias y relaciones entre las personas en la historia.",
+          pdas: {
+            "1": "Comprende que la forma en la que las personas piensan y actúan en relación con el amor, la amistad, las familias y las relaciones interpersonales ha cambiado a lo largo de la historia.",
+            "2": "N/A",
+            "3": "N/A"
+          }
         },
         {
-          id: "GE02", num: 2,
-          titulo: "Las categorías de análisis espacial y representaciones del espacio geográfico.",
-          pdas: { "1": "Usa categorías de análisis espacial y diversas representaciones geográficas para comprender el territorio." }
+          id: "HI13", num: 13,
+          titulo: "Grupos sociales y culturales en la conformación de las identidades juveniles.",
+          pdas: {
+            "1": "Valora la diversidad de grupos e identidades juveniles en la escuela y en la comunidad y fortalece el sentido de pertenencia.",
+            "2": "Argumenta sobre el derecho a pertenecer a una cultura, grupo social, económico, ideológico, entre otros.",
+            "3": "Promueve espacios de participación juvenil, presenciales o virtuales, para construir relaciones de convivencia."
+          }
         },
-        {
-          id: "GE03", num: 3,
-          titulo: "La distribución y dinámica de las aguas continentales y oceánicas en la Tierra.",
-          pdas: { "1": "Analiza la distribución y dinámica de las aguas continentales y oceánicas y su importancia para la vida." }
-        },
-        {
-          id: "GE04", num: 4,
-          titulo: "La relación de las placas tectónicas con el relieve, la sismicidad y el vulcanismo.",
-          pdas: { "1": "Relaciona el movimiento de las placas tectónicas con los fenómenos de relieve, sismicidad y vulcanismo." }
-        },
-        {
-          id: "GE05", num: 5,
-          titulo: "Los riesgos de desastre, su relación con los procesos naturales y la vulnerabilidad de la población en lugares específicos.",
-          pdas: { "1": "Identifica que los desastres pueden ser originados por procesos naturales o por las actividades humanas. Valora la importancia de consolidar una cultura de prevención de desastres." }
-        },
-        {
-          id: "GE06", num: 6,
-          titulo: "Crecimiento, distribución, composición y migración de la población.",
-          pdas: { "1": "Analiza las implicaciones sociales, ambientales y económicas del crecimiento, distribución y composición de la población." }
-        },
-        {
-          id: "GE07", num: 7,
-          titulo: "Los procesos productivos y sus consecuencias ambientales y sociales en la comunidad, México y el mundo.",
-          pdas: { "1": "Compara procesos productivos y espacios económicos en México y el mundo, para reconocer sus implicaciones sociales, económicas y ambientales." }
-        },
-        {
-          id: "GE08", num: 8,
-          titulo: "Las prácticas de producción, distribución y consumo sustentables como alternativas para preservar el medio ambiente.",
-          pdas: { "1": "Analiza prácticas sustentables de producción, distribución y consumo como alternativas para preservar el medio ambiente." }
-        },
-        {
-          id: "GE09", num: 9,
-          titulo: "Las desigualdades socioeconómicas en México y el mundo, y sus efectos en la calidad de vida de las personas.",
-          pdas: { "1": "Analiza las desigualdades socioeconómicas en México y el mundo y sus efectos en la calidad de vida de las personas." }
-        },
-        {
-          id: "GE10", num: 10,
-          titulo: "Los conflictos territoriales actuales en México y el mundo, y sus implicaciones ambientales y sociales.",
-          pdas: { "1": "Analiza conflictos territoriales actuales en México y el mundo, identificando sus implicaciones ambientales y sociales." }
-        },
-        {
-          id: "GE11", num: 11,
-          titulo: "Los retos sociales y ambientales en la comunidad, en México y el mundo.",
-          pdas: { "1": "Reconoce cómo las problemáticas sociales y ambientales afectan a la comunidad. Asume responsabilidad como agente de cambio para encontrar soluciones." }
-        },
-        {
-          id: "GE12", num: 12,
-          titulo: "La diversidad de grupos sociales y culturales en México.",
-          pdas: { "1": "Reconoce la diversidad de pueblos originarios, afromexicanos, migrantes y grupos sociales en México, como parte de la identidad nacional pluricultural." }
-        },
-        {
-          id: "GE13", num: 13,
-          titulo: "El suelo, recurso estratégico para la seguridad alimentaria y la vida en el planeta.",
-          pdas: { "1": "Indaga sobre el origen, los usos y los problemas del suelo en la localidad. Comparte alternativas para la protección y recuperación del suelo." }
-        },
-        {
-          id: "GE14", num: 14,
-          titulo: "El reto del cambio climático.",
-          pdas: { "1": "Analiza el cambio climático como un reto global, identificando sus causas, consecuencias y posibles soluciones desde la comunidad." }
-        }
       ]
     },
 
@@ -882,156 +949,148 @@ const CURRICULUM = {
       contenidos: [
         {
           id: "FC01", num: 1,
-          titulo: "Grupos sociales y culturales en la conformación de las identidades juveniles.",
+          titulo: "Los derechos humanos en México y en el mundo como valores compartidos por las sociedades actuales.",
           pdas: {
-            "1": "Analiza cómo los grupos sociales y culturales contribuyen a la conformación de la identidad juvenil.",
-            "2": "Analiza cómo los grupos sociales y culturales contribuyen a la conformación de la identidad juvenil.",
-            "3": "Promueve espacios de participación juvenil para construir comunidades que promuevan la colaboración y el respeto."
+            "1": "Asume una postura crítica acerca de la vigencia de los derechos humanos como valores compartidos por distintas sociedades del mundo.",
+            "2": "Propone acciones orientadas a fortalecer la igualdad de derechos, el bienestar colectivo y el respeto a la dignidad humana en poblaciones en situación de vulnerabilidad.",
+            "3": "Debate acerca de la importancia de defender y exigir el respeto a los derechos humanos, como un reto de las sociedades actuales."
           }
         },
         {
           id: "FC02", num: 2,
-          titulo: "Los derechos humanos en México y en el mundo como valores compartidos por las sociedades actuales.",
+          titulo: "Movimientos sociales y políticos por los derechos humanos en el mundo y en México.",
           pdas: {
-            "1": "Analiza los derechos humanos como valores compartidos y fundamentales para la convivencia en México y el mundo.",
-            "2": "Propone acciones orientadas a fortalecer la igualdad, el bienestar colectivo y el respeto a los derechos humanos.",
-            "3": "Promueve el ejercicio de los derechos humanos en la comunidad escolar."
+            "1": "Asume una postura ética acerca de los movimientos sociales y políticos que originaron los derechos humanos.",
+            "2": "Explica la trascendencia de los movimientos sociales y políticos en México y América Latina, para la defensa de los derechos humanos.",
+            "3": "Asume una postura ética sobre los movimientos sociales y políticos en la actualidad y propone acciones para fortalecer la defensa de los derechos humanos."
           }
         },
         {
           id: "FC03", num: 3,
-          titulo: "Movimientos sociales y políticos por los derechos humanos en el mundo y en México.",
+          titulo: "Consecuencias de la desigualdad en la calidad de vida de las personas y comunidades.",
           pdas: {
-            "1": "Analiza movimientos sociales y políticos que han luchado por el reconocimiento y defensa de los derechos humanos.",
-            "2": "Analiza movimientos sociales y políticos por los derechos humanos.",
-            "3": "Analiza movimientos sociales y políticos por los derechos humanos en México y el mundo."
+            "1": "Analiza las causas que dan origen a las diferencias en la calidad de vida de la población en México.",
+            "2": "Explica las consecuencias de la desigualdad socioeconómica en la calidad de vida de la comunidad.",
+            "3": "Actúa éticamente para reducir las desigualdades, fomentando el respeto y la solidaridad en su entorno."
           }
         },
         {
           id: "FC04", num: 4,
-          titulo: "Consecuencias de la desigualdad en la calidad de vida de las personas y comunidades.",
+          titulo: "Normas, leyes, instituciones y organizaciones encargadas de proteger, defender y exigir la aplicación de los derechos humanos en la convivencia diaria.",
           pdas: {
-            "1": "Analiza las causas que dan origen a las diferencias en la calidad de vida de la población en México y el mundo.",
-            "2": "Analiza las causas y consecuencias de la desigualdad social.",
-            "3": "Analiza las consecuencias de la desigualdad en la calidad de vida de las personas."
+            "1": "Aprecia los beneficios de participar en la construcción y aplicación de normas y leyes para garantizar la convivencia y el ejercicio de los derechos humanos en la comunidad.",
+            "2": "Participa en la creación y transformación de normas y leyes que aplican en distintos contextos, orientadas a favorecer la igualdad, la libertad, la justicia y los derechos humanos.",
+            "3": "Analiza la función de instituciones y organizaciones nacionales e internacionales, para demandar la aplicación de normas y leyes que defienden y exigen respeto a los derechos humanos."
           }
         },
         {
           id: "FC05", num: 5,
-          titulo: "Normas, leyes, instituciones y organizaciones encargadas de proteger, defender y exigir la aplicación de los derechos humanos en la convivencia diaria.",
+          titulo: "El conflicto en la convivencia humana desde la cultura de paz.",
           pdas: {
-            "1": "Identifica las normas, leyes, instituciones y organizaciones que protegen los derechos humanos.",
-            "2": "Identifica las normas, leyes e instituciones que protegen los derechos humanos.",
-            "3": "Identifica y valora las normas, leyes e instituciones que protegen los derechos humanos."
+            "1": "Analiza distintos tipos de conflictos en sus espacios de convivencia, su estructura y sus causas.",
+            "2": "Propone distintas formas de resolver conflictos sociales y políticos ocurridos en México y América Latina.",
+            "3": "Valora la resolución pacífica de conflictos sociales y políticos en México y el mundo."
           }
         },
         {
           id: "FC06", num: 6,
-          titulo: "El conflicto en la convivencia humana desde la cultura de paz.",
+          titulo: "La cultura de paz y la creación de ambientes que garanticen el respeto a la vida y la dignidad del ser humano.",
           pdas: {
-            "1": "Analiza distintos tipos de conflictos en sus espacios de convivencia, su estructura y formas de solucionarlos desde la cultura de paz.",
-            "2": "Analiza conflictos y propone soluciones desde la cultura de paz.",
-            "3": "Analiza conflictos y propone soluciones desde la cultura de paz en la comunidad."
+            "1": "Comprende la influencia que tiene la cultura de paz en la convivencia escolar, familiar y comunitaria, para favorecer ambientes que garanticen el respeto a la vida y la dignidad humana.",
+            "2": "Aplica la cultura de paz para tomar decisiones responsables en contextos presenciales y virtuales que promuevan el respeto a la dignidad humana.",
+            "3": "Colabora con personas de la escuela, la comunidad, el país y el mundo, para rechazar y denunciar la violencia, así como fortalecer la cultura de paz."
           }
         },
         {
           id: "FC07", num: 7,
-          titulo: "La cultura de paz y la creación de ambientes que garanticen el respeto a la vida y la dignidad del ser humano.",
+          titulo: "Personas, grupos y organizaciones a favor de la cultura de paz.",
           pdas: {
-            "1": "Promueve la cultura de paz en los distintos ámbitos de su vida.",
-            "2": "Promueve la cultura de paz en los distintos ámbitos de su vida.",
-            "3": "Promueve la cultura de paz en los distintos ámbitos de su vida y comunidad."
+            "1": "Aprecia las acciones de personas, grupos u organizaciones en México a favor de la cultura de paz.",
+            "2": "Analiza las acciones de personas, grupos u organizaciones realizadas en México y el mundo a favor de la cultura de paz.",
+            "3": "Valora las acciones que personas, grupos u organizaciones han realizado en México y el mundo a favor de la cultura de paz."
           }
         },
         {
           id: "FC08", num: 8,
-          titulo: "Personas, grupos y organizaciones a favor de la cultura de paz.",
+          titulo: "Principios éticos como referentes para un desarrollo sustentable.",
           pdas: {
-            "1": "Identifica y valora a personas, grupos y organizaciones que trabajan a favor de la cultura de paz.",
-            "2": "Identifica y valora a personas, grupos y organizaciones que trabajan a favor de la cultura de paz.",
-            "3": "Identifica y valora a personas, grupos y organizaciones que trabajan a favor de la cultura de paz."
+            "1": "Reflexiona éticamente acerca de la relación de las comunidades con la naturaleza para proponer acciones orientadas al desarrollo sustentable.",
+            "2": "Evalúa la contribución de la ética en las prácticas de producción, distribución y consumo para proponer alternativas sustentables.",
+            "3": "Implementa acciones de colaboración, reciprocidad, solidaridad y empatía orientadas al desarrollo sustentable."
           }
         },
         {
           id: "FC09", num: 9,
-          titulo: "Principios éticos como referente para un desarrollo sustentable.",
+          titulo: "Igualdad sustantiva en el marco de la interculturalidad, la inclusión y la perspectiva de género.",
           pdas: {
-            "1": "Reflexiona éticamente acerca de la relación de las comunidades con su contexto socionatural para impulsar acciones que promuevan el desarrollo sustentable.",
-            "2": "Evalúa la contribución de la ética en las prácticas de producción, distribución y consumo de bienes y servicios, para generar alternativas de desarrollo sustentable.",
-            "3": "Implementa acciones de colaboración, reciprocidad, solidaridad y de participación igualitaria como valores para un desarrollo sustentable."
+            "1": "Aprecia la interculturalidad y el respeto al derecho a la igualdad sustantiva para establecer relaciones de convivencia incluyentes.",
+            "2": "Elabora juicios éticos sobre problemas de injusticia y discriminación que afectan la igualdad sustantiva.",
+            "3": "Participa en acciones dirigidas a reducir brechas de desigualdad para promover y fortalecer la igualdad sustantiva."
           }
         },
         {
           id: "FC10", num: 10,
-          titulo: "Igualdad sustantiva en el marco de la interculturalidad, la inclusión y la perspectiva de género.",
+          titulo: "Medidas de protección y mecanismos de denuncia en el rechazo a la violencia de género, sexual y la trata de personas.",
           pdas: {
-            "1": "Aprecia la interculturalidad y el respeto al derecho a la igualdad sustantiva para establecer relaciones incluyentes y respetuosas de la diversidad.",
-            "2": "Aprecia la interculturalidad y el respeto al derecho a la igualdad sustantiva.",
-            "3": "Aprecia la interculturalidad y el respeto al derecho a la igualdad sustantiva para establecer relaciones incluyentes."
+            "1": "Analiza situaciones de violencia escolar, de género, sexual y la trata de personas, con base en la perspectiva de género y demanda la aplicación de medidas de protección y mecanismos de denuncia.",
+            "2": "Compara los tipos de violencia escolar, de género y la trata de personas e identifica medidas de protección y mecanismos de denuncia.",
+            "3": "Propone acciones de denuncia en contextos presenciales y en las redes sociales para garantizar el derecho a una vida libre de violencia."
           }
         },
         {
           id: "FC11", num: 11,
-          titulo: "Medidas de protección y mecanismos de denuncia en el rechazo a la violencia de género, sexual y la trata de personas.",
+          titulo: "Principios y valores de la cultura democrática como forma de gobierno y de vida.",
           pdas: {
-            "1": "Analiza situaciones de violencia escolar, de género, sexual y la trata de personas, con base en la perspectiva de género.",
-            "2": "Compara los tipos de violencia escolar, de género y la trata de personas e identifica medidas de protección y mecanismos de denuncia.",
-            "3": "Analiza situaciones de violencia y propone estrategias de protección y denuncia."
+            "1": "Aprecia en los principios y valores de la democracia una forma de vida y de gobierno, para tomar decisiones responsables orientadas al bien común.",
+            "2": "Propone acciones para fortalecer en su entorno los rasgos del Estado de derecho democrático.",
+            "3": "Participa de manera activa, responsable e informada en la promoción, defensa y ejercicio de los principios y valores de la democracia."
           }
         },
         {
           id: "FC12", num: 12,
-          titulo: "Principios y valores de la cultura democrática como forma de gobierno y de vida.",
+          titulo: "Proyectos como un recurso para atender problemáticas de la comunidad desde una ciudadanía democrática.",
           pdas: {
-            "1": "Analiza los principios y valores de la cultura democrática como forma de gobierno y de vida.",
-            "2": "Analiza los principios y valores de la cultura democrática.",
-            "3": "Promueve los principios y valores de la cultura democrática en la comunidad."
+            "1": "Participa en actividades y proyectos en su entorno escolar y social, en donde aplica mecanismos de participación ciudadana.",
+            "2": "Elabora proyectos orientados a resolver necesidades y problemas relacionados con la violencia escolar y de género.",
+            "3": "Colabora en proyectos con la comunidad para responder a necesidades colectivas en sus dimensiones ética, política, social y ambiental."
           }
         },
         {
           id: "FC13", num: 13,
-          titulo: "Proyectos como un recurso para atender problemáticas de la comunidad desde una ciudadanía democrática.",
+          titulo: "Instituciones, organizaciones y mecanismos de representación democrática.",
           pdas: {
-            "1": "Diseña y participa en proyectos ciudadanos para atender problemáticas de la comunidad.",
-            "2": "Diseña y participa en proyectos ciudadanos para atender problemáticas de la comunidad.",
-            "3": "Diseña y participa en proyectos ciudadanos para atender problemáticas de la comunidad."
+            "1": "Aprecia la función de las instituciones y organizaciones sociales y políticas, así como de los mecanismos de participación democrática.",
+            "2": "Destaca la importancia de la participación ciudadana, organizaciones sociales y partidos políticos para exigir a las autoridades que cumplan sus funciones.",
+            "3": "Valora los retos que enfrenta la democracia en México y el mundo para involucrarse en su fortalecimiento."
           }
         },
         {
           id: "FC14", num: 14,
-          titulo: "Instituciones, organizaciones y mecanismos de representación democrática.",
+          titulo: "Defensa del derecho al acceso a la protección de datos personales, a la información, la transparencia y la rendición de cuentas en un gobierno democrático.",
           pdas: {
-            "1": "Identifica las instituciones, organizaciones y mecanismos de representación democrática en México.",
-            "2": "Identifica las instituciones, organizaciones y mecanismos de representación democrática.",
-            "3": "Valora el funcionamiento de las instituciones y mecanismos de representación democrática."
+            "1": "Destaca la importancia de que las servidoras y los servidores públicos y representantes populares desempeñen sus funciones con apego a la ley de manera honesta, transparente y con rendición de cuentas.",
+            "2": "Aprecia la participación ciudadana para exigir a las autoridades que cumplan sus funciones y administren los recursos públicos con honestidad, transparencia y legalidad.",
+            "3": "Analiza el actuar de partidos políticos, organizaciones, gobiernos y las servidoras y los servidores públicos, mediante el acceso a la información, transparencia y rendición de cuentas."
           }
         },
         {
           id: "FC15", num: 15,
-          titulo: "Defensa del derecho al acceso a la protección de datos personales, a la información, la transparencia y la rendición de cuentas en un gobierno democrático.",
-          pdas: {
-            "1": "Analiza el derecho a la protección de datos personales y a la transparencia gubernamental.",
-            "2": "Analiza el derecho a la protección de datos personales y a la transparencia gubernamental.",
-            "3": "Analiza el actuar de los partidos políticos, organizaciones y gobiernos mediante el acceso a la información, transparencia y rendición de cuentas."
-          }
-        },
-        {
-          id: "FC16", num: 16,
           titulo: "El derecho a la salud y la prevención en el consumo de drogas.",
           pdas: {
-            "1": "Analiza el derecho a la salud y la importancia de la prevención del consumo de drogas.",
-            "2": "Analiza el derecho a la salud y la importancia de la prevención del consumo de drogas.",
-            "3": "Analiza el derecho a la salud y la importancia de la prevención del consumo de drogas."
+            "1": "Reconoce que el consumo de drogas afecta el derecho a la dignidad y la salud.",
+            "2": "Promueve valores y habilidades para desarrollar la autoestima, la autorregulación y la resiliencia como factores de protección ante el consumo de drogas.",
+            "3": "Toma decisiones autónomas, responsables y comprometidas con el bienestar propio y colectivo, para prevenir el consumo de drogas."
           }
-        }
+        },
       ]
-    }
+    },
   },
 
   // ============================================================
   // CAMPO 4: DE LO HUMANO Y LO COMUNITARIO
+  // Fuente: Programa Sintético Fase 6, SEP 2022 — páginas 113-119
   // ============================================================
-  "De lo humano y lo comunitario": {
+  "De lo Humano y lo Comunitario": {
 
     "Tecnología": {
       contenidos: [
@@ -1039,124 +1098,97 @@ const CURRICULUM = {
           id: "TE01", num: 1,
           titulo: "Herramientas, máquinas e instrumentos, como extensión corporal, en la satisfacción continua de intereses y necesidades humanas.",
           pdas: {
-            "1": "Describe los elementos que interactúan en los sistemas técnicos para comprender su vínculo con la sociedad, la cultura y la naturaleza.",
-            "2": "Analiza las posibilidades de mejora en las herramientas, máquinas e instrumentos para satisfacer necesidades humanas.",
-            "3": "Explora las posibilidades corporales y la delegación de funciones en herramientas, máquinas e instrumentos."
+            "1": "Explora las posibilidades corporales y la delegación de funciones en herramientas, máquinas, instrumentos y formas de organización para identificar sus funciones y procesos de cambio técnico, en la satisfacción de intereses y necesidades de diversas sociedades.",
+            "2": "Analiza las herramientas, máquinas, instrumentos y formas de organización, como una extensión de las posibilidades corporales para solucionar problemas en diversos contextos.",
+            "3": "Amplía sus posibilidades corporales por medio del conocimiento y habilidades en el manejo de herramientas, máquinas, instrumentos y formas de organización en procesos técnicos comunitarios, para favorecer la inclusión y la sustentabilidad."
           }
         },
         {
           id: "TE02", num: 2,
           titulo: "Materiales, procesos técnicos y comunidad.",
           pdas: {
-            "1": "Identifica los materiales y procesos técnicos utilizados en la comunidad y su impacto social y ambiental.",
-            "2": "Analiza los materiales y procesos técnicos utilizados en la comunidad.",
-            "3": "Distingue el origen, transformación y características tecnológicas de los materiales que comparten técnicas similares."
+            "1": "Distingue el origen, transformación y características tecnológicas de los materiales que comparten técnicas similares, para utilizarlos desde una perspectiva local, eficiente y sustentable.",
+            "2": "Explora el uso y transformación de los materiales, de acuerdo con sus características en los procesos técnicos de distintas comunidades, para prevenir daños sociales o a la naturaleza.",
+            "3": "Implementa alternativas a situaciones que, por el origen, transformación, uso o desecho de los materiales, ponen en riesgo el entorno de la comunidad, para favorecer el desarrollo sustentable."
           }
         },
         {
           id: "TE03", num: 3,
           titulo: "Usos e implicaciones de la energía en los procesos técnicos.",
           pdas: {
-            "1": "Identifica los usos e implicaciones de la energía en los procesos técnicos y su relación con la sustentabilidad.",
-            "2": "Analiza los usos e implicaciones de la energía en los procesos técnicos.",
-            "3": "Comprende la función de la energía en los sistemas técnicos y sus implicaciones en el desarrollo tecnológico."
+            "1": "Comprende la función de la energía en los sistemas técnicos y sus implicaciones en el desarrollo tecnológico para la toma de decisiones responsables, que permitan prever y disminuir riesgos personales, sociales y naturales.",
+            "2": "Explora las principales fuentes de energía en los procesos técnicos para su uso óptimo, así como las alternativas de prevención de riesgos personales, sociales y naturales.",
+            "3": "Analiza diversas fuentes de energía en los procesos técnicos para considerar posibles alternativas sustentables en su funcionamiento."
           }
         },
         {
           id: "TE04", num: 4,
-          titulo: "Factores que inciden en los procesos técnicos.",
+          titulo: "Pensamiento estratégico y creativo en la resolución de problemas.",
           pdas: {
-            "1": "Identifica los factores sociales, económicos, culturales y naturales que inciden en los procesos técnicos.",
-            "2": "Analiza factores sociales, económicos, culturales y naturales a tomar en cuenta en la definición de criterios para el desarrollo de soluciones técnicas.",
-            "3": "Analiza los factores que inciden en los procesos técnicos en su comunidad."
+            "1": "Analiza necesidades del entorno cercano para plantear un problema, investigar alternativas de solución y seleccionar la que mejor se adapte a los criterios y condiciones contextuales.",
+            "2": "Planifica y organiza acciones, medios técnicos e insumos, para el desarrollo de alternativas de solución a diversos problemas identificados.",
+            "3": "Implementa, da seguimiento y evalúa las propuestas conforme a los criterios y condiciones establecidas en un plan para satisfacer las necesidades o intereses identificados."
           }
         },
         {
           id: "TE05", num: 5,
-          titulo: "Procesos técnicos.",
-          pdas: {
-            "1": "Describe los elementos que interactúan en los sistemas técnicos artesanales, industriales y automatizados.",
-            "2": "Analiza los diferentes sistemas técnicos: artesanales, industriales y automatizados.",
-            "3": "Analiza necesidades del entorno cercano para plantear un problema, investigar alternativas de solución y seleccionar la más adecuada."
-          }
-        },
-        {
-          id: "TE06", num: 6,
-          titulo: "Comunicación y representación técnica.",
-          pdas: {
-            "1": "Elabora representaciones gráficas de ideas relacionadas con sistemas técnicos.",
-            "2": "Elabora representaciones gráficas de sus ideas con respecto a la operación, funcionamiento y diseño de las producciones técnicas.",
-            "3": "Elabora representaciones gráficas y comunicaciones técnicas de proyectos de solución."
-          }
-        },
-        {
-          id: "TE07", num: 7,
-          titulo: "Pensamiento estratégico y creativo en la resolución de problemas.",
-          pdas: {
-            "1": "Aplica el pensamiento estratégico y creativo para proponer soluciones técnicas a problemas de la comunidad.",
-            "2": "Aplica el pensamiento estratégico y creativo para proponer soluciones técnicas.",
-            "3": "Analiza necesidades del entorno cercano para plantear un problema, investigar alternativas de solución y seleccionar la que mejor se adapte."
-          }
-        },
-        {
-          id: "TE08", num: 8,
           titulo: "Evaluación de sistemas tecnológicos.",
           pdas: {
-            "1": "Comprende la importancia de la evaluación de los procesos como parte de la innovación y mejora continua.",
-            "2": "Comprende la importancia de la evaluación de los procesos como parte de la innovación y mejora continua para el logro de la eficiencia.",
-            "3": "Evalúa sistemas tecnológicos considerando criterios de eficiencia, eficacia, fiabilidad y factibilidad."
+            "1": "Comprende la importancia de la evaluación de los procesos como parte de la innovación y mejora continua, para el logro de la eficiencia, eficacia, fiabilidad y factibilidad de los sistemas técnicos.",
+            "2": "Analiza las implicaciones de los procesos, productos o servicios en la naturaleza y la sociedad, para desarrollar sistemas técnicos sustentables.",
+            "3": "Participa en la evaluación interna y externa de sistemas tecnológicos para mejorar su eficiencia, eficacia, fiabilidad y factibilidad desde un enfoque sustentable."
           }
-        }
+        },
       ]
     },
 
-    "Tutoría": {
+    "Educación Socioemocional": {
       contenidos: [
         {
-          id: "TU01", num: 1,
+          id: "SE01", num: 1,
           titulo: "Formas de ser, pensar, actuar y relacionarse.",
           pdas: {
-            "1": "Reconoce ideas, gustos, necesidades, posibilidades, intereses, deseos y experiencias, para favorecer el autoconocimiento.",
-            "2": "Analiza las formas de ser, pensar, actuar e interactuar, para comprender las diversas maneras de vivenciar situaciones cotidianas.",
-            "3": "Reconoce ideas, gustos, necesidades, posibilidades, intereses, deseos y experiencias para favorecer el autoconocimiento y descubrimiento de nuevas potencialidades."
+            "1": "Reconoce ideas, gustos, necesidades, posibilidades, intereses, deseos y experiencias, para favorecer el autoconocimiento y descubrimiento de nuevas potencialidades.",
+            "2": "Analiza las formas de ser, pensar, actuar e interactuar, para comprender las diversas maneras de vivenciar situaciones cotidianas y lograr el bienestar personal y social.",
+            "3": "Promueve el entendimiento mutuo y la toma de decisiones, considerando formas de ser, pensar, actuar y relacionarse ante diferentes situaciones y contextos, para lograr un mayor bienestar personal y social."
           }
         },
         {
-          id: "TU02", num: 2,
+          id: "SE02", num: 2,
           titulo: "Los sentimientos y su influencia en la toma de decisiones.",
           pdas: {
-            "1": "Distingue entre emociones, estados de ánimo y sentimientos como elementos que contribuyen a la construcción de relaciones afectivas inclusivas y equitativas.",
+            "1": "Distingue entre emociones, estados de ánimo y sentimientos como elementos que contribuyen a la construcción de relaciones afectivas inclusivas y equitativas. Reconoce que los sentimientos son resultado de las vivencias y la cultura.",
             "2": "Reflexiona sobre cómo los sentimientos se construyen a partir de ideas y experiencias, para la toma de decisiones asertivas.",
-            "3": "Reflexiona sobre cómo los sentimientos influyen en la toma de decisiones personales y colectivas."
+            "3": "Gestiona los afectos para tomar decisiones asertivas y construir relaciones de convivencia inclusivas y equitativas."
           }
         },
         {
-          id: "TU03", num: 3,
+          id: "SE03", num: 3,
           titulo: "Construcción del proyecto de vida.",
           pdas: {
-            "1": "Reconoce cambios presentes a lo largo de la vida y en la adolescencia para definir metas personales y en colectivo.",
-            "2": "Analiza intereses y necesidades, así como logros y metas personales y compartidas para proponer ideas acerca de un proyecto de vida personal.",
-            "3": "Valora metas individuales y de otras personas a partir de identificar situaciones y formas de actuar que las afectan, para favorecer su logro y el bienestar colectivo."
+            "1": "Reconoce cambios presentes a lo largo de la vida y en la adolescencia para definir metas personales y en colectivo, a alcanzar en un corto, mediano y largo plazo. Valora metas individuales y de otras personas a partir de identificar situaciones y formas de actuar que las afectan, para favorecer su logro y el bienestar colectivo.",
+            "2": "Analiza intereses y necesidades, así como logros y metas personales y compartidas de acuerdo con conocimientos, capacidades y habilidades desarrolladas hasta el momento para proponer ideas acerca de un proyecto de vida personal. Replantea sus metas a partir del análisis de logros y situaciones afrontadas, para favorecer el bienestar personal y comunitario.",
+            "3": "Visualiza un proyecto de vida para determinar posibles retos a superar, estrategias de apoyo mutuo y acciones a realizar en favor del bienestar personal y colectivo. Reconoce nuevos intereses, habilidades y necesidades, propias y de las demás personas, con la finalidad de replantear metas individuales y grupales en favor del bienestar común."
           }
         },
         {
-          id: "TU04", num: 4,
+          id: "SE04", num: 4,
           titulo: "Prevención de situaciones de riesgo.",
           pdas: {
-            "1": "Incorpora prácticas que inciden en la prevención de situaciones de riesgo ante accidentes, adicciones, formas de violencia y fenómenos naturales.",
-            "2": "Incorpora prácticas que inciden en la prevención de situaciones de riesgo.",
-            "3": "Incorpora prácticas que inciden en la prevención de situaciones de riesgo ante accidentes, adicciones, formas de violencia y fenómenos naturales, para favorecer el desarrollo personal, familiar y comunitario."
+            "1": "Incorpora prácticas que inciden en la prevención de situaciones de riesgo ante accidentes, adicciones, formas de violencia y fenómenos naturales, para favorecer el desarrollo personal, familiar y comunitario, así como el cuidado del medio ambiente.",
+            "2": "Participa en la construcción de alternativas personales, familiares y comunitarias, que favorezcan la prevención de situaciones de riesgo ante accidentes, adicciones, formas de violencia y fenómenos naturales, para lograr el bien común.",
+            "3": "Reflexiona sobre las condiciones del contexto familiar y comunitario que representan situaciones de riesgo a la salud, a la seguridad y al medio ambiente para el autocuidado y el bienestar colectivo."
           }
         },
         {
-          id: "TU05", num: 5,
-          titulo: "Educación integral en sexualidad.",
+          id: "SE05", num: 5,
+          titulo: "Educación Integral en Sexualidad.",
           pdas: {
-            "1": "Reconoce que los sentimientos son resultado de las vivencias y la cultura, en el contexto de la educación integral en sexualidad.",
+            "1": "Identifica las dimensiones de la sexualidad: biológica, psicológica, social, cultural, entre otras, en distintos momentos de su vida, para establecer relaciones en favor del bienestar.",
             "2": "Valora la identidad y la diversidad de formas de expresión de género para comprender la manera en que favorece la interacción con las personas y el desarrollo integral.",
-            "3": "Identifica las dimensiones de la sexualidad: biológica, psicológica, social, cultural, entre otras, en distintos momentos de su vida, para establecer relaciones en favor del bienestar."
+            "3": "Promueve estrategias en favor de una educación integral en sexualidad para incorporarlas permanentemente en su proyecto de vida."
           }
-        }
+        },
       ]
     },
 
@@ -1166,9 +1198,9 @@ const CURRICULUM = {
           id: "EF01", num: 1,
           titulo: "Capacidades, habilidades y destrezas motrices.",
           pdas: {
-            "1": "Pone en práctica capacidades, habilidades y destrezas motrices en actividades físicas y deportivas.",
-            "2": "Integra sus capacidades, habilidades y destrezas motrices para poner a prueba el potencial individual y de conjunto.",
-            "3": "Pone en práctica los elementos de su condición física en actividades motrices y recreativas, para reconocerlas como alternativas que fomentan el bienestar individual y colectivo."
+            "1": "Explora las capacidades, habilidades y destrezas motrices, para enriquecer y ampliar el potencial propio y de las demás personas.",
+            "2": "Integra sus capacidades, habilidades y destrezas motrices, para poner a prueba el potencial individual y de conjunto.",
+            "3": "Valora las capacidades, habilidades y destrezas propias y de las demás personas, para mostrar mayor disponibilidad corporal y autonomía motriz."
           }
         },
         {
@@ -1176,17 +1208,17 @@ const CURRICULUM = {
           titulo: "Potencialidades cognitivas, expresivas, motrices, creativas y de relación.",
           pdas: {
             "1": "Pone en práctica los elementos de la condición física en actividades motrices y recreativas, para reconocerlas como alternativas que fomentan el bienestar individual y colectivo.",
-            "2": "Pone en práctica los elementos de la condición física en actividades motrices y recreativas.",
-            "3": "Pone en práctica los elementos de su condición física en actividades motrices y recreativas."
+            "2": "Analiza el incremento de su condición física, al participar en actividades recreativas, de iniciación deportiva y deporte educativo, para reflexionar acerca de su relación con el bienestar.",
+            "3": "Diseña, organiza y participa en actividades recreativas, de iniciación deportiva y deporte educativo, con la intención de fomentar el bienestar personal y social."
           }
         },
         {
           id: "EF03", num: 3,
           titulo: "Estilos de vida activos y saludables.",
           pdas: {
-            "1": "Practica estilos de vida activos y saludables en su vida cotidiana.",
-            "2": "Practica estilos de vida activos y saludables.",
-            "3": "Implementa acciones que le permiten mantenerse físicamente activo en diferentes momentos del día, para favorecer la práctica de estilos de vida saludables."
+            "1": "Implementa acciones que le permiten mantenerse físicamente activo en diferentes momentos del día, para favorecer la práctica de estilos de vida saludables.",
+            "2": "Reflexiona acerca de los factores que afectan la práctica sistemática de actividad física, para proponer acciones que contribuyan a modificarlos o eliminarlos.",
+            "3": "Diseña alternativas que fomenten la práctica de estilos de vida activos y saludables, a partir del análisis de comportamientos que ponen en riesgo la salud, para hacer frente a problemas asociados con el sedentarismo."
           }
         },
         {
@@ -1194,56 +1226,22 @@ const CURRICULUM = {
           titulo: "Pensamiento lúdico, estratégico y creativo.",
           pdas: {
             "1": "Toma decisiones individuales y colectivas en situaciones de juego (defensivas u ofensivas), con el propósito de valorar su efectividad.",
-            "2": "Toma decisiones individuales y colectivas en situaciones de juego.",
-            "3": "Toma decisiones individuales y colectivas en situaciones de juego, con el propósito de valorar su efectividad."
+            "2": "Valora las estrategias de juego que utiliza ante distintas condiciones que se presentan, para reestructurarlas e incrementar su efectividad.",
+            "3": "Emplea el pensamiento estratégico para favorecer la colaboración y creatividad en la resolución de situaciones individuales y colectivas."
           }
         },
         {
           id: "EF05", num: 5,
           titulo: "Interacción motriz.",
           pdas: {
-            "1": "Pone a prueba la interacción motriz en situaciones de juego, iniciación deportiva y deporte educativo, con el fin de alcanzar metas comunes.",
-            "2": "Pone a prueba la interacción motriz en situaciones de juego y deporte educativo.",
-            "3": "Pone a prueba la interacción motriz en situaciones de juego y deporte educativo."
+            "1": "Pone a prueba la interacción motriz en situaciones de juego, iniciación deportiva y deporte educativo, con el fin de alcanzar metas comunes y obtener satisfacción al colaborar con las demás personas.",
+            "2": "Toma decisiones a favor de la participación colectiva en situaciones de iniciación deportiva y deporte educativo, para promover ambientes de aprendizaje y actitudes asertivas.",
+            "3": "Promueve relaciones asertivas con las demás personas en situaciones de juego, iniciación deportiva y deporte educativo, para fortalecer su autoestima y fomentar el juego limpio y la confrontación lúdica."
           }
-        }
+        },
       ]
-    }
-  }
-};
-
-// ============================================================
-// MAPEO DE CAMPOS Y DISCIPLINAS POR GRADO
-// ============================================================
-const CAMPOS_POR_GRADO = {
-  "1": {
-    "Lenguajes": ["Español", "Inglés", "Artes"],
-    "Saberes y pensamiento científico": ["Matemáticas", "Biología"],
-    "Ética, naturaleza y sociedades": ["Historia", "Geografía", "Formación Cívica y Ética"],
-    "De lo humano y lo comunitario": ["Tecnología", "Tutoría", "Educación Física"]
+    },
   },
-  "2": {
-    "Lenguajes": ["Español", "Inglés", "Artes"],
-    "Saberes y pensamiento científico": ["Matemáticas", "Física"],
-    "Ética, naturaleza y sociedades": ["Historia", "Formación Cívica y Ética"],
-    "De lo humano y lo comunitario": ["Tecnología", "Tutoría", "Educación Física"]
-  },
-  "3": {
-    "Lenguajes": ["Español", "Inglés", "Artes"],
-    "Saberes y pensamiento científico": ["Matemáticas", "Química"],
-    "Ética, naturaleza y sociedades": ["Historia", "Formación Cívica y Ética"],
-    "De lo humano y lo comunitario": ["Tecnología", "Tutoría", "Educación Física"]
-  }
-};
-
-// ============================================================
-// TIPO DE PROYECTO POR CAMPO FORMATIVO
-// ============================================================
-const TIPOS_PROYECTO = {
-  "Lenguajes": ["Proyecto comunitario", "Proyecto de aula", "Proyecto escolar", "Secuencia didáctica"],
-  "Saberes y pensamiento científico": ["Proyecto de aula", "Aprendizaje basado en problemas", "Secuencia didáctica", "Proyecto comunitario"],
-  "Ética, naturaleza y sociedades": ["Proyecto comunitario", "Proyecto escolar", "Secuencia didáctica", "Aprendizaje basado en problemas"],
-  "De lo humano y lo comunitario": ["Proyecto comunitario", "Proyecto de aula", "Secuencia didáctica", "Aprendizaje servicio"]
 };
 
 // ============================================================
