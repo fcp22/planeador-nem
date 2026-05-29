@@ -432,10 +432,6 @@ const INSTITUCION = {
 // CRÍTICO: NO SE ESCAPA EL HTML (sin .replace para &lt;)
 // ============================================================
 function descargarWord(htmlContenido, nombreArchivo) {
-  const fecha = new Date().toLocaleDateString('es-MX', {
-    weekday:'long', year:'numeric', month:'long', day:'numeric'
-  });
-
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
     xmlns:w="urn:schemas-microsoft-com:office:word"
     xmlns="http://www.w3.org/TR/REC-html40">
@@ -444,71 +440,31 @@ function descargarWord(htmlContenido, nombreArchivo) {
 <style>
   body {
     font-family: Calibri, Arial, sans-serif;
-    font-size: 11pt;
-    margin: 1.5cm 2cm;
-    line-height: 1.4;
-    color: #1a1a2e;
+    font-size: 10pt;
+    margin: 0;
+    line-height: 1.3;
+    color: #000;
   }
-  table { border-collapse: collapse; width: 100%; margin: 6px 0; }
-  td, th { border: 1px solid #000; padding: 5px 8px; font-size: 10.5pt; vertical-align: top; }
-  p { margin: 4px 0; }
-  h2, h3 { margin: 8px 0 4px 0; }
-  .enc-sello {
-    background: #f1f5f9;
-    border-left: 4px solid #1a3a5c;
-    padding: 4px 12px;
-    font-size: 9pt;
-    color: #334155;
-    margin-bottom: 14px;
-    font-style: italic;
+  table { border-collapse: collapse; width: 100%; margin: 4px 0; }
+  td, th { border: 1px solid #000; padding: 4px 6px; font-size: 10pt; vertical-align: top; }
+  p { margin: 3px 0; }
+  h2, h3 { margin: 6px 0 3px 0; }
+  @page {
+    size: landscape;
+    margin: 1.5cm 1.5cm;
   }
-  .pie {
-    margin-top: 24px;
-    padding-top: 10px;
-    border-top: 2px solid #1a3a5c;
-    font-size: 9pt;
-    color: #64748b;
-    text-align: center;
+  @page Section1 {
+    size: 841.9pt 595.3pt;
+    mso-page-orientation: landscape;
+    margin: 1.5cm 1.5cm;
   }
-  @page { margin: 1.5cm 2cm; }
+  div.Section1 { page: Section1; }
 </style>
 </head>
 <body>
-
-<table style="width:100%;border:none;border-bottom:3px solid #1a3a5c;margin-bottom:10px;padding-bottom:8px;">
-  <tr>
-    <td style="border:none;width:80px;vertical-align:middle;padding:0;">
-      <img src="${LOGO_B64}" style="width:72px;height:auto;" alt="Escudo FCP">
-    </td>
-    <td style="border:none;vertical-align:middle;padding:0 0 0 12px;">
-      <div style="font-size:12pt;font-weight:bold;color:#1a3a5c;">${INSTITUCION.nombre}</div>
-      <div style="font-size:9.5pt;color:#334155;margin-top:3px;">
-        CCT: <strong>${INSTITUCION.cct}</strong> &nbsp;·&nbsp;
-        ${INSTITUCION.municipio} &nbsp;·&nbsp;
-        ${INSTITUCION.subsistema}
-      </div>
-      <div style="font-size:9.5pt;color:#334155;">
-        Ciclo escolar: <strong>${INSTITUCION.ciclo}</strong>
-      </div>
-    </td>
-    <td style="border:none;width:80px;vertical-align:middle;text-align:right;padding:0;">
-      <img src="${LOGO_B64}" style="width:72px;height:auto;" alt="Escudo FCP">
-    </td>
-  </tr>
-</table>
-
-<div class="enc-sello">
-  ${INSTITUCION.sello} &nbsp;·&nbsp; Generado el ${fecha}
-</div>
-
+<div class="Section1">
 ${htmlContenido}
-
-<div class="pie">
-  ${INSTITUCION.nombre} &nbsp;·&nbsp; CCT: ${INSTITUCION.cct} &nbsp;·&nbsp; ${INSTITUCION.municipio}<br>
-  Documento generado con el Planeador Docente NEM — Programa Sintético Fase 6 — SEP 2025-2026<br>
-  <em>Este documento es de uso exclusivo del personal docente de la institución.</em>
 </div>
-
 </body>
 </html>`;
 
@@ -519,4 +475,5 @@ ${htmlContenido}
   a.download = nombreArchivo;
   a.click();
   URL.revokeObjectURL(url);
+}
 }
