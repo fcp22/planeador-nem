@@ -498,6 +498,17 @@ const INSTITUCION = {
 // CRÍTICO: NO SE ESCAPA EL HTML (sin .replace para &lt;)
 // ============================================================
 function descargarWord(htmlContenido, nombreArchivo) {
+  // Marca de agua con datos del maestro para identificar el documento
+  const usr = (typeof getUsuario === 'function') ? getUsuario() : null;
+  const nombreMaestro = usr ? usr.nombre : '';
+  const curpMaestro = usr ? (usr.curp || '') : '';
+  const fechaGen = new Date().toLocaleDateString('es-MX', {day:'2-digit',month:'long',year:'numeric'});
+  
+  const marcaAgua = nombreMaestro ? `
+<div style="text-align:right;font-size:8pt;color:#888;border-top:1px solid #ddd;padding-top:4px;margin-top:12px;">
+  Documento generado para: <strong>${nombreMaestro}</strong>${curpMaestro ? ' · CURP: '+curpMaestro : ''} · ${fechaGen} · Planeador NEM — Sec. Felipe Carrillo Puerto
+</div>` : '';
+
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
     xmlns:w="urn:schemas-microsoft-com:office:word"
     xmlns="http://www.w3.org/TR/REC-html40">
@@ -530,6 +541,7 @@ function descargarWord(htmlContenido, nombreArchivo) {
 <body>
 <div class="Section1">
 ${htmlContenido}
+${marcaAgua}
 </div>
 </body>
 </html>`;
