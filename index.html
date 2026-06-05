@@ -827,7 +827,18 @@ async function doLogin(){
     document.querySelectorAll('.admin-only').forEach(el=>el.classList.remove('hidden'));
     loadUsrTable();
   }
-  renderHist();
+  // Cargar historial desde Firebase si es maestro
+  if(!esAdmin() && usr.curp) {
+    fbCargarHist(usr.curp).then(histFB => {
+      if(histFB.length > 0) {
+        historial = histFB;
+        localStorage.setItem('nem_hist', JSON.stringify(historial.slice(0,20)));
+      }
+      renderHist();
+    });
+  } else {
+    renderHist();
+  }
 }
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'){
@@ -1434,11 +1445,48 @@ function limpiarD(){
 }
 
 // ── HISTORIAL ─────────────────────────────────────────────
-function saveHist(tipo,nombre,contenido,datos){
+async function fbGuardarHist(curp, h) {
+  try {
+    const key = curp.replace(/[^A-Z0-9]/g,'');
+    const hSinContenido = {...h};
+    await fetch(`${FIREBASE_URL}/historial/${key}/${h.id}.json`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(h)
+    });
+    // Mantener solo las últimas 20
+    const res = await fetch(`${FIREBASE_URL}/historial/${key}.json`);
+    const todos = await res.json() || {};
+    const ids = Object.keys(todos).map(Number).sort((a,b)=>b-a);
+    if(ids.length > 20) {
+      const aBorrar = ids.slice(20);
+      for(const id of aBorrar) {
+        await fetch(`${FIREBASE_URL}/historial/${key}/${id}.json`, {method:'DELETE'});
+      }
+    }
+  } catch(e) { console.warn('Error guardando historial en Firebase:', e); }
+}
+
+async function fbCargarHist(curp) {
+  try {
+    const key = curp.replace(/[^A-Z0-9]/g,'');
+    const res = await fetch(`${FIREBASE_URL}/historial/${key}.json`);
+    if(!res.ok) return [];
+    const datos = await res.json();
+    if(!datos) return [];
+    return Object.values(datos).sort((a,b)=>b.id-a.id);
+  } catch(e) { return []; }
+}
+
+async function saveHist(tipo,nombre,contenido,datos){
   const h={id:Date.now(),tipo,nombre,contenido,docente:datos.docente,grado:datos.grado,disciplina:datos.disciplina,fecha:new Date().toLocaleDateString('es-MX')};
   historial.unshift(h);
-  localStorage.setItem('nem_hist',JSON.stringify(historial.slice(0,60)));
+  localStorage.setItem('nem_hist',JSON.stringify(historial.slice(0,20)));
   renderHist();
+  const usr = (typeof getUsuario==='function') ? getUsuario() : null;
+  if(usr && usr.curp && usr.curp !== 'ADMIN') {
+    await fbGuardarHist(usr.curp, h);
+  }
 }
 function renderHist(){
   const el=document.getElementById('hist-lista');
