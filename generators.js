@@ -5,7 +5,7 @@
 // ============================================================
 
 // ── GROQ CONFIG ───────────────────────────────────────────
-const GROQ_KEY = 'gsk_9qXlYFQFe1CjomYQAiVRWGdyb3FYGqDLp6kYECiE1KJtyeCTuyOCgsk_9qXlYFQFe1CjomYQAiVRWGdyb3FYGqDLp6kYECiE1KJtyeCTuyOC';
+const GROQ_KEY = '';
 const GROQ_URL = 'https://groq-proxy-fcp.federal8felipecarrillopuerto.workers.dev';
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
@@ -18,7 +18,7 @@ async function llamarGemini(prompt) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${GROQ_KEY}`
+          'X-Source': 'planeador-nem'
         },
         body: JSON.stringify({
           model: GROQ_MODEL,
