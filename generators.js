@@ -6,7 +6,7 @@
 
 // ── GROQ CONFIG ───────────────────────────────────────────
 const GROQ_KEY = 'gsk_9qXlYFQFe1CjomYQAiVRWGdyb3FYGqDLp6kYECiE1KJtyeCTuyOCgsk_9qXlYFQFe1CjomYQAiVRWGdyb3FYGqDLp6kYECiE1KJtyeCTuyOC';
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_URL = 'https://groq-proxy-fcp.federal8felipecarrillopuerto.workers.dev';
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
 async function llamarGemini(prompt) {
