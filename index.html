@@ -1294,7 +1294,7 @@ async function genDidactico(){
     }
     const txt=await (tgen==='semanal'
       ? (async()=>{
-          const respSem = await llamarGemini(prompt);
+          const respSem = await llamarGeminiJSON(prompt);
           const iaSem = parsearJSON(respSem);
           const C='#BDD7EE';
           const th=(t,w,bg)=>`<td style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${bg||C};${w?'width:'+w+';':''}vertical-align:top;">${t}</td>`;
