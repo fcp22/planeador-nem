@@ -714,9 +714,99 @@ ${rubricaHTML()}
 }
 
 // ── FUNCIÓN PRINCIPAL SECUENCIA ──────────────────────────
+
+// ── PROMPT ENCABEZADO (sin sesiones) ─────────────────────
+function buildPromptEncabezadoSecuencia(d) {
+  const trimNom = d.trimestre==='1'?'Primer':d.trimestre==='2'?'Segundo':'Tercer';
+  return `Eres experto en didáctica NEM México. Genera el encabezado de una Secuencia Didáctica.
+Responde SOLO con JSON válido, sin markdown ni texto extra.
+
+DATOS:
+- Disciplina: ${d.disciplina} | Campo: ${d.campo} | Grado: ${d.grado}° | ${trimNom} trimestre
+- Propósito: ${d.proposito || 'desarrollar las competencias del contenido'}
+- Evidencia esperada: ${d.productoIntegrador || 'por determinar'}
+
+Genera este JSON:
+{
+  "perfil": "Párrafos del perfil de egreso NEM relevantes, con número: 1. Reconocen... 5. Desarrollan...",
+  "finalidades": "2-3 finalidades del campo ${d.campo} para ${d.disciplina}",
+  "especificidad": "Especificidad del campo para esta secuencia, 1 párrafo",
+  "situacion": "Situación de aprendizaje que da origen a la secuencia, 2-3 oraciones",
+  "observaciones": "Ajustes razonables para alumnos con NEE o barreras de aprendizaje",
+  "rubrica": [
+    {
+      "criterio": "nombre del criterio",
+      "ponderacion": "porcentaje",
+      "excelente": "nivel 4",
+      "satisfactorio": "nivel 3",
+      "suficiente": "nivel 2",
+      "insuficiente": "nivel 1"
+    }
+  ]
+}
+IMPORTANTE: La rúbrica debe tener entre 4 y 6 criterios con ponderaciones que sumen 100%.`;
+}
+
+// ── PROMPT SESIONES ───────────────────────────────────────
+function buildPromptSesionesSecuencia(d) {
+  const contenidosTexto = d.contenidos.map(c =>
+    `- Contenido: ${c.titulo}
+  PDA: ${obtenerPDA(c, d.grado)}`
+  ).join('\n');
+  const trimNom = d.trimestre==='1'?'Primer':d.trimestre==='2'?'Segundo':'Tercer';
+  const numSes = parseInt(d.numSesiones)||11;
+  const durMin = parseInt(d.duracionSesion)||50;
+  const esSesDoble = durMin >= 90;
+  const durInicio = 10;
+  const durDesarrollo = esSesDoble ? 80 : 30;
+  const durCierre = 10;
+
+  return `Eres experto en didáctica NEM México. Genera las sesiones de una Secuencia Didáctica.
+Responde SOLO con JSON válido, sin markdown ni texto extra.
+
+DATOS:
+- Disciplina: ${d.disciplina} | Grado: ${d.grado}° | ${trimNom} trimestre
+- Número de sesiones: ${numSes} | Duración: ${durMin} min
+- Propósito: ${d.proposito || 'desarrollar las competencias del contenido'}
+- Evidencia: ${d.productoIntegrador || 'por determinar'}
+- Contexto: ${d.problematizacion || ''}
+
+CONTENIDOS:
+${contenidosTexto}
+
+ESTRUCTURA (${durMin} min):
+- Inicio: ${durInicio} min
+- Desarrollo: ${durDesarrollo} min
+- Cierre: ${durCierre} min
+
+Genera este JSON con exactamente ${numSes} sesiones:
+{
+  "sesiones": [
+    {
+      "num": 1,
+      "titulo": "título breve",
+      "inicio": "Descripción del Inicio (${durInicio} min)",
+      "desarrollo": "Descripción del Desarrollo (${durDesarrollo} min)",
+      "cierre": "Descripción del Cierre (${durCierre} min)",
+      "materiales": "materiales necesarios",
+      "evaluacion_formativa": "qué se observa o registra"
+    }
+  ]
+}`;
+}
+
 async function generarSecuenciaDidactica(d) {
-  const prompt = buildPromptSecuenciaDidactica(d);
-  const respuesta = await llamarGemini(prompt);
-  const ia = parsearJSON(respuesta);
+  // LLAMADA 1: encabezado (perfil, finalidades, especificidad, situacion, observaciones, rubrica)
+  const promptEncabezado = buildPromptEncabezadoSecuencia(d);
+  const respEncabezado = await llamarGemini(promptEncabezado);
+  const iaEncabezado = parsearJSON(respEncabezado);
+
+  // LLAMADA 2: sesiones
+  const promptSesiones = buildPromptSesionesSecuencia(d);
+  const respSesiones = await llamarGemini(promptSesiones);
+  const iaSesiones = parsearJSON(respSesiones);
+
+  // Combinar resultados
+  const ia = Object.assign({}, iaEncabezado, { sesiones: iaSesiones.sesiones });
   return construirHTMLSecuenciaDidactica(d, ia);
 }
