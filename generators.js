@@ -11,6 +11,43 @@ const GROQ_MODEL = 'llama-3.3-70b-versatile';
 const GEMINI_KEY = '';
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
+async function llamarGeminiJSON(prompt) {
+  let intentos = 0;
+  const maxIntentos = 3;
+  while (intentos < maxIntentos) {
+    try {
+      const res = await fetch('https://groq-proxy-fcp.federal8felipecarrillopuerto.workers.dev', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Source': 'planeador-nem' },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+          max_tokens: 8192,
+          response_format: { type: 'json_object' }
+        })
+      });
+      if (res.status === 429) {
+        intentos++;
+        if (intentos < maxIntentos) { await new Promise(r => setTimeout(r, 3000 * intentos)); continue; }
+        throw new Error('El servicio está ocupado. Por favor espera unos segundos e intenta de nuevo.');
+      }
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error?.message || `Error HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      const texto = data.choices?.[0]?.message?.content;
+      if (!texto) throw new Error('Respuesta vacía del servicio de IA');
+      return texto;
+    } catch(e) {
+      intentos++;
+      if (intentos >= maxIntentos) throw e;
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+}
+
 async function llamarGemini(prompt) {
   let intentos = 0;
   const maxIntentos = 3;
