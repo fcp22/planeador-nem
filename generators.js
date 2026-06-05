@@ -51,7 +51,13 @@ async function llamarGemini(prompt) {
 // HELPER — CONVIERTE TEXTO IA EN JSON SEGURO
 // ============================================================
 function parsearJSON(texto) {
-  const limpio = texto.replace(/```json/g,'').replace(/```/g,'').trim();
+  let limpio = texto.replace(/```json/g,'').replace(/```/g,'').trim();
+  // Extraer solo el bloque JSON si hay texto extra
+  const inicio = limpio.indexOf('{');
+  const fin = limpio.lastIndexOf('}');
+  if (inicio !== -1 && fin !== -1) {
+    limpio = limpio.substring(inicio, fin + 1);
+  }
   return JSON.parse(limpio);
 }
 
