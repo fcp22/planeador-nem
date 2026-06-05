@@ -1329,7 +1329,7 @@ async function genDidactico(){
 
 // ── DESCARGA ──────────────────────────────────────────────
 // ── CONTROL DE DESCARGAS POR TRIMESTRE ───────────────────
-const LIMITE_DESCARGAS = 3;
+const LIMITE_DESCARGAS = 10;
 
 function claveDescarga(pfx) {
   const trim = obtenerTrimestreActual();
@@ -1514,7 +1514,7 @@ async function toggleUsuario(curp, activar, btn){
 }
 
 async function resetearDescargas(curp, btn){
-  if(!confirm('¿Resetear el contador de descargas de este trimestre para este maestro?\nPodrá volver a descargar 3 documentos de cada tipo.')) return;
+  if(!confirm('¿Resetear el contador de descargas de este trimestre para este maestro?\nPodrá volver a descargar 10 documentos de cada tipo.')) return;
   btn.disabled = true;
   btn.textContent = '...';
   const trim = obtenerTrimestreActual();
