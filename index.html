@@ -1307,7 +1307,23 @@ async function genDidactico(){
 <tr>${th('CIERRE (10 min)','15%','#D1ECF1')}${td(s.cierre,'85%')}</tr>
 <tr>${th('Materiales','15%')}${td(s.materiales,'85%')}</tr>
 </table>`).join('');
-          return `<h3 style="color:#1F4E79;">Semana — ${d.disciplina} ${d.grado}°</h3>${sesHTML}`;
+          const trNom = d.trimestre==='1'?'PRIMER':d.trimestre==='2'?'SEGUNDO':'TERCER';
+          const C='#BDD7EE';
+          const thS=(t,w)=>`<td style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${C};${w?'width:'+w+';':''}vertical-align:top;">${t}</td>`;
+          const tdS=(t)=>`<td style="border:1px solid #000;padding:5px 8px;vertical-align:top;">${t||''}</td>`;
+          const encHTML=`
+<h2 style="text-align:center;font-weight:bold;">Plano Didáctico — Semana ${semAct}</h2>
+<p><strong>ESCUELA:</strong> ${d.escuela}, CCT ${d.cct||'31DES0008B'}, CICLO ${d.cicloEscolar||'2025-2026'}</p>
+<p><strong>CAMPO FORMATIVO:</strong> ${d.campo} &nbsp;&nbsp; <strong>DISCIPLINA:</strong> ${d.disciplina}</p>
+<p><strong>GRADO Y GRUPO:</strong> ${d.grado}° ${d.grupo||'A, B, C'} &nbsp;&nbsp; <strong>DOCENTE(S):</strong> ${d.docente}</p>
+<p><strong>PERIODO:</strong> ${trNom} TRIMESTRE &nbsp;&nbsp; <strong>MODALIDAD:</strong> ${d.modalidad||'Proyectos comunitarios'}</p>
+<p><strong>NOMBRE DEL PROYECTO:</strong> ${d.nombreProyecto}</p>
+<table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
+<tr>${thS('Problematización de la realidad','30%')}${tdS(d.problematizacion)}</tr>
+<tr>${thS('Propósito u Objetivo')}${tdS(d.proposito)}</tr>
+<tr>${thS('Ejes Articuladores')}${tdS('Inclusión | Pensamiento crítico | Interculturalidad crítica | Igualdad de género | Vida saludable | Apropiación de las culturas a través de la lectura y la escritura | Artes y Experiencias estéticas')}</tr>
+</table>`;
+          return encHTML + sesHTML;
         })()
       : modalidadD==='secuencia'
         ? generarSecuenciaDidactica(d)
