@@ -1293,7 +1293,22 @@ async function genDidactico(){
       nomDoc=`Plano_T${d.trimestre}_${dis}_${g}`;
     }
     const txt=await (tgen==='semanal'
-      ? llamarGemini(prompt)
+      ? (async()=>{
+          const respSem = await llamarGemini(prompt);
+          const iaSem = parsearJSON(respSem);
+          const C='#BDD7EE';
+          const th=(t,w,bg)=>`<td style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${bg||C};${w?'width:'+w+';':''}vertical-align:top;">${t}</td>`;
+          const td=(t,w)=>`<td style="border:1px solid #000;padding:5px 8px;vertical-align:top;${w?'width:'+w+';':''}">${t||'&nbsp;'}</td>`;
+          const sesHTML=(iaSem.sesiones||[]).map((s,i)=>`
+<p style="font-weight:bold;margin-top:10px;">Sesión ${s.num||i+1}${s.titulo?' — '+s.titulo:''}</p>
+<table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
+<tr>${th('INICIO (10 min)','15%','#FFF3CD')}${td(s.inicio,'85%')}</tr>
+<tr>${th('DESARROLLO (30 min)','15%','#D4EDDA')}${td(s.desarrollo,'85%')}</tr>
+<tr>${th('CIERRE (10 min)','15%','#D1ECF1')}${td(s.cierre,'85%')}</tr>
+<tr>${th('Materiales','15%')}${td(s.materiales,'85%')}</tr>
+</table>`).join('');
+          return `<h3 style="color:#1F4E79;">Semana — ${d.disciplina} ${d.grado}°</h3>${sesHTML}`;
+        })()
       : modalidadD==='secuencia'
         ? generarSecuenciaDidactica(d)
         : generarPlanDidacticoTrimestre(d));
