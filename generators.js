@@ -4,27 +4,24 @@
 // Esto mantiene el prompt corto (< 5000 tokens)
 // ============================================================
 
-// ── GROQ CONFIG ───────────────────────────────────────────
+// ── GEMINI CONFIG ─────────────────────────────────────────
 const GROQ_KEY = '';
 const GROQ_URL = 'https://groq-proxy-fcp.federal8felipecarrillopuerto.workers.dev';
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
+const GEMINI_KEY = '';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 async function llamarGemini(prompt) {
   let intentos = 0;
   const maxIntentos = 3;
   while (intentos < maxIntentos) {
     try {
-      const res = await fetch(GROQ_URL, {
+      const res = await fetch('https://groq-proxy-fcp.federal8felipecarrillopuerto.workers.dev', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Source': 'planeador-nem'
-        },
+        headers: { 'Content-Type': 'application/json', 'X-Source': 'planeador-nem' },
         body: JSON.stringify({
-          model: GROQ_MODEL,
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.7,
-          max_tokens: 8192
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
         })
       });
       if (res.status === 429) {
@@ -37,7 +34,7 @@ async function llamarGemini(prompt) {
         throw new Error(err.error?.message || `Error HTTP ${res.status}`);
       }
       const data = await res.json();
-      const texto = data.choices?.[0]?.message?.content;
+      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!texto) throw new Error('Respuesta vacía del servicio de IA');
       return texto;
     } catch (e) {
