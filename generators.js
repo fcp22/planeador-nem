@@ -20,8 +20,10 @@ async function llamarGemini(prompt) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Source': 'planeador-nem' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+          max_tokens: 8192
         })
       });
       if (res.status === 429) {
@@ -34,7 +36,7 @@ async function llamarGemini(prompt) {
         throw new Error(err.error?.message || `Error HTTP ${res.status}`);
       }
       const data = await res.json();
-      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const texto = data.choices?.[0]?.message?.content;
       if (!texto) throw new Error('Respuesta vacía del servicio de IA');
       return texto;
     } catch (e) {
