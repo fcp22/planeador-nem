@@ -1319,6 +1319,7 @@ async function genDidactico(){
 <tr>${th('Materiales','15%')}${td(s.materiales,'85%')}</tr>
 </table>`).join('');
           const trNom = d.trimestre==='1'?'PRIMER':d.trimestre==='2'?'SEGUNDO':'TERCER';
+          const C='#BDD7EE';
           const thS=(t,w)=>`<td style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${C};${w?'width:'+w+';':''}vertical-align:top;">${t}</td>`;
           const tdS=(t)=>`<td style="border:1px solid #000;padding:5px 8px;vertical-align:top;">${t||''}</td>`;
           const encHTML=`
