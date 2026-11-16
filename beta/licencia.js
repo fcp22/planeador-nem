@@ -1,0 +1,174 @@
+// ============================================================
+// LICENCIA E IA — llamadas al servidor de IA, «Mi licencia» y
+// panel de administración de códigos.
+// Depende de: auth.js (AUTH, getUsuario), firebase-config.js
+// ============================================================
+
+const LIC = { estado: null, cargando: false, adminKey: '' };
+
+function workerUrl() { return String((window.NEM_CONFIG && window.NEM_CONFIG.workerUrl) || '').replace(/\/+$/, ''); }
+async function idToken() { const u = AUTH && AUTH.auth && AUTH.auth.currentUser; return u ? await u.getIdToken() : null; }
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+// Llamada genérica al servidor
+async function workerFetch(ruta, { metodo = 'GET', body, admin } = {}) {
+  const base = workerUrl();
+  if (!base) { const e = new Error('La IA todavía no está conectada (falta «workerUrl» en firebase-config.js).'); e.codigo = 'config'; throw e; }
+  const headers = {};
+  if (admin) headers['X-Admin-Key'] = admin;
+  else { const t = await idToken(); if (!t) { const e = new Error('Inicia sesión para continuar.'); e.codigo = 'sin_sesion'; throw e; } headers.Authorization = 'Bearer ' + t; }
+  if (body) headers['Content-Type'] = 'application/json';
+  let res;
+  try { res = await fetch(base + ruta, { method: metodo, headers, body: body ? JSON.stringify(body) : undefined }); }
+  catch (e) { const er = new Error('No hay conexión con el servidor. Revisa tu internet.'); er.codigo = 'red'; er.reintentar = true; throw er; }
+  let data = null; try { data = await res.json(); } catch (e) { /* sin cuerpo */ }
+  if (!res.ok) {
+    const m = (data && data.error) || {};
+    const er = new Error(m.message || `Error ${res.status}`); er.codigo = m.codigo || 'http_' + res.status; er.status = res.status; er.reintentar = !!m.reintentar; throw er;
+  }
+  return data;
+}
+
+// Mensaje + a dónde ir cuando el problema es de licencia
+const LIC_CODIGOS = ['sin_licencia', 'vencida', 'cuota', 'revocada', 'correo_sin_verificar'];
+function licMensajeIA(e) {
+  if (LIC_CODIGOS.includes(e.codigo)) return e.message + ' (Menú → «Mi licencia»)';
+  return e.message;
+}
+
+// Pide texto a la IA. json=true pide formato JSON.
+async function llamarIA(prompt, { json = false } = {}) {
+  let ultimo;
+  for (let intento = 0; intento < 3; intento++) {
+    try {
+      const data = await workerFetch('/v1/generar', { metodo: 'POST', body: { prompt, json } });
+      if (data.cuota) { LIC.estado = Object.assign(LIC.estado || {}, { limite: data.cuota.limite, usadas: data.cuota.usadas, restantes: data.cuota.restantes, activa: true }); licPintarChip(); }
+      const texto = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+      if (!texto) throw new Error('Respuesta vacía del servicio de IA');
+      return texto;
+    } catch (e) {
+      ultimo = e;
+      if (e.reintentar && intento < 2) { await esperar(2500 * (intento + 1)); continue; }   // solo se reintenta lo que no es de licencia/cuota
+      break;
+    }
+  }
+  const err = new Error(licMensajeIA(ultimo)); err.codigo = ultimo.codigo; throw err;
+}
+
+// ── Estado de la licencia ─────────────────────────────────
+function licPintarChip() {
+  const c = document.getElementById('h-cuota'); if (!c) return;
+  const e = LIC.estado;
+  if (!e || !workerUrl()) { c.style.display = 'none'; return; }
+  c.style.display = 'inline-block';
+  c.textContent = e.activa ? `IA ${e.usadas}/${e.limite}` : 'IA sin licencia';
+  c.style.background = e.activa ? (e.restantes <= Math.max(1, Math.round(e.limite * 0.1)) ? '#f59e0b' : 'rgba(255,255,255,.18)') : '#dc2626';
+}
+async function licCargar() {
+  if (!workerUrl()) return null;
+  try { LIC.estado = await workerFetch('/v1/estado'); LIC.error = ''; }
+  catch (e) { LIC.estado = null; LIC.error = e.message; }
+  licPintarChip(); return LIC.estado;
+}
+function licReiniciar() { LIC.estado = null; LIC.error = ''; licPintarChip(); }
+
+function licFecha(iso) { return iso ? new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'; }
+
+// ── Pantalla «Mi licencia» ────────────────────────────────
+async function licRender() {
+  const p = document.getElementById('g-licencia'); if (!p) return;
+  const u = getUsuario();
+  p.innerHTML = `<div class="sec-title">Mi licencia</div><div class="sec-sub">Tu acceso a la IA para crear planeaciones y exámenes. Todo lo demás (pase de lista, calificaciones, grupos) no la necesita.</div><div class="card"><p style="color:var(--gris)">Consultando tu licencia…</p></div>`;
+  const e = await licCargar();
+  let h = `<div class="sec-title">Mi licencia</div><div class="sec-sub">Tu acceso a la IA para crear planeaciones y exámenes. Todo lo demás (pase de lista, calificaciones, grupos) no la necesita.</div>`;
+  if (!workerUrl()) h += `<div class="g-aviso" style="background:#fffbeb;border-color:#fde68a;color:#92400e">La IA aún no está conectada a un servidor (falta «workerUrl» en <code>firebase-config.js</code>).</div>`;
+  else if (!e) h += `<div class="g-aviso" style="background:#fef2f2;border-color:#fecaca;color:#991b1b">${gEsc(LIC.error || 'No se pudo consultar tu licencia.')} <button class="g-btn g-btn-s" onclick="licRender()">Reintentar</button></div>`;
+  else {
+    const pct = e.limite ? Math.min(100, Math.round(e.usadas * 100 / e.limite)) : 0;
+    const color = !e.activa ? '#dc2626' : pct >= 90 ? '#f59e0b' : '#16a34a';
+    h += `<div class="card"><div class="card-title">🔑 ${e.prueba ? 'Prueba gratis' : (e.plan ? 'Plan ' + gEsc(e.plan) : 'Licencia')} <span class="g-tag" style="margin-left:auto;background:${color}">${e.activa ? 'Activa' : (e.limite ? 'Vencida' : 'Sin licencia')}</span></div>
+      <div style="font-size:13px;margin-bottom:12px"><b>Cuenta:</b> ${gEsc(e.correo || (u && u.email) || '')}</div>
+      ${e.limite ? `<div style="font-size:13px;margin-bottom:6px"><b>Documentos con IA ${e.prueba ? 'de la prueba' : 'este mes'}:</b> ${e.usadas} de ${e.limite} <span style="color:var(--gris)">(${e.restantes} disponibles)</span></div>
+      <div style="height:10px;background:var(--gris-claro);border-radius:6px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:${pct}%;background:${color}"></div></div>
+      <div style="font-size:13px"><b>${e.activa ? 'Vigente hasta' : 'Venció el'}:</b> ${licFecha(e.vence)}</div>` : `<p style="color:var(--gris)">Tu prueba gratis ya se usó. Canjea un código para seguir usando la IA.</p>`}
+    </div>`;
+  }
+  h += `<div class="card"><div class="card-title">🎟️ Canjear un código</div>
+    <div class="campo"><label>Código de licencia</label><input id="lic-codigo" placeholder="NEM-XXXX-XXXX-XXXX" maxlength="16" oninput="this.value=this.value.toUpperCase()" style="max-width:320px;letter-spacing:.05em"></div>
+    <div class="l-err" id="lic-err" style="margin:0 0 12px"></div><div class="l-ok" id="lic-ok" style="margin:0 0 12px"></div>
+    <button class="g-btn" id="lic-btn" onclick="licCanjear()">Canjear código</button>
+    ${window.NEM_CONFIG && window.NEM_CONFIG.contacto ? `<div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px">¿Aún no tienes código? ${gEsc(window.NEM_CONFIG.contacto)}</div>` : ''}
+    <div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px">Si ya tienes una licencia vigente, el nuevo código <b>suma</b> el tiempo. La licencia es de tu cuenta: sirve en tu celular y en tu computadora.</div></div>
+    <div class="card"><div class="card-title">👤 Mi cuenta</div><div style="font-size:13px;margin-bottom:10px">${gEsc((u && u.email) || '')}</div><button class="g-btn g-btn-s" onclick="doLogout()">Cerrar sesión</button></div>`;
+  p.innerHTML = h;
+}
+async function licCanjear() {
+  const cod = document.getElementById('lic-codigo').value.trim(); const err = document.getElementById('lic-err'), ok = document.getElementById('lic-ok');
+  err.style.display = ok.style.display = 'none';
+  if (!cod) { err.textContent = 'Escribe tu código.'; err.style.display = 'block'; return; }
+  const b = document.getElementById('lic-btn'); b.disabled = true; b.textContent = 'Canjeando…';
+  try { LIC.estado = await workerFetch('/v1/activar', { metodo: 'POST', body: { codigo: cod } }); await licRender(); const o = document.getElementById('lic-ok'); o.textContent = '✓ Listo. Tu licencia está activa.'; o.style.display = 'block'; }
+  catch (e) { err.textContent = e.message; err.style.display = 'block'; b.disabled = false; b.textContent = 'Canjear código'; }
+}
+
+// ── Panel de administración de licencias ──────────────────
+function licAdminRender() {
+  const p = document.getElementById('g-licadmin'); if (!p) return;
+  p.innerHTML = `<div class="sec-title">Licencias (administrador)</div><div class="sec-sub">Genera códigos para vender, revisa quién los usó y bloquea correos temporales.</div>
+  <div class="card"><div class="card-title">🛡️ Clave de administrador</div>
+    <div class="campo" style="max-width:340px"><label>Clave (ADMIN_SECRET del servidor)</label><input id="la-clave" type="password" autocomplete="off" value="${gEsc(LIC.adminKey)}" onchange="LIC.adminKey=this.value"></div>
+    <div class="ayuda" style="font-size:11px;color:var(--gris)">No se guarda: tendrás que escribirla otra vez al recargar la página.</div></div>
+  <div class="card"><div class="card-title">➕ Generar códigos</div>
+    <div class="f3"><div class="campo"><label>Cantidad</label><input id="la-cant" type="number" min="1" max="100" value="1"></div>
+    <div class="campo"><label>Vigencia</label><select id="la-vig"><option value="m1">1 mes</option><option value="m3">3 meses</option><option value="m6">6 meses</option><option value="m12">12 meses</option><option value="d7">7 días (cortesía)</option></select></div>
+    <div class="campo"><label>Documentos con IA al mes</label><input id="la-cuota" type="number" min="1" max="2000" value="60"></div></div>
+    <div class="f2"><div class="campo"><label>Plan (etiqueta)</label><input id="la-plan" placeholder="Ej. Trimestral"></div><div class="campo"><label>Nota (para ti)</label><input id="la-nota" placeholder="Ej. Prof. Pérez / escuela X"></div></div>
+    <div class="l-err" id="la-err" style="margin:0 0 12px"></div>
+    <button class="g-btn" onclick="licAdminGenerar()">Generar códigos</button>
+    <div id="la-salida" style="margin-top:14px"></div></div>
+  <div class="card"><div class="card-title">📋 Códigos y uso</div><button class="g-btn g-btn-s" onclick="licAdminListar()">Actualizar lista</button><div id="la-lista" style="margin-top:12px"></div></div>
+  <div class="card"><div class="card-title">🚫 Bloquear un dominio de correo</div>
+    <div class="campo" style="max-width:340px"><label>Dominio</label><input id="la-dom" placeholder="ejemplo-temporal.com"></div>
+    <button class="g-btn g-btn-s" onclick="licAdminBloquear(false)">Bloquear</button> <button class="g-btn g-btn-s" onclick="licAdminBloquear(true)">Quitar bloqueo</button>
+    <div class="l-ok" id="la-dom-ok" style="margin-top:10px"></div></div>`;
+}
+function licAdminClave() { const k = document.getElementById('la-clave').value; LIC.adminKey = k; return k; }
+function licAdminErr(msg) { const e = document.getElementById('la-err'); if (e) { e.textContent = msg || ''; e.style.display = msg ? 'block' : 'none'; } }
+async function licAdminGenerar() {
+  licAdminErr('');
+  const k = licAdminClave(); if (!k) return licAdminErr('Escribe la clave de administrador.');
+  const vig = document.getElementById('la-vig').value; const body = { cantidad: +document.getElementById('la-cant').value || 1, cuota: +document.getElementById('la-cuota').value || 60, plan: document.getElementById('la-plan').value, nota: document.getElementById('la-nota').value };
+  if (vig[0] === 'm') body.meses = +vig.slice(1); else body.dias = +vig.slice(1);
+  try {
+    const r = await workerFetch('/admin/codigos', { metodo: 'POST', body, admin: k });
+    LIC.ultimos = r.codigos;
+    document.getElementById('la-salida').innerHTML = `<div class="g-aviso" style="font-family:monospace;font-size:14px;line-height:1.9">${r.codigos.map(c => gEsc(c)).join('<br>')}</div>
+      <button class="g-btn g-btn-s" onclick="licCopiar(this)">Copiar todos</button>`;
+    licAdminListar();
+  } catch (e) { licAdminErr(e.message); }
+}
+async function licAdminListar() {
+  licAdminErr(''); const k = licAdminClave(); if (!k) return licAdminErr('Escribe la clave de administrador.');
+  try {
+    const r = await workerFetch('/admin/codigos', { admin: k });
+    const filas = r.codigos.sort((a, b) => String(b.creado).localeCompare(String(a.creado)));
+    document.getElementById('la-lista').innerHTML = filas.length ? `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>Código</th><th>Estado</th><th>Cuenta</th><th>Plan / nota</th><th>Uso</th><th>Vence</th><th></th></tr></thead><tbody>` +
+      filas.map(c => `<tr><td style="font-family:monospace;white-space:nowrap">${gEsc(c.codigo)}</td><td>${c.revocada || c.estado === 'revocado' ? '<span class="g-mal">Revocado</span>' : c.estado === 'activado' ? 'Canjeado' : 'Sin canjear'}</td><td>${gEsc(c.correo || '—')}</td><td>${gEsc([c.plan, c.nota].filter(Boolean).join(' · '))}</td><td>${c.usadas != null ? c.usadas + '/' + c.cuota : '—'}</td><td>${c.vence ? licFecha(c.vence) : (c.meses ? c.meses + ' m' : c.dias + ' d')}</td><td style="white-space:nowrap">${c.estado !== 'revocado' ? `<button class="g-x" title="Revocar" onclick="licAdminAccion('revocar','${c.codigo}')">🚫</button>` : ''}${c.estado === 'activado' ? `<button class="g-x" title="Ampliar" onclick="licAdminAccion('ampliar','${c.codigo}')">➕</button>` : ''}</td></tr>`).join('') + '</tbody></table></div>' : '<p style="color:var(--gris)">Aún no hay códigos.</p>';
+  } catch (e) { licAdminErr(e.message); }
+}
+async function licAdminAccion(accion, codigo) {
+  const k = licAdminClave(); let body = { codigo };
+  if (accion === 'revocar') { if (!confirm('¿Revocar ' + codigo + '? La persona perderá el acceso a la IA.')) return; }
+  else { const c = prompt('Nueva cuota mensual de documentos (deja vacío para no cambiarla):', ''); const m = prompt('Meses a sumar a la vigencia (0 para no cambiarla):', '0'); if (c) body.cuota = +c; if (+m) body.mesesMas = +m; }
+  try { await workerFetch('/admin/' + accion, { metodo: 'POST', body, admin: k }); licAdminListar(); } catch (e) { licAdminErr(e.message); }
+}
+async function licAdminBloquear(quitar) {
+  const k = licAdminClave(); const d = document.getElementById('la-dom').value; const ok = document.getElementById('la-dom-ok'); ok.style.display = 'none'; licAdminErr('');
+  try { const r = await workerFetch('/admin/bloquear', { metodo: 'POST', body: { dominio: d, quitar }, admin: k }); ok.textContent = r.bloqueado ? '✓ Dominio bloqueado: ' + r.dominio : '✓ Bloqueo quitado: ' + r.dominio; ok.style.display = 'block'; }
+  catch (e) { licAdminErr(e.message); }
+}
+
+function licCopiar(btn) { navigator.clipboard.writeText((LIC.ultimos || []).join('\n')).then(() => { btn.textContent = '✓ Copiados'; }); }
+
+// Enrutado desde el menú
+function licOnTab(id) { if (id === 'licencia') { licRender(); return true; } if (id === 'licadmin') { licAdminRender(); return true; } return false; }
