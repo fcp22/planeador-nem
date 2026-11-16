@@ -917,7 +917,7 @@ function gAbrirPlano(pid) {
   gProyDef(p);
   const selSes = document.getElementById('d-ses');
   if (![...selSes.options].some(o => +o.value === p.clases)) {
-    const o = document.createElement('option'); o.value = p.clases; o.textContent = `~${p.clases} sesiones`; selSes.appendChild(o);
+    const o = document.createElement('option'); o.value = p.clases; o.textContent = `~${p.clases} sesiones`; selSes.insertBefore(o, selSes.querySelector('option[value="otro"]'));
   }
   gSel('d-ses', String(p.clases));
   const selDur = document.getElementById('d-dur');

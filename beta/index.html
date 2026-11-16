@@ -884,8 +884,8 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
                 <option value="3">Tercer Trimestre (Abr - Jun)</option>
               </select>
             </div>
-            <div class="campo"><label>Número de sesiones</label>
-              <select id="d-ses">
+            <div class="campo"><label>Número de sesiones de la planeación trimestral</label>
+              <select id="d-ses" onchange="sesOtroCambio()">
                 <option value="9">~9 sesiones</option>
                 <option value="15">~15 sesiones</option>
                 <option value="20">~20 sesiones</option>
@@ -893,7 +893,10 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
                 <option value="36">~36 sesiones</option>
                 <option value="50">~50 sesiones</option>
                 <option value="64">~64 sesiones</option>
+                <option value="otro">Otro (escribir el número)…</option>
               </select>
+              <div id="d-ses-otro-box" class="hidden" style="margin-top:6px;"><input type="number" id="d-ses-otro" min="1" max="200" step="1" placeholder="Escribe el número de sesiones" oninput="sesOtroEscribir()"></div>
+              <div class="ayuda">Son las sesiones que vas a usar en el trimestre. Si no está tu número, elige «Otro».</div>
             </div>
           </div>
           <div class="f2">
@@ -1098,16 +1101,16 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   </div><!-- /layout -->
 </div><!-- /app -->
 
-<script src="firebase-config.js?v=202611161650"></script>
-<script src="correos-temporales.js?v=202611161650"></script>
-<script src="auth.js?v=202611161650"></script>
-<script src="licencia.js?v=202611161650"></script>
-<script src="curriculum.js?v=202611161650"></script>
-<script src="projects.js?v=202611161650"></script>
-<script src="generators.js?v=202611161650"></script>
-<script src="metodologias.js?v=202611161650"></script>
-<script src="ruta-ui.js?v=202611161650"></script>
-<script src="secuencias.js?v=202611161650"></script>
+<script src="firebase-config.js?v=202611161755"></script>
+<script src="correos-temporales.js?v=202611161755"></script>
+<script src="auth.js?v=202611161755"></script>
+<script src="licencia.js?v=202611161755"></script>
+<script src="curriculum.js?v=202611161755"></script>
+<script src="projects.js?v=202611161755"></script>
+<script src="generators.js?v=202611161755"></script>
+<script src="metodologias.js?v=202611161755"></script>
+<script src="ruta-ui.js?v=202611161755"></script>
+<script src="secuencias.js?v=202611161755"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
 // (la pantalla de acceso conserva su autocompletar para correo y contraseña).
@@ -1129,8 +1132,8 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611161650"></script>
-<script src="rezago.js?v=202611161650"></script>
+<script src="gestion.js?v=202611161755"></script>
+<script src="rezago.js?v=202611161755"></script>
 <script>
 // ── ESTADO ──────────────────────────────────────────────
 let tipoActivo='a', semAct=1, semsGen=new Set();
@@ -1234,6 +1237,25 @@ function showTab(id,btn){
   navPintar();
   window.scrollTo({top:0});
   if(typeof gOnTab==='function') gOnTab(id);
+}
+
+// ── NÚMERO DE SESIONES: «Otro» permite escribir cualquier número ─────
+function sesOtroCambio(){
+  const sel=document.getElementById('d-ses'), box=document.getElementById('d-ses-otro-box'), inp=document.getElementById('d-ses-otro');
+  const custom=sel.options[sel.selectedIndex]&&sel.options[sel.selectedIndex].dataset.custom==='1';
+  box.classList.toggle('hidden', !(sel.value==='otro'||custom));
+  if(sel.value==='otro'){ inp.value=''; inp.focus(); }
+  else if(custom) inp.value=sel.value;
+}
+function sesOtroEscribir(){
+  const sel=document.getElementById('d-ses'), inp=document.getElementById('d-ses-otro');
+  let n=parseInt(inp.value,10);
+  let o=[...sel.options].find(x=>x.dataset.custom==='1');
+  if(isNaN(n)||n<1){ if(o) o.remove(); sel.value='otro'; return; }
+  n=Math.min(200,n);
+  if(!o){ o=document.createElement('option'); o.dataset.custom='1'; sel.insertBefore(o, sel.querySelector('option[value="otro"]')); }
+  o.value=String(n); o.textContent=`${n} sesiones (otro)`; sel.value=String(n);
+  sel.dispatchEvent(new Event('change',{bubbles:true}));   // avisa a quien dependa del número (secuencias, ruta)
 }
 
 // ── TIPO ─────────────────────────────────────────────────
@@ -1634,6 +1656,7 @@ async function genDidactico(){
   const dis=document.getElementById('d-dis').value;
   if(!doc||!g||!cam||!dis){showErr('err-d','Completa: docente, grado, campo y disciplina.');return;}
   if(!cD.length){showErr('err-d','Selecciona al menos un contenido.');return;}
+  if(document.getElementById('d-ses').value==='otro'){showErr('err-d','Escribe el número de sesiones (elegiste «Otro»).');return;}
   hideErr('err-d');
   document.getElementById('bgd').disabled=true;
   document.getElementById('gen-d').style.display='block';
