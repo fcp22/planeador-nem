@@ -164,7 +164,7 @@ ${tabla(
   tr(th('Asignatura/Disciplina:'), td(`<strong>${discs.join(', ')}</strong>`)) +
   tr(th('Grado:'), td(`<strong>${d.grado}°</strong>`)) +
   tr(th('Problemática/Situación de aprendizaje:'), td(ia.situacion||d.problematica||'')) +
-  tr(th('Metodología:'), td('ABP')) +
+  tr(th('Metodología:'), td([...new Set([d.t1, d.t2, d.t3].map(t => t && t.modalidad).filter(Boolean))].join(' · ') || 'Proyectos comunitarios')) +
   tr(th('Curso escolar:'), td(d.cicloEscolar||'2026-2027'))
 )}
 

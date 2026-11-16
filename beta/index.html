@@ -80,6 +80,7 @@ input,select,textarea,button{font-family:inherit;font-size:14px;}
 .campo input:focus,.campo select:focus,.campo textarea:focus{border-color:var(--azul-med);}
 .campo textarea{resize:vertical;min-height:80px;}
 .campo .ayuda{font-size:11px;color:var(--gris);margin-top:4px;font-style:italic;}
+.sug-tag{color:#15803d;font-weight:600;font-size:12px;text-transform:none;letter-spacing:0;}
 .f2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .f3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
 
@@ -772,9 +773,10 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
             <div class="proy-lista" id="ps-a-t1"></div>
             <div class="f2 mt12">
               <div class="campo"><label>Nombre del proyecto (T1)</label><input type="text" id="a-pn1" placeholder="Escribe o elige arriba"></div>
-              <div class="campo"><label>Modalidad (T1)</label><select id="a-pm1"><option>Proyecto comunitario</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>ABP</option></select></div>
+              <div class="campo"><label>Modalidad (T1)</label><select id="a-pm1" onchange="aSugerirProyecto(1)"><option>Aprendizaje en proyectos comunitarios</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>Aprendizaje Basado en Problemas (ABP)</option><option>Aprendizaje basado en indagación (enfoque STEAM)</option><option>Aprendizaje servicio</option></select></div>
             </div>
             <div class="campo"><label>Propósito del proyecto (T1)</label><textarea id="a-pp1" placeholder="Propósito del primer trimestre..."></textarea></div>
+            <div style="margin:2px 0 10px;"><button class="btn-sec" type="button" style="padding:6px 12px;font-size:12px;" onclick="aSugerirProyecto(1,true)">💡 Sugerir otro nombre y producto</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Se basan en la problemática y la modalidad que elegiste; puedes cambiarlos.</span></div>
             <div class="campo"><label>Productos / evidencias (T1)</label><input type="text" id="a-pr1" placeholder="Ej. Cartel, ensayo, presentación..."></div>
           </div>
           <hr class="sep">
@@ -782,9 +784,10 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
             <div class="proy-lista" id="ps-a-t2"></div>
             <div class="f2 mt12">
               <div class="campo"><label>Nombre del proyecto (T2)</label><input type="text" id="a-pn2" placeholder="Escribe o elige arriba"></div>
-              <div class="campo"><label>Modalidad (T2)</label><select id="a-pm2"><option>Proyecto comunitario</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>ABP</option></select></div>
+              <div class="campo"><label>Modalidad (T2)</label><select id="a-pm2" onchange="aSugerirProyecto(2)"><option>Aprendizaje en proyectos comunitarios</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>Aprendizaje Basado en Problemas (ABP)</option><option>Aprendizaje basado en indagación (enfoque STEAM)</option><option>Aprendizaje servicio</option></select></div>
             </div>
             <div class="campo"><label>Propósito del proyecto (T2)</label><textarea id="a-pp2" placeholder="Propósito del segundo trimestre..."></textarea></div>
+            <div style="margin:2px 0 10px;"><button class="btn-sec" type="button" style="padding:6px 12px;font-size:12px;" onclick="aSugerirProyecto(2,true)">💡 Sugerir otro nombre y producto</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Se basan en la problemática y la modalidad que elegiste; puedes cambiarlos.</span></div>
             <div class="campo"><label>Productos / evidencias (T2)</label><input type="text" id="a-pr2" placeholder="Ej. Maqueta, reportaje, dramatización..."></div>
           </div>
           <hr class="sep">
@@ -792,9 +795,10 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
             <div class="proy-lista" id="ps-a-t3"></div>
             <div class="f2 mt12">
               <div class="campo"><label>Nombre del proyecto (T3)</label><input type="text" id="a-pn3" placeholder="Escribe o elige arriba"></div>
-              <div class="campo"><label>Modalidad (T3)</label><select id="a-pm3"><option>Proyecto comunitario</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>ABP</option></select></div>
+              <div class="campo"><label>Modalidad (T3)</label><select id="a-pm3" onchange="aSugerirProyecto(3)"><option>Aprendizaje en proyectos comunitarios</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>Aprendizaje Basado en Problemas (ABP)</option><option>Aprendizaje basado en indagación (enfoque STEAM)</option><option>Aprendizaje servicio</option></select></div>
             </div>
             <div class="campo"><label>Propósito del proyecto (T3)</label><textarea id="a-pp3" placeholder="Propósito del tercer trimestre..."></textarea></div>
+            <div style="margin:2px 0 10px;"><button class="btn-sec" type="button" style="padding:6px 12px;font-size:12px;" onclick="aSugerirProyecto(3,true)">💡 Sugerir otro nombre y producto</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Se basan en la problemática y la modalidad que elegiste; puedes cambiarlos.</span></div>
             <div class="campo"><label>Productos / evidencias (T3)</label><input type="text" id="a-pr3" placeholder="Ej. Podcast, documental, historieta..."></div>
           </div>
         </div>
@@ -1491,6 +1495,7 @@ function elejirProyA(el,t,nom){
   el.closest('.proy-lista').querySelectorAll('.proy-card').forEach(c=>c.classList.remove('sel'));
   el.classList.add('sel');
   document.getElementById('a-pn'+t.slice(-1)).value=nom;
+  if(typeof sugMarcar==='function') sugMarcar('a-pn'+t.slice(-1),false);
 }
 
 // ── CONTENIDOS DIDÁCTICO ──────────────────────────────────
@@ -1539,6 +1544,7 @@ function elejirProyD(el,nom){
   document.getElementById('ps-d').querySelectorAll('.proy-card').forEach(c=>c.classList.remove('sel'));
   el.classList.add('sel');
   document.getElementById('d-proy').value=nom;
+  if(typeof sugMarcar==='function') sugMarcar('d-proy',false);
 }
 
 // ── SEMANAS ───────────────────────────────────────────────
@@ -1741,6 +1747,7 @@ function limpiarD(){
   document.getElementById('ps-d').style.display='none';
   document.getElementById('res-d').style.display='none';
   ['d-proy','d-prob','d-prop','d-prod','d-inter','d-codis'].forEach(id=>{const e=document.getElementById(id); if(e) e.value='';});
+  if(typeof sugMarcar==='function'){ sugMarcar('d-proy',false); sugMarcar('d-prod',false); }
 }
 
 // ── HISTORIAL ─────────────────────────────────────────────

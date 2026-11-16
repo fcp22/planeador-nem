@@ -118,6 +118,11 @@ function disenarRuta() {
   rutaSugerencias = sugerirProyectos(c.met, c.prob, c.esc);
   rutaSelProy = -1;
   rutaActual.ejesSug = (rutaSugerencias.find(s => s.ejes && s.ejes.length) || { ejes: [] }).ejes;
+  // Si aún no hay nombre ni producto, propone el primero marcado como «sugerido» (el docente puede cambiarlo)
+  if (rutaSugerencias[0]) {
+    sugPoner('d-proy', rutaSugerencias[0].nombre);
+    if (sugPoner('d-prod', rutaSugerencias[0].producto)) rutaActual.proyecto = { nombre: rVal('d-proy'), producto: rVal('d-prod'), tipo: rutaSugerencias[0].tipo };
+  }
   renderRuta();
   const out = rEl('ruta-out');
   if (out) out.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -129,6 +134,7 @@ function rutaElegirProyecto(i) {
   rutaSelProy = i;
   rEl('d-proy').value = s.nombre;
   rEl('d-prod').value = s.producto;
+  sugMarcar('d-proy', false); sugMarcar('d-prod', false);   // lo eligió el docente
   rutaActual.proyecto = { nombre: s.nombre, producto: s.producto, tipo: s.tipo };
   if (s.ejes && s.ejes.length) rutaActual.ejesSug = s.ejes;
   renderRuta();
@@ -399,3 +405,65 @@ function rutaInit() {
   rutaActualizarAyudaMet();
 }
 document.addEventListener('DOMContentLoaded', rutaInit);
+
+
+// ============================================================
+// SUGERENCIAS «(sugerido)» de nombre de proyecto y producto
+// El docente siempre puede cambiarlos: al escribir, la marca desaparece.
+// ============================================================
+const SUG_IDS = ['d-proy', 'd-prod', 'a-pn1', 'a-pn2', 'a-pn3', 'a-pr1', 'a-pr2', 'a-pr3'];
+
+function sugMarcar(id, sugerido) {
+  const e = rEl(id); if (!e) return;
+  e.dataset.sug = sugerido ? '1' : '';
+  let t = rEl(id + '-sugtag');
+  if (!t) {
+    const campo = e.closest('.campo'), lab = campo && campo.querySelector('label');
+    if (!lab) return;
+    t = document.createElement('span'); t.id = id + '-sugtag'; t.className = 'sug-tag'; t.textContent = ' (sugerido)';
+    lab.appendChild(t);
+  }
+  t.style.display = sugerido ? 'inline' : 'none';
+}
+// Pone un valor sugerido solo si el campo está vacío o todavía tiene una sugerencia anterior
+function sugPoner(id, valor) {
+  const e = rEl(id); if (!e || !valor) return false;
+  if (e.value.trim() && e.dataset.sug !== '1') return false;
+  e.value = valor; sugMarcar(id, true); return true;
+}
+document.addEventListener('input', ev => { if (ev.target && SUG_IDS.includes(ev.target.id)) sugMarcar(ev.target.id, false); });
+
+// Modalidad (texto del menú) → metodología y escenario
+function modalidadAMetodologia(txt) {
+  const t = String(txt || '').toLowerCase();
+  if (/steam|indagaci/.test(t)) return { met: 'steam', esc: 'aula' };
+  if (/problemas|abp/.test(t)) return { met: 'abp', esc: 'aula' };
+  if (/servicio/.test(t)) return { met: 'as', esc: 'comunidad' };
+  if (/escolar/.test(t)) return { met: 'abpc', esc: 'escuela' };
+  if (/aula|secuencia/.test(t)) return { met: 'abpc', esc: 'aula' };
+  return { met: 'abpc', esc: 'comunidad' };
+}
+
+// Programa Analítico: sugiere nombre y producto de cada trimestre según la problemática y la modalidad
+const aSugIdx = { 1: 0, 2: 1, 3: 2 };
+let aSugTimer = null;
+function aSugerirProyecto(t, otro) {
+  const prob = rVal('a-prob').trim();
+  if (prob.length < 20) { if (otro) alert('Primero escribe la problemática detectada (en «Datos generales»), para sugerirte un proyecto que se relacione con ella.'); return; }
+  if (otro) aSugIdx[t] = (aSugIdx[t] || 0) + 1;
+  const m = modalidadAMetodologia(rVal('a-pm' + t));
+  const lista = sugerirProyectos(m.met, prob, m.esc);
+  if (!lista.length) return;
+  const s = lista[(aSugIdx[t] || 0) % lista.length];
+  const idN = 'a-pn' + t, idP = 'a-pr' + t;
+  if (otro) {   // el botón es una petición explícita: reemplaza lo sugerido; si el docente ya escribió algo propio, pregunta
+    const e = rEl(idN), propio = e && e.value.trim() && e.dataset.sug !== '1';
+    if (propio && !confirm('Ya escribiste un nombre de proyecto. ¿Quieres reemplazarlo por esta sugerencia?')) return;
+    [[idN, s.nombre], [idP, s.producto]].forEach(([id, v]) => { const x = rEl(id); if (x) { x.value = v; sugMarcar(id, true); } });
+  } else { sugPoner(idN, s.nombre); sugPoner(idP, s.producto); }
+}
+function aSugerirTodos() { [1, 2, 3].forEach(t => aSugerirProyecto(t)); }
+document.addEventListener('DOMContentLoaded', () => {
+  const p = rEl('a-prob');
+  if (p) p.addEventListener('input', () => { clearTimeout(aSugTimer); aSugTimer = setTimeout(aSugerirTodos, 900); });
+});
