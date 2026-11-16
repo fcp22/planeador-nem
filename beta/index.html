@@ -1092,6 +1092,27 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
 <script src="generators.js"></script>
 <script src="metodologias.js"></script>
 <script src="ruta-ui.js"></script>
+<script>
+// Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
+// (la pantalla de acceso conserva su autocompletar para correo y contraseña).
+(function () {
+  function sinAutocompletar(raiz) {
+    try {
+      raiz.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=hidden]), textarea').forEach(function (e) {
+        if (e.closest('#pantalla-login') || e.hasAttribute('autocomplete')) return;
+        e.setAttribute('autocomplete', 'off');
+        e.setAttribute('data-lpignore', 'true');
+      });
+    } catch (_e) {}
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    sinAutocompletar(document);
+    new MutationObserver(function (muts) {
+      muts.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) { if (n.matches && n.matches('input,textarea')) sinAutocompletar(n.parentNode || document); else sinAutocompletar(n); } }); });
+    }).observe(document.body, { childList: true, subtree: true });
+  });
+})();
+</script>
 <script src="gestion.js"></script>
 <script src="rezago.js"></script>
 <script>
