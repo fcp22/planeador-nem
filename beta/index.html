@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="robots" content="noindex,nofollow">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Planeador Docente NEM — Fase 6 Secundaria</title>
@@ -780,6 +779,11 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
             <div class="campo"><label>Productos / evidencias (T1)</label><input type="text" id="a-pr1" placeholder="Ej. Cartel, ensayo, presentación..."></div>
             <div id="a-extras1"></div>
             <div style="margin:6px 0 4px;"><button class="btn-sec" type="button" style="padding:7px 14px;font-size:12.5px;" onclick="aAgregarActividad(1)">➕ Agregar otro proyecto o secuencia didáctica de este trimestre</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Ej.: un proyecto y dos secuencias didácticas. El Programa Analítico los enlista de forma general.</span></div>
+            <div style="margin:4px 0 10px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12.5px;">
+              <b>Cuando termines este trimestre, pasa al Plano Didáctico</b> con todo ya cargado (contenidos, ejes, perfil, nombre, propósito y producto):<br>
+              <button class="btn-sec" type="button" style="margin-top:6px;padding:7px 14px;font-size:12.5px;" onclick="secDesdeAnalitico(1,'secuencia')">📝 Planear las secuencias didácticas del trimestre 1</button>
+              <button class="btn-sec" type="button" style="margin-top:6px;padding:7px 14px;font-size:12.5px;" onclick="secDesdeAnalitico(1,'proyecto')">📋 Planear el proyecto del trimestre 1</button>
+            </div>
           </div>
           <hr class="sep">
           <div id="apt2" class="hidden">
@@ -794,6 +798,11 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
             <div class="campo"><label>Productos / evidencias (T2)</label><input type="text" id="a-pr2" placeholder="Ej. Maqueta, reportaje, dramatización..."></div>
             <div id="a-extras2"></div>
             <div style="margin:6px 0 4px;"><button class="btn-sec" type="button" style="padding:7px 14px;font-size:12.5px;" onclick="aAgregarActividad(2)">➕ Agregar otro proyecto o secuencia didáctica de este trimestre</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Ej.: un proyecto y dos secuencias didácticas. El Programa Analítico los enlista de forma general.</span></div>
+            <div style="margin:4px 0 10px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12.5px;">
+              <b>Cuando termines este trimestre, pasa al Plano Didáctico</b> con todo ya cargado (contenidos, ejes, perfil, nombre, propósito y producto):<br>
+              <button class="btn-sec" type="button" style="margin-top:6px;padding:7px 14px;font-size:12.5px;" onclick="secDesdeAnalitico(2,'secuencia')">📝 Planear las secuencias didácticas del trimestre 2</button>
+              <button class="btn-sec" type="button" style="margin-top:6px;padding:7px 14px;font-size:12.5px;" onclick="secDesdeAnalitico(2,'proyecto')">📋 Planear el proyecto del trimestre 2</button>
+            </div>
           </div>
           <hr class="sep">
           <div id="apt3" class="hidden">
@@ -808,6 +817,11 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
             <div class="campo"><label>Productos / evidencias (T3)</label><input type="text" id="a-pr3" placeholder="Ej. Podcast, documental, historieta..."></div>
             <div id="a-extras3"></div>
             <div style="margin:6px 0 4px;"><button class="btn-sec" type="button" style="padding:7px 14px;font-size:12.5px;" onclick="aAgregarActividad(3)">➕ Agregar otro proyecto o secuencia didáctica de este trimestre</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Ej.: un proyecto y dos secuencias didácticas. El Programa Analítico los enlista de forma general.</span></div>
+            <div style="margin:4px 0 10px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12.5px;">
+              <b>Cuando termines este trimestre, pasa al Plano Didáctico</b> con todo ya cargado (contenidos, ejes, perfil, nombre, propósito y producto):<br>
+              <button class="btn-sec" type="button" style="margin-top:6px;padding:7px 14px;font-size:12.5px;" onclick="secDesdeAnalitico(3,'secuencia')">📝 Planear las secuencias didácticas del trimestre 3</button>
+              <button class="btn-sec" type="button" style="margin-top:6px;padding:7px 14px;font-size:12.5px;" onclick="secDesdeAnalitico(3,'proyecto')">📋 Planear el proyecto del trimestre 3</button>
+            </div>
           </div>
         </div>
 
@@ -967,18 +981,7 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
           </div>
 
           <!-- SOLO SECUENCIA DIDÁCTICA -->
-          <div id="campos-secuencia" class="hidden">
-            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#1e40af;">
-              <strong>Modo Secuencia Didáctica:</strong> La IA diseñará todas las sesiones del trimestre con Inicio, Desarrollo y Cierre, incluyendo tiempos, actividades, materiales y rúbrica de evaluación. Solo necesitas indicar el propósito y elegir los contenidos arriba.
-            </div>
-            <div class="campo"><label>Situación o contexto de aprendizaje (opcional)</label>
-              <textarea id="d-situacion" rows="3" placeholder="Ej: Los alumnos han mostrado dificultades en comprensión lectora. Esta secuencia busca desarrollar estrategias de lectura activa a partir de textos del entorno comunitario..."></textarea>
-              <div class="ayuda">Puedes describir el contexto o dejar que la IA lo plantee a partir de los contenidos</div>
-            </div>
-            <div class="campo"><label>Evidencia o producto esperado al final de la secuencia</label>
-              <input type="text" id="d-prod-sec" placeholder="Ej. Antología de textos, Mapa conceptual, Exposición oral, Texto argumentativo...">
-            </div>
-          </div>
+          <div id="campos-secuencia" class="hidden"><div id="s-form"></div></div>
         </div>
 
         <!-- RUTA METODOLÓGICA SOCIOCRÍTICA (solo modalidad Proyecto) -->
@@ -1095,15 +1098,16 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   </div><!-- /layout -->
 </div><!-- /app -->
 
-<script src="firebase-config.js?v=202611161520"></script>
-<script src="correos-temporales.js?v=202611161520"></script>
-<script src="auth.js?v=202611161520"></script>
-<script src="licencia.js?v=202611161520"></script>
-<script src="curriculum.js?v=202611161520"></script>
-<script src="projects.js?v=202611161520"></script>
-<script src="generators.js?v=202611161520"></script>
-<script src="metodologias.js?v=202611161520"></script>
-<script src="ruta-ui.js?v=202611161520"></script>
+<script src="firebase-config.js?v=202611161650"></script>
+<script src="correos-temporales.js?v=202611161650"></script>
+<script src="auth.js?v=202611161650"></script>
+<script src="licencia.js?v=202611161650"></script>
+<script src="curriculum.js?v=202611161650"></script>
+<script src="projects.js?v=202611161650"></script>
+<script src="generators.js?v=202611161650"></script>
+<script src="metodologias.js?v=202611161650"></script>
+<script src="ruta-ui.js?v=202611161650"></script>
+<script src="secuencias.js?v=202611161650"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
 // (la pantalla de acceso conserva su autocompletar para correo y contraseña).
@@ -1125,8 +1129,8 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611161520"></script>
-<script src="rezago.js?v=202611161520"></script>
+<script src="gestion.js?v=202611161650"></script>
+<script src="rezago.js?v=202611161650"></script>
 <script>
 // ── ESTADO ──────────────────────────────────────────────
 let tipoActivo='a', semAct=1, semsGen=new Set();
@@ -1634,7 +1638,7 @@ async function genDidactico(){
   document.getElementById('bgd').disabled=true;
   document.getElementById('gen-d').style.display='block';
   document.getElementById('res-d').style.display='none';
-  const tgen=document.getElementById('d-tgen').value;
+  const tgen=(modalidadD==='secuencia')?'trimestre':document.getElementById('d-tgen').value;
   const d={
     docente:doc,grado:g,campo:cam,disciplina:dis,
     escuela:document.getElementById('d-esc').value,
@@ -1674,7 +1678,7 @@ async function genDidactico(){
       semsGen.add(semAct);
     }else{
       if(modalidadD==='secuencia'){
-        document.getElementById('gen-d-msg').innerHTML=`Generando Secuencia Didáctica...<br><small>Diseñando sesiones con Inicio/Desarrollo/Cierre...</small>`;
+        document.getElementById('gen-d-msg').innerHTML=`Generando secuencias didácticas...<br><small>Inicio, desarrollo y cierre con sus tiempos</small>`;
       } else {
         document.getElementById('gen-d-msg').innerHTML=`Generando Plano Didáctico...<br><small>40-90 segundos</small>`;
       }
