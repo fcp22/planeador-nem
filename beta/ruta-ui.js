@@ -240,7 +240,11 @@ async function rutaGenerarPlano(d) {
     try {
       const r = await rutaPedirComplementos(d, false);
       rutaActual.comp = Object.assign({}, rutaActual.comp, r.comp);
-    } catch (e) { console.warn('No se pudieron generar finalidades con IA:', e); }
+    } catch (e) {
+      console.warn('No se pudieron generar finalidades con IA:', e);
+      // No se oculta: el Plano sale con textos de plantilla y el docente debe saberlo para revisarlos o volver a generar
+      alert('Aviso: la IA no respondió (' + (e && e.message ? e.message : 'error') + '). El Plano se generó con los textos de plantilla en «Finalidades» y «Propósito específico». Revísalos, o vuelve a generar en un momento.');
+    }
   }
   return construirHTMLPlanoRuta(d, rutaActual, rutaActual.comp || {});
 }

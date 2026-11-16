@@ -39,7 +39,8 @@ function licMensajeIA(e) {
 // Pide texto a la IA. json=true pide formato JSON.
 async function llamarIA(prompt, { json = false } = {}) {
   let ultimo;
-  for (let intento = 0; intento < 3; intento++) {
+  // El servidor ya reintenta y cambia de modelo por su cuenta; aquí solo se da una segunda oportunidad a fallos de red o de saturación.
+  for (let intento = 0; intento < 2; intento++) {
     try {
       const data = await workerFetch('/v1/generar', { metodo: 'POST', body: { prompt, json } });
       if (data.cuota) { LIC.estado = Object.assign(LIC.estado || {}, { limite: data.cuota.limite, usadas: data.cuota.usadas, restantes: data.cuota.restantes, activa: true }); licPintarChip(); }
@@ -48,7 +49,7 @@ async function llamarIA(prompt, { json = false } = {}) {
       return texto;
     } catch (e) {
       ultimo = e;
-      if (e.reintentar && intento < 2) { await esperar(2500 * (intento + 1)); continue; }   // solo se reintenta lo que no es de licencia/cuota
+      if (e.reintentar && intento < 1) { await esperar(3000); continue; }   // solo se reintenta lo que no es de licencia/cuota
       break;
     }
   }
@@ -127,6 +128,11 @@ function licAdminRender() {
     <button class="g-btn" onclick="licAdminGenerar()">Generar códigos</button>
     <div id="la-salida" style="margin-top:14px"></div></div>
   <div class="card"><div class="card-title">📋 Códigos y uso</div><button class="g-btn g-btn-s" onclick="licAdminListar()">Actualizar lista</button><div id="la-lista" style="margin-top:12px"></div></div>
+  <div class="card"><div class="card-title">🩺 Probar la IA</div>
+    <div class="ayuda" style="font-size:12px;color:var(--gris);margin-bottom:10px">Hace una generación real de prueba (no descuenta documentos a nadie) y te dice si la llave, el saldo y el modelo funcionan. Úsala antes de vender y cuando alguien reporte un error.</div>
+    <div class="campo" style="max-width:340px"><label>Modelo (opcional, para probar uno en particular)</label><input id="la-modelo" placeholder="Vacío = el configurado en el servidor"></div>
+    <button class="g-btn" id="la-prb" onclick="licAdminProbar()">Probar ahora</button>
+    <div id="la-prb-out" style="margin-top:12px"></div></div>
   <div class="card"><div class="card-title">🚫 Bloquear un dominio de correo</div>
     <div class="campo" style="max-width:340px"><label>Dominio</label><input id="la-dom" placeholder="ejemplo-temporal.com"></div>
     <button class="g-btn g-btn-s" onclick="licAdminBloquear(false)">Bloquear</button> <button class="g-btn g-btn-s" onclick="licAdminBloquear(true)">Quitar bloqueo</button>
@@ -161,6 +167,22 @@ async function licAdminAccion(accion, codigo) {
   if (accion === 'revocar') { if (!confirm('¿Revocar ' + codigo + '? La persona perderá el acceso a la IA.')) return; }
   else { const c = prompt('Nueva cuota mensual de documentos (deja vacío para no cambiarla):', ''); const m = prompt('Meses a sumar a la vigencia (0 para no cambiarla):', '0'); if (c) body.cuota = +c; if (+m) body.mesesMas = +m; }
   try { await workerFetch('/admin/' + accion, { metodo: 'POST', body, admin: k }); licAdminListar(); } catch (e) { licAdminErr(e.message); }
+}
+async function licAdminProbar() {
+  licAdminErr(''); const k = licAdminClave(); if (!k) return licAdminErr('Escribe la clave de administrador.');
+  const b = document.getElementById('la-prb'), o = document.getElementById('la-prb-out'); b.disabled = true; b.textContent = 'Probando… (puede tardar hasta un minuto)'; o.innerHTML = '';
+  try {
+    const r = await workerFetch('/admin/probar', { metodo: 'POST', body: { modelo: document.getElementById('la-modelo').value.trim() }, admin: k });
+    const fila = (t, v) => `<tr><td style="padding:3px 10px 3px 0;color:var(--gris)">${t}</td><td>${v}</td></tr>`;
+    const inten = (r.intentos || []).map(i => `<li><code>${gEsc(i.modelo)}</code> → ${gEsc(String(i.estado))} · ${gEsc(i.detalle || '')}</li>`).join('');
+    const u = r.uso ? `${r.uso.input_tokens || '?'} entrada / ${r.uso.output_tokens || '?'} salida` : '—';
+    const ult = r.ultimoProblema ? `<div style="font-size:12px;margin-top:10px;color:var(--gris)"><b>Último problema registrado${r.ultimoProblema.recuperado ? ' (se recuperó solo)' : ''}:</b> ${gEsc(r.ultimoProblema.hora ? new Date(r.ultimoProblema.hora).toLocaleString('es-MX') : '')}<ul style="margin:4px 0 0 18px">${(r.ultimoProblema.bitacora || []).map(i => `<li><code>${gEsc(i.modelo)}</code> → ${gEsc(String(i.estado))} · ${gEsc(i.detalle || '')}</li>`).join('')}</ul></div>` : '';
+    o.innerHTML = `<div class="g-aviso" style="${r.ok ? '' : 'background:#fef2f2;border-color:#fecaca;color:#991b1b'}"><b>${r.ok ? '✓ La IA funciona' : '✗ La IA NO está funcionando'}</b>${r.ok && r.respaldo ? ' — <b>pero usó el modelo de respaldo</b>: revisa por qué falló el principal.' : ''}${!r.ok ? '<br>' + gEsc(r.mensaje || '') : ''}</div>
+      <table style="font-size:13px;margin-top:8px">${fila('Servicio', gEsc(r.config.proveedor))}${fila('Modelos (principal → respaldo)', r.config.modelos.map(gEsc).join(' → '))}${r.ok ? fila('Respondió', '<code>' + gEsc(r.modelo) + '</code> en ' + (r.ms / 1000).toFixed(1) + ' s') : ''}${fila('Tokens', u)}${fila('Tope de respuesta', r.config.maxTokens + ' tokens')}</table>
+      ${inten ? `<div style="font-size:12px;margin-top:8px"><b>Intentos fallidos en esta prueba:</b><ul style="margin:4px 0 0 18px">${inten}</ul></div>` : ''}${ult}
+      ${r.ok && r.muestra ? `<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px">Ver la respuesta de prueba</summary><pre style="white-space:pre-wrap;font-size:11px">${gEsc(r.muestra)}</pre></details>` : ''}`;
+  } catch (e) { licAdminErr(e.message); }
+  b.disabled = false; b.textContent = 'Probar ahora';
 }
 async function licAdminBloquear(quitar) {
   const k = licAdminClave(); const d = document.getElementById('la-dom').value; const ok = document.getElementById('la-dom-ok'); ok.style.display = 'none'; licAdminErr('');
