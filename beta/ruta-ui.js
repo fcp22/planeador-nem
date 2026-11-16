@@ -435,7 +435,7 @@ function sugPoner(id, valor) {
   if (e.value.trim() && e.dataset.sug !== '1') return false;
   e.value = valor; sugMarcar(id, true); return true;
 }
-document.addEventListener('input', ev => { if (ev.target && SUG_IDS.includes(ev.target.id)) sugMarcar(ev.target.id, false); });
+document.addEventListener('input', ev => { if (ev.target && (SUG_IDS.includes(ev.target.id) || /^a-x\d-\d+-[nrp]$/.test(ev.target.id))) sugMarcar(ev.target.id, false); });
 
 // Modalidad (texto del menú) → metodología y escenario
 function modalidadAMetodologia(txt) {
@@ -483,24 +483,77 @@ function listaSugerida(met, prob, esc) {
   return base.concat(extra).slice(0, 8);
 }
 
-// Programa Analítico: sugiere nombre y producto de cada trimestre según la problemática y la modalidad
+// Programa Analítico: sugiere nombre, producto y propósito de cada proyecto o secuencia de un trimestre.
+// Es un panorama GENERAL del año: cada trimestre puede mezclar proyectos y secuencias didácticas.
 const aSugIdx = { 1: 0, 2: 1, 3: 2 };
 let aSugTimer = null;
-function aSugerirProyecto(t, otro) {
+const A_MODALIDADES = ['Aprendizaje en proyectos comunitarios', 'Proyecto de aula', 'Proyecto escolar', 'Secuencia didáctica', 'Aprendizaje Basado en Problemas (ABP)', 'Aprendizaje basado en indagación (enfoque STEAM)', 'Aprendizaje servicio'];
+const aEsSecuencia = txt => /secuencia/i.test(String(txt || ''));
+
+// o = { t: trimestre, key: clave del contador, mod/n/r/p: ids de los campos, otro: ¿lo pidió el botón? }
+function aSugerirActividad(o) {
   const prob = rVal('ctx-7').trim();
-  if (prob.length < 5) { if (otro) alert('Primero escribe la problemática detectada (apartado 7 del contexto), para sugerirte un proyecto que se relacione con ella.'); return; }
-  if (otro) aSugIdx[t] = (aSugIdx[t] || 0) + 1;
-  const m = modalidadAMetodologia(rVal('a-pm' + t));
-  const lista = listaSugerida(m.met, prob, m.esc);
-  if (!lista.length) return;
-  const s = lista[(aSugIdx[t] || 0) % lista.length];
-  const idN = 'a-pn' + t, idP = 'a-pr' + t;
-  if (otro) {   // el botón es una petición explícita: reemplaza lo sugerido; si el docente ya escribió algo propio, pregunta
-    const e = rEl(idN), propio = e && e.value.trim() && e.dataset.sug !== '1';
-    if (propio && !confirm('Ya escribiste un nombre de proyecto. ¿Quieres reemplazarlo por esta sugerencia?')) return;
-    [[idN, s.nombre], [idP, s.producto]].forEach(([id, v]) => { const x = rEl(id); if (x) { x.value = v; sugMarcar(id, true); } });
-    sugPoner('a-pp' + t, propositoSugerido(m.met, s.nombre, s.producto, prob));   // no pisa un propósito escrito por el docente
-  } else { sugPoner(idN, s.nombre); sugPoner(idP, s.producto); sugPoner('a-pp' + t, propositoSugerido(m.met, s.nombre, s.producto, prob)); }
+  let nombre, producto, proposito;
+  if (aEsSecuencia(rVal(o.mod))) {
+    // Una secuencia didáctica se basa en un contenido concreto del trimestre, no en la problemática
+    const cont = (typeof cA !== 'undefined' && cA['t' + o.t]) || [];
+    if (!cont.length) { if (o.otro) alert('Para sugerirte la secuencia, primero elige los contenidos de este trimestre (arriba, en «Contenidos»).'); return; }
+    if (o.otro) aSugIdx[o.key] = (aSugIdx[o.key] || 0) + 1;
+    const c = cont[(aSugIdx[o.key] || 0) % cont.length];
+    const tit = String(c.titulo || '').trim().replace(/[.\s]+$/, '');
+    nombre = ('Secuencia didáctica: ' + tit).slice(0, 110);
+    producto = 'Texto, esquema o presentación que muestre lo aprendido sobre ' + minuscula1(tit);
+    proposito = 'Que las y los estudiantes desarrollen el aprendizaje del contenido «' + tit + '» mediante una secuencia de actividades de inicio, desarrollo y cierre, y muestren lo aprendido en: ' + minuscula1(producto) + '.';
+  } else {
+    if (prob.length < 5) { if (o.otro) alert('Primero escribe la problemática detectada (apartado 7 del contexto), para sugerirte un proyecto que se relacione con ella.'); return; }
+    if (o.otro) aSugIdx[o.key] = (aSugIdx[o.key] || 0) + 1;
+    const m = modalidadAMetodologia(rVal(o.mod));
+    const lista = listaSugerida(m.met, prob, m.esc);
+    if (!lista.length) return;
+    const s = lista[(aSugIdx[o.key] || 0) % lista.length];
+    nombre = s.nombre; producto = s.producto; proposito = propositoSugerido(m.met, s.nombre, s.producto, prob);
+  }
+  if (o.otro) {   // el botón es una petición explícita: reemplaza lo sugerido; si el docente ya escribió algo propio, pregunta
+    const e = rEl(o.n), propio = e && e.value.trim() && e.dataset.sug !== '1';
+    if (propio && !confirm('Ya escribiste un nombre. ¿Quieres reemplazarlo por esta sugerencia?')) return;
+    [[o.n, nombre], [o.r, producto]].forEach(([id, v]) => { const x = rEl(id); if (x) { x.value = v; sugMarcar(id, true); } });
+    sugPoner(o.p, proposito);   // no pisa un propósito escrito por el docente
+  } else { sugPoner(o.n, nombre); sugPoner(o.r, producto); sugPoner(o.p, proposito); }
+}
+function aSugerirProyecto(t, otro) { aSugerirActividad({ t, key: t, mod: 'a-pm' + t, n: 'a-pn' + t, r: 'a-pr' + t, p: 'a-pp' + t, otro }); }
+function aSugerirExtra(t, k, otro) { const id = `a-x${t}-${k}`; aSugerirActividad({ t, key: id, mod: id + '-m', n: id + '-n', r: id + '-r', p: id + '-p', otro }); }
+
+// ── Varios proyectos / secuencias por trimestre ──
+let aExtraN = 0;
+function aRenumerar(t) { document.querySelectorAll('#a-extras' + t + ' .a-extra .a-extra-tit').forEach((e, i) => { e.textContent = 'Proyecto o secuencia ' + (i + 2); }); }
+function aAgregarActividad(t) {
+  const cont = rEl('a-extras' + t); if (!cont) return;
+  const k = ++aExtraN, id = `a-x${t}-${k}`;
+  // Lo más común es combinar: si la primera es un proyecto, la siguiente se propone como secuencia (y viceversa)
+  const mod = aEsSecuencia(rVal('a-pm' + t)) ? 'Proyecto de aula' : 'Secuencia didáctica';
+  const div = document.createElement('div');
+  div.className = 'a-extra'; div.id = id; div.dataset.k = k;
+  div.style.cssText = 'border:1.5px dashed var(--borde);border-radius:12px;padding:12px 14px;margin:12px 0;background:#fcfdff;';
+  div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><b class="a-extra-tit" style="font-size:13px;">Proyecto o secuencia</b><button type="button" class="btn-sec" style="padding:4px 10px;font-size:12px;" onclick="aQuitarActividad(${t},${k})">✕ Quitar</button></div>
+    <div class="f3">
+      <div class="campo"><label>Nombre del proyecto o de la secuencia</label><input type="text" id="${id}-n" placeholder="Escribe o usa «Sugerir»"></div>
+      <div class="campo"><label>Modalidad</label><select id="${id}-m" onchange="aSugerirExtra(${t},${k})">${A_MODALIDADES.map(m => `<option${m === mod ? ' selected' : ''}>${m}</option>`).join('')}</select></div>
+      <div class="campo"><label>Duración aproximada (opcional)</label><input type="text" id="${id}-d" placeholder="Ej. 2 semanas · 6 sesiones"></div>
+    </div>
+    <div class="campo"><label>Propósito</label><textarea id="${id}-p" rows="2" placeholder="Se sugiere uno; puedes escribir el tuyo..."></textarea></div>
+    <div style="margin:2px 0 10px;"><button class="btn-sec" type="button" style="padding:6px 12px;font-size:12px;" onclick="aSugerirExtra(${t},${k},true)">💡 Sugerir otro nombre y producto</button></div>
+    <div class="campo"><label>Productos / evidencias</label><input type="text" id="${id}-r" placeholder="Ej. Cartel, ensayo, presentación..."></div>`;
+  cont.appendChild(div); aRenumerar(t);
+  aSugIdx[id] = cont.querySelectorAll('.a-extra').length + t;   // cada una arranca con una sugerencia distinta
+  aSugerirExtra(t, k, false);
+}
+function aQuitarActividad(t, k) { const e = rEl(`a-x${t}-${k}`); if (e) e.remove(); aRenumerar(t); }
+// Lista completa de proyectos/secuencias de un trimestre (la primera es la de siempre)
+function aActividades(t) {
+  const v = id => { const e = rEl(id); return e ? String(e.value || '').trim() : ''; };
+  const lista = [{ modalidad: v('a-pm' + t), nombre: v('a-pn' + t), duracion: v('a-pd' + t), proposito: v('a-pp' + t), productos: v('a-pr' + t) }];
+  document.querySelectorAll('#a-extras' + t + ' .a-extra').forEach(d => lista.push({ modalidad: v(d.id + '-m'), nombre: v(d.id + '-n'), duracion: v(d.id + '-d'), proposito: v(d.id + '-p'), productos: v(d.id + '-r') }));
+  return lista.filter((x, i) => i === 0 || x.nombre || x.proposito || x.productos);
 }
 function aSugerirTodos() { [1, 2, 3].forEach(t => aSugerirProyecto(t)); }
 document.addEventListener('DOMContentLoaded', () => {

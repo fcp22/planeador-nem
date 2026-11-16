@@ -29,6 +29,19 @@ function parsearJSON(texto) {
 // Recibe datos del docente + JSON generado por IA
 // Arma las tablas sin depender de la IA para el HTML
 // ============================================================
+// Proyectos y secuencias didácticas de un trimestre. El Programa Analítico es un panorama general del año:
+// cada trimestre puede combinar varios (p. ej. un proyecto y dos secuencias). Compatible con documentos guardados
+// antes de que existiera la lista (solo traían una modalidad, un nombre y un propósito).
+function actividadesDe(tData) {
+  tData = tData || {};
+  if (Array.isArray(tData.actividades) && tData.actividades.length) return tData.actividades;
+  return [{ modalidad: tData.modalidad, nombre: tData.nombreProyecto, duracion: '', proposito: tData.proposito, productos: tData.productos }];
+}
+const esSecuenciaAct = a => /secuencia/i.test((a && a.modalidad) || '');
+function modalidadesDelAnio(d) {
+  return [...new Set([d.t1, d.t2, d.t3].flatMap(t => actividadesDe(t).map(a => a && a.modalidad)).filter(Boolean))];
+}
+
 function construirHTMLAnalitico(d, ia) {
   const C = '#BDD7EE';
   const th = (txt, w) => `<td style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${C};${w?'width:'+w+';':''}vertical-align:top;">${txt}</td>`;
@@ -97,7 +110,7 @@ function construirHTMLAnalitico(d, ia) {
     const tData = d[tKey] || {};
     const headerCells = discs.map(disc => th(disc, anchoDisc)).join('');
     const dataCells = discs.map(disc => {
-      if(disc === d.disciplina) return td(tData.productos||'&nbsp;', anchoDisc);
+      if(disc === d.disciplina) { const ps = actividadesDe(tData).map(a => a && a.productos).filter(Boolean); return td(ps.length > 1 ? ps.map(x => '• ' + x).join('<br>') : (ps[0] || '&nbsp;'), anchoDisc); }
       const iaProd = (ia['productos_'+disc.toLowerCase().replace(/[^a-z]/g,'')+'_t'+tNum])||'';
       return td(iaProd || '&nbsp;', anchoDisc);
     }).join('');
@@ -122,6 +135,37 @@ function construirHTMLAnalitico(d, ia) {
     );
   };
 
+  // ── MODALIDAD(ES) DIDÁCTICA(S) DEL TRIMESTRE ──────────
+  // Una sola: formato de siempre. Varias: lista general (modalidad, nombre, duración y propósito de cada una).
+  const bloqueModalidad = (tData, iaT) => {
+    const acts = actividadesDe(tData);
+    const hayProyecto = acts.some(a => !esSecuenciaAct(a));
+    const prob = `<strong>Problematización de la realidad:</strong><br>${iaT.problematizacion||''}`;
+    if (acts.length === 1) {
+      const a = acts[0] || {}, sec = esSecuenciaAct(a);
+      return tabla(
+        tr(th(`Modalidad didáctica: ${a.modalidad||'Proyectos comunitarios'}`)) +
+        (sec ? '' : tr(td(`<strong>Tipo de proyecto:</strong> ${iaT.tipo||'ABP'}`))) +
+        tr(td(`<strong>${sec ? 'Nombre de la secuencia didáctica' : 'Nombre del proyecto'}:</strong> ${a.nombre||''}`)) +
+        (a.duracion ? tr(td(`<strong>Duración aproximada:</strong> ${a.duracion}`)) : '') +
+        tr(td(prob)) +
+        tr(td(`<strong>${sec ? 'Propósito' : 'Propósitos del proyecto'}:</strong><br>${a.proposito||''}`))
+      );
+    }
+    const nSec = acts.filter(esSecuenciaAct).length, nPro = acts.length - nSec;
+    const resumen = [nPro ? `${nPro} proyecto${nPro > 1 ? 's' : ''}` : '', nSec ? `${nSec} secuencia${nSec > 1 ? 's' : ''} didáctica${nSec > 1 ? 's' : ''}` : ''].filter(Boolean).join(' y ');
+    const cel = (txt, w, extra) => `<td style="border:1px solid #000;padding:5px 8px;vertical-align:top;width:${w};${extra||''}">${txt||'&nbsp;'}</td>`;
+    const ths = (txt, w) => `<td style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${C};vertical-align:top;width:${w};">${txt}</td>`;
+    const ancho = ['22%', '26%', '12%', '40%'];
+    return tabla(
+      `<tr><td colspan="4" style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${C};">Modalidades didácticas del trimestre: ${resumen}</td></tr>` +
+      tr(ths('Modalidad', ancho[0]), ths('Nombre del proyecto o de la secuencia', ancho[1]), ths('Duración aproximada', ancho[2]), ths('Propósito', ancho[3])) +
+      acts.map(a => tr(cel(a.modalidad || 'Proyectos comunitarios', ancho[0]), cel(a.nombre, ancho[1]), cel(a.duracion, ancho[2]), cel(a.proposito, ancho[3]))).join('') +
+      (hayProyecto ? `<tr><td colspan="4" style="border:1px solid #000;padding:5px 8px;"><strong>Tipo de proyecto:</strong> ${iaT.tipo||'ABP'}</td></tr>` : '') +
+      `<tr><td colspan="4" style="border:1px solid #000;padding:5px 8px;">${prob}</td></tr>`
+    );
+  };
+
   // ── BLOQUE TRIMESTRE COMPLETO ─────────────────────────
   const bloqueTrimestre = (tNum) => {
     const nomTrim = ['Primer trimestre','Segundo trimestre','Tercer trimestre'][tNum-1];
@@ -134,13 +178,7 @@ function construirHTMLAnalitico(d, ia) {
     return `
 <p style="font-weight:bold;">${nomTrim.toUpperCase()}</p>
 ${tablaSesiones(tNum)}
-${tabla(
-  tr(th(`Modalidad didáctica: ${tData.modalidad||'Proyectos comunitarios'}`)) +
-  tr(td(`<strong>Tipo de proyecto:</strong> ${iaT.tipo||'ABP'}`)) +
-  tr(td(`<strong>Nombre del proyecto:</strong> ${tData.nombreProyecto||''}`)) +
-  tr(td(`<strong>Problematización de la realidad:</strong><br>${iaT.problematizacion||''}`)) +
-  tr(td(`<strong>Propósitos del proyecto:</strong><br>${tData.proposito||''}`))
-)}
+${bloqueModalidad(tData, iaT)}
 ${tablaContenidos(tNum)}
 <p style="font-weight:bold;">ELEMENTOS QUE SE DESARROLLAN CON EL CONTENIDO ABORDADO:</p>
 <p style="font-weight:bold;">PERFIL DE EGRESO:</p>
@@ -164,7 +202,7 @@ ${tabla(
   tr(th('Asignatura/Disciplina:'), td(`<strong>${discs.join(', ')}</strong>`)) +
   tr(th('Grado:'), td(`<strong>${d.grado}°</strong>`)) +
   tr(th('Problemática/Situación de aprendizaje:'), td(ia.situacion||d.problematica||'')) +
-  tr(th('Metodología:'), td([...new Set([d.t1, d.t2, d.t3].map(t => t && t.modalidad).filter(Boolean))].join(' · ') || 'Proyectos comunitarios')) +
+  tr(th('Metodología:'), td(modalidadesDelAnio(d).join(' · ') || 'Proyectos comunitarios')) +
   tr(th('Curso escolar:'), td(d.cicloEscolar||'2026-2027'))
 )}
 
@@ -199,15 +237,17 @@ ${tablaInstrumento()}
 // ============================================================
 function buildPromptAnalitico(d) {
   const resumir = (arr) => arr.map(c=>c.titulo).join(' | ');
+  // Si el trimestre combina proyectos y secuencias, la IA lo sabe para redactar una problematización que sirva a todos
+  const modsTxt = t => { const a = actividadesDe(t).filter(x => x && (x.nombre || x.modalidad)); return a.length > 1 ? `\n   (modalidades del trimestre: ${a.map(x => (x.modalidad||'') + (x.nombre ? ': ' + x.nombre : '')).join(' / ')})` : ''; };
   const discs = d.disciplinasDelCampo || [d.disciplina];
   return `Eres experto en currículum NEM México. Genera contenido pedagógico para un Programa Analítico.
 Responde SOLO con JSON válido, sin markdown ni texto extra.
 Lenguaje: español formal, humanista, Plan 2022 NEM.
 
 Campo: ${d.campo} | Disciplina: ${d.disciplina} | Grado: ${d.grado}°
-T1: ${resumir(d.t1?.contenidos||[])}
-T2: ${resumir(d.t2?.contenidos||[])}
-T3: ${resumir(d.t3?.contenidos||[])}
+T1: ${resumir(d.t1?.contenidos||[])}${modsTxt(d.t1)}
+T2: ${resumir(d.t2?.contenidos||[])}${modsTxt(d.t2)}
+T3: ${resumir(d.t3?.contenidos||[])}${modsTxt(d.t3)}
 
 JSON requerido:
 {

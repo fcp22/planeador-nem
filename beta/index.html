@@ -770,35 +770,44 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
 
           <div id="apt1">
             <div class="proy-lista" id="ps-a-t1"></div>
-            <div class="f2 mt12">
-              <div class="campo"><label>Nombre del proyecto (T1)</label><input type="text" id="a-pn1" placeholder="Escribe o elige arriba"></div>
+            <div class="f3 mt12">
+              <div class="campo"><label>Nombre del proyecto o de la secuencia (T1)</label><input type="text" id="a-pn1" placeholder="Escribe o elige arriba"></div>
               <div class="campo"><label>Modalidad (T1)</label><select id="a-pm1" onchange="aSugerirProyecto(1)"><option>Aprendizaje en proyectos comunitarios</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>Aprendizaje Basado en Problemas (ABP)</option><option>Aprendizaje basado en indagación (enfoque STEAM)</option><option>Aprendizaje servicio</option></select></div>
+              <div class="campo"><label>Duración aproximada (opcional)</label><input type="text" id="a-pd1" placeholder="Ej. 5 semanas · 15 sesiones"></div>
             </div>
-            <div class="campo"><label>Propósito del proyecto (T1)</label><textarea id="a-pp1" rows="3" placeholder="Propósito del primer trimestre (se sugiere uno al elegir el proyecto; puedes escribir el tuyo)..."></textarea></div>
+            <div class="campo"><label>Propósito (T1)</label><textarea id="a-pp1" rows="3" placeholder="Propósito del primer trimestre (se sugiere uno al elegir el proyecto; puedes escribir el tuyo)..."></textarea></div>
             <div style="margin:2px 0 10px;"><button class="btn-sec" type="button" style="padding:6px 12px;font-size:12px;" onclick="aSugerirProyecto(1,true)">💡 Sugerir otro nombre y producto</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Se basan en la problemática y la modalidad que elegiste; puedes cambiarlos.</span></div>
             <div class="campo"><label>Productos / evidencias (T1)</label><input type="text" id="a-pr1" placeholder="Ej. Cartel, ensayo, presentación..."></div>
+            <div id="a-extras1"></div>
+            <div style="margin:6px 0 4px;"><button class="btn-sec" type="button" style="padding:7px 14px;font-size:12.5px;" onclick="aAgregarActividad(1)">➕ Agregar otro proyecto o secuencia didáctica de este trimestre</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Ej.: un proyecto y dos secuencias didácticas. El Programa Analítico los enlista de forma general.</span></div>
           </div>
           <hr class="sep">
           <div id="apt2" class="hidden">
             <div class="proy-lista" id="ps-a-t2"></div>
-            <div class="f2 mt12">
-              <div class="campo"><label>Nombre del proyecto (T2)</label><input type="text" id="a-pn2" placeholder="Escribe o elige arriba"></div>
+            <div class="f3 mt12">
+              <div class="campo"><label>Nombre del proyecto o de la secuencia (T2)</label><input type="text" id="a-pn2" placeholder="Escribe o elige arriba"></div>
               <div class="campo"><label>Modalidad (T2)</label><select id="a-pm2" onchange="aSugerirProyecto(2)"><option>Aprendizaje en proyectos comunitarios</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>Aprendizaje Basado en Problemas (ABP)</option><option>Aprendizaje basado en indagación (enfoque STEAM)</option><option>Aprendizaje servicio</option></select></div>
+              <div class="campo"><label>Duración aproximada (opcional)</label><input type="text" id="a-pd2" placeholder="Ej. 5 semanas · 15 sesiones"></div>
             </div>
-            <div class="campo"><label>Propósito del proyecto (T2)</label><textarea id="a-pp2" rows="3" placeholder="Propósito del segundo trimestre (se sugiere uno al elegir el proyecto; puedes escribir el tuyo)..."></textarea></div>
+            <div class="campo"><label>Propósito (T2)</label><textarea id="a-pp2" rows="3" placeholder="Propósito del segundo trimestre (se sugiere uno al elegir el proyecto; puedes escribir el tuyo)..."></textarea></div>
             <div style="margin:2px 0 10px;"><button class="btn-sec" type="button" style="padding:6px 12px;font-size:12px;" onclick="aSugerirProyecto(2,true)">💡 Sugerir otro nombre y producto</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Se basan en la problemática y la modalidad que elegiste; puedes cambiarlos.</span></div>
             <div class="campo"><label>Productos / evidencias (T2)</label><input type="text" id="a-pr2" placeholder="Ej. Maqueta, reportaje, dramatización..."></div>
+            <div id="a-extras2"></div>
+            <div style="margin:6px 0 4px;"><button class="btn-sec" type="button" style="padding:7px 14px;font-size:12.5px;" onclick="aAgregarActividad(2)">➕ Agregar otro proyecto o secuencia didáctica de este trimestre</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Ej.: un proyecto y dos secuencias didácticas. El Programa Analítico los enlista de forma general.</span></div>
           </div>
           <hr class="sep">
           <div id="apt3" class="hidden">
             <div class="proy-lista" id="ps-a-t3"></div>
-            <div class="f2 mt12">
-              <div class="campo"><label>Nombre del proyecto (T3)</label><input type="text" id="a-pn3" placeholder="Escribe o elige arriba"></div>
+            <div class="f3 mt12">
+              <div class="campo"><label>Nombre del proyecto o de la secuencia (T3)</label><input type="text" id="a-pn3" placeholder="Escribe o elige arriba"></div>
               <div class="campo"><label>Modalidad (T3)</label><select id="a-pm3" onchange="aSugerirProyecto(3)"><option>Aprendizaje en proyectos comunitarios</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>Aprendizaje Basado en Problemas (ABP)</option><option>Aprendizaje basado en indagación (enfoque STEAM)</option><option>Aprendizaje servicio</option></select></div>
+              <div class="campo"><label>Duración aproximada (opcional)</label><input type="text" id="a-pd3" placeholder="Ej. 5 semanas · 15 sesiones"></div>
             </div>
-            <div class="campo"><label>Propósito del proyecto (T3)</label><textarea id="a-pp3" rows="3" placeholder="Propósito del tercer trimestre (se sugiere uno al elegir el proyecto; puedes escribir el tuyo)..."></textarea></div>
+            <div class="campo"><label>Propósito (T3)</label><textarea id="a-pp3" rows="3" placeholder="Propósito del tercer trimestre (se sugiere uno al elegir el proyecto; puedes escribir el tuyo)..."></textarea></div>
             <div style="margin:2px 0 10px;"><button class="btn-sec" type="button" style="padding:6px 12px;font-size:12px;" onclick="aSugerirProyecto(3,true)">💡 Sugerir otro nombre y producto</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Se basan en la problemática y la modalidad que elegiste; puedes cambiarlos.</span></div>
             <div class="campo"><label>Productos / evidencias (T3)</label><input type="text" id="a-pr3" placeholder="Ej. Podcast, documental, historieta..."></div>
+            <div id="a-extras3"></div>
+            <div style="margin:6px 0 4px;"><button class="btn-sec" type="button" style="padding:7px 14px;font-size:12.5px;" onclick="aAgregarActividad(3)">➕ Agregar otro proyecto o secuencia didáctica de este trimestre</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Ej.: un proyecto y dos secuencias didácticas. El Programa Analítico los enlista de forma general.</span></div>
           </div>
         </div>
 
@@ -1086,15 +1095,15 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   </div><!-- /layout -->
 </div><!-- /app -->
 
-<script src="firebase-config.js?v=202611161410"></script>
-<script src="correos-temporales.js?v=202611161410"></script>
-<script src="auth.js?v=202611161410"></script>
-<script src="licencia.js?v=202611161410"></script>
-<script src="curriculum.js?v=202611161410"></script>
-<script src="projects.js?v=202611161410"></script>
-<script src="generators.js?v=202611161410"></script>
-<script src="metodologias.js?v=202611161410"></script>
-<script src="ruta-ui.js?v=202611161410"></script>
+<script src="firebase-config.js?v=202611161520"></script>
+<script src="correos-temporales.js?v=202611161520"></script>
+<script src="auth.js?v=202611161520"></script>
+<script src="licencia.js?v=202611161520"></script>
+<script src="curriculum.js?v=202611161520"></script>
+<script src="projects.js?v=202611161520"></script>
+<script src="generators.js?v=202611161520"></script>
+<script src="metodologias.js?v=202611161520"></script>
+<script src="ruta-ui.js?v=202611161520"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
 // (la pantalla de acceso conserva su autocompletar para correo y contraseña).
@@ -1116,8 +1125,8 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611161410"></script>
-<script src="rezago.js?v=202611161410"></script>
+<script src="gestion.js?v=202611161520"></script>
+<script src="rezago.js?v=202611161520"></script>
 <script>
 // ── ESTADO ──────────────────────────────────────────────
 let tipoActivo='a', semAct=1, semsGen=new Set();
@@ -1593,9 +1602,9 @@ async function genAnalitico(){
     sesionesPorDisc: datosDisciplinas.sesiones,
     instrumentosPorDisc: datosDisciplinas.instrumentos,
     contexto: contexto,
-    t1:{contenidos:cA.t1,modalidad:document.getElementById('a-pm1').value,nombreProyecto:document.getElementById('a-pn1').value,proposito:document.getElementById('a-pp1').value,productos:document.getElementById('a-pr1').value},
-    t2:{contenidos:cA.t2,modalidad:document.getElementById('a-pm2').value,nombreProyecto:document.getElementById('a-pn2').value,proposito:document.getElementById('a-pp2').value,productos:document.getElementById('a-pr2').value},
-    t3:{contenidos:cA.t3,modalidad:document.getElementById('a-pm3').value,nombreProyecto:document.getElementById('a-pn3').value,proposito:document.getElementById('a-pp3').value,productos:document.getElementById('a-pr3').value},
+    t1:Object.assign({contenidos:cA.t1,modalidad:document.getElementById('a-pm1').value,nombreProyecto:document.getElementById('a-pn1').value,proposito:document.getElementById('a-pp1').value,productos:document.getElementById('a-pr1').value},{actividades:aActividades(1)}),
+    t2:Object.assign({contenidos:cA.t2,modalidad:document.getElementById('a-pm2').value,nombreProyecto:document.getElementById('a-pn2').value,proposito:document.getElementById('a-pp2').value,productos:document.getElementById('a-pr2').value},{actividades:aActividades(2)}),
+    t3:Object.assign({contenidos:cA.t3,modalidad:document.getElementById('a-pm3').value,nombreProyecto:document.getElementById('a-pn3').value,proposito:document.getElementById('a-pp3').value,productos:document.getElementById('a-pr3').value},{actividades:aActividades(3)}),
   };
   try{
     const txt=await generarAnalitico(d);
