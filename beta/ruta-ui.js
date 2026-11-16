@@ -411,7 +411,7 @@ document.addEventListener('DOMContentLoaded', rutaInit);
 // SUGERENCIAS «(sugerido)» de nombre de proyecto y producto
 // El docente siempre puede cambiarlos: al escribir, la marca desaparece.
 // ============================================================
-const SUG_IDS = ['d-proy', 'd-prod', 'a-pn1', 'a-pn2', 'a-pn3', 'a-pr1', 'a-pr2', 'a-pr3'];
+const SUG_IDS = ['d-proy', 'd-prod', 'a-pn1', 'a-pn2', 'a-pn3', 'a-pr1', 'a-pr2', 'a-pr3', 'a-pp1', 'a-pp2', 'a-pp3'];
 
 function sugMarcar(id, sugerido) {
   const e = rEl(id); if (!e) return;
@@ -444,6 +444,28 @@ function modalidadAMetodologia(txt) {
   return { met: 'abpc', esc: 'comunidad' };
 }
 
+// Primera problemática escrita por el docente (primer renglón, sin «Problemática 1:»)
+function primeraProblematica(txt) {
+  const l = String(txt || '').split(/\n+/).map(x => x.trim()).filter(Boolean)[0] || '';
+  let p = l.replace(/^problem[aá]tica\s*\d*\s*[:.\-]\s*/i, '').replace(/[.\s]+$/, '');
+  if (p && p === p.toUpperCase()) p = p.toLowerCase();   // si escribió todo en mayúsculas, se redacta en minúsculas
+  return p;
+}
+// Propósito sugerido del proyecto según metodología, nombre, producto y problemática
+function propositoSugerido(metId, nombre, producto, prob) {
+  const p = primeraProblematica(prob), prod = String(producto || '').trim().replace(/[.\s]+$/, '');
+  const sobre = p ? ' de ' + p : ' de su contexto';
+  const cierre = prod ? ', y presenten como producto: ' + minuscula1(prod) : '';
+  const nom = nombre ? ', mediante el proyecto ' + (/[«»]/.test(nombre) ? nombre : '«' + nombre + '»') : '';
+  const t = {
+    abpc: 'Que las y los estudiantes identifiquen y atiendan la problemática' + sobre + nom + ', vinculando los contenidos y PDA de la disciplina con su contexto' + cierre + '.',
+    abp: 'Que las y los estudiantes analicen críticamente el problema' + sobre + ', propongan y justifiquen una solución fundamentada' + nom + cierre + '.',
+    steam: 'Que las y los estudiantes indaguen las causas del problema' + sobre + ', interpreten la información recabada y propongan acciones con evidencia' + nom + cierre + '.',
+    as: 'Que las y los estudiantes diseñen y realicen un servicio solidario a partir de la problemática' + sobre + nom + ', y reflexionen sobre su aprendizaje y su impacto en la comunidad' + cierre + '.',
+  };
+  return t[metId] || t.abpc;
+}
+
 // Lista de sugerencias: primero las que se relacionan con la problemática y, para que «Sugerir otro» no se
 // acabe pronto, se completa con proyectos de otros temas de la misma metodología (hasta 8, sin repetir nombre).
 function listaSugerida(met, prob, esc) {
@@ -473,7 +495,8 @@ function aSugerirProyecto(t, otro) {
     const e = rEl(idN), propio = e && e.value.trim() && e.dataset.sug !== '1';
     if (propio && !confirm('Ya escribiste un nombre de proyecto. ¿Quieres reemplazarlo por esta sugerencia?')) return;
     [[idN, s.nombre], [idP, s.producto]].forEach(([id, v]) => { const x = rEl(id); if (x) { x.value = v; sugMarcar(id, true); } });
-  } else { sugPoner(idN, s.nombre); sugPoner(idP, s.producto); }
+    sugPoner('a-pp' + t, propositoSugerido(m.met, s.nombre, s.producto, prob));   // no pisa un propósito escrito por el docente
+  } else { sugPoner(idN, s.nombre); sugPoner(idP, s.producto); sugPoner('a-pp' + t, propositoSugerido(m.met, s.nombre, s.producto, prob)); }
 }
 function aSugerirTodos() { [1, 2, 3].forEach(t => aSugerirProyecto(t)); }
 document.addEventListener('DOMContentLoaded', () => {
