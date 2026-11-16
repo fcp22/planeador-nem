@@ -482,12 +482,12 @@ function descargarWord(htmlContenido, nombreArchivo) {
   h2, h3 { margin: 6px 0 3px 0; }
   @page {
     size: landscape;
-    margin: 1.5cm 1.5cm;
+    margin: 1.3cm 1.3cm;
   }
   @page Section1 {
-    size: 841.9pt 595.3pt;
+    size: 792pt 612pt;
     mso-page-orientation: landscape;
-    margin: 1.5cm 1.5cm;
+    margin: 1.3cm 1.3cm;
   }
   div.Section1 { page: Section1; }
 </style>

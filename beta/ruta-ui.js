@@ -49,6 +49,7 @@ function rutaDatosPlano() {
   return {
     docente: rVal('d-doc'), grado: rVal('d-gra'), campo: rVal('d-cam'), disciplina: rVal('d-dis'),
     escuela: rVal('d-esc'), cct: rVal('d-cct'), cicloEscolar: rVal('d-cic'), grupo: rVal('d-grp'),
+    tipoEscuela: rVal('d-tipoesc'), zona: rVal('d-zona'), codiseno: rVal('d-codis'), productoSecundario: rVal('d-prod-sec'),
     trimestre: rVal('d-tri'), numSesiones: rVal('d-ses'), duracionSesion: rVal('d-dur'),
     nombreProyecto: rVal('d-proy') || 'Proyecto del trimestre',
     modalidad: rVal('d-mod'),
@@ -112,7 +113,7 @@ function disenarRuta() {
   const c = rutaLeerCfg();
   rutaError('');
   if (c.prob.length < 20) { rutaError('Escribe la problemática de tu contexto (al menos una o dos oraciones): ¿qué pasa?, ¿a quién afecta?, ¿cómo se nota en tu grupo?'); rEl('r-prob').focus(); return; }
-  if (rutaActual && rutaActual.editada && !confirm('Ya editaste la ruta. Si la vuelves a diseñar se perderán tus cambios. ¿Continuar?')) return;
+  if (rutaActual && rutaActual.editada && !confirm('Ya editaste la ruta. Si vuelves a armar el proyecto se perderán tus cambios. ¿Continuar?')) return;
   rutaActual = construirRuta(c);
   rutaSugerencias = sugerirProyectos(c.met, c.prob, c.esc);
   rutaSelProy = -1;
@@ -179,7 +180,8 @@ ${contenidos || '- (sin contenidos seleccionados)'}
 
 Devuelve este JSON:
 {
-  "finalidades": "2 finalidades del campo formativo ${d.campo} a las que contribuye este proyecto, redactadas en una sola cadena",
+  "finalidades": "2 finalidades del campo formativo ${d.campo} a las que contribuye este proyecto y, al final, 1 oración que ARGUMENTE con claridad de qué manera la intervención didáctica contribuirá a lograrlas; todo en una sola cadena",
+  "propositoDisciplina": "propósito específico de la disciplina ${d.disciplina}: 1 o 2 oraciones tomadas de los contenidos, los PDA, las finalidades y la especificidad del campo, redactadas como lo que lograrán los estudiantes",
   "especificidad": "especificidad del campo formativo para ${d.disciplina}, 2 oraciones",
   "interdisciplinariedad": "1 o 2 oraciones sobre cómo se vincula con otras disciplinas del campo"${conMomentos ? `,
   "momentos": { "1": {"doc": "...", "alu": "..."} }` : ''}
@@ -194,7 +196,7 @@ async function rutaPedirComplementos(d, conMomentos) {
   const ia = parsearJSON(resp);
   const str = v => (typeof v === 'string' ? v.trim() : '');
   return {
-    comp: { finalidades: str(ia.finalidades), especificidad: str(ia.especificidad), interdisciplinariedad: str(ia.interdisciplinariedad) },
+    comp: { finalidades: str(ia.finalidades), especificidad: str(ia.especificidad), interdisciplinariedad: str(ia.interdisciplinariedad), propositoDisciplina: str(ia.propositoDisciplina) },
     momentos: (ia.momentos && typeof ia.momentos === 'object') ? ia.momentos : {},
   };
 }
@@ -204,7 +206,7 @@ async function rutaPersonalizarIA() {
   if (rutaActual.editada && !confirm('La IA reescribirá la primera actividad de cada momento. Si ya editaste esas actividades se perderán. ¿Continuar?')) return;
   rutaSincronizarCampos();
   const btn = rEl('btn-ruta-ia'), st = rEl('ruta-ia-st');
-  btn.disabled = true; st.textContent = 'Personalizando con IA… (20–60 segundos)'; st.style.color = 'var(--gris)';
+  btn.disabled = true; st.textContent = 'Mejorando las actividades con IA… (20–60 segundos)'; st.style.color = 'var(--gris)';
   try {
     const d = rutaDatosPlano();
     const r = await rutaPedirComplementos(d, true);
@@ -217,10 +219,10 @@ async function rutaPersonalizarIA() {
     });
     rutaActual.comp = Object.assign({}, rutaActual.comp, r.comp);
     renderRuta();
-    const s2 = rEl('ruta-ia-st'); if (s2) { s2.textContent = `✓ Personalizado (${n} momentos). Revisa y ajusta lo que necesites.`; s2.style.color = 'var(--verde)'; }
+    const s2 = rEl('ruta-ia-st'); if (s2) { s2.textContent = `✓ Actividades mejoradas (${n} momentos). Revisa y ajusta lo que necesites.`; s2.style.color = 'var(--verde)'; }
   } catch (e) {
     console.error(e);
-    btn.disabled = false; st.textContent = 'No se pudo personalizar con IA: ' + e.message + '. Tu ruta sigue intacta.'; st.style.color = 'var(--rojo)';
+    btn.disabled = false; st.textContent = 'No se pudo mejorar con IA: ' + e.message + '. Tu ruta sigue intacta.'; st.style.color = 'var(--rojo)';
   }
 }
 
@@ -260,15 +262,15 @@ function rutaGrupoHTML(titulo, grupo, abierto) {
   const cuerpo = Array.isArray(grupo)
     ? `<ul class="v-lista">${rutaItemsHTML(grupo)}</ul>`
     : Object.entries(grupo).map(([k, arr]) => `<div class="v-sub">${escM(k)}</div><ul class="v-lista">${rutaItemsHTML(arr)}</ul>`).join('');
-  return `<details class="v-det" ${abierto ? 'open' : ''}><summary><strong>${escM(titulo)}</strong><span class="v-cnt">${rs.ok}/${rs.total} ✓${rs.par ? ` · ${rs.par} por afinar` : ''}${rs.falta ? ` · ${rs.falta} pendientes` : ''}</span></summary>${cuerpo}</details>`;
+  return `<details class="v-det" ${abierto ? 'open' : ''}><summary><strong>${escM(titulo)}</strong><span class="v-cnt">${rs.ok} de ${rs.total} cumplidos${rs.par ? ` · ${rs.par} por mejorar` : ''}${rs.falta ? ` · ${rs.falta} faltan` : ''}</span></summary>${cuerpo}</details>`;
 }
 function renderVerif() {
   const cont = rEl('ruta-verif'); if (!cont || !rutaActual) return;
   const v = verificarIndicadores(rutaCtxVerif());
   cont.innerHTML =
-    rutaGrupoHTML('Revisión del Plano Didáctico (Factores 1 al 5)', v.pd, true) +
-    rutaGrupoHTML('Guía para el análisis del Programa Analítico (Planos 2 y 3)', v.pa, false) +
-    rutaGrupoHTML('Observación de la intervención didáctica (Dimensiones 1 al 4)', v.obs, false);
+    rutaGrupoHTML('Lista 1 · Tu Plano Didáctico: ¿trae todo lo que se revisa? (Factores 1 al 5)', v.pd, true) +
+    rutaGrupoHTML('Lista 2 · Programa Analítico: ¿tu proyecto responde a lo que se analiza? (Planos 2 y 3)', v.pa, false) +
+    rutaGrupoHTML('Lista 3 · Observación en clase: ¿tu planeación apoya lo que verá el observador? (Dimensiones 1 al 4)', v.obs, false);
 }
 function rutaProgramarVerif() {
   if (!rutaActual) return;
@@ -343,26 +345,27 @@ function renderRuta() {
   const nota = met.nota ? `<div class="r-nota-box">🔧 ${escM(met.nota)}</div>` : '';
 
   out.innerHTML = `
-    <div class="alerta alerta-err" id="ruta-desact" style="display:none;background:#fffbeb;border-color:#fde68a;color:#92400e;">Cambiaste la metodología o la problemática. Pulsa «Diseñar mi ruta» para actualizar las actividades (tus ediciones actuales se perderían).</div>
+    <div class="alerta alerta-err" id="ruta-desact" style="display:none;background:#fffbeb;border-color:#fde68a;color:#92400e;">Cambiaste la metodología o la problemática. Pulsa «Armar mi proyecto» para actualizar las actividades (tus ediciones actuales se perderían).</div>
     ${chips}${aviso}
     <h4 class="r-h">1 · Proyectos que podrías hacer con tu problemática</h4>
     <p class="r-nota">Son sugerencias para empezar: elige una y adáptala. También puedes escribir tu propio nombre de proyecto más abajo, en «Nombre del proyecto».</p>
     <div class="r-sugs">${sug}</div>
-    <h4 class="r-h">2 · Tu ruta de ${r.totalSes} sesiones</h4>
+    <h4 class="r-h">2 · Fases y actividades de tu proyecto (${r.totalSes} sesiones)</h4>
     <div class="r-barra">${barra}</div>
     <p class="r-nota">${escM(met.resumen)} Puedes editar las actividades y los recursos; los tiempos se recalculan solos si cambias las sesiones.</p>
     ${nota}${fasesHTML}
-    <h4 class="r-h">3 · Rutina, evaluación y verificación</h4>
+    <h4 class="r-h">3 · Rutina de cada sesión y evaluación</h4>
     ${rutina}${evalHTML}
-    <h4 class="r-h">4 · ¿Cumple lo que se revisa? <small>(autoverificación orientativa)</small></h4>
-    <p class="r-nota">✓ cumplido · ◐ por afinar · ✗ pendiente. Se actualiza mientras llenas el formulario. Es una guía de apoyo: no sustituye la revisión del supervisor.</p>
+    <h4 class="r-h">4 · Revisa si tu proyecto cumple lo que piden los supervisores</h4>
+    <p class="r-nota">Son 3 listas de revisión con los criterios oficiales. Ábrelas para ver qué te falta. ✓ cumplido · ◐ por mejorar · ✗ falta. Se actualizan solas mientras llenas el formulario. Es solo una guía de apoyo: no sustituye la revisión del supervisor.</p>
     <div id="ruta-verif"></div>
     <div class="r-acciones">
-      <button class="btn-gen" onclick="rutaUsar()">✅ Usar en mi Plano Didáctico</button>
-      <button class="btn-sec" id="btn-ruta-ia" onclick="rutaPersonalizarIA()">✨ Personalizar con IA</button>
+      <button class="btn-gen" onclick="rutaUsar()">✅ Pasar este proyecto al Plano Didáctico</button>
+      <button class="btn-sec" id="btn-ruta-ia" onclick="rutaPersonalizarIA()">✨ Mejorar las actividades con IA</button>
     </div>
+    <p class="r-nota"><b>Pasar este proyecto al Plano Didáctico:</b> copia al formulario de arriba el nombre, la problemática, el producto, el propósito y los ejes (no gasta IA). <b>Mejorar las actividades con IA:</b> la IA reescribe las actividades para que hablen de tu grupo y tu problemática (gasta 1 uso de tu cuota; tarda 20–60 segundos).</p>
     <p class="r-nota" id="ruta-ia-st"></p>
-    <div class="alerta" id="ruta-usada" style="display:${r.usar ? 'block' : 'none'};background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;">✓ Ruta lista. Se cargaron el nombre, la problemática, el producto, el propósito y los ejes. Completa contenidos y perfil de egreso y pulsa <strong>Generar Plano Didáctico</strong>: saldrá en el formato oficial con estas fases y tiempos.</div>`;
+    <div class="alerta" id="ruta-usada" style="display:${r.usar ? 'block' : 'none'};background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;">✓ Ruta lista. Se cargaron el nombre, la problemática, el producto, el propósito y los ejes. Completa contenidos y perfil de egreso y pulsa <strong>Generar Plano Didáctico</strong> (el documento final, abajo): saldrá en el formato oficial con estas fases y tiempos.</div>`;
   renderVerif();
 }
 

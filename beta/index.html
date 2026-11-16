@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<meta name="robots" content="noindex,nofollow">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex,nofollow">
 <title>Planeador Docente NEM — Fase 6 Secundaria</title>
 <style>
 :root {
@@ -830,6 +830,10 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
             <div class="campo"><label>Ciclo escolar</label><input type="text" id="d-cic" value="2026-2027"></div>
             <div class="campo"><label>Grado y grupo</label><input type="text" id="d-grp" placeholder="Ej. 3° A, B, C"></div>
           </div>
+          <div class="f2">
+            <div class="campo"><label>Tipo de escuela (opcional)</label><input type="text" id="d-tipoesc" placeholder="Ej. Escuela Secundaria General, Técnica, Federal, Estatal…"><div class="ayuda">Se imprime en el encabezado de tus documentos. Si lo dejas vacío, no aparece.</div></div>
+            <div class="campo"><label>Zona escolar (opcional)</label><input type="text" id="d-zona" placeholder="Ej. 08"></div>
+          </div>
           <div class="f3">
             <div class="campo"><label>Grado</label>
               <select id="d-gra" onchange="updCampos('d')">
@@ -937,6 +941,10 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
             <textarea id="d-inter" placeholder="Ej. Inglés: Contenido X | PDA X | Producto: Texto en inglés"></textarea>
             <div class="ayuda">Describe cómo se vinculan otras disciplinas del campo formativo</div>
           </div>
+          <div class="campo"><label>Contenidos de codiseño (opcional)</label>
+            <textarea id="d-codis" placeholder="Ej. Contenido que no está en el programa sintético pero responde a tu contexto, con su justificación"></textarea>
+            <div class="ayuda">Contenidos y PDA que agregas según las necesidades de tu grupo y que no vienen en los programas sintéticos. Anota también por qué los incluyes.</div>
+          </div>
 
           <!-- SOLO PROYECTO -->
           <div id="campos-proyecto">
@@ -963,8 +971,8 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
 
         <!-- RUTA METODOLÓGICA SOCIOCRÍTICA (solo modalidad Proyecto) -->
         <div class="card" id="card-ruta">
-          <div class="card-title">🧭 Ruta metodológica sociocrítica <span class="badge-nuevo">Nuevo</span></div>
-          <p class="ruta-intro">Escribe la <strong>problemática de tu contexto</strong> y el sistema te propone <strong>qué proyecto hacer</strong>, las <strong>fases de la metodología</strong> del campo formativo, las <strong>actividades del docente y de los estudiantes</strong>, los <strong>recursos</strong> y los <strong>tiempos estimados</strong> según tus sesiones. Al final verifica si cumple lo que se revisa en la Observación de la intervención didáctica, el Programa Analítico y el Plano Didáctico.</p>
+          <div class="card-title">🧭 Asistente para armar tu proyecto <span class="badge-nuevo">Nuevo</span></div>
+          <p class="ruta-intro"><strong>¿Qué es esto?</strong> Es tu punto de partida para planear un proyecto. Cuéntame la <strong>problemática de tu grupo o comunidad</strong> y yo te armo un <strong>borrador de proyecto</strong>: <strong>qué proyecto puedes hacer</strong> y su producto, las <strong>fases de la metodología</strong> del campo formativo, las <strong>actividades del docente y de los estudiantes</strong>, los <strong>recursos</strong> y en <strong>qué sesiones y semanas</strong> toca cada momento, según tus sesiones disponibles.<br><strong>¿Cómo se usa?</strong> 1) Escribe la problemática y pulsa «Armar mi proyecto». 2) Elige el proyecto que más te guste y edita lo que quieras. 3) Pulsa «Pasar este proyecto al Plano Didáctico» y se llenan los campos de arriba. Este paso <strong>no gasta IA</strong>; la IA se usa hasta que pulses «Generar Plano Didáctico». Al final también revisa si cumple lo que se evalúa en la Observación de la intervención didáctica, el Programa Analítico y el Plano Didáctico.</p>
 
           <div class="f2">
             <div class="campo">
@@ -1019,7 +1027,7 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
 
           <div class="ruta-ref" id="r-ref"></div>
           <div class="alerta alerta-err" id="ruta-err"></div>
-          <button class="btn-gen" type="button" onclick="disenarRuta()"><span>🧭</span> Diseñar mi ruta</button>
+          <button class="btn-gen" type="button" onclick="disenarRuta()"><span>🧭</span> Armar mi proyecto</button>
           <div id="ruta-out"></div>
         </div>
 
@@ -1041,7 +1049,7 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
         <div class="alerta alerta-err" id="err-d"></div>
         <div class="btns">
           <button class="btn-gen" id="bgd" onclick="genDidactico()"><span>✨</span> Generar Plano Didáctico</button>
-          <button class="btn-sec" onclick="limpiarD()">🔄 Nuevo plano</button>
+          <button class="btn-sec" onclick="limpiarD()">🔄 Limpiar y empezar de nuevo</button>
         </div>
         <div class="generando" id="gen-d"><div class="spinner"></div><p id="gen-d-msg">Generando Plano Didáctico...<br><small>Esto puede tardar 30-90 segundos</small></p></div>
         <div class="resultado" id="res-d">
@@ -1597,6 +1605,10 @@ async function genDidactico(){
     escuela:document.getElementById('d-esc').value,
     cct:document.getElementById('d-cct').value,
     cicloEscolar:document.getElementById('d-cic').value,
+    tipoEscuela:(document.getElementById('d-tipoesc')||{}).value||'',
+    zona:(document.getElementById('d-zona')||{}).value||'',
+    codiseno:(document.getElementById('d-codis')||{}).value||'',
+    productoSecundario:(document.getElementById('d-prod-sec')||{}).value||'',
     grupo:document.getElementById('d-grp').value,
     trimestre:document.getElementById('d-tri').value,
     numSesiones:document.getElementById('d-ses').value,
@@ -1707,7 +1719,7 @@ function limpiarD(){
   document.getElementById('d-cnt-lista').innerHTML='';
   document.getElementById('ps-d').style.display='none';
   document.getElementById('res-d').style.display='none';
-  ['d-proy','d-prob','d-prop','d-prod','d-inter'].forEach(id=>document.getElementById(id).value='');
+  ['d-proy','d-prob','d-prop','d-prod','d-inter','d-codis'].forEach(id=>{const e=document.getElementById(id); if(e) e.value='';});
 }
 
 // ── HISTORIAL ─────────────────────────────────────────────

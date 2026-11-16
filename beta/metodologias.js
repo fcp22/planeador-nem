@@ -794,10 +794,10 @@ function verificarIndicadores(c) {
     ev(largo(c.prob, 80), hay(c.prob), 'Problemática(s) y justificación', 'Descríbela con datos de tu contexto: qué pasa, a quién afecta y por qué importa (mín. 80 caracteres).'),
     ok('Tipo de proyecto: áulico, escolar o comunitario'),
     ev(hay(c.proy), false, 'Nombre del proyecto', 'Elige una sugerencia o escribe el nombre del proyecto.'),
-    ev(largo(c.prop, 40), hay(c.prop), 'Propósito del proyecto', 'Redacta qué lograrán los estudiantes (usa «Usar en mi Plano Didáctico» para precargarlo).'),
+    ev(largo(c.prop, 40), hay(c.prop), 'Propósito del proyecto', 'Redacta qué lograrán los estudiantes (usa «Pasar este proyecto al Plano Didáctico» para precargarlo).'),
     ev(c.perfil.length > 0, false, 'Perfil de egreso', 'Marca los rasgos del perfil de egreso que se desarrollan.'),
-    ev(hay(comp.finalidades), false, 'Finalidades del campo formativo', 'Se completan al generar el Plano (o con «Personalizar con IA»).'),
-    ev(hay(comp.especificidad), false, 'Especificidad del campo formativo', 'Se completa al generar el Plano (o con «Personalizar con IA»).'),
+    ev(hay(comp.finalidades), false, 'Finalidades del campo formativo', 'Se completan al generar el Plano (o con «Mejorar las actividades con IA»).'),
+    ev(hay(comp.especificidad), false, 'Especificidad del campo formativo', 'Se completa al generar el Plano (o con «Mejorar las actividades con IA»).'),
     ev(c.nContenidos > 0, false, 'Mapeo de contenidos y PDA de la disciplina', 'Selecciona los contenidos del trimestre.'),
     ev(sesionesOk, !!r, 'Temporalidad por periodo', 'Con pocas sesiones algunos momentos quedan por debajo de media sesión; aumenta el número de sesiones.'),
     ev(hay(c.inter), false, 'Interdisciplinariedad', 'Describe cómo se vinculan otras disciplinas del campo (campo «Interdisciplinariedad»).'),
@@ -816,11 +816,11 @@ function verificarIndicadores(c) {
     'Factor 2 · Conocimiento del currículo': [
       ev(c.nContenidos > 0, false, 'Especifica los contenidos a trabajar (del programa analítico)', 'Selecciona los contenidos del trimestre.'),
       ev(c.nContenidos > 0, false, 'Especifica los PDA de la disciplina', 'Los PDA se cargan al seleccionar el contenido.'),
-      ev(hay(comp.finalidades), false, 'Especifica las finalidades del campo formativo', 'Se completan al generar el Plano (o con «Personalizar con IA»).'),
+      ev(hay(comp.finalidades), false, 'Especifica las finalidades del campo formativo', 'Se completan al generar el Plano (o con «Mejorar las actividades con IA»).'),
       ev(c.perfil.length > 0, false, 'Argumenta los rasgos del perfil de egreso', 'Marca los rasgos; la ruta redacta cómo se contribuye a cada uno.'),
     ],
     'Factor 3 · Estrategias didácticas': [
-      ok('Enuncia una metodología sociocrítica propuesta por la NEM'),
+      ok('Enuncia una metodología sociocrítica propuesta por la NEM y la justifica'),
       ok('Describe actividades congruentes con las fases de la metodología'),
       ev(c.perfil.length > 0, false, 'Describe las actividades que contribuyen al perfil de egreso', 'Marca los rasgos del perfil de egreso.'),
       ev(hay(c.bap), false, 'Ajusta las estrategias a la diversidad del aula', 'Describe las BAP y la diversidad de tu grupo; la ruta propone ajustes.'),
@@ -829,11 +829,11 @@ function verificarIndicadores(c) {
       ev(sesionesOk, !!r, 'Especifica la temporalidad de cada fase', 'Aumenta el número de sesiones para que cada momento tenga tiempo suficiente.'),
     ],
     'Factor 4 · Interacciones': [
-      ok('Establece diversas formas de organización grupal'),
+      ok('Establece y justifica diversas formas de organización grupal'),
       ev(hay(c.bap), false, 'Especifica los ajustes razonables para estudiantes con BAP', 'Describe las BAP de tu grupo para precisar los ajustes.'),
     ],
     'Factor 5 · Evaluación formativa': [
-      ok('Establece criterios de evaluación congruentes con contenidos y PDA (proceso 70 % · producto 30 %)'),
+      ok('Establece criterios de evaluación congruentes con contenidos y PDA, tomados de los PDA (proceso 70 % · producto 30 %)'),
       ok('Menciona técnicas e instrumentos para valorar el proceso'),
       ok('Menciona técnicas e instrumentos para valorar el producto'),
       ev(hay(c.bap), true, 'Incluye técnicas e instrumentos que consideran la diversidad', 'Describe las BAP de tu grupo para adecuar la evaluación.'),
@@ -948,7 +948,7 @@ ${cel(listaHTML(m.rec))}
   return h;
 }
 
-function evaluacionHTML(ruta) {
+function evaluacionHTML(ruta, d) {
   const C = '#BDD7EE';
   const th = (t, w) => `<td style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${C};${w ? 'width:' + w + ';' : ''}vertical-align:top;">${t}</td>`;
   const td = (t) => `<td style="border:1px solid #000;padding:5px 8px;vertical-align:top;">${t}</td>`;
@@ -960,7 +960,7 @@ function evaluacionHTML(ruta) {
   return `
 <h3 style="margin-top:14px;">EVALUACIÓN FORMATIVA</h3>
 <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
-<tr>${th('Criterios de evaluación / ponderación (conocimientos, habilidades, destrezas, actitudes, valores)', '30%')}${td(`<strong>Proceso ${sumProc} %</strong><br><strong>Producto ${100 - sumProc} %</strong>`)}</tr>
+<tr>${th('Criterios de evaluación / ponderación (conocimientos, habilidades, destrezas, actitudes, valores)', '30%')}${td(`<strong>Proceso ${sumProc} %</strong> · <strong>Producto ${100 - sumProc} %</strong>` + (d ? listaHTML(criteriosEvaluacion(d, ruta)) : ''))}</tr>
 </table>
 <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
 <tr>${th('Estrategia de evaluación', '14%')}${th('Técnicas', '18%')}${th('Modalidades', '16%')}${th('Actividades evaluativas (solo las ponderadas)', '24%')}${th('Instrumentos de evaluación', '28%')}</tr>
@@ -977,6 +977,46 @@ ${td(escM(ruta.proyecto ? ruta.proyecto.producto : 'Producto integrador'))}${td(
 function rutinaHTML() {
   return `<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><tr>` +
     RUTINA_SESION.map(b => `<td style="border:1px solid #000;padding:5px 8px;vertical-align:top;width:33%;"><strong>${b.t}</strong>${listaHTML(b.items)}</td>`).join('') + '</tr></table>';
+}
+
+
+// ── Textos que la rúbrica pide justificar / argumentar ────
+function primeraOracion(t, max) {
+  t = String(t || '').replace(/\s+/g, ' ').trim();
+  const m = t.match(/^[^.!?]+[.!?]?/);
+  let s = (m ? m[0] : t).trim();
+  if (s.length > (max || 220)) s = s.slice(0, (max || 220) - 1).replace(/\s+\S*$/, '') + '…';
+  return s.replace(/[.!?]+$/, '');
+}
+function minuscula1(t) { t = String(t || ''); return t.charAt(0).toLowerCase() + t.slice(1); }
+
+function justificarMetodologia(ruta, d) {
+  const met = METODOLOGIAS[ruta.met];
+  return `${met.resumen} Se elige porque es una metodología sociocrítica propuesta por la NEM para el campo formativo ${d.campo || ''}, centra el aprendizaje en la actividad del estudiante y permite atender la problemática del contexto: «${probCorta(ruta.prob || d.problematizacion)}».`;
+}
+
+function organizacionGrupalTexto(ruta) {
+  const orgs = [];
+  ruta.fases.forEach(f => f.mom.forEach(m => { if (m.org && !orgs.includes(m.org)) orgs.push(m.org); }));
+  return `${orgs.join(' · ')}. Justificación: las formas de organización son congruentes con la metodología (${METODOLOGIAS[ruta.met].nombre}); alternar plenaria, equipos y trabajo individual propicia la interacción y la movilidad de los estudiantes, favorece el aprendizaje y la participación, y cuida su bienestar personal.`;
+}
+
+function espaciosJustificados(ruta) {
+  return espaciosSugeridos(ruta.esc, ruta.espacios) + ' Justificación: son los espacios donde se realizan las actividades de cada fase (trabajo en equipo, búsqueda y análisis de información, elaboración y presentación del producto) y permiten atender la diversidad del grupo.';
+}
+
+// Criterios de evaluación congruentes con los contenidos y PDA (Factor 5, reactivo 1)
+function criteriosEvaluacion(d, ruta) {
+  const items = [];
+  (d.contenidos || []).forEach(c => {
+    const pda = primeraOracion(typeof obtenerPDA === 'function' ? obtenerPDA(c, d.grado) : '', 230);
+    if (pda) items.push(`Conocimientos y habilidades — «${c.titulo}»: demuestra que ${minuscula1(pda)}.`);
+  });
+  const ejes = (d.ejes || '').split(/\s*[,|]\s*/).filter(Boolean);
+  items.push(`Actitudes y valores: participa, colabora y respeta las ideas propias y ajenas durante las actividades${ejes.length ? ', en congruencia con los ejes articuladores (' + ejes.join(', ') + ')' : ''}.`);
+  const prod = (ruta.proyecto && ruta.proyecto.producto) || d.productoIntegrador || 'el producto integrador';
+  items.push(`Producto — ${prod}: pertinencia con la problemática, calidad del contenido, claridad, creatividad y utilidad para la comunidad.`);
+  return items;
 }
 
 // Documento completo en el formato oficial del Plano Didáctico.
@@ -1001,20 +1041,21 @@ function construirHTMLPlanoRuta(d, ruta, comp) {
   const pr = ruta.proyecto || {};
 
   return `
-<p style="text-align:center;margin:0;">Escuelas Secundarias Generales Transferidas</p>
-<p style="text-align:center;margin:0;">Supervisión de la Zona Escolar ${escM(d.zona || '08')} &nbsp; Curso escolar: ${escM(d.cicloEscolar || '')}</p>
+${(d.tipoEscuela || '').trim() ? `<p style="text-align:center;margin:0;"><strong>${escM(d.tipoEscuela.trim())}</strong></p>` : ''}
+<p style="text-align:center;margin:0;">Supervisión de la Zona Escolar ${escM((d.zona || '').trim() || '____')} &nbsp; Curso escolar: ${escM((d.cicloEscolar || '').trim() || '202__-202__')}</p>
 <p style="margin:6px 0 0;"><strong>Escuela secundaria:</strong> ${escM(d.escuela)} &nbsp; <strong>C.C.T.</strong> ${escM(d.cct || '')}</p>
 <p style="margin:0;"><strong>Nombre del docente:</strong> ${escM(d.docente)} &nbsp; <strong>Grado:</strong> ${escM(d.grado)}° &nbsp; <strong>Grupo:</strong> ${escM(d.grupo || '')}</p>
 <h2 style="text-align:center;font-weight:bold;margin:10px 0;">PLANO DIDÁCTICO</h2>
 <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
 ${tr(th('Campo formativo', '28%'), td(escM(d.campo)))}
-${tr(th('Modalidad'), td(escM(met.modalidadPlano) + ' (' + escM(met.nombre) + ') — Proyecto ' + escM(tipo)))}
+${tr(th('Modalidad'), td(escM(met.modalidadPlano) + ' (' + escM(met.nombre) + ') — Proyecto ' + escM(tipo) + '<br><em>Justificación: ' + escM(justificarMetodologia(ruta, d)) + '</em>'))}
 ${tr(th('Escenario'), td(escM(escenarioTxt)))}
 ${tr(th('Periodo'), td(trNom + ' TRIMESTRE'))}
 ${tr(th('Disciplina'), td(escM(d.disciplina)))}
 ${tr(th('Nombre del proyecto'), td(escM(d.nombreProyecto)))}
 ${tr(th('Problematización de la realidad'), td(escM(d.problematizacion || ruta.prob)))}
-${tr(th('Propósitos generales del proyecto y específicos de la disciplina'), td(escM(d.proposito)))}
+${tr(th('Propósitos generales del proyecto'), td(escM(d.proposito)))}
+${tr(th('Propósitos específicos de la disciplina'), td(escM(comp.propositoDisciplina || ('Que el alumnado logre, en ' + (d.disciplina || 'la disciplina') + ', los PDA de los contenidos seleccionados (' + (d.contenidos || []).map(c => c.titulo).join('; ') + ') mediante el proyecto «' + (d.nombreProyecto || '') + '».'))))}
 ${tr(th('Perfil de egreso al cual se contribuye'), td(perfilArg.length ? perfilArg.map(p => `<p style="margin:0 0 4px;"><strong>${escM(p.rasgo.split('.')[0])}.</strong> ${escM(p.corto)}<br><em>${escM(p.arg)}</em></p>`).join('') : escM(comp.perfil || '')))}
 ${tr(th('Finalidades del campo formativo'), td(escM(comp.finalidades || '[Escribe aquí las finalidades del campo formativo según el Programa Sintético]')))}
 ${tr(th('Especificidades del campo formativo'), td(escM(comp.especificidad || '[Escribe aquí las especificidades del campo formativo]')))}
@@ -1024,7 +1065,8 @@ ${tr(th('Interdisciplinariedad'), td(escM(d.disciplinasAdicionales || comp.inter
 <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
 <tr><td colspan="2" style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${C};">CONTENIDOS Y PDA — ${escM(d.disciplina)}</td></tr>
 ${contenidosHTML}
-<tr>${th('Productos (tangibles o intangibles, entregables)', '28%')}${td(escM(pr.producto || d.productoIntegrador || ''))}</tr>
+<tr>${th('Contenidos de codiseño (si fueren necesarios)', '28%')}${td(escM(d.codiseno || 'No se requieren contenidos de codiseño en este periodo.'))}</tr>
+<tr>${th('Productos (tangibles o intangibles, entregables)', '28%')}${td('<strong>' + escM(d.disciplina) + ':</strong> ' + escM(pr.producto || d.productoIntegrador || '') + (d.productoSecundario ? '<br><strong>Otro producto:</strong> ' + escM(d.productoSecundario) : ''))}</tr>
 </table>
 <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
 ${tr(th('Temporalidad (meses, semanas / número de sesiones)', '28%'), td(`${ruta.totalSes} sesiones de ${ruta.minSes} minutos · ${ruta.semanas} semanas (${ruta.sesPorSem} sesiones por semana)`))}
@@ -1032,9 +1074,10 @@ ${tr(th('Temporalidad (meses, semanas / número de sesiones)', '28%'), td(`${rut
 <p style="margin:8px 0 2px;"><strong>Rutina de cada sesión</strong> (orientaciones y estrategias didácticas generales)</p>
 ${rutinaHTML()}
 ${tablaFasesHTML(ruta)}
-${evaluacionHTML(Object.assign({}, ruta, { proyecto: pr }))}
+${evaluacionHTML(Object.assign({}, ruta, { proyecto: pr }), d)}
 <table style="width:100%;border-collapse:collapse;margin-top:8px;">
-${tr(th('Espacios para el aprendizaje', '28%'), td(escM(espacios)))}
+${tr(th('Organización grupal', '28%'), td(escM(organizacionGrupalTexto(ruta))))}
+${tr(th('Espacios para el aprendizaje'), td(escM(espaciosJustificados(ruta))))}
 ${tr(th('Observaciones'), td(''))}
 ${tr(th('Ajustes (de tiempo, espacios, organización, materiales y/o recursos, para atender a la diversidad)'), td(listaHTML(ajustes) + (ruta.bap ? `<p style="margin:4px 0 0;"><strong>BAP y diversidad identificadas:</strong> ${escM(ruta.bap)}</p>` : '')))}
 </table>`;
