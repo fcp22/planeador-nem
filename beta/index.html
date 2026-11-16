@@ -660,7 +660,6 @@ input,select,textarea,button{font-family:inherit;font-size:14px;}
             <div class="campo"><label>Municipio / Localidad</label><input type="text" id="a-mun" placeholder="Municipio, Estado"></div>
             <div class="campo"><label>Escuela indígena</label><select id="a-ind"><option value="no">No</option><option value="si">Sí</option></select></div>
           </div>
-          <div class="campo"><label>Problemática detectada y jerarquizada</label><textarea id="a-prob" placeholder="Ej: Problemática 1: Expresión escrita y comprensión lectora..." rows="3"></textarea></div>
         </div>
 
         <!-- CARD DOCENTES POR DISCIPLINA -->
@@ -718,7 +717,7 @@ input,select,textarea,button{font-family:inherit;font-size:14px;}
             <textarea id="ctx-7" rows="5" placeholder="Problemática 1: Expresión escrita y comprensión lectora. Los estudiantes presentan dificultades para redactar textos...
 
 Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textarea>
-            <div class="ayuda">Lista y describe las problemáticas en orden de prioridad</div>
+            <div class="ayuda">Lista y describe las problemáticas en orden de prioridad. La primera se usa para sugerirte el nombre y el producto de los proyectos.</div>
           </div>
         </div>
 
@@ -1586,7 +1585,7 @@ async function genAnalitico(){
     turno:document.getElementById('a-tur').value,
     cicloEscolar:document.getElementById('a-cic').value,
     municipio:document.getElementById('a-mun').value,
-    problematica:document.getElementById('a-prob').value,
+    problematica:(document.getElementById('ctx-7')||{}).value||'',
     ejesSeleccionados: getEjesSeleccionados('a-ejes-grid'),
     perfilSeleccionado: getPerfilSeleccionado('a-perfil-grid'),
     disciplinasDelCampo: datosDisciplinas.disciplinas,

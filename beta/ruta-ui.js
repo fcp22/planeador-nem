@@ -448,8 +448,8 @@ function modalidadAMetodologia(txt) {
 const aSugIdx = { 1: 0, 2: 1, 3: 2 };
 let aSugTimer = null;
 function aSugerirProyecto(t, otro) {
-  const prob = rVal('a-prob').trim();
-  if (prob.length < 20) { if (otro) alert('Primero escribe la problemática detectada (en «Datos generales»), para sugerirte un proyecto que se relacione con ella.'); return; }
+  const prob = rVal('ctx-7').trim();
+  if (prob.length < 5) { if (otro) alert('Primero escribe la problemática detectada (apartado 7 del contexto), para sugerirte un proyecto que se relacione con ella.'); return; }
   if (otro) aSugIdx[t] = (aSugIdx[t] || 0) + 1;
   const m = modalidadAMetodologia(rVal('a-pm' + t));
   const lista = sugerirProyectos(m.met, prob, m.esc);
@@ -464,6 +464,6 @@ function aSugerirProyecto(t, otro) {
 }
 function aSugerirTodos() { [1, 2, 3].forEach(t => aSugerirProyecto(t)); }
 document.addEventListener('DOMContentLoaded', () => {
-  const p = rEl('a-prob');
+  const p = rEl('ctx-7');
   if (p) p.addEventListener('input', () => { clearTimeout(aSugTimer); aSugTimer = setTimeout(aSugerirTodos, 900); });
 });
