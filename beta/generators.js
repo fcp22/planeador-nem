@@ -451,7 +451,55 @@ function buildPromptPlanDidacticoSemanal(d, semana, sesionesEnSemana) {
 // DESCARGA EN WORD — CONTENIDO HTML CON TABLAS
 // CRÍTICO: NO SE ESCAPA EL HTML (sin .replace para &lt;)
 // ============================================================
-function descargarWord(htmlContenido, nombreArchivo) {
+// ============================================================
+// PAGINADO: que ninguna tabla quede cortada entre dos hojas
+// Word no «sabe» de tablas completas al abrir un .doc hecho de HTML, así que se le indica:
+//  • una fila nunca se parte entre dos hojas;
+//  • si la tabla cabe en una hoja, se mantiene entera (si no cabe en lo que queda, pasa a la siguiente);
+//  • si es más larga que una hoja, solo se evita dejar el encabezado solo al final de una hoja;
+//  • el título que va justo antes de una tabla se queda con ella.
+// «Mantener con el siguiente» (keep with next) se expresa en HTML como page-break-after: avoid.
+// ============================================================
+const PAG_ALTO_UTIL_PX = 640;   // alto aprovechable de una hoja Carta horizontal con márgenes de 1.3 cm (538 pt ≈ 717 px), con holgura porque Word usa otra tipografía
+function paginarTablas(htmlContenido) {
+  let doc;
+  try { doc = new DOMParser().parseFromString('<!doctype html><body><div id="raiz">' + htmlContenido + '</div></body>', 'text/html'); }
+  catch (e) { return htmlContenido; }
+  const raiz = doc.getElementById('raiz'); if (!raiz) return htmlContenido;
+  const BLOQUES = 'p,div,ul,ol,table,h1,h2,h3,h4,h5,h6';
+  const unir = (el, css) => { const a = (el.getAttribute('style') || '').trim(); el.setAttribute('style', (a && !/;\s*$/.test(a) ? a + ';' : a) + css); };
+  // Medición: se dibuja el contenido con el ancho útil de la hoja (Carta horizontal menos márgenes ≈ 718 pt ≈ 957 px)
+  let medir = null;
+  try {
+    medir = document.createElement('div');
+    medir.style.cssText = 'position:absolute;left:-10000px;top:0;width:957px;font:10pt Calibri,Arial,sans-serif;line-height:1.3;visibility:hidden';
+    medir.innerHTML = '<style>table{border-collapse:collapse;width:100%}td,th{border:1px solid #000;padding:4px 6px;font-size:10pt;vertical-align:top}p{margin:3px 0}</style>' + raiz.innerHTML;
+    document.body.appendChild(medir);
+  } catch (e) { medir = null; }
+  const altos = medir ? [...medir.querySelectorAll('table')].map(t => t.offsetHeight) : [];
+  const todas = [...raiz.querySelectorAll('table')];
+  todas.forEach((t, idx) => {
+    const filas = [...t.rows]; if (!filas.length) return;
+    filas.forEach(f => unir(f, 'page-break-inside:avoid;'));                       // fila indivisible
+    const cabe = altos[idx] != null && altos[idx] > 0 && altos[idx] <= PAG_ALTO_UTIL_PX;
+    // Cuántas filas se «pegan» con la siguiente: todas menos la última si cabe; solo el encabezado (1.ª fila) si es larga
+    const hasta = cabe ? filas.length - 1 : Math.min(1, filas.length - 1);
+    for (let i = 0; i < hasta; i++) {
+      [...filas[i].cells].forEach(c => {
+        if (c.querySelector(BLOQUES)) c.querySelectorAll('p,div,li,h1,h2,h3,h4,h5,h6').forEach(x => unir(x, 'page-break-after:avoid;'));
+        else c.innerHTML = '<p style="margin:0;page-break-after:avoid;">' + c.innerHTML + '</p>';
+      });
+    }
+    // el título de la tabla (párrafo o encabezado corto inmediatamente antes) se queda con ella
+    let prev = t.previousElementSibling;
+    if (prev && /^(P|H[1-6]|DIV)$/.test(prev.tagName) && !prev.querySelector('table') && (prev.textContent || '').trim().length < 160) unir(prev, 'page-break-after:avoid;');
+  });
+  if (medir) medir.remove();
+  return raiz.innerHTML;
+}
+
+function armarHTMLWord(htmlContenido) {
+  try { htmlContenido = paginarTablas(htmlContenido); } catch (e) { console.warn('No se pudo ajustar el paginado:', e); }
   // Marca de agua con datos del maestro para identificar el documento
   const usr = (typeof getUsuario === 'function') ? getUsuario() : null;
   const nombreMaestro = usr ? usr.nombre : '';
@@ -477,6 +525,7 @@ function descargarWord(htmlContenido, nombreArchivo) {
     color: #000;
   }
   table { border-collapse: collapse; width: 100%; margin: 4px 0; }
+  tr { page-break-inside: avoid; }
   td, th { border: 1px solid #000; padding: 4px 6px; font-size: 10pt; vertical-align: top; }
   p { margin: 3px 0; }
   h2, h3 { margin: 6px 0 3px 0; }
@@ -499,7 +548,10 @@ ${marcaAgua}
 </div>
 </body>
 </html>`;
-
+  return html;
+}
+function descargarWord(htmlContenido, nombreArchivo) {
+  const html = armarHTMLWord(htmlContenido);
   const blob = new Blob([html], { type: 'application/msword' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
