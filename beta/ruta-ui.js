@@ -444,6 +444,19 @@ function modalidadAMetodologia(txt) {
   return { met: 'abpc', esc: 'comunidad' };
 }
 
+// Lista de sugerencias: primero las que se relacionan con la problemática y, para que «Sugerir otro» no se
+// acabe pronto, se completa con proyectos de otros temas de la misma metodología (hasta 8, sin repetir nombre).
+function listaSugerida(met, prob, esc) {
+  const base = sugerirProyectos(met, prob, esc);
+  const ctx = { prob: probCorta(prob), dis: '', prod: '' };
+  const vistos = new Set(base.map(x => x.nombre)), extra = [];
+  PROY_TEMAS.forEach(t => ((t.p && t.p[met]) || []).slice(0, 1).forEach(([n, pr, tipo]) => {
+    const nombre = sustituir(n, ctx);
+    if (!vistos.has(nombre)) { vistos.add(nombre); extra.push({ nombre, producto: sustituir(pr, ctx), tipo, tema: t.lbl, ejes: t.ejes || [] }); }
+  }));
+  return base.concat(extra).slice(0, 8);
+}
+
 // Programa Analítico: sugiere nombre y producto de cada trimestre según la problemática y la modalidad
 const aSugIdx = { 1: 0, 2: 1, 3: 2 };
 let aSugTimer = null;
@@ -452,7 +465,7 @@ function aSugerirProyecto(t, otro) {
   if (prob.length < 5) { if (otro) alert('Primero escribe la problemática detectada (apartado 7 del contexto), para sugerirte un proyecto que se relacione con ella.'); return; }
   if (otro) aSugIdx[t] = (aSugIdx[t] || 0) + 1;
   const m = modalidadAMetodologia(rVal('a-pm' + t));
-  const lista = sugerirProyectos(m.met, prob, m.esc);
+  const lista = listaSugerida(m.met, prob, m.esc);
   if (!lista.length) return;
   const s = lista[(aSugIdx[t] || 0) % lista.length];
   const idN = 'a-pn' + t, idP = 'a-pr' + t;
