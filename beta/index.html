@@ -734,6 +734,10 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
           <div class="card-title">🧭 Ejes articuladores y Perfil de egreso</div>
           <p style="font-size:13px;color:var(--gris);margin-bottom:16px;">Selecciona los que aplican a tu planeación anual. Puedes elegir más de uno.</p>
 
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin:0 0 14px;font-size:13px;color:#166534;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;">
+            <span><b>La app te propone</b> los ejes articuladores y el perfil de egreso, y el nombre, propósito y producto de cada trimestre, según los contenidos que elijas. Todo aparece como <i>(sugerido)</i>: déjalo, cámbialo o escribe el tuyo.</span>
+            <button class="btn-sec" type="button" style="padding:7px 14px;font-size:12.5px;" onclick="sugpPlanoA(true)">💡 Sugerir ejes y perfil</button>
+          </div>
           <div class="campo">
             <label>Ejes articuladores (selecciona los que aplican)</label>
             <div class="check-grid" id="a-ejes-grid"></div>
@@ -953,6 +957,10 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
             </select>
           </div>
 
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin:0 0 14px;font-size:13px;color:#166534;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;">
+            <span><b>La app te propone</b> los ejes, el perfil, el propósito, el proyecto, la problematización y el producto según tus contenidos. Todo aparece como <i>(sugerido)</i>: déjalo, cámbialo o escribe el tuyo.</span>
+            <button class="btn-sec" type="button" style="padding:7px 14px;font-size:12.5px;" onclick="sugpPlanoD(false,true)">💡 Sugerir todo</button>
+          </div>
           <div class="campo">
             <label>Ejes articuladores (selecciona los que aplican)</label>
             <div class="check-grid" id="d-ejes-grid"></div>
@@ -978,7 +986,8 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
           <!-- SOLO PROYECTO -->
           <div id="campos-proyecto">
             <div class="proy-lista" id="ps-d"></div>
-            <div class="campo mt12"><label>Nombre del proyecto</label><input type="text" id="d-proy" placeholder="Escribe el nombre o selecciona de la lista"></div>
+            <div class="campo mt12"><label>Nombre del proyecto</label><input type="text" id="d-proy" placeholder="Se sugiere uno; escribe el tuyo o elige de la lista">
+              <div style="margin-top:6px;"><button class="btn-sec" type="button" style="padding:6px 12px;font-size:12px;" onclick="sugpPlanoD(true)">💡 Sugerir otro nombre y producto</button></div></div>
             <div class="campo"><label>Problematización de la realidad</label><textarea id="d-prob" placeholder="Describe la problemática o situación de aprendizaje que da origen al proyecto..."></textarea></div>
             <div class="campo"><label>Producto integrador</label><input type="text" id="d-prod" placeholder="Ej. Cartel, Ensayo literario, Podcast, Maqueta..."></div>
           </div>
@@ -1101,16 +1110,17 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   </div><!-- /layout -->
 </div><!-- /app -->
 
-<script src="firebase-config.js?v=202611161755"></script>
-<script src="correos-temporales.js?v=202611161755"></script>
-<script src="auth.js?v=202611161755"></script>
-<script src="licencia.js?v=202611161755"></script>
-<script src="curriculum.js?v=202611161755"></script>
-<script src="projects.js?v=202611161755"></script>
-<script src="generators.js?v=202611161755"></script>
-<script src="metodologias.js?v=202611161755"></script>
-<script src="ruta-ui.js?v=202611161755"></script>
-<script src="secuencias.js?v=202611161755"></script>
+<script src="firebase-config.js?v=202611161840"></script>
+<script src="correos-temporales.js?v=202611161840"></script>
+<script src="auth.js?v=202611161840"></script>
+<script src="licencia.js?v=202611161840"></script>
+<script src="curriculum.js?v=202611161840"></script>
+<script src="projects.js?v=202611161840"></script>
+<script src="generators.js?v=202611161840"></script>
+<script src="metodologias.js?v=202611161840"></script>
+<script src="ruta-ui.js?v=202611161840"></script>
+<script src="secuencias.js?v=202611161840"></script>
+<script src="sugerencias-plano.js?v=202611161840"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
 // (la pantalla de acceso conserva su autocompletar para correo y contraseña).
@@ -1132,8 +1142,8 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611161755"></script>
-<script src="rezago.js?v=202611161755"></script>
+<script src="gestion.js?v=202611161840"></script>
+<script src="rezago.js?v=202611161840"></script>
 <script>
 // ── ESTADO ──────────────────────────────────────────────
 let tipoActivo='a', semAct=1, semsGen=new Set();
@@ -1782,7 +1792,7 @@ function limpiarD(){
   document.getElementById('ps-d').style.display='none';
   document.getElementById('res-d').style.display='none';
   ['d-proy','d-prob','d-prop','d-prod','d-inter','d-codis'].forEach(id=>{const e=document.getElementById(id); if(e) e.value='';});
-  if(typeof sugMarcar==='function'){ sugMarcar('d-proy',false); sugMarcar('d-prod',false); }
+  if(typeof sugMarcar==='function'){ ['d-proy','d-prod','d-prob','d-prop','d-inter','d-ejes-grid','d-perfil-grid'].forEach(id=>sugMarcar(id,false)); }
 }
 
 // ── HISTORIAL ─────────────────────────────────────────────

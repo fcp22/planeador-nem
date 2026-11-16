@@ -143,7 +143,8 @@ function rutaElegirProyecto(i) {
 // ── Usar la ruta en el Plano Didáctico ────────────────────
 function rutaAplicarEjes(lista) {
   const grid = rEl('d-ejes-grid'); if (!grid || !lista) return;
-  if (grid.querySelectorAll('input:checked').length) return; // respeta lo que ya marcó el docente
+  if (grid.querySelectorAll('input:checked').length && grid.dataset.sug !== '1') return; // respeta lo que ya marcó el docente (las casillas «sugeridas» sí se pueden reemplazar)
+  if (grid.dataset.sug === '1' && typeof sugpGrid === 'function') { sugpGrid('d-ejes-grid', v => lista.includes(v)); return; }
   grid.querySelectorAll('input[type=checkbox]').forEach(inp => { if (lista.includes(inp.value) && !inp.checked) inp.click(); });
 }
 
@@ -154,13 +155,13 @@ function rutaUsar() {
   if (typeof setModalidadD === 'function') setModalidadD('proyecto');
   const sel = rEl('d-mod'); if (sel) sel.value = RUTA_MOD_SELECT[rutaActual.met];
   const prob = rEl('d-prob');
-  if (prob && (!prob.value.trim() || prob.value === rutaActual.probAuto)) { prob.value = rutaActual.prob; rutaActual.probAuto = rutaActual.prob; }
+  if (prob && (!prob.value.trim() || prob.value === rutaActual.probAuto || prob.dataset.sug === '1')) { prob.value = rutaActual.prob; rutaActual.probAuto = rutaActual.prob; sugMarcar('d-prob', false); }
   const proy = (rutaActual.proyecto && rutaActual.proyecto.nombre) || rVal('d-proy');
   const prodT = (rutaActual.proyecto && rutaActual.proyecto.producto) || rVal('d-prod') || 'un producto integrador';
   const dg = rVal('d-gra') || '';
   const prop = `Que las y los estudiantes de ${dg ? dg + '° grado' : 'secundaria'} desarrollen, mediante ${met.nombre.toLowerCase()}, los aprendizajes de ${rVal('d-dis') || 'la disciplina'} vinculados con los contenidos y PDA seleccionados, para atender «${probCorta(rutaActual.prob)}» y elaborar «${prodT}» que contribuya a mejorar su ${{ aula: 'aula', escuela: 'escuela', comunidad: 'comunidad' }[rutaActual.esc]}.`;
   const pp = rEl('d-prop');
-  if (pp && (!pp.value.trim() || pp.value === rutaActual.propAuto)) { pp.value = prop; rutaActual.propAuto = prop; }
+  if (pp && (!pp.value.trim() || pp.value === rutaActual.propAuto || pp.dataset.sug === '1')) { pp.value = prop; rutaActual.propAuto = prop; sugMarcar('d-prop', false); }
   rutaAplicarEjes(rutaActual.ejesSug);
   rutaActual.usar = true;
   renderRuta();
