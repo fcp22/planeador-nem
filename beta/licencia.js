@@ -260,6 +260,10 @@ function licAdminRender() {
     <button class="g-btn" onclick="licAdminGenerar()">Generar códigos</button>
     <div id="la-salida" style="margin-top:14px"></div></div>
   <div class="card"><div class="card-title">📋 Códigos y uso</div><button class="g-btn g-btn-s" onclick="licAdminListar()">Actualizar lista</button><div id="la-lista" style="margin-top:12px"></div></div>
+  <div class="card"><div class="card-title">💳 Créditos de IA</div>
+    <div class="ayuda" style="font-size:12.5px;color:var(--gris);margin-bottom:10px">Cuánto has gastado de la IA y cuánto te queda, para recargar a tiempo. Es una <b>estimación</b> con lo que gastan los maestros; el saldo exacto lo ves siempre en la consola de tu proveedor.</div>
+    <button class="g-btn" id="la-cred-btn" onclick="licAdminCreditos()">Ver cómo voy</button>
+    <div id="la-cred" style="margin-top:12px"></div></div>
   <div class="card"><div class="card-title">🩺 Probar la IA</div>
     <div class="ayuda" style="font-size:12px;color:var(--gris);margin-bottom:10px">Hace una generación real de prueba (no descuenta documentos a nadie) y te dice si la llave, el saldo y el modelo funcionan. Úsala antes de vender y cuando alguien reporte un error.</div>
     <div class="campo" style="max-width:340px"><label>Modelo (opcional, para probar uno en particular)</label><input id="la-modelo" placeholder="Vacío = el configurado en el servidor"></div>
@@ -315,6 +319,73 @@ async function licAdminProbar() {
       ${r.ok && r.muestra ? `<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px">Ver la respuesta de prueba</summary><pre style="white-space:pre-wrap;font-size:11px">${gEsc(r.muestra)}</pre></details>` : ''}`;
   } catch (e) { licAdminErr(e.message); }
   b.disabled = false; b.textContent = 'Probar ahora';
+}
+// ── Cuadro «Créditos de IA» (estimación con los tokens que ha gastado el servidor) ──
+const LIC_CONSOLAS = {
+  'api.anthropic.com': ['Anthropic', 'https://console.anthropic.com/settings/billing'],
+  'api.openai.com': ['OpenAI', 'https://platform.openai.com/settings/organization/billing/overview'],
+  'api.groq.com': ['Groq', 'https://console.groq.com/settings/billing'],
+};
+async function licAdminCreditos() {
+  licAdminErr(''); const k = licAdminClave(); if (!k) return licAdminErr('Escribe la clave de administrador.');
+  const o = document.getElementById('la-cred'); o.textContent = 'Cargando…';
+  try { LIC.ia = await workerFetch('/admin/ia', { admin: k }); licAdminCreditosPintar(); }
+  catch (e) { o.innerHTML = ''; licAdminErr(e.status === 404 ? 'El servidor todavía no tiene el cuadro de créditos: pega el nuevo worker.js en Cloudflare (Edit code → Deploy).' : e.message); }
+}
+function licAdminCreditosPintar() {
+  const d = LIC.ia, o = document.getElementById('la-cred'); if (!d || !o) return;
+  const c = d.config || {}, cons = d.consumo || { docs: 0, tin: 0, tout: 0, desde: null }, m = d.mes || { docs: 0, tin: 0, tout: 0 };
+  const usd = n => 'US$ ' + n.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const nf = n => (n || 0).toLocaleString('es-MX');
+  const consola = LIC_CONSOLAS[d.proveedor];
+  const precios = typeof c.pin === 'number' && typeof c.pout === 'number';
+  const credito = typeof c.credito === 'number' && c.credito > 0 ? c.credito : null;
+  const gasto = precios ? (cons.tin * c.pin + cons.tout * c.pout) / 1e6 : null;
+  const resta = gasto != null && credito != null ? credito - gasto : null;
+  const alerta = typeof c.alerta === 'number' ? c.alerta : (credito != null ? credito * 0.2 : 0);
+  const porDoc = gasto != null && cons.docs > 0 ? gasto / cons.docs : null;
+  const dias = cons.desde ? Math.max(1, (Date.now() - new Date(cons.desde).getTime()) / 86400000) : null;
+  const ritmo = gasto != null && dias ? gasto / dias : null;
+  const diasRest = resta != null && ritmo > 0 ? resta / ritmo : null;
+  const nivel = d.sinSaldo || (resta != null && resta <= 0) ? 'rojo' : (resta != null && (resta <= alerta || (diasRest != null && diasRest < 7)) ? 'ambar' : 'verde');
+  const col = { rojo: ['#fef2f2', '#fecaca', '#991b1b', '#dc2626'], ambar: ['#fffbeb', '#fcd34d', '#92400e', '#f59e0b'], verde: ['#f0fdf4', '#bbf7d0', '#166534', '#16a34a'] }[nivel];
+  const enlace = consola ? `<a href="${consola[1]}" target="_blank" rel="noopener" style="font-weight:700">Abrir la consola de ${consola[0]} para recargar</a>` : 'Recarga en la consola de tu proveedor (' + gEsc(d.proveedor) + ').';
+  let h = '';
+  if (d.sinSaldo) h += `<div style="background:#fef2f2;border:2px solid #dc2626;color:#991b1b;border-radius:10px;padding:12px 14px;margin-bottom:12px"><b>⛔ La IA se quedó SIN SALDO</b> (${gEsc(new Date(d.sinSaldo.hora).toLocaleString('es-MX'))}). Los maestros no pueden generar documentos hasta que recargues.<br>${enlace}</div>`;
+  else if (resta != null) h += `<div style="background:${col[0]};border:1.5px solid ${col[1]};color:${col[2]};border-radius:10px;padding:12px 14px;margin-bottom:12px"><b>${nivel === 'rojo' ? '⛔ Se acabó el crédito estimado' : nivel === 'ambar' ? '⚠️ Te está quedando poco: recarga pronto' : '✓ Crédito suficiente por ahora'}</b> — quedan aprox. <b>${usd(Math.max(0, resta))}</b> de ${usd(credito)}${diasRest != null ? ` · a este ritmo alcanzan unos <b>${diasRest < 1 ? 'menos de 1 día' : Math.floor(diasRest) + ' días'}</b>` : ''}.
+    <div style="height:10px;background:rgba(0,0,0,.1);border-radius:6px;overflow:hidden;margin:8px 0 6px"><div style="height:100%;width:${Math.max(0, Math.min(100, resta / credito * 100))}%;background:${col[3]}"></div></div>${nivel !== 'verde' ? enlace : ''}</div>`;
+  else h += `<div class="g-aviso" style="margin-bottom:12px">Para ver cuánto te queda, captura abajo tu saldo actual y los precios de tu proveedor, y pulsa <b>Guardar</b>. ${enlace}</div>`;
+  const fila = (t, v) => `<tr><td style="padding:3px 14px 3px 0;color:var(--gris)">${t}</td><td>${v}</td></tr>`;
+  h += `<table style="font-size:13px;margin-bottom:12px">${fila('Servicio / modelos', gEsc(d.proveedor) + ' · ' + (d.modelos || []).map(gEsc).join(' → '))}
+    ${fila('Documentos con IA este mes (' + gEsc(d.mesClave || '') + ')', '<b>' + nf(m.docs) + '</b> · ' + nf(m.tin + m.tout) + ' tokens')}
+    ${fila('Desde tu última recarga' + (cons.desde ? ' (' + gEsc(new Date(cons.desde).toLocaleDateString('es-MX')) + ')' : ''), '<b>' + nf(cons.docs) + '</b> documentos · ' + nf(cons.tin) + ' tokens de entrada / ' + nf(cons.tout) + ' de salida')}
+    ${gasto != null ? fila('Gasto estimado desde la recarga', '<b>' + usd(gasto) + '</b>') : ''}${porDoc != null ? fila('Costo promedio por documento', '<b>' + usd(porDoc) + '</b>') : ''}</table>`;
+  h += `<div class="f2"><div class="campo"><label>Saldo que muestra tu proveedor ahora (US$)</label><input id="la-ia-credito" type="number" min="0" step="0.01" value="${credito != null ? credito : ''}"></div>
+    <div class="campo"><label>Avisarme cuando queden menos de (US$)</label><input id="la-ia-alerta" type="number" min="0" step="0.01" value="${typeof c.alerta === 'number' ? c.alerta : ''}" placeholder="${credito != null ? (credito * 0.2).toFixed(2) + ' (20 %)' : ''}"></div></div>
+    <div class="f2"><div class="campo"><label>Precio por millón de tokens de ENTRADA (US$)</label><input id="la-ia-pin" type="number" min="0" step="0.01" value="${typeof c.pin === 'number' ? c.pin : ''}"></div>
+    <div class="campo"><label>Precio por millón de tokens de SALIDA (US$)</label><input id="la-ia-pout" type="number" min="0" step="0.01" value="${typeof c.pout === 'number' ? c.pout : ''}"></div></div>
+    <div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-bottom:10px">Los precios los ves en la página de precios de tu proveedor, para el modelo que usas. Sin ellos no se puede convertir tokens a dinero.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="g-btn" onclick="licAdminCreditosGuardar(false)">Guardar</button>
+    <button class="g-btn g-btn-s" onclick="licAdminCreditosGuardar(true)">Ya recargué: empezar a contar de nuevo</button></div>`;
+  if (porDoc != null) h += `<div style="margin-top:16px;border-top:1px solid var(--borde);padding-top:12px"><b style="font-size:13.5px">🧮 ¿Cuánto necesito recargar?</b>
+    <div class="f2" style="margin-top:8px"><div class="campo"><label>Maestros con licencia</label><input id="la-calc-m" type="number" min="1" value="50" oninput="licAdminCalc()"></div><div class="campo"><label>Documentos con IA por maestro al mes</label><input id="la-calc-d" type="number" min="1" value="30" oninput="licAdminCalc()"></div></div>
+    <div id="la-calc-r" style="font-size:13.5px"></div></div>`;
+  o.innerHTML = h; licAdminCalc();
+}
+function licAdminCalc() {
+  const d = LIC.ia, r = document.getElementById('la-calc-r'); if (!d || !r) return;
+  const c = d.config || {}, cons = d.consumo || {}; if (!(cons.docs > 0) || typeof c.pin !== 'number' || typeof c.pout !== 'number') return;
+  const porDoc = (cons.tin * c.pin + cons.tout * c.pout) / 1e6 / cons.docs;
+  const mae = +document.getElementById('la-calc-m').value || 0, dm = +document.getElementById('la-calc-d').value || 0;
+  const mes = mae * dm * porDoc;
+  r.innerHTML = `${mae} maestros × ${dm} documentos = <b>${mae * dm}</b> documentos al mes ≈ <b>US$ ${mes.toFixed(2)}</b> al mes (a US$ ${porDoc.toFixed(3)} por documento). Para tener tranquilidad, recarga al menos <b>US$ ${(mes * 1.5).toFixed(2)}</b> (un mes y medio).`;
+}
+async function licAdminCreditosGuardar(nueva) {
+  licAdminErr(''); const k = licAdminClave(); if (!k) return licAdminErr('Escribe la clave de administrador.');
+  if (nueva && !confirm('Esto reinicia el conteo de gasto desde hoy. Úsalo solo cuando YA hayas recargado y capturado tu saldo nuevo. ¿Continuar?')) return;
+  const body = { nuevaRecarga: !!nueva };
+  for (const [id, k2] of [['la-ia-credito', 'credito'], ['la-ia-alerta', 'alerta'], ['la-ia-pin', 'pin'], ['la-ia-pout', 'pout']]) { const v = document.getElementById(id).value; if (v !== '') body[k2] = +v; }
+  try { await workerFetch('/admin/ia-config', { metodo: 'POST', body, admin: k }); await licAdminCreditos(); } catch (e) { licAdminErr(e.message); }
 }
 async function licAdminBloquear(quitar) {
   const k = licAdminClave(); const d = document.getElementById('la-dom').value; const ok = document.getElementById('la-dom-ok'); ok.style.display = 'none'; licAdminErr('');
