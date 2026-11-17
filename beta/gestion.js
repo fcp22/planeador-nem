@@ -127,7 +127,6 @@ const G_MENU = [
   ['grupos', '👥', 'Mis grupos', 'Alumnos y listas', true],
   ['lista', '✅', 'Pasar lista', 'Asistencia, retardos y faltas', true],
   ['nueva', '📝', 'Planeación', 'Programa analítico y plano didáctico', true],
-  ['trim', '🧭', 'Proyecto del trimestre', 'Fases, fechas y tiempos', true],
   ['calif', '📊', 'Calificaciones', 'Criterios y calificación del trimestre', true],
   ['examenes', '🧮', 'Exámenes', 'Crear con IA y calificar', true],
   ['rezago', '🚦', 'Rezago', 'Semáforo de alumnos en riesgo', true],
@@ -882,13 +881,27 @@ function gProyectoEvalHTML(g, t) {
   let h = `<div class="card"><div class="card-title">🧩 Proyecto de este trimestre</div>
     <p style="font-size:13px;margin:0 0 10px">Si en lugar de examen evalúas con un <b>proyecto</b>, cada fase y el producto final se califican de 0 a 10 en <b>«Calificaciones»</b> (ahí está la lista de tus alumnos). Se promedian y juntos valen el porcentaje de arriba.</p>`;
   if (ce && gPct(g, ce.id, t) > 0) h += `<div class="g-aviso" style="margin-bottom:10px;font-size:12.5px">¿Este trimestre no vas a aplicar examen? <button class="g-btn g-btn-s" onclick="gSinExamen()">Poner el examen en 0 %</button></div>`;
-  if (!pl.proyectos.length) h += `<p style="color:var(--gris)">Aún no tienes un proyecto en este trimestre.</p><button class="g-btn" onclick="gIrA('trim')">🧭 Ir a «Proyecto del trimestre» a crearlo</button>`;
+  if (!pl.proyectos.length) {
+    const metRec = METODOLOGIA_POR_CAMPO[gCampoDe(g.grado, g.materia)] || 'abpc';
+    h += `<p style="color:var(--gris);margin:0 0 10px">Aún no tienes un proyecto en este trimestre. Ponle nombre y la app crea las actividades de evaluación (una por fase y el producto final).</p>
+      <div class="campo"><label>Nombre del proyecto</label><input id="gx-nom" placeholder="Ej. Feria de ciencias de la comunidad"></div>
+      <div class="f2"><div class="campo"><label>Producto final (opcional)</label><input id="gx-prod" placeholder="Ej. Maqueta y exposición"></div>
+      <div class="campo"><label>Metodología</label><select id="gx-met">${Object.values(METODOLOGIAS).map(m => `<option value="${m.id}"${m.id === metRec ? ' selected' : ''}>${gEsc(m.siglas)} · ${gEsc(m.nombre)}</option>`).join('')}</select></div></div>
+      <button class="g-btn" onclick="gProyectoRapido()">🧩 Crear proyecto y sus actividades</button>`;
+  }
   pl.proyectos.forEach(p => {
     const n = g.actividades.filter(a => a.proyectoId === p.id).length;
     h += `<div class="g-proy" style="margin-bottom:10px"><b>${gEsc(p.nombre)}</b>${p.producto ? `<div style="font-size:12.5px;color:var(--gris);margin-top:2px">Producto: ${gEsc(p.producto)}</div>` : ''}
       <div style="margin-top:8px">${n ? `<span style="font-size:12.5px;color:var(--gris)">${n} actividades de evaluación creadas.</span> ` : ''}<button class="g-btn g-btn-s" onclick="gCrearEvalProyectoEx('${p.id}')">${n ? 'Ver y calificar en «Calificaciones»' : '+ Crear actividades de evaluación (una por fase + producto final)'}</button></div></div>`;
   });
   return h + '</div>';
+}
+function gProyectoRapido() {
+  const g = gGrupo(); const nombre = (document.getElementById('gx-nom').value || '').trim();
+  if (!nombre) { gAviso('Escribe el nombre del proyecto.'); return; }
+  const id = gId();
+  gPlanTrim(g, G.trimExam).proyectos.push(gProyDef({ id, nombre, producto: (document.getElementById('gx-prod').value || '').trim(), tipo: '', met: document.getElementById('gx-met').value, esc: 'aula', prob: '', estado: 'Por planear' }));
+  gGuardar(); gCrearEvalProyectoEx(id);
 }
 function gCrearEvalProyectoEx(id) { G.trimPlan = G.trimExam; gCrearEvalProyecto(id); }
 function gRenderExamenes() {
