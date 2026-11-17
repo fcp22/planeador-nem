@@ -97,7 +97,7 @@ function gGuardarPerfil() {
 function gInit() { gCargar(); if (G.tab) gRender(); }
 function gOnTab(id) {
   if (typeof licOnTab === 'function' && licOnTab(id)) { G.tab = id; return; }
-  const conocidas = ['inicio', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', ...Object.keys(G_PRONTO)];
+  const conocidas = ['inicio', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'calendario', ...Object.keys(G_PRONTO)];
   if (!conocidas.includes(id)) return;
   if (!G.data) gCargar();
   G.tab = id;
@@ -106,15 +106,61 @@ function gOnTab(id) {
 function gRender() {
   if (licTabBloqueada(G.tab)) { gPanel().innerHTML = licHTMLBloqueo(G.tab); return; }
   if (G_PRONTO[G.tab]) return gRenderProntoTab(G.tab);
-  const f = { inicio: gRenderInicio, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago }[G.tab];
+  const f = { inicio: gRenderInicio, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, calendario: gRenderCalendario }[G.tab];
   if (f) f();
+}
+
+// ── Calendario escolar: se suben los archivos que da la escuela (PDF o imagen) ──
+function gIdb() {
+  return new Promise((ok, mal) => {
+    if (!window.indexedDB) return mal(new Error('Este navegador no permite guardar archivos.'));
+    const r = indexedDB.open('nem_archivos', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('cal', { keyPath: 'id' });
+    r.onsuccess = () => ok(r.result); r.onerror = () => mal(r.error);
+  });
+}
+async function gCalLista() {
+  const db = await gIdb();
+  return new Promise((ok, mal) => { const q = db.transaction('cal').objectStore('cal').getAll(); q.onsuccess = () => ok((q.result || []).filter(x => x.cuenta === G.key).sort((a, b) => a.t - b.t)); q.onerror = () => mal(q.error); });
+}
+async function gCalPoner(rec) { const db = await gIdb(); return new Promise((ok, mal) => { const q = db.transaction('cal', 'readwrite').objectStore('cal').put(rec); q.onsuccess = ok; q.onerror = () => mal(q.error); }); }
+async function gCalQuitarArchivo(id) { if (!confirm('¿Quitar este archivo del calendario?')) return; const db = await gIdb(); db.transaction('cal', 'readwrite').objectStore('cal').delete(id).onsuccess = () => gRenderCalendario(); }
+async function gCalSubir(inp) {
+  const fs = [...inp.files]; inp.value = ''; if (!fs.length) return;
+  const msg = document.getElementById('gcal-msg'); let n = 0, mal = [];
+  for (const f of fs) {
+    const esPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name), esImg = /^image\/(png|jpe?g|webp|heic)/i.test(f.type) || /\.(png|jpe?g|webp|heic)$/i.test(f.name);
+    if (!esPdf && !esImg) { mal.push(`«${f.name}»: solo se aceptan PDF, JPG o PNG`); continue; }
+    if (f.size > 15 * 1024 * 1024) { mal.push(`«${f.name}»: pesa más de 15 MB`); continue; }
+    try { await gCalPoner({ id: gId(), cuenta: G.key, nombre: f.name, tipo: esPdf ? 'pdf' : 'img', mime: esPdf ? 'application/pdf' : (f.type || 'image/jpeg'), blob: f, t: Date.now() }); n++; }
+    catch (e) { mal.push(`«${f.name}»: no se pudo guardar (${e.message || 'error'})`); }
+  }
+  await gRenderCalendario();
+  const m2 = document.getElementById('gcal-msg'); if (m2) m2.innerHTML = (n ? `<span style="color:var(--verde)">✓ Se guardó ${n} archivo(s).</span> ` : '') + mal.map(x => `<span class="g-mal">${gEsc(x)}</span>`).join('<br>');
+}
+async function gRenderCalendario() {
+  const p = gPanel(); if (!p) return;
+  let lista = [], err = '';
+  try { lista = await gCalLista(); } catch (e) { err = e.message; }
+  (window.__calUrls || []).forEach(u => URL.revokeObjectURL(u)); window.__calUrls = [];
+  const url = b => { const u = URL.createObjectURL(b); window.__calUrls.push(u); return u; };
+  p.innerHTML = `<div class="sec-title">Calendario escolar</div><div class="sec-sub">Sube el calendario que te da tu escuela (PDF o foto) para tenerlo a la mano dentro de la app.</div>
+  <div class="card"><div class="card-title">📎 Subir calendario</div>
+    <p style="font-size:13px;color:var(--gris);margin:0 0 10px">Acepta <b>PDF</b>, <b>JPG</b> o <b>PNG</b> (hasta 15 MB cada uno). Puedes subir varios, por ejemplo uno por trimestre o una hoja por mes. Desde el celular también puedes tomarle una foto.</p>
+    <label class="g-btn" style="display:inline-block;cursor:pointer">⬆ Elegir archivo(s)<input type="file" accept="application/pdf,image/*,.pdf,.png,.jpg,.jpeg" multiple style="display:none" onchange="gCalSubir(this)"></label>
+    <div id="gcal-msg" style="font-size:13px;margin-top:10px">${err ? `<span class="g-mal">${gEsc(err)}</span>` : ''}</div>
+    <div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:8px">Los archivos se guardan <b>en este dispositivo</b> (igual que tus grupos). Si usas otra computadora o celular, súbelo ahí también.</div></div>
+  ${lista.length ? lista.map(f => `<div class="card"><div class="card-title" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${f.tipo === 'pdf' ? '📄' : '🖼️'} <span style="flex:1;min-width:0;word-break:break-word">${gEsc(f.nombre)}</span>
+      <a class="g-btn g-btn-s" href="${url(f.blob)}" target="_blank" rel="noopener" style="text-decoration:none">Abrir grande</a>
+      <a class="g-btn g-btn-s" href="${url(f.blob)}" download="${gEsc(f.nombre)}" style="text-decoration:none">⬇ Descargar</a>
+      <button class="g-btn g-btn-x" onclick="gCalQuitarArchivo('${f.id}')">Quitar</button></div>
+      ${f.tipo === 'pdf' ? `<iframe src="${url(f.blob)}" style="width:100%;height:70vh;border:1px solid var(--borde);border-radius:10px" title="${gEsc(f.nombre)}"></iframe>` : `<img src="${url(f.blob)}" alt="${gEsc(f.nombre)}" style="max-width:100%;border:1px solid var(--borde);border-radius:10px">`}</div>`).join('') : `<div class="card g-vacio">Todavía no has subido tu calendario escolar.</div>`}`;
 }
 
 // ── Menús que todavía están en construcción (se van llenando uno por uno) ──
 const G_PRONTO = {
   bitacora: ['📔', 'Bitácora de clase', 'Diario de cada sesión: qué se trabajó, qué pasó y a quién dar seguimiento, con evidencias fotográficas.'],
   escaner: ['📷', 'Escáner de exámenes', 'Fotografiar el examen resuelto y obtener la calificación de cada alumno automáticamente.'],
-  calendario: ['📅', 'Calendario escolar', 'Días festivos, periodos de evaluación y tus propios eventos, con sugerencias para planear.'],
   horario: ['🕐', 'Horario semanal', 'Tu horario por grupo y materia, para que el pase de lista y la planeación se llenen solos.'],
 };
 function gRenderProntoTab(id) {
@@ -132,7 +178,7 @@ const G_MENU = [
   ['rezago', '🚦', 'Rezago', 'Semáforo de alumnos en riesgo', true],
   ['bitacora', '📔', 'Bitácora', 'Diario de cada clase', false],
   ['escaner', '📷', 'Escanear examen', 'Calificar con la cámara', false],
-  ['calendario', '📅', 'Calendario', 'Festivos y evaluaciones', false],
+  ['calendario', '📅', 'Calendario escolar', 'Sube el de tu escuela', true],
   ['horario', '🕐', 'Horario', 'Tu semana por grupo', false],
   ['historial', '📋', 'Historial', 'Planeaciones generadas', true],
   ['licencia', '🔑', 'Mi licencia', 'IA, plan y código', true],
