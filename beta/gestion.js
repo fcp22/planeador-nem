@@ -64,6 +64,7 @@ function gGuardar() {
 }
 function gGrupo() { return (G.data && G.data.grupos.find(g => g.id === G.gid)) || null; }
 function gCampoDe(grado, materia) {
+  if (materia === 'Educación Socioemocional') materia = 'Tutoría';   // nombre anterior (grupos guardados antes)
   const cm = CAMPOS_POR_GRADO[grado] || {};
   for (const c of Object.keys(cm)) if (cm[c].includes(materia)) return c;
   return '';
@@ -668,8 +669,8 @@ function gTemasPanel(g, t) {
   const { propios, programa } = gTemasCandidatos(g, t); G.temasLista = propios.concat(programa);
   if (!G.temasLista.length) return '';
   const sel = new Set(G.temasSel || []);
-  const fila = c => `<label class="g-tema" style="display:flex;gap:8px;align-items:flex-start;text-align:left;text-transform:none;letter-spacing:0;font-weight:400;font-size:13px;margin:0;cursor:pointer"><input type="checkbox" style="margin-top:3px;width:auto;flex:none;padding:0" ${sel.has(c.k) ? 'checked' : ''} onchange="gTemasMarcar()" data-k="${gEsc(c.k)}"> <span><b>${gEsc(c.titulo)}</b>${c.proy ? ` <small style="color:var(--gris)">· ${gEsc(c.proy)}</small>` : ''}</span></label>`;
-  return `<div class="campo"><label>${propios.length ? '📚 Temas de tu planeación de este trimestre' : '📚 Contenidos del programa'} (toca los que quieres evaluar)</label>
+  const fila = c => `<label class="g-tema" style="display:flex;gap:8px;align-items:flex-start;text-align:left;text-transform:none;letter-spacing:0;font-weight:400;font-size:13px;margin:0;cursor:pointer"><input type="checkbox" style="margin-top:3px;width:auto;flex:none;padding:0" ${sel.has(c.k) ? 'checked' : ''} onchange="gTemasMarcar()" data-k="${gEsc(c.k)}"> <span><b>${gEsc(c.titulo)}</b>${c.proy ? ` <small style="color:var(--gris)">· ${gEsc(c.proy)}</small>` : ''}${c.pda ? `<small title="${gEsc(c.pda)}" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;color:var(--gris);font-size:12px;line-height:1.4;margin-top:2px">📌 PDA (${g.grado}.°): ${gEsc(c.pda)}</small>` : ''}</span></label>`;
+  return `<div class="campo"><label>${propios.length ? '📚 Temas de tu planeación de este trimestre' : '📚 Contenidos del programa'} (toca los que quieres evaluar; cada uno muestra su PDA del grado)</label>
     <div style="max-height:220px;overflow:auto;border:1px solid var(--gris-claro);border-radius:10px;padding:8px 10px;display:grid;gap:6px">${(propios.length ? propios : programa).map(fila).join('')}</div>
     ${propios.length && programa.length ? `<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12.5px;color:var(--gris)">Ver otros contenidos del programa</summary><div style="max-height:200px;overflow:auto;border:1px solid var(--gris-claro);border-radius:10px;padding:8px 10px;display:grid;gap:6px;margin-top:6px">${programa.map(fila).join('')}</div></details>` : ''}
     <div class="ayuda">Al marcarlos se escriben abajo con su aprendizaje esperado; ahí mismo los puedes cambiar o agregar los tuyos.</div></div>`;
@@ -678,7 +679,7 @@ function gTemasMarcar() {
   const marcados = [...document.querySelectorAll('.g-tema input:checked')].map(i => i.dataset.k);
   G.temasSel = [...new Set(marcados)];
   const por = new Map((G.temasLista || []).map(c => [c.k, c]));
-  const txt = G.temasSel.map(k => por.get(k)).filter(Boolean).map(c => `${c.titulo}${c.pda ? ' — Aprendizaje esperado: ' + String(c.pda).replace(/\s+/g, ' ').slice(0, 260) : ''}`).join('\n');
+  const txt = G.temasSel.map(k => por.get(k)).filter(Boolean).map(c => `${c.titulo}${c.pda ? ' — Aprendizaje esperado: ' + String(c.pda).replace(/\s+/g, ' ').slice(0, 900) : ''}`).join('\n');
   const ta = document.getElementById('ge-tema'); if (ta) ta.value = txt;
 }
 // Edición del examen generado (pregunta, opciones y respuesta) antes de guardarlo o bajarlo
