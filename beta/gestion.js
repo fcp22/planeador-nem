@@ -482,7 +482,8 @@ function gRenderGrupos() {
   }
   h += `<div class="card"><div class="card-title">💾 Respaldo</div>
     <button class="g-btn" onclick="gRespaldar()">⬇ Descargar respaldo</button>
-    <label class="g-btn g-btn-s" style="display:inline-block;cursor:pointer">⬆ Restaurar respaldo<input type="file" accept=".json,application/json" style="display:none" onchange="gRestaurar(this)"></label></div>`;
+    <label class="g-btn g-btn-s" style="display:inline-block;cursor:pointer">⬆ Restaurar respaldo<input type="file" accept=".json,application/json" style="display:none" onchange="gRestaurar(this)"></label>
+    <div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px;line-height:1.5">💡 <b>Qué se respalda:</b> todos tus grupos con su lista de alumnos, el pase de lista (asistencias, retardos, faltas y justificantes), los criterios de evaluación, las actividades, los exámenes y las calificaciones, y los recuperativos. <b>No incluye</b> el Historial de planeaciones ni el calendario escolar que hayas subido.</div></div>`;
   gPanel().innerHTML = h;
 }
 
