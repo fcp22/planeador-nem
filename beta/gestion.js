@@ -97,7 +97,7 @@ function gGuardarPerfil() {
 function gInit() { gCargar(); if (G.tab) gRender(); }
 function gOnTab(id) {
   if (typeof licOnTab === 'function' && licOnTab(id)) { G.tab = id; return; }
-  const conocidas = ['inicio', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'calendario', 'libros', ...Object.keys(G_PRONTO)];
+  const conocidas = ['inicio', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'recup', 'calendario', 'libros', ...Object.keys(G_PRONTO)];
   if (!conocidas.includes(id)) return;
   if (!G.data) gCargar();
   G.tab = id;
@@ -106,7 +106,7 @@ function gOnTab(id) {
 function gRender() {
   if (licTabBloqueada(G.tab)) { gPanel().innerHTML = licHTMLBloqueo(G.tab); return; }
   if (G_PRONTO[G.tab]) return gRenderProntoTab(G.tab);
-  const f = { inicio: gRenderInicio, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, calendario: gRenderCalendario, libros: gRenderLibros }[G.tab];
+  const f = { inicio: gRenderInicio, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, recup: gRenderRecup, calendario: gRenderCalendario, libros: gRenderLibros }[G.tab];
   if (f) f();
 }
 
@@ -192,6 +192,73 @@ function gRenderLibros() {
     <div class="ayuda" style="font-size:11.5px;color:var(--gris)">Son enlaces oficiales de la SEP y la CONALITEG; abren en otra pestaña.</div></div>`;
 }
 
+// ── Recuperativos: segunda oportunidad para quienes reprobaron un trimestre ──
+const G_REC_MODOS = {
+  mayor: 'Queda la calificación más alta (la del trimestre o la del recuperativo)',
+  prom: 'Se promedia la del trimestre con la del recuperativo',
+  seis: 'Si aprueba el recuperativo, su calificación queda en 6',
+};
+function gRecDef(g, t) {
+  if (!g.recup) g.recup = {};
+  if (!g.recup[t]) g.recup[t] = { nombre: 'Recuperativo del ' + G_TRIM_NOM[t].toLowerCase(), fecha: '', max: 10, modo: 'mayor', notas: {}, extra: [] };
+  return g.recup[t];
+}
+function gRecTrim(v) { G.recTrim = +v; gRenderRecup(); }
+function gRecCampo(k, v) { const g = gGrupo(), R = gRecDef(g, G.recTrim || 1); R[k] = v; gGuardar(); }
+function gRecNota(aid, el) {
+  const g = gGrupo(), t = G.recTrim || 1, R = gRecDef(g, t); const v = el.value.trim();
+  if (v === '') delete R.notas[aid]; else { const n = Math.max(0, Math.min(R.max, gNum(v))); R.notas[aid] = n; }
+  gGuardar();
+  const c = document.getElementById('rc-' + aid); if (c) { const b = gBoleta(gCalcAlumno(g, aid, t).final); c.innerHTML = b == null ? '—' : `<b class="${b < 6 ? 'g-mal' : ''}">${b}</b>`; }
+}
+function gRecAgregar(aid) { if (!aid) return; const R = gRecDef(gGrupo(), G.recTrim || 1); if (!R.extra.includes(aid)) R.extra.push(aid); gGuardar(); gRenderRecup(); }
+function gRecQuitar(aid) { const R = gRecDef(gGrupo(), G.recTrim || 1); R.extra = R.extra.filter(x => x !== aid); delete R.notas[aid]; gGuardar(); gRenderRecup(); }
+function gRecFilas(g, t) {
+  const R = gRecDef(g, t);
+  return g.alumnos.map(a => {
+    const orig = gCalcAlumno(g, a.id, t, true), b = gBoleta(orig.final);
+    const rep = b != null && b < 6, extra = R.extra.includes(a.id);
+    if (!rep && !extra) return null;
+    const flojos = g.criterios.filter(c => orig.porCrit[c.id] != null && orig.porCrit[c.id] < 6).sort((x, y) => orig.porCrit[x.id] - orig.porCrit[y.id]);
+    return { a, orig, b, rep, extra, flojos };
+  }).filter(Boolean);
+}
+function gRenderRecup() {
+  const g = gGrupo();
+  if (!g) return gSinGrupo('Recuperativos', 'Una segunda oportunidad para los alumnos que reprobaron un trimestre');
+  const t = G.recTrim || (G.recTrim = 1), R = gRecDef(g, t);
+  let h = `<div class="sec-title">Recuperativos</div><div class="sec-sub">Para los alumnos que reprobaron un trimestre. Se aplica al cerrar un trimestre, antes de que termine el siguiente. La app te arma la lista de quienes reprobaron, con su calificación actual, y calcula cómo queda en la boleta con la nueva.</div>${gBarra()}
+  <div class="g-trims">${[1, 2, 3].map(x => `<button class="ttab${t === x ? ' on' : ''}" onclick="gRecTrim(${x})">${G_TRIM_NOM[x]}</button>`).join('')}</div>`;
+  if (!g.alumnos.length) return void (gPanel().innerHTML = h + gVacio('Este grupo aún no tiene alumnos.'));
+  const filas = gRecFilas(g, t);
+  h += `<div class="card"><div class="card-title">📝 Examen de recuperación — ${G_TRIM_NOM[t]}</div>
+    <div class="f2"><div class="campo"><label>Nombre</label><input value="${gEsc(R.nombre)}" onchange="gRecCampo('nombre',this.value)"></div>
+    <div class="campo"><label>Fecha de aplicación</label><input type="date" value="${gEsc(R.fecha)}" onchange="gRecCampo('fecha',this.value)"></div></div>
+    <div class="ayuda">Aplica el examen a los alumnos de la lista de abajo. Después escribe la calificación nueva de cada uno (de 0 a 10). Si saca 6 o más, esa pasa a su boleta; si no aprueba, se queda con la que tenía.</div></div>`;
+  h += `<div class="card"><div class="card-title">🔁 Alumnos para recuperar — ${G_TRIM_NOM[t]} <span style="font-size:12px;font-weight:600;color:var(--gris);margin-left:8px">${filas.length}</span></div>`;
+  if (!filas.length) h += `<p style="color:var(--gris);margin:0 0 10px">${g.alumnos.some(a => gCalcAlumno(g, a.id, t, true).final != null) ? '🎉 Nadie reprobó este trimestre.' : 'Aún no hay calificaciones en este trimestre. Captúralas en «Calificaciones» y aquí aparecerán los que reprueben.'}</p>`;
+  else h += `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th>Calif. actual</th><th style="width:120px">Calif. nueva</th><th>Queda en boleta</th><th></th></tr></thead><tbody>` +
+    filas.map((f, i) => { const bf = gBoleta(gCalcAlumno(g, f.a.id, t).final), n = R.notas[f.a.id];
+      return `<tr><td>${i + 1}</td><td>${gEsc(f.a.nombre)}</td><td class="${f.b != null && f.b < 6 ? 'g-mal' : ''}"><b>${f.b == null ? '—' : f.b}</b></td>
+      <td><input class="g-nota" type="number" step="0.1" min="0" max="10" value="${n == null ? '' : n}" oninput="gRecNota('${f.a.id}',this)"></td>
+      <td id="rc-${f.a.id}">${n == null ? '—' : `<b class="${bf < 6 ? 'g-mal' : ''}">${bf}</b>`}</td>
+      <td>${f.extra && !f.rep ? `<button class="g-x" title="Quitar de la lista" onclick="gRecQuitar('${f.a.id}')">✕</button>` : ''}</td></tr>`; }).join('') + '</tbody></table></div>';
+  const otros = g.alumnos.filter(a => !filas.some(f => f.a.id === a.id));
+  if (otros.length) h += `<div style="margin-top:12px"><select id="rc-add" style="padding:8px;border:1.5px solid var(--borde);border-radius:8px;max-width:100%"><option value="">+ Agregar otro alumno…</option>${otros.map(a => `<option value="${a.id}">${gEsc(a.nombre)}</option>`).join('')}</select> <button class="g-btn g-btn-s" onclick="gRecAgregar(document.getElementById('rc-add').value)">Agregar</button></div>`;
+  if (filas.length) h += `<div style="margin-top:12px"><button class="g-btn" onclick="gRecWord()">⬇ Lista de recuperativo (Word)</button></div>`;
+  h += `<div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:10px">Al escribir la calificación nueva, la «Boleta» de ese alumno en «Calificaciones» se actualiza y aparece marcada con (R). La lista incluye a los alumnos con menos de 6 en ese trimestre; puedes agregar a otro con el selector.</div></div>`;
+  gPanel().innerHTML = h;
+}
+function gRecWord() {
+  const g = gGrupo(), t = G.recTrim || 1, R = gRecDef(g, t), filas = gRecFilas(g, t);
+  const th = x => `<td style="border:1px solid #000;padding:4px;background:#BDD7EE;font-weight:bold">${x}</td>`, td = x => `<td style="border:1px solid #000;padding:4px">${x}</td>`;
+  const html = gEncabezadoDoc('RECUPERATIVO — ' + gEsc(R.nombre).toUpperCase(), g, `<b>${G_TRIM_NOM[t]}</b>${R.fecha ? ' &nbsp; <b>Fecha:</b> ' + gFechaBonita(R.fecha) : ''}`) +
+    `<table style="width:100%;border-collapse:collapse"><tr>${['#', 'Alumno', 'Calif. actual', 'Calif. nueva'].map(th).join('')}</tr>` +
+    filas.map((f, i) => { const n = R.notas[f.a.id];
+      return `<tr>${[i + 1, gEsc(f.a.nombre), f.b == null ? '—' : f.b, n == null ? '' : n].map(td).join('')}</tr>`; }).join('') + '</table>';
+  descargarWord(html, `Recuperativo_${(g.nombre + '_' + g.materia + '_T' + t).replace(/\W+/g, '_')}.doc`);
+}
+
 // ── Menús que todavía están en construcción (se van llenando uno por uno) ──
 const G_PRONTO = {
   bitacora: ['📔', 'Bitácora de clase', 'Diario de cada sesión: qué se trabajó, qué pasó y a quién dar seguimiento, con evidencias fotográficas.'],
@@ -212,6 +279,7 @@ const G_MENU = [
   ['calif', '📊', 'Calificaciones', 'Criterios y calificación del trimestre', true],
   ['examenes', '🧮', 'Exámenes', 'Crear con IA y calificar', true],
   ['rezago', '🚦', 'Rezago', 'Semáforo de alumnos en riesgo', true],
+  ['recup', '🔁', 'Recuperativos', 'Segunda oportunidad para reprobados', true],
   ['bitacora', '📔', 'Bitácora', 'Diario de cada clase', false],
   ['escaner', '📷', 'Escanear examen', 'Calificar con la cámara', false],
   ['calendario', '📅', 'Calendario escolar', 'Sube el de tu escuela', true],
@@ -228,6 +296,7 @@ const G_ICONOS = {
   calif: ['<path d="M19 5L5 19"/><circle cx="7.200" cy="7.200" r="2.600"/><circle cx="16.800" cy="16.800" r="2.600"/>', '#ea580c', '#ffedd5'],
   examenes: ['<path d="M4 20h4L19.500 8.500l-4-4L4 16z"/><path d="M13.500 6.500l4 4"/>', '#9333ea', '#f3e8ff'],
   grupos: ['<circle cx="9" cy="8" r="3.200"/><path d="M3 20c0-3.500 2.700-6 6-6s6 2.500 6 6"/><circle cx="17" cy="9" r="2.500"/><path d="M17.500 14c2.500.3 4 2.200 4 5"/>', '#2563eb', '#dbeafe'],
+  recup: ['<path d="M20 12a8 8 0 1 1-2.500-5.800"/><path d="M20 4v4.500h-4.500"/>', '#0891b2', '#cffafe'],
   rezago: ['<path d="M4 20v-6M10 20V9M16 20V4"/><path d="M2.500 20.500h19"/>', '#e11d48', '#ffe4e6'],
   bitacora: ['<rect x="5" y="4" width="14" height="17" rx="2.800"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/>', '#db2777', '#fce7f3'],
   escaner: ['<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.500"/>', '#0284c7', '#e0f2fe'],
@@ -562,7 +631,7 @@ function gAsistNota(g, aid, t) {
 }
 function gAutoAsistencia(cid) { const g = gGrupo(), c = g.criterios.find(x => x.id === cid); if (c) { c.auto = 'asistencia'; gGuardar(); gRenderCalif(); } }
 function gPrimerManual(g) { return g.criterios.find(c => !c.auto) || g.criterios[0]; }
-function gCalcAlumno(g, aid, t) {
+function gCalcAlumno(g, aid, t, sinRec) {
   const porCrit = {}; let suma = 0, pcts = 0;
   g.criterios.forEach(c => {
     const pc = gPct(g, c.id, t);
@@ -574,7 +643,14 @@ function gCalcAlumno(g, aid, t) {
     if (vals.length) { const s = vals.reduce((x, y) => x + y, 0) / vals.length; porCrit[c.id] = s; suma += s * pc; pcts += pc; }
     else porCrit[c.id] = null;
   });
-  return { porCrit, final: pcts > 0 ? suma / pcts : null, pcts };
+  let final = pcts > 0 ? suma / pcts : null, rec = null;
+  const R = !sinRec && g.recup && g.recup[t];
+  if (R && final != null && R.notas && R.notas[aid] != null && R.max > 0) {   // recuperativo: se aplica según lo que decidió el maestro
+    const n = Math.min(10, R.notas[aid] / R.max * 10), orig = final;
+    final = R.modo === 'prom' ? (orig + n) / 2 : R.modo === 'seis' ? (n >= 6 ? Math.max(orig, 6) : orig) : Math.max(orig, n);
+    rec = { orig, n };
+  }
+  return { porCrit, final, pcts, rec };
 }
 function gCalcAnual(g, aid) {
   const bs = [1, 2, 3].map(t => gBoleta(gCalcAlumno(g, aid, t).final)).filter(b => b != null);
@@ -744,7 +820,7 @@ function gResumenHTML() {
   h += `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th>${g.criterios.map(c => `<th>${gEsc(c.nombre)}<br><small>${gPct(g, c.id, t)}%</small></th>`).join('')}<th>Calif.</th><th>Boleta</th></tr></thead><tbody>`;
   h += calc.map(({ a, r }, i) => {
     const b = gBoleta(r.final);
-    return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${g.criterios.map(c => `<td>${gFmt(r.porCrit[c.id])}</td>`).join('')}<td>${gFmt(r.final, 2)}</td><td class="${b != null && b < 6 ? 'g-mal' : ''}"><b>${b == null ? '—' : b}</b></td></tr>`;
+    return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${g.criterios.map(c => `<td>${gFmt(r.porCrit[c.id])}</td>`).join('')}<td>${gFmt(r.final, 2)}</td><td class="${b != null && b < 6 ? 'g-mal' : ''}"><b>${b == null ? '—' : b}</b>${r.rec ? ' <small title="Con recuperativo" style="color:var(--azul-med)">(R)</small>' : ''}</td></tr>`;
   }).join('') + '</tbody></table></div>';
   if (fin.length && calc.some(x => x.r.pcts < 100 && x.r.final != null)) h += `<div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">Los criterios sin calificaciones todavía no cuentan: la calificación se calcula con lo registrado hasta ahora.</div>`;
   return h;

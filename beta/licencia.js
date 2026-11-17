@@ -172,7 +172,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && LI
 // Incluye: 2 documentos con IA (uno de cada tipo; el examen de hasta 5 reactivos y 1 sola secuencia), verlos en pantalla,
 // crear grupos y generar el examen. NO incluye: descargar Word/PDF/Excel, subir listas desde archivo, pase de lista,
 // calificaciones ni seguimiento de rezago (eso se abre con la licencia). El tope de documentos lo hace cumplir el servidor.
-const LIC_TABS_CON_LICENCIA = { lista: 'Pase de lista', calif: 'Calificaciones y promedios', rezago: 'Seguimiento de rezago' };
+const LIC_TABS_CON_LICENCIA = { lista: 'Pase de lista', calif: 'Calificaciones y promedios', rezago: 'Seguimiento de rezago', recup: 'Recuperativos' };
 function licEsPrueba() { const e = LIC.estado; return !!(e && e.prueba && e.activa) && !licEsAdminCuenta(); }
 function licTabBloqueada(id) { return !!LIC_TABS_CON_LICENCIA[id] && licEsPrueba(); }
 function licHTMLBloqueo(id) {
