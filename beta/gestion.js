@@ -469,6 +469,24 @@ function gRestablecerCriterios() {
   g.actividades.forEach(a => { a.criterioId = g.criterios[a.tipo === 'examen' ? 4 : 1].id; });
   gGuardar(); gRenderCalif();
 }
+// Criterio con su peso, para el examen: el nombre dice cuánto vale dentro de la calificación del trimestre
+function gCriteriosOptsPct(g, sel) { return g.criterios.map(c => `<option value="${c.id}"${c.id === sel ? ' selected' : ''}>${gEsc(c.nombre)} — vale ${c.pct}% de la calificación del trimestre</option>`).join(''); }
+function gEsCritExamen(c) { return /exam/i.test(String(c.nombre).normalize('NFD').replace(/[\u0300-\u036f]/g, '')); }   // acepta «Examen», «Exámenes», «EXAMENES»…
+function gCritAyudaHTML(g, cid) {
+  const c = g.criterios.find(x => x.id === cid); if (!c) return '';
+  const nom = gEsc(c.nombre), pct = c.pct, aporte = Math.round(8 * pct) / 100;
+  const hay = gActsTrim(g, G.trimExam).filter(a => a.criterioId === c.id).length;
+  const suma = gSumaPct(g);
+  return `<b>¿Cómo cuenta este examen en la calificación del trimestre?</b>
+    <ol style="margin:6px 0 6px 18px;padding:0;line-height:1.55">
+      <li>El examen se califica de <b>0 a 10</b>. No importa cuántos puntos tenga en total (por ejemplo 6): al capturar los aciertos de cada alumno, la app lo convierte sola a una calificación de 0 a 10.</li>
+      <li>Esa calificación se guarda en el criterio <b>«${nom}»</b>, que vale el <b>${pct}%</b> de la calificación final del trimestre.</li>
+      <li><b>Ejemplo:</b> un alumno que saca <b>8</b> en este examen suma 8 × ${pct}% = <b>${aporte} puntos</b> de los 10 de su calificación del trimestre.</li>
+      <li>${hay ? `En este trimestre ya tienes <b>${hay}</b> actividad${hay > 1 ? 'es' : ''} en «${nom}»: se <b>promedian</b> con este examen y ese promedio es lo que vale el ${pct}%.` : `Si después guardas otro examen o actividad en «${nom}», se <b>promedian</b> entre sí y ese promedio es lo que vale el ${pct}%.`}</li>
+    </ol>
+    <span style="color:var(--gris)">Los porcentajes de cada criterio se cambian en «Calificaciones».</span>${suma !== 100 ? `<div style="color:#b45309;margin-top:6px">⚠ Tus criterios suman ${suma}% y deben sumar 100%. Ajústalos en «Calificaciones».</div>` : ''}`;
+}
+function gCritAyuda() { const g = gGrupo(), s = document.getElementById('ge-crit'), e = document.getElementById('ge-crit-ayuda'); if (g && s && e) e.innerHTML = gCritAyudaHTML(g, s.value); }
 function gCriteriosOpts(g, sel) { return g.criterios.map(c => `<option value="${c.id}"${c.id === sel ? ' selected' : ''}>${gEsc(c.nombre)} (${c.pct}%)</option>`).join(''); }
 
 function gAgregarActividad() {
@@ -756,7 +774,7 @@ function gRenderExamenes() {
   const g = gGrupo();
   if (!g) return gSinGrupo('Exámenes', 'Genera exámenes con IA y califica a tu grupo');
   const t = G.trimExam;
-  const critEx = (g.criterios.find(c => /examen/i.test(c.nombre)) || g.criterios[0]).id;
+  const critEx = (g.criterios.find(gEsCritExamen) || g.criterios[0]).id;
   let h = `<div class="sec-title">Exámenes</div><div class="sec-sub">Crea un examen con su clave de respuestas, captura los aciertos de cada alumno y la calificación se calcula sola.</div>${gBarra()}
   <div class="g-trims">${[1, 2, 3].map(x => `<button class="ttab${t === x ? ' on' : ''}" onclick="gTrimExam(${x})">${G_TRIM_NOM[x]}</button>`).join('')}</div>
   <div class="card"><div class="card-title">✨ Generar examen con IA — ${gEsc(g.materia)} ${g.grado}°</div>
@@ -765,8 +783,9 @@ function gRenderExamenes() {
     <div class="f3">
       <div class="campo"><label>Número de reactivos</label>${licEsPrueba() ? '<input id="ge-n" type="number" min="3" max="5" value="5"><div class="ayuda">En la prueba gratis: hasta 5 reactivos.</div>' : '<input id="ge-n" type="number" min="3" max="30" value="10">'}</div>
       <div class="campo"><label>Dificultad</label><select id="ge-dif"><option>Básica</option><option selected>Media</option><option>Alta</option></select></div>
-      <div class="campo"><label>Criterio donde cuenta</label><select id="ge-crit">${gCriteriosOpts(g, critEx)}</select></div>
     </div>
+    <div class="campo"><label>¿En qué parte de la calificación del trimestre cuenta este examen?</label><select id="ge-crit" onchange="gCritAyuda()">${gCriteriosOptsPct(g, critEx)}</select>
+      <div id="ge-crit-ayuda" class="g-aviso" style="margin-top:8px;font-size:12.5px">${gCritAyudaHTML(g, critEx)}</div></div>
     <div class="campo"><label>Tipos de reactivo</label><div class="g-checks">${Object.entries(G_TIPOS_EXAM).map(([k, v]) => `<label><input type="checkbox" id="ge-t-${k}" ${k !== 'desarrollo' ? 'checked' : ''}> ${v}</label>`).join('')}</div></div>
     <div class="l-err" id="ge-err" style="margin:0 0 12px"></div>
     <button class="g-btn" id="ge-btn" onclick="gGenerarExamen()">✨ Generar examen con IA</button>
@@ -775,6 +794,7 @@ function gRenderExamenes() {
   if (G.borrador && G.borrador.trim === t) {
     const b = G.borrador;
     h += `<div class="card" id="g-borrador"><div class="card-title">👀 Revisa tu examen (${gMaxExamen(b)} puntos)</div>
+      <div class="ayuda" style="margin:-4px 0 10px">Este examen suma <b>${gMaxExamen(b)} puntos</b> (lo que vale cada pregunta aparece entre paréntesis). Al capturar los aciertos de cada alumno, la app lo convierte sola a una calificación de 0 a 10.</div>
       <div class="campo"><label>Título</label><input value="${gEsc(b.titulo)}" oninput="gTituloBorrador(this.value)"></div>` +
       `<div class="ayuda" style="margin:-4px 0 10px">Puedes corregir cualquier pregunta, opción o respuesta directamente aquí, o quitar la que no te guste con ✕.</div>` +
       b.reactivos.map((r, i) => `<div class="g-reac"><button class="g-x" title="Quitar reactivo" onclick="gQuitarReactivo(${i})">✕</button><b>${i + 1}.</b> <small>(${G_TIPOS_EXAM[r.tipo]}, ${r.valor} pt)</small>
@@ -790,7 +810,7 @@ function gRenderExamenes() {
   h += `<details class="card g-det"><summary>📄 Ya apliqué un examen en papel (registrarlo sin IA)</summary>
     <div class="f3" style="margin-top:12px"><div class="campo"><label>Nombre</label><input id="gp-nom" placeholder="Ej. Examen del trimestre"></div>
     <div class="campo"><label>Total de puntos / reactivos</label><input id="gp-max" type="number" min="1" value="10"></div>
-    <div class="campo"><label>Criterio</label><select id="gp-crit">${gCriteriosOpts(g, critEx)}</select></div></div>
+    <div class="campo"><label>¿En qué criterio cuenta?</label><select id="gp-crit">${gCriteriosOptsPct(g, critEx)}</select></div></div>
     <button class="g-btn" onclick="gRegistrarExamenPapel()">Registrar examen</button></details>`;
 
   const exs = gActsTrim(g, t).filter(a => a.tipo === 'examen');
