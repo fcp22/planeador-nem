@@ -162,13 +162,60 @@ const G_LIBROS_CICLO = 2026;   // Ciclo escolar 2026-2027 en el catálogo de la 
 const G_LIBROS = [[1, "S0LPM", "Un libro sin recetas para la maestra y el maestro. Fase 6. Secundaria"], [1, "S1ETA", "Colección Ximhai. Ética, naturaleza y sociedades. Primer grado"], [1, "S1HPA", "Historia del pueblo mexicano. Multigrado"], [1, "S1HUA", "Colección Ximhai. De lo humano y lo comunitario. Primer grado"], [1, "S1INA", "Uérakua anapu uantakua. Projects and Readings. First grade. Secondary"], [1, "S1LEA", "Colección Ximhai. Lenguajes. Primer grado"], [1, "S1MLA", "Colección Ximhai. Múltiples lenguajes. Primer grado"], [1, "S1NLA", "Colección Ximhai. Nuestro libro de proyectos. Primer grado de secundaria"], [1, "S1SAA", "Colección Ximhai. Saberes y pensamiento científico. Primer grado"], [2, "S0LPM", "Un libro sin recetas para la maestra y el maestro. Fase 6. Secundaria"], [2, "S2ETA", "Colección Sk'asolil. Ética, naturaleza y sociedades. Segundo grado"], [2, "S2HUA", "Colección Sk'asolil. De lo humano y lo comunitario. Segundo grado"], [2, "S2INA", "Uérakua anapu uantakua. Projects and Readings. Second grade. Secondary"], [2, "S2LEA", "Colección Sk'asolil. Lenguajes. Segundo grado"], [2, "S2MLA", "Colección Sk'asolil. Múltiples lenguajes. Segundo grado"], [2, "S2NLA", "Colección Sk'asolil. Nuestro libro de proyectos. Segundo grado"], [2, "S2SAA", "Colección Sk'asolil. Saberes y pensamiento científico. Segundo grado"], [3, "S0LPM", "Un libro sin recetas para la maestra y el maestro. Fase 6. Secundaria"], [3, "S3ETA", "Colección Nanahuatzin. Ética, naturaleza y sociedades. Tercer grado"], [3, "S3HUA", "Colección Nanahuatzin. De lo humano y lo comunitario. Tercer grado"], [3, "S3INA", "Uérakua anapu uantakua. Projects and Readings. Third grade. Secondary"], [3, "S3LEA", "Colección Nanahuatzin. Lenguajes. Tercer grado"], [3, "S3MLA", "Colección Nanahuatzin. Múltiples lenguajes. Tercer grado"], [3, "S3NLA", "Colección Nanahuatzin. Nuestro libro de proyectos. Tercer grado"], [3, "S3SAA", "Colección Nanahuatzin. Saberes y pensamiento científico. Tercer grado"]];
 const G_LIBROS_URL = c => `https://libros.conaliteg.gob.mx/pdf-reader/reader.html?nivel=secundaria&ciclo=${G_LIBROS_CICLO}&clave=${c}`;
 const G_LIBROS_PORTADA = c => `https://libros.conaliteg.gob.mx/${G_LIBROS_CICLO}/m/${c}/000.jpg`;
+// Documentos propios de la app (carpeta docs/): se abren sin salir de la app
+const G_DOCS = [
+  ['📗', 'Plan de Estudio 2022', 'Plan de Estudio para la Educación Preescolar, Primaria y Secundaria (200 páginas).', 'docs/plan-de-estudio-2022.pdf', '3.2 MB'],
+  ['📘', 'Programa sintético · Fase 6 (secundaria)', 'Contenidos y procesos de desarrollo de aprendizaje (PDA) de 1.º a 3.º (136 páginas).', 'docs/programa-sintetico-fase6.pdf', '3.0 MB'],
+];
+// Programa sintético Fase 6: páginas de cada campo formativo [clave, nombre, prefijo normalizado, icono, desde, hasta, materias, archivo]
+const G_CAMPOS_PROG = [
+  ['lenguajes', 'Lenguajes', 'lenguajes', '🗣️', 29, 53, 'Español · Lenguas indígenas · Inglés · Artes', 'docs/programa-f6-campo-lenguajes.pdf'],
+  ['saberes', 'Saberes y pensamiento científico', 'saberes', '🔬', 55, 72, 'Matemáticas · Biología · Física · Química', 'docs/programa-f6-campo-saberes.pdf'],
+  ['etica', 'Ética, naturaleza y sociedades', 'etica', '🌎', 75, 107, 'Geografía · Historia · Formación Cívica y Ética', 'docs/programa-f6-campo-etica.pdf'],
+  ['humano', 'De lo humano y lo comunitario', 'de lo humano', '🤝', 109, 119, 'Tecnología · Tutoría (Educ. Socioemocional) · Educación Física', 'docs/programa-f6-campo-humano.pdf'],
+];
+const G_OTRAS_PROG = [
+  ['Introducción y elementos curriculares', 11, 13, 'docs/programa-f6-intro-elementos.pdf'],
+  ['Panorama de los contenidos de la Fase 6', 14, 27, 'docs/programa-f6-panorama-contenidos.pdf'],
+  ['El Programa Analítico', 121, 124, 'docs/programa-f6-programa-analitico.pdf'],
+  ['Reflexiones sobre la evaluación formativa', 125, 126, 'docs/programa-f6-evaluacion-formativa.pdf'],
+  ['Materiales de apoyo para el diseño de actividades didácticas', 129, 134, 'docs/programa-f6-materiales-apoyo.pdf'],
+];
 const G_PROGRAMAS = [
-  ['📘', 'Programa sintético · Fase 6 (secundaria)', 'Contenidos y procesos de desarrollo de aprendizaje (PDA) de 1.º a 3.º. Edición 2025.', 'https://educacionbasica.sep.gob.mx/wp-content/uploads/2025/Plan_y_programas_de_estudio_2025/WEB%20FASE%206-2025.pdf', 'PDF · pesa unos 70 MB'],
-  ['📗', 'Plan de Estudio 2025', 'Documento general del plan de estudio de educación básica.', 'https://educacionbasica.sep.gob.mx/wp-content/uploads/2025/Plan_y_programas_de_estudio_2025/Plan%20de%20Estudio%202025%20-WEB-.pdf', 'PDF'],
+  ['📘', 'Programa sintético · Fase 6 · edición 2025 (SEP)', 'Edición más reciente publicada por la SEP, por si necesitas compararla.', 'https://educacionbasica.sep.gob.mx/wp-content/uploads/2025/Plan_y_programas_de_estudio_2025/WEB%20FASE%206-2025.pdf', 'PDF · pesa unos 70 MB'],
+  ['📗', 'Plan de Estudio 2025 (SEP)', 'Documento general del plan de estudio de educación básica.', 'https://educacionbasica.sep.gob.mx/wp-content/uploads/2025/Plan_y_programas_de_estudio_2025/Plan%20de%20Estudio%202025%20-WEB-.pdf', 'PDF'],
   ['🗂️', 'Todos los programas sintéticos', 'Página oficial con los programas de todas las fases.', 'https://educacionbasica.sep.gob.mx/programas-sinteticos/', 'Sitio de la SEP'],
   ['🧭', 'Marco curricular y planes', 'Marco curricular de la Nueva Escuela Mexicana.', 'https://www.sep.gob.mx/marcocurricular/', 'Sitio de la SEP'],
   ['📚', 'Catálogo completo de libros de texto', 'Todos los libros gratuitos de secundaria en la CONALITEG.', 'https://libros.conaliteg.gob.mx/secundaria.html', 'Sitio de la CONALITEG'],
 ];
+// Abre libros y documentos en una ventana aparte: al cerrarla no se cierra el Planeador
+function gAbrirVentana(url) {
+  try {
+    const w = window.open(url, '_blank', 'popup=yes,width=1150,height=850,left=60,top=40,resizable=yes,scrollbars=yes');
+    if (!w) return true;            // el navegador la bloqueó: se abre como pestaña normal
+    try { w.opener = null; } catch (e) {}
+    return false;
+  } catch (e) { return true; }
+}
+function gDocsHTML(nc) {
+  const COMPLETO = 'docs/programa-sintetico-fase6.pdf';
+  const btn = (href, txt, pri, dl) => `<a href="${href}" ${dl ? 'download' : 'target="_blank" rel="noopener" onclick="return gAbrirVentana(this.href)"'} class="g-btn ${pri ? 'g-btn-p' : 'g-btn-s'}" style="text-decoration:none;display:inline-block">${txt}</a>`;
+  const pg = (a, b) => a === b ? `p. ${a}` : `pp. ${a}–${b}`;
+  const campos = G_CAMPOS_PROG.slice().sort((x, y) => (nc && nc.startsWith(y[2]) ? 1 : 0) - (nc && nc.startsWith(x[2]) ? 1 : 0));
+  return `<div class="card"><div class="card-title">📘 Plan de estudio y programa sintético · Fase 6</div>
+    ${G_DOCS.map(([ic, t, d, u, n]) => `<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1.5px solid var(--borde);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff"><span style="font-size:26px">${ic}</span><span style="flex:1;min-width:200px"><b style="font-size:14px">${t}</b><br><span style="font-size:12.5px;color:var(--gris)">${d}</span></span>${btn(u, 'Abrir', true)} ${btn(u, '⬇ Descargar · ' + n, false, true)}</div>`).join('')}
+  </div>
+  <div class="card"><div class="card-title">🧭 Programa sintético por campo formativo</div>
+    <p style="font-size:12.5px;color:var(--gris);margin:0 0 10px">Cada botón te lleva <b>solo a las páginas de tu campo formativo</b>, sin buscar en todo el programa. También puedes abrir el programa completo en esa misma página.${nc ? ' ⭐ Primero va el campo de tu grupo.' : ''}</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">${campos.map(([k, nom, pre, ic, a, b, mats, f]) => { const propio = nc && nc.startsWith(pre); return `<div style="border:1.5px solid ${propio ? 'var(--azul-med)' : 'var(--borde)'};border-radius:12px;padding:12px;background:#fff">
+      <div style="font-size:26px">${ic}</div><b style="font-size:14px">${propio ? '⭐ ' : ''}${nom}</b>
+      <div style="font-size:12.5px;color:var(--gris);margin:4px 0 2px">${mats}</div>
+      <div style="font-size:12px;color:var(--gris);margin-bottom:10px">${pg(a, b)} del programa · ${b - a + 1} páginas</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${btn(f, 'Abrir solo estas páginas', true)} ${btn(COMPLETO + '#page=' + a, 'Ver en el programa completo', false)} ${btn(f, '⬇', false, true)}</div></div>`; }).join('')}</div>
+    <div style="font-size:13px;font-weight:700;margin:16px 0 8px">Otras secciones del programa</div>
+    ${G_OTRAS_PROG.map(([t, a, b, f]) => `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--borde);padding:8px 0"><span style="flex:1;min-width:200px;font-size:13.5px"><b>${t}</b> <small style="color:var(--gris)">· ${pg(a, b)}</small></span>${btn(f, 'Abrir', false)} ${btn(COMPLETO + '#page=' + a, 'En el programa completo', false)}</div>`).join('')}
+  </div>`;
+}
 function gLibrosGrado(v) { G.libGrado = +v; gRenderLibros(); }
 function gRenderLibros() {
   const g = gGrupo();
@@ -179,16 +226,17 @@ function gRenderLibros() {
   const propio = t => { if (!nc) return false; const n = norm(t); if (/multiples/.test(n)) return false;
     return nc.startsWith('lenguajes') ? /lenguajes\. /.test(n) : nc.startsWith('saberes') ? /saberes/.test(n) : nc.startsWith('etica') ? /etica,/.test(n) : nc.startsWith('de lo humano') ? /de lo humano/.test(n) : false; };
   const libros = G_LIBROS.filter(b => b[0] === gr).sort((a, b) => (propio(b[2]) ? 1 : 0) - (propio(a[2]) ? 1 : 0));
-  gPanel().innerHTML = `<div class="sec-title">Libros y programas SEP</div><div class="sec-sub">Abre los libros de texto gratuitos y los programas oficiales sin salir a buscarlos. Se abren en el sitio oficial de la SEP.</div>
+  gPanel().innerHTML = `<div class="sec-title">Libros y programas SEP</div><div class="sec-sub">Abre el plan de estudio, el programa sintético y los libros de texto gratuitos sin salir a buscarlos.</div>
+  ${gDocsHTML(nc)}
   <div class="card"><div class="card-title">📚 Libros de texto gratuitos — ciclo 2026-2027</div>
     <div class="g-trims">${[1, 2, 3].map(x => `<button class="ttab${gr === x ? ' on' : ''}" onclick="gLibrosGrado(${x})">${x}.º grado</button>`).join('')}</div>
     ${campo && g ? `<p style="font-size:12.5px;color:var(--gris);margin:0 0 10px">⭐ Primero va el libro del campo de tu grupo (<b>${gEsc(campo)}</b>, ${gEsc(g.materia)}). Los demás son de los otros campos formativos.</p>` : ''}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px">${libros.map(b => `<a href="${G_LIBROS_URL(b[1])}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;border:1.5px solid ${propio(b[2]) ? 'var(--azul-med)' : 'var(--borde)'};border-radius:12px;padding:8px;display:block;background:#fff">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px">${libros.map(b => `<a href="${G_LIBROS_URL(b[1])}" target="_blank" rel="noopener" onclick="return gAbrirVentana(this.href)" style="text-decoration:none;color:inherit;border:1.5px solid ${propio(b[2]) ? 'var(--azul-med)' : 'var(--borde)'};border-radius:12px;padding:8px;display:block;background:#fff">
       <img src="${G_LIBROS_PORTADA(b[1])}" alt="" loading="lazy" onerror="this.style.display='none'" style="width:100%;border-radius:8px;display:block;margin-bottom:6px;background:#f1f5f9;min-height:60px">
       <div style="font-size:12.5px;font-weight:600;line-height:1.3">${propio(b[2]) ? '⭐ ' : ''}${gEsc(b[2])}</div></a>`).join('')}</div>
     <div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:12px">Los libros salen del catálogo oficial de la CONALITEG. Si un libro no abre, entra a «Catálogo completo de libros de texto» más abajo.</div></div>
   <div class="card"><div class="card-title">📘 Programas y planes de estudio</div>
-    ${G_PROGRAMAS.map(([ic, t, d, u, n]) => `<a href="${u}" target="_blank" rel="noopener" style="display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit;border:1.5px solid var(--borde);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff"><span style="font-size:26px">${ic}</span><span style="flex:1"><b style="font-size:14px">${t}</b><br><span style="font-size:12.5px;color:var(--gris)">${d}</span></span><small style="color:var(--gris);white-space:nowrap">${n} ↗</small></a>`).join('')}
+    ${G_PROGRAMAS.map(([ic, t, d, u, n]) => `<a href="${u}" target="_blank" rel="noopener" onclick="return gAbrirVentana(this.href)" style="display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit;border:1.5px solid var(--borde);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff"><span style="font-size:26px">${ic}</span><span style="flex:1"><b style="font-size:14px">${t}</b><br><span style="font-size:12.5px;color:var(--gris)">${d}</span></span><small style="color:var(--gris);white-space:nowrap">${n} ↗</small></a>`).join('')}
     <div class="ayuda" style="font-size:11.5px;color:var(--gris)">Son enlaces oficiales de la SEP y la CONALITEG; abren en otra pestaña.</div></div>`;
 }
 
