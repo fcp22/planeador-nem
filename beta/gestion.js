@@ -53,7 +53,7 @@ function gCargar() {
   try { G.data = JSON.parse(localStorage.getItem(G.key) || 'null'); } catch (e) { G.data = null; }
   if (!G.data || !Array.isArray(G.data.grupos)) G.data = { v: 1, grupos: [] };
   gSembrarPerfil();
-  G.gid = G.data.grupos[0] ? G.data.grupos[0].id : null;
+  G.gid = G.data.grupos[0] ? G.data.grupos[0].id : null; G.gidManual = false;
   G.fecha = gHoy();
   G.borrador = null; G.sugerencias = [];
   G.trimCalif = G.trimExam = G.trimPlan = gTrimDeFecha(gHoy());
@@ -101,6 +101,7 @@ function gOnTab(id) {
   if (!conocidas.includes(id)) return;
   if (!G.data) gCargar();
   G.tab = id;
+  if (id === 'lista') gAutoGrupo();
   gRender();
 }
 function gRender() {
@@ -486,6 +487,7 @@ function gRenderInicio() {
     `<a class="tile ancho" style="${gTinte('libros')}" href="https://libros.conaliteg.gob.mx/" target="_blank" rel="noopener"><span class="ti">${gIco('libros')}</span><div class="tx"><div class="tt">Libros de texto SEP</div><div class="td">Consulta y descarga los libros gratuitos de cada grado (sitio oficial de la CONALITEG)</div></div><span class="go">${G_FLECHA}</span></a></div>`;
   const gs = G.data ? G.data.grupos : [];
   if (G.data && !gPerfil().escuela) h += `<div class="g-aviso" style="background:#fffbeb;border-color:#fde68a;color:#92400e">🏫 Falta el nombre de tu escuela. <a href="#" onclick="gIrA('grupos');return false">Captúralo en «Mis grupos»</a> para que aparezca en tus documentos.</div>`;
+  h += gHoyTocaHTML();
   h += `<div class="card"><div class="card-title">📌 Hoy en mis grupos</div>`;
   if (!gs.length) h += `<p style="color:var(--gris)">Aún no tienes grupos. <a href="#" onclick="gIrA('grupos');return false">Crea el primero</a> para pasar lista, calificar y crear exámenes.</p>`;
   else h += gs.map(g => {
@@ -496,7 +498,62 @@ function gRenderInicio() {
   gPanel().innerHTML = h;
 }
 function gPanel() { return document.getElementById('g-' + G.tab); }
-function gCambiarGrupo(id) { G.gid = id; G.borrador = null; G.temaUlt = ''; G.temasSel = []; G.sugerencias = []; gRender(); }
+function gCambiarGrupo(id) { G.gid = id; G.gidManual = true; G.borrador = null; G.temaUlt = ''; G.temasSel = []; G.sugerencias = []; gRender(); }
+
+// ── Horario → «Hoy te toca» y grupo sugerido al pasar lista ──
+function gNorm(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, ''); }
+function gMinutos(h) { const m = String(h || '').match(/^(\d{1,2}):(\d{2})/); return m ? (+m[1]) * 60 + (+m[2]) : null; }
+// Grupo de la app que corresponde a una celda del horario («Materia · Grupo» o «Grupo · Materia»)
+function gHorarioGrupo(txt) {
+  if (!txt || !G.data) return null;
+  const partes = String(txt).split(/\s*[·|\/]\s*/), gs = G.data.grupos;
+  const buscar = (mat, gr) => {
+    const m = gNorm(mat), r = gNorm(gr); if (!r) return null;
+    let c = gs.filter(g => gNorm(g.nombre) === r); if (!c.length) return null;
+    if (c.length > 1) { const k = c.filter(x => { const gm = gNorm(x.materia); return m && (gm.startsWith(m) || m.startsWith(gm) || gm.includes(m)); }); if (k.length) c = k; }
+    return c[0];
+  };
+  return buscar(partes[0], partes.slice(1).join('')) || buscar(partes.slice(1).join(''), partes[0]);
+}
+// Clases de hoy según el horario (varios módulos seguidos de lo mismo se juntan en una sola fila)
+function gClasesHoy() {
+  const H = gHorario(), wd = (new Date().getDay() + 6) % 7; if (wd > 4) return null;
+  const out = []; let n = 0;
+  H.mods.forEach((m, i) => {
+    if (m[2] === 'rec') return; n++;
+    const t = H.c[i + '-' + wd]; if (!t) return;
+    const u = out[out.length - 1];
+    if (u && u.t === t && u.idx === i - 1) { u.fin = n; u.hFin = m[1]; u.idx = i; } else out.push({ t, ini: n, fin: n, hIni: m[0], hFin: m[1], idx: i });
+  });
+  out.forEach(c => { c.g = gHorarioGrupo(c.t); });
+  return out;
+}
+// La clase en curso, o la siguiente de hoy
+function gClaseAhora(cl) {
+  const d = new Date(), ahora = d.getHours() * 60 + d.getMinutes();
+  return (cl || []).find(c => { const a = gMinutos(c.hIni), b = gMinutos(c.hFin); return a != null && b != null && ahora >= a && ahora < b; }) ||
+    (cl || []).find(c => { const a = gMinutos(c.hIni); return a != null && a > ahora; }) || null;
+}
+function gAutoGrupo() {
+  if (!G.data || G.gidManual) return;
+  const c = gClaseAhora(gClasesHoy()); if (c && c.g) G.gid = c.g.id;
+}
+function gHoyLista(id) { G.gid = id; G.fecha = gHoy(); G.gidManual = true; gIrA('lista'); }
+function gHoyTocaHTML() {
+  const hay = Object.values(gHorario().c).some(v => v);
+  let h = `<div class="card"><div class="card-title">🕐 Hoy te toca <a href="#" onclick="gIrA('horario');return false" style="margin-left:auto;font-size:12px;font-weight:600">Ver / editar horario</a></div>`;
+  if (!hay) return h + `<p style="color:var(--gris);margin:0">Escribe tu horario para ver aquí las clases de cada día y pasar lista con un toque. <button class="g-btn g-btn-s" onclick="gIrA('horario')">Capturar mi horario</button></p></div>`;
+  const cl = gClasesHoy();
+  if (!cl) return h + `<p style="color:var(--gris);margin:0">Hoy no hay clases. ¡Buen descanso!</p></div>`;
+  if (!cl.length) return h + `<p style="color:var(--gris);margin:0">Hoy no tienes clases en tu horario.</p></div>`;
+  const ahora = gClaseAhora(cl);
+  const d = new Date(), min = d.getHours() * 60 + d.getMinutes();
+  return h + cl.map(c => {
+    const g = c.g, hecho = g && g.asist[gHoy()], enCurso = c === ahora && gMinutos(c.hIni) <= min;
+    return `<div class="hoy-fila"${c === ahora ? ' style="background:#eff6ff;border-radius:8px;padding:6px 8px"' : ''}><b>${c.ini === c.fin ? c.ini : c.ini + '–' + c.fin}</b><span style="color:var(--gris)">${gEsc(c.hIni)}–${gEsc(c.hFin)}</span><span>${gEsc(c.t)}</span>${c === ahora ? `<span class="g-tag" style="margin:0">${enCurso ? 'En curso' : 'Sigue'}</span>` : ''}
+      <span style="margin-left:auto">${!g ? `<a href="#" onclick="gIrA('grupos');return false" style="font-size:12px">Crea este grupo en «Mis grupos»</a>` : hecho ? `<span style="color:var(--verde)">✓ Lista de hoy: ${gConteoDia(g, hecho)}</span>` : `<button class="g-btn g-btn-s" onclick="gHoyLista('${g.id}')">Pasar lista</button>`}</span></div>`;
+  }).join('') + '</div>';
+}
 
 // Barra superior con el selector de grupo (la usan todas las pestañas)
 function gBarra() {
