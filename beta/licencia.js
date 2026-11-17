@@ -121,7 +121,7 @@ function licAdminRender() {
     <div class="ayuda" style="font-size:11px;color:var(--gris)">No se guarda: tendrás que escribirla otra vez al recargar la página.</div></div>
   <div class="card"><div class="card-title">➕ Generar códigos</div>
     <div class="f3"><div class="campo"><label>Cantidad</label><input id="la-cant" type="number" min="1" max="100" value="1"></div>
-    <div class="campo"><label>Vigencia</label><select id="la-vig"><option value="m1">1 mes</option><option value="m3">3 meses</option><option value="m6">6 meses</option><option value="m12">12 meses</option><option value="d7">7 días (cortesía)</option></select></div>
+    <div class="campo"><label>Vigencia</label><select id="la-vig"><option value="m1">1 mes</option><option value="m3">3 meses</option><option value="m6">6 meses</option><option value="m12">12 meses</option><option value="d1">1 día (para probar el vencimiento)</option><option value="d3">3 días</option><option value="d7">7 días (cortesía)</option></select></div>
     <div class="campo"><label>Documentos con IA al mes</label><input id="la-cuota" type="number" min="1" max="2000" value="60"></div></div>
     <div class="f2"><div class="campo"><label>Plan (etiqueta)</label><input id="la-plan" placeholder="Ej. Trimestral"></div><div class="campo"><label>Nota (para ti)</label><input id="la-nota" placeholder="Ej. Prof. Pérez / escuela X"></div></div>
     <div class="l-err" id="la-err" style="margin:0 0 12px"></div>
