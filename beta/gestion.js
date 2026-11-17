@@ -484,6 +484,7 @@ function gCritAyudaHTML(g, cid) {
       <li><b>Ejemplo:</b> un alumno que saca <b>8</b> en este examen suma 8 × ${pct}% = <b>${aporte} puntos</b> de los 10 de su calificación del trimestre.</li>
       <li>${hay ? `En este trimestre ya tienes <b>${hay}</b> actividad${hay > 1 ? 'es' : ''} en «${nom}»: se <b>promedian</b> con este examen y ese promedio es lo que vale el ${pct}%.` : `Si después guardas otro examen o actividad en «${nom}», se <b>promedian</b> entre sí y ese promedio es lo que vale el ${pct}%.`}</li>
     </ol>
+    ${gEsCritExamen(c) ? '' : `<div style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:8px;padding:8px 10px;margin:6px 0">💡 Elegiste «${nom}», que no es el criterio de exámenes. El examen <b>no sustituye</b> lo que ya tengas ahí: se <b>promedia</b> con eso y comparten el ${pct}%. Normalmente los exámenes van en el criterio de exámenes, y el producto del proyecto se registra aparte en «Calificaciones».</div>`}
     <span style="color:var(--gris)">Los porcentajes de cada criterio se cambian en «Calificaciones».</span>${suma !== 100 ? `<div style="color:#b45309;margin-top:6px">⚠ Tus criterios suman ${suma}% y deben sumar 100%. Ajústalos en «Calificaciones».</div>` : ''}`;
 }
 function gCritAyuda() { const g = gGrupo(), s = document.getElementById('ge-crit'), e = document.getElementById('ge-crit-ayuda'); if (g && s && e) e.innerHTML = gCritAyudaHTML(g, s.value); }
