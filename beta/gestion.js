@@ -97,7 +97,7 @@ function gGuardarPerfil() {
 function gInit() { gCargar(); if (G.tab) gRender(); }
 function gOnTab(id) {
   if (typeof licOnTab === 'function' && licOnTab(id)) { G.tab = id; return; }
-  const conocidas = ['inicio', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'recup', 'calendario', 'libros', ...Object.keys(G_PRONTO)];
+  const conocidas = ['inicio', 'bienvenida', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'recup', 'calendario', 'libros', 'planes', ...Object.keys(G_PRONTO)];
   if (!conocidas.includes(id)) return;
   if (!G.data) gCargar();
   G.tab = id;
@@ -106,8 +106,55 @@ function gOnTab(id) {
 function gRender() {
   if (licTabBloqueada(G.tab)) { gPanel().innerHTML = licHTMLBloqueo(G.tab); return; }
   if (G_PRONTO[G.tab]) return gRenderProntoTab(G.tab);
-  const f = { inicio: gRenderInicio, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, recup: gRenderRecup, calendario: gRenderCalendario, libros: gRenderLibros }[G.tab];
+  const f = { inicio: gRenderInicio, bienvenida: gRenderBienvenida, planes: gRenderPlanes, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, recup: gRenderRecup, calendario: gRenderCalendario, libros: gRenderLibros }[G.tab];
   if (f) f();
+}
+
+// ── Planes y precios (dentro de la app; los mismos datos que la página suscripcion.html) ──
+const G_PLANES = { correo: 'planeador.nem.docente@gmail.com', precioMes: 199, limiteIA: 60, planes: [
+  { nombre: 'Mensual', meses: 1, precio: 199 },
+  { nombre: 'Trimestral', meses: 3, precio: 500 },
+  { nombre: 'Semestral', meses: 6, precio: 1000, destacado: true },
+  { nombre: 'Anual', meses: 12, precio: 1990, extra: '2 meses gratis' },
+] };
+function gPlanMailto(p) {
+  const u = (typeof getUsuario === 'function' && getUsuario()) || {};
+  const asunto = 'Quiero una licencia del Planeador Docente NEM' + (p ? ' — plan ' + p.nombre : '');
+  const cuerpo = 'Hola, quiero suscribirme al Planeador Docente NEM' + (p ? ' (plan ' + p.nombre + ')' : '') + '.\n\nMi nombre: ' + (u.nombre || '') + '\nMi escuela: \nCorreo con el que entro a la app: ' + (u.email || '');
+  return 'mailto:' + G_PLANES.correo + '?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo);
+}
+function gRenderPlanes() {
+  const P = G_PLANES, n = x => x.toLocaleString('es-MX');
+  gPanel().innerHTML = `<div class="sec-title">Planes y precios</div><div class="sec-sub">Elige cuánto tiempo quieres tu licencia. ¿Solo quieres probar un mes? El plan Mensual es para ti: no hay cobro automático ni compromiso.</div>
+  <div class="g-aviso" style="margin-bottom:14px;font-size:13.5px">🎉 <b>Precio de introducción.</b> Estos precios son de lanzamiento y pueden cambiar más adelante.</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">${P.planes.map(p => `<div style="background:#fff;border:2px solid ${p.destacado ? 'var(--azul-med)' : 'var(--borde)'};border-radius:14px;padding:18px 14px;text-align:center;${p.destacado ? 'box-shadow:0 8px 24px rgba(37,99,168,.18)' : ''}">
+    ${p.destacado ? '<div style="display:inline-block;background:#dbeafe;color:var(--azul-med);font-size:11.5px;font-weight:700;border-radius:20px;padding:2px 10px;margin-bottom:6px">Más elegido</div>' : ''}
+    <div style="font-size:18px;font-weight:800;color:var(--azul)">${p.nombre}</div>
+    <div style="font-size:12.5px;color:var(--gris)">${p.meses === 1 ? '1 mes' : p.meses + ' meses'} de acceso</div>
+    <div style="font-size:30px;font-weight:800;margin:8px 0 2px">$${n(p.precio)} <small style="font-size:13px;color:var(--gris)">MXN</small></div>
+    ${p.meses > 1 ? `<div style="font-size:12.5px;color:var(--gris)">$${n(Math.round(p.precio / p.meses))} por mes</div>${P.precioMes * p.meses > p.precio ? `<div style="color:var(--verde);font-weight:700;font-size:13.5px;margin-top:4px">${p.extra || 'Ahorras'} · $${n(P.precioMes * p.meses - p.precio)}</div>` : ''}` : '<div style="font-size:12.5px;color:var(--gris)">&nbsp;</div>'}
+    <a class="g-btn" style="display:inline-block;margin-top:12px;text-decoration:none" href="${gPlanMailto(p)}">Quiero este plan</a></div>`).join('')}</div>
+  <div class="card" style="margin-top:14px"><div class="card-title">ℹ️ Qué incluye</div>
+    <p style="font-size:13.5px;line-height:1.55;margin:0 0 8px">Planeaciones y exámenes con IA, descarga en Word, calificaciones, lista de alumnos, rezago, recuperativos, libros y programas SEP y calendario escolar.</p>
+    <p style="font-size:13.5px;line-height:1.55;margin:0"><b>El uso de IA no es ilimitado:</b> cada licencia incluye hasta ${P.limiteIA} documentos con IA al mes (planeaciones y exámenes); el tope se renueva cada mes. Lista, calificaciones, rezago, libros y calendario no gastan ese tope.</p></div>
+  <div class="card"><div class="card-title">🧾 Cómo suscribirte</div>
+    <ol style="margin:0 0 0 20px;font-size:13.5px;line-height:1.7"><li><b>Escríbenos por correo</b> con el botón de tu plan (a <b>${P.correo}</b>).</li><li><b>Te decimos cómo pagar</b> y, al recibir el pago, te enviamos tu código <code>NEM-XXXX-XXXX-XXXX</code>.</li><li><b>Canjéalo</b> en el menú «Mi licencia». Se activa de inmediato.</li></ol>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="g-btn" onclick="gIrA('licencia')">🔑 Ya tengo mi código</button><a class="g-btn g-btn-s" style="text-decoration:none" href="${gPlanMailto(null)}">✉️ Escribir por correo</a></div></div>`;
+}
+
+// ── Pantalla de bienvenida: la información del programa, para leerla con calma y luego continuar ──
+function gRenderBienvenida() {
+  const F = [['📝', 'Planeación', 'Programa analítico y plano didáctico NEM, con contenidos y PDA de la Fase 6.'], ['🧭', 'Proyectos', 'Fases, fechas y tiempos de cada proyecto.'], ['✅', 'Pase de lista', 'Asistencia, retardos y faltas en segundos.'], ['📊', 'Calificaciones', 'Tus criterios, sus porcentajes y la boleta del trimestre.'], ['🧮', 'Exámenes', 'Crea exámenes con IA y captura las calificaciones.'], ['🚦', 'Rezago y recuperativos', 'Detecta a quien está en riesgo y arma la lista de recuperativos.'], ['📚', 'Libros y programas SEP', 'Libros de texto, plan de estudio y programa sintético por campo formativo.'], ['👥', 'Mis grupos', 'Tus alumnos, tus listas y tu respaldo.']];
+  gPanel().innerHTML = `<div style="background:linear-gradient(160deg,#16314f,#245a96);color:#fff;border-radius:18px;padding:28px 22px;box-shadow:var(--sombra-lg)">
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:18px"><div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#3b82c4,#2563a8);display:flex;align-items:center;justify-content:center;font-size:24px">📚</div><div><b style="font-size:16px">Planeador Docente NEM</b><div style="font-size:12px;opacity:.75">Aplicación realizada por el Maestro Manuel Uitzil Cerón</div></div></div>
+    <div style="display:inline-block;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;margin-bottom:14px">Nueva Escuela Mexicana · Fase 6 · Secundaria</div>
+    <h1 style="font-size:clamp(24px,4vw,36px);line-height:1.15;margin-bottom:12px">Planea, pasa lista y evalúa <span style="color:#7dd3fc">en un solo lugar.</span></h1>
+    <p style="font-size:15.5px;line-height:1.6;opacity:.92;max-width:680px;margin-bottom:20px">Programa analítico, plano didáctico, proyectos con fechas y tiempos, pase de lista, calificaciones y exámenes. Hecho por un maestro de secundaria, para maestros de secundaria.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:20px">${F.map(([i, t, d]) => `<div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:12px"><div style="font-size:24px">${i}</div><b style="font-size:14px">${t}</b><div style="font-size:12.5px;opacity:.8;margin-top:2px;line-height:1.35">${d}</div></div>`).join('')}</div>
+    <div style="font-size:13px;opacity:.8;margin-bottom:18px">🔒 Los datos de tus alumnos se guardan solo en tu dispositivo. Haz tu respaldo desde «Mis grupos».</div>
+    <button class="g-btn" style="background:#f59e0b;color:#1e293b;font-size:16px;padding:13px 26px;border-radius:12px" onclick="navInicio()">Continuar al menú principal ➜</button>
+    <button type="button" onclick="gIrA('planes')" style="margin:10px 0 0 12px;background:transparent;border:2px solid rgba(255,255,255,.6);color:#fff;font-weight:600;font-size:14px;border-radius:12px;padding:11px 18px;cursor:pointer">💳 Ver planes y precios</button>
+  </div>`;
 }
 
 // ── Calendario escolar: se suben los archivos que da la escuela (PDF o imagen) ──
@@ -333,6 +380,7 @@ const G_MENU = [
   ['calendario', '📅', 'Calendario escolar', 'Sube el de tu escuela', true],
   ['horario', '🕐', 'Horario', 'Tu semana por grupo', false],
   ['historial', '📋', 'Historial', 'Planeaciones generadas', true],
+  ['planes', '💳', 'Planes y precios', 'Suscripción desde $199 al mes', true],
   ['licencia', '🔑', 'Mi licencia', 'IA, plan y código', true],
 ];
 // Iconos de línea propios (24×24) y su color de acento, para las tarjetas y la barra inferior
@@ -352,6 +400,7 @@ const G_ICONOS = {
   horario: ['<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.500 2"/>', '#d97706', '#fef3c7'],
   historial: ['<path d="M6 3h8l4 4v14H6z"/><path d="M9 12h6M9 16h6"/>', '#475569', '#e2e8f0'],
   licencia: ['<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>', '#ca8a04', '#fef9c3'],
+  planes: ['<rect x="2.500" y="5" width="19" height="14" rx="3"/><path d="M2.500 10h19M6.500 15h4"/>', '#16a34a', '#dcfce7'],
   libros: ['<path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11"/>', '#0f766e', '#ccfbf1'],
   mas: ['<circle cx="5" cy="12" r="1.300"/><circle cx="12" cy="12" r="1.300"/><circle cx="19" cy="12" r="1.300"/>', '#64748b', '#e2e8f0'],
   inicio: ['<path d="M3.500 11L12 3.500 20.500 11V20a1 1 0 01-1 1H15v-6H9v6H4.500a1 1 0 01-1-1z"/>', '#2563a8', '#dbeafe'],
