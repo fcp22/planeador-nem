@@ -232,7 +232,9 @@ function gCrearGrupo() {
   const grado = document.getElementById('gg-grado').value;
   const materia = document.getElementById('gg-materia').value;
   if (!nombre) { gAviso('Escribe el nombre del grupo, por ejemplo «3° A».'); return; }
-  const g = { id: gId(), nombre, grado, materia, alumnos: [], asist: {}, criterios: G_CRITERIOS_DEF.map(([n, p]) => ({ id: gId(), nombre: n, pct: p })), actividades: [], plan: {} };
+  const ta = document.getElementById('gn-lista');
+  const nombres = ta ? gNombresDeTexto(ta.value) : [];
+  const g = { id: gId(), nombre, grado, materia, alumnos: nombres.map(n => ({ id: gId(), nombre: n })), asist: {}, criterios: G_CRITERIOS_DEF.map(([n, p]) => ({ id: gId(), nombre: n, pct: p })), actividades: [], plan: {} };
   G.data.grupos.push(g); G.gid = g.id; gGuardar(); gRender();
 }
 function gBorrarGrupo(id) {
@@ -302,8 +304,11 @@ function gRenderGrupos() {
       <div class="campo"><label>Grado</label><select id="gg-grado" onchange="gActualizarMaterias()"><option value="1">1° Secundaria</option><option value="2">2° Secundaria</option><option value="3">3° Secundaria</option></select></div>
       <div class="campo"><label>Materia que impartes</label><select id="gg-materia">${gMateriasOpts('1')}</select></div>
     </div>
+    <div class="campo"><label>Alumnos (opcional: teclea, pega o sube tu lista)</label>
+      <textarea id="gn-lista" rows="4" placeholder="1. AGUILAR PECH ANDREA&#10;2. BALAM CHAN DIEGO"></textarea></div>
+    ${gUiArchivo('gn-lista')}
     <button class="g-btn" onclick="gCrearGrupo()">Crear grupo</button>
-    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">Si das la misma materia a varios grupos, crea uno por cada grupo.</div>
+    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">Si das la misma materia a varios grupos, crea uno por cada grupo. Los nombres se revisan en el recuadro antes de crear el grupo.</div>
   </div>`;
 
   if (G.data.grupos.length) {
