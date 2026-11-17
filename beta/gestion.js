@@ -415,10 +415,10 @@ function gRenderLista() {
     <option value="todo"${per === 'todo' ? ' selected' : ''}>Todo el ciclo</option></select></div>`;
   if (!rs.dias.length) h += `<p style="color:var(--gris)">Todavía no hay días registrados en este periodo.</p>`;
   else {
-    h += `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th>Asist.</th><th>Ret.</th><th>Faltas</th><th>Just.</th><th>% asist.</th></tr></thead><tbody>` +
-      rs.filas.map((f, i) => `<tr><td>${i + 1}</td><td>${gEsc(f.a.nombre)}</td><td>${f.c.P}</td><td>${f.c.R}</td><td>${f.c.F}</td><td>${f.c.J}</td><td class="${f.pct != null && f.pct < 80 ? 'g-mal' : ''}"><b>${f.pct == null ? '—' : f.pct + '%'}</b></td></tr>`).join('') +
+    h += `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th>Asist.</th><th>Ret.</th><th>Faltas</th><th>Just.</th><th>% asist.</th><th>% inasist.</th></tr></thead><tbody>` +
+      rs.filas.map((f, i) => `<tr><td>${i + 1}</td><td>${gEsc(f.a.nombre)}</td><td>${f.c.P}</td><td>${f.c.R}</td><td>${f.c.F}</td><td>${f.c.J}</td><td class="${f.pct != null && f.pct < 80 ? 'g-mal' : ''}"><b>${f.pct == null ? '—' : f.pct + '%'}</b></td><td class="${f.pct != null && f.pct < 80 ? 'g-mal' : ''}"><b>${f.pct == null ? '—' : (100 - f.pct) + '%'}</b></td></tr>`).join('') +
       `</tbody></table></div>
-    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">${rs.dias.length} día(s) con lista. % de asistencia = (asistencias + retardos) ÷ días registrados. En rojo: menos de 80 %.</div>
+    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">${rs.dias.length} día(s) con lista. % de asistencia = (asistencias + retardos) ÷ días registrados. % de inasistencia = lo que resta para 100 % (faltas y justificadas). En rojo: menos de 80 % de asistencia.</div>
     <button class="g-btn" style="margin-top:12px" onclick="gDescargarAsistencia()">⬇ Descargar resumen en Word</button>`;
   }
   h += '</div>';
@@ -449,8 +449,8 @@ function gDescargarAsistencia() {
   const th = t => `<td style="border:1px solid #000;padding:4px;background:#BDD7EE;font-weight:bold">${t}</td>`;
   const td = t => `<td style="border:1px solid #000;padding:4px">${t}</td>`;
   const html = gEncabezadoDoc('RESUMEN DE ASISTENCIA', g, `<b>Periodo:</b> ${per} (${rs.dias.length} días con lista)`) +
-    `<table style="width:100%;border-collapse:collapse"><tr>${['#', 'Alumno', 'Asistencias', 'Retardos', 'Faltas', 'Justificadas', '% asistencia'].map(th).join('')}</tr>` +
-    rs.filas.map((f, i) => `<tr>${[i + 1, gEsc(f.a.nombre), f.c.P, f.c.R, f.c.F, f.c.J, f.pct == null ? '—' : f.pct + '%'].map(td).join('')}</tr>`).join('') + '</table>';
+    `<table style="width:100%;border-collapse:collapse"><tr>${['#', 'Alumno', 'Asistencias', 'Retardos', 'Faltas', 'Justificadas', '% asistencia', '% inasistencia'].map(th).join('')}</tr>` +
+    rs.filas.map((f, i) => `<tr>${[i + 1, gEsc(f.a.nombre), f.c.P, f.c.R, f.c.F, f.c.J, f.pct == null ? '—' : f.pct + '%', f.pct == null ? '—' : (100 - f.pct) + '%'].map(td).join('')}</tr>`).join('') + '</table>';
   descargarWord(html, `Asistencia_${g.nombre.replace(/\W+/g, '_')}_${per.replace(/\W+/g, '_')}.doc`);
 }
 
