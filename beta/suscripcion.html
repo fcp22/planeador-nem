@@ -83,9 +83,9 @@ footer{padding:26px 0;color:var(--gris);font-size:13.5px;text-align:center}
 
 <section style="padding-top:0"><div class="wrap">
   <h2>Prueba gratis y licencia</h2>
-  <p class="sub">Entra con tu cuenta de Google y pruébalo antes de decidir.</p>
+  <p class="sub"><b>Todos tienen 3 días de prueba gratis.</b> Entra con tu cuenta de Google y pruébalo antes de decidir.</p>
   <table class="comp">
-    <tr><th></th><th>Prueba gratis</th><th>Con licencia</th></tr>
+    <tr><th></th><th>Prueba gratis (3 días)</th><th>Con licencia</th></tr>
     <tr><td>Documentos con IA</td><td>2 (un plano o analítico y un examen)</td><td class="si" id="td-ia"></td></tr>
     <tr><td>Ver el documento en pantalla</td><td class="si">✓</td><td class="si">✓</td></tr>
     <tr><td>Descargar en Word</td><td class="no">—</td><td class="si">✓</td></tr>
@@ -101,10 +101,6 @@ footer{padding:26px 0;color:var(--gris);font-size:13.5px;text-align:center}
   <div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:15px">🎉 <b>Precio de introducción.</b> Estos precios son de lanzamiento y pueden cambiar más adelante. Quien se suscribe ahora conserva el precio durante el tiempo que contrató.</div>
   <div class="planes" id="planes-lista"></div>
   <p class="sub" style="margin-top:12px;font-size:14px" id="nota-precios"></p>
-  <div class="card" id="promo" style="margin-top:14px;display:none;gap:14px;align-items:center;flex-wrap:wrap;border-color:#fcd34d;background:#fffbeb">
-    <div style="flex:1;min-width:230px"><b>🎁 Promoción de lanzamiento: gánate 5 días completos</b><br><span>Las primeras <b id="promo-total"></b> personas que recomienden el Planeador a un compañero ganan <b>5 días con todo incluido</b> (descarga en Word, calificaciones, lista de alumnos, rezago y recuperativos). Los días se entregan <b>cuando tu compañero se suscribe</b>: escríbenos con su nombre y correo.</span><br><b id="promo-quedan" style="color:#b45309"></b></div>
-    <a class="btn btn-s" id="btn-prueba" href="#">Quiero mis 5 días</a>
-  </div>
 </div></section>
 
 <section style="padding-top:0"><div class="wrap">
@@ -140,9 +136,6 @@ const PLANES = [
   { nombre: 'Anual',      meses: 12, precio: 1990, extra: '2 meses gratis' },
 ];
 const MONEDA = 'MXN';
-// Promoción de lanzamiento por recomendar. Cada vez que entregues unos 5 días, sube «entregados».
-// Para apagarla: activa:false (o cuando entregados llegue a cupos se oculta sola).
-const PROMO = { activa: true, cupos: 10, entregados: 0 };
 // ────────────────────────────────────────────────────────────────────
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const hayPrecios = PLANES.some(p => typeof p.precio === 'number');
@@ -164,13 +157,6 @@ function mailto(p) {
 }
 document.getElementById('td-ia').textContent = 'Hasta ' + LIMITE_IA + ' al mes (uso justo; no es ilimitado)';
 document.getElementById('btn-correo').href = mailto(null);
-if (PROMO.activa && PROMO.entregados < PROMO.cupos) {
-  const q = PROMO.cupos - PROMO.entregados;
-  document.getElementById('promo').style.display = 'flex';
-  document.getElementById('promo-total').textContent = PROMO.cupos;
-  document.getElementById('promo-quedan').textContent = q === 1 ? '¡Queda 1 lugar!' : 'Quedan ' + q + ' de ' + PROMO.cupos + ' lugares.';
-}
-document.getElementById('btn-prueba').href ='mailto:' + CORREO + '?subject=' + encodeURIComponent('Promoción de 5 días del Planeador Docente NEM') + '&body=' + encodeURIComponent('Hola, recomendé el Planeador Docente NEM y quiero mis 5 días de prueba completa.\n\nMi nombre: \nMi escuela: \nCorreo con el que entro a la app: \n\nCompañero(a) que recomendé:\nNombre: \nCorreo: ');
 document.getElementById('txt-correo').innerHTML = 'O escribe directamente a <b>' + esc(CORREO) + '</b>';
 </script>
 </body>
