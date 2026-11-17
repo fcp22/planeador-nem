@@ -97,7 +97,7 @@ function gGuardarPerfil() {
 function gInit() { gCargar(); if (G.tab) gRender(); }
 function gOnTab(id) {
   if (typeof licOnTab === 'function' && licOnTab(id)) { G.tab = id; return; }
-  const conocidas = ['inicio', 'bienvenida', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'recup', 'calendario', 'libros', 'planes', 'bitacora', ...Object.keys(G_PRONTO)];
+  const conocidas = ['inicio', 'bienvenida', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'recup', 'calendario', 'libros', 'planes', 'bitacora', 'horario', ...Object.keys(G_PRONTO)];
   if (!conocidas.includes(id)) return;
   if (!G.data) gCargar();
   G.tab = id;
@@ -106,7 +106,7 @@ function gOnTab(id) {
 function gRender() {
   if (licTabBloqueada(G.tab)) { gPanel().innerHTML = licHTMLBloqueo(G.tab); return; }
   if (G_PRONTO[G.tab]) return gRenderProntoTab(G.tab);
-  const f = { inicio: gRenderInicio, bienvenida: gRenderBienvenida, planes: gRenderPlanes, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, recup: gRenderRecup, calendario: gRenderCalendario, libros: gRenderLibros, bitacora: gRenderBitacora }[G.tab];
+  const f = { inicio: gRenderInicio, bienvenida: gRenderBienvenida, planes: gRenderPlanes, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, recup: gRenderRecup, calendario: gRenderCalendario, libros: gRenderLibros, bitacora: gRenderBitacora, horario: () => gRenderArchivos('horario') }[G.tab];
   if (f) f();
 }
 
@@ -168,42 +168,99 @@ function gIdb() {
     r.onsuccess = () => ok(r.result); r.onerror = () => mal(r.error);
   });
 }
-async function gCalLista() {
+async function gCalLista(cat) {
+  cat = cat || 'cal';
   const db = await gIdb();
-  return new Promise((ok, mal) => { const q = db.transaction('cal').objectStore('cal').getAll(); q.onsuccess = () => ok((q.result || []).filter(x => x.cuenta === G.key).sort((a, b) => a.t - b.t)); q.onerror = () => mal(q.error); });
+  return new Promise((ok, mal) => { const q = db.transaction('cal').objectStore('cal').getAll(); q.onsuccess = () => ok((q.result || []).filter(x => x.cuenta === G.key && (x.cat || 'cal') === cat).sort((a, b) => a.t - b.t)); q.onerror = () => mal(q.error); });
 }
 async function gCalPoner(rec) { const db = await gIdb(); return new Promise((ok, mal) => { const q = db.transaction('cal', 'readwrite').objectStore('cal').put(rec); q.onsuccess = ok; q.onerror = () => mal(q.error); }); }
-async function gCalQuitarArchivo(id) { if (!confirm('¿Quitar este archivo del calendario?')) return; const db = await gIdb(); db.transaction('cal', 'readwrite').objectStore('cal').delete(id).onsuccess = () => gRenderCalendario(); }
-async function gCalSubir(inp) {
+async function gCalQuitarArchivo(id, cat) { cat = cat || 'cal'; if (!confirm('¿Quitar este archivo?')) return; const db = await gIdb(); db.transaction('cal', 'readwrite').objectStore('cal').delete(id).onsuccess = () => gRenderArchivos(cat); }
+async function gCalSubir(inp, cat) {
+  cat = cat || 'cal';
   const fs = [...inp.files]; inp.value = ''; if (!fs.length) return;
   const msg = document.getElementById('gcal-msg'); let n = 0, mal = [];
   for (const f of fs) {
     const esPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name), esImg = /^image\/(png|jpe?g|webp|heic)/i.test(f.type) || /\.(png|jpe?g|webp|heic)$/i.test(f.name);
     if (!esPdf && !esImg) { mal.push(`«${f.name}»: solo se aceptan PDF, JPG o PNG`); continue; }
     if (f.size > 15 * 1024 * 1024) { mal.push(`«${f.name}»: pesa más de 15 MB`); continue; }
-    try { await gCalPoner({ id: gId(), cuenta: G.key, nombre: f.name, tipo: esPdf ? 'pdf' : 'img', mime: esPdf ? 'application/pdf' : (f.type || 'image/jpeg'), blob: f, t: Date.now() }); n++; }
+    try { await gCalPoner({ id: gId(), cuenta: G.key, cat, nombre: f.name, tipo: esPdf ? 'pdf' : 'img', mime: esPdf ? 'application/pdf' : (f.type || 'image/jpeg'), blob: f, t: Date.now() }); n++; }
     catch (e) { mal.push(`«${f.name}»: no se pudo guardar (${e.message || 'error'})`); }
   }
-  await gRenderCalendario();
+  await gRenderArchivos(cat);
   const m2 = document.getElementById('gcal-msg'); if (m2) m2.innerHTML = (n ? `<span style="color:var(--verde)">✓ Se guardó ${n} archivo(s).</span> ` : '') + mal.map(x => `<span class="g-mal">${gEsc(x)}</span>`).join('<br>');
 }
-async function gRenderCalendario() {
-  const p = gPanel(); if (!p) return;
+// ── Horario semanal escrito por el maestro (tabla editable, como el horario impreso) ──
+const G_HDIAS = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi'];
+function gHorario() {
+  if (!G.data.horario) G.data.horario = { mods: [['07:00', '07:50'], ['07:50', '08:40'], ['08:40', '09:30'], ['09:30', '10:20'], ['10:20', '10:40', 'rec'], ['10:40', '11:30'], ['11:30', '12:20'], ['12:20', '13:10']], c: {} };
+  return G.data.horario;
+}
+function gHorarioNum(i) { return gHorario().mods.slice(0, i + 1).filter(m => m[2] !== 'rec').length; }   // número de módulo (el descanso no cuenta)
+function gHorarioCelda(m, d, v) { gHorario().c[m + '-' + d] = v.trim(); gGuardar(); }
+function gHorarioHora(m, i, v) { gHorario().mods[m][i] = v.trim(); gGuardar(); }
+function gHorarioFila(accion) {
+  const H = gHorario();
+  if (accion === 'mas') H.mods.push(['', '']);
+  else if (accion === 'rec') H.mods.push(['', '', 'rec']);
+  else if (H.mods.length > 1) { if (!confirm('¿Quitar la última fila del horario?')) return; const m = H.mods.length - 1; H.mods.pop(); G_HDIAS.forEach((x, d) => delete H.c[m + '-' + d]); }
+  gGuardar(); gRenderArchivos('horario');
+}
+function gHorarioLimpiar() { if (!confirm('¿Borrar todo lo escrito en la tabla del horario?')) return; gHorario().c = {}; gGuardar(); gRenderArchivos('horario'); }
+function gHorarioHTML() {
+  const H = gHorario(), ci = 'padding:7px;border:1.5px solid var(--borde);border-radius:6px;width:100%;min-width:0;box-sizing:border-box';
+  const opts = []; (G.data.grupos || []).forEach(g => opts.push(g.materia + ' · ' + g.nombre));
+  const hora = (i, m) => `<input value="${gEsc(m[0])}" onchange="gHorarioHora(${i},0,this.value)" placeholder="07:00" style="${ci};width:56px;display:inline-block;text-align:center;padding:5px"> <span style="color:var(--gris)">–</span> <input value="${gEsc(m[1])}" onchange="gHorarioHora(${i},1,this.value)" placeholder="07:50" style="${ci};width:56px;display:inline-block;text-align:center;padding:5px">`;
+  return `<div class="card"><div class="card-title">⌨️ Escribe tu horario</div>
+    <p style="font-size:13px;color:var(--gris);margin:0 0 10px">Escribe en cada celda la materia y el grupo, separados por un punto medio (por ejemplo «Biología · 1° C»). Si ya creaste tus grupos, te los sugiere al escribir. Puedes cambiar las horas, agregar filas y poner el descanso. Se guarda solo.</p>
+    <datalist id="gh-dl">${opts.map(o => `<option value="${gEsc(o)}">`).join('')}</datalist>
+    <div style="overflow-x:auto"><table style="border-collapse:separate;border-spacing:4px;min-width:760px;width:100%">
+      <tr><td style="font-weight:700;font-size:12.5px;text-align:center;color:var(--azul)">No. / hora</td>${G_HDIAS.map(d => `<td style="font-weight:700;font-size:12.5px;text-align:center;color:var(--azul)">${d}</td>`).join('')}</tr>
+      ${H.mods.map((m, i) => m[2] === 'rec'
+        ? `<tr><td style="white-space:nowrap;width:150px"><b style="font-size:12px">REC</b> ${hora(i, m)}</td><td colspan="5" style="text-align:center;font-weight:700;font-size:12.5px;background:#f1f5f9;border-radius:6px;padding:8px;color:var(--gris-oscuro)">DESCANSO</td></tr>`
+        : `<tr><td style="white-space:nowrap;width:150px"><b style="font-size:13px">${gHorarioNum(i)}</b> ${hora(i, m)}</td>
+        ${G_HDIAS.map((d, j) => `<td><input list="gh-dl" value="${gEsc(H.c[i + '-' + j] || '')}" onchange="gHorarioCelda(${i},${j},this.value)" style="${ci}"></td>`).join('')}</tr>`).join('')}
+    </table></div>
+    <div style="margin-top:10px"><button class="g-btn g-btn-s" onclick="gHorarioFila('mas')">＋ Agregar clase</button> <button class="g-btn g-btn-s" onclick="gHorarioFila('rec')">＋ Agregar descanso</button> <button class="g-btn g-btn-s" onclick="gHorarioFila('menos')">－ Quitar última fila</button> <button class="g-btn g-btn-s" onclick="gHorarioLimpiar()">Borrar todo</button>
+      <button class="g-btn" onclick="gHorarioImprimir()">🖨️ Imprimir / PDF</button> <button class="g-btn g-btn-s" onclick="gHorarioWord()">⬇ Word</button></div></div>`;
+}
+function gHorarioDoc() {
+  const H = gHorario(), C = '#233b6e', bd = 'border:1px solid #6b7280';
+  const th = `${bd};background:${C};color:#fff;font-weight:bold;font-size:11pt;padding:7px;text-align:center`;
+  const celda = v => { v = String(v || ''); if (!v) return '<span style="color:#bbb">–</span>'; const [a, ...r] = v.split(/\s*[·|\/]\s*/); return `<b style="font-size:13pt">${gEsc(a)}</b>${r.length ? '<br><span style="font-size:11pt">' + gEsc(r.join(' · ')) + '</span>' : ''}`; };
+  const enc = typeof bitEnc === 'function' ? bitEnc() : `<p style="text-align:center"><b>${gEsc(gEscuela())}</b></p>`;
+  return `${enc}<p style="text-align:center;margin:0 0 10px;font-size:18pt;font-weight:bold;color:${C}">${gEsc(gDocente()).toUpperCase()}</p>
+  <table style="width:100%;border-collapse:collapse"><tr><td style="${th};width:80px">No.</td>${G_HDIAS.map(d => `<td style="${th}">${d}</td>`).join('')}</tr>
+  ${H.mods.map((m, i) => m[2] === 'rec'
+    ? `<tr><td style="${bd};text-align:center;padding:8px;height:36px"><b style="font-size:10pt">REC</b><br><span style="font-size:9pt">${gEsc(m[0])}-${gEsc(m[1])}</span></td><td colspan="5" style="${bd};text-align:center;font-weight:bold;font-size:10pt">DESCANSO</td></tr>`
+    : `<tr><td style="${bd};text-align:center;padding:8px;height:52px"><b style="font-size:13pt">${gHorarioNum(i)}</b><br><span style="font-size:9pt">${gEsc(m[0])}${m[0] || m[1] ? '-' : ''}${gEsc(m[1])}</span></td>${G_HDIAS.map((d, j) => `<td style="${bd};text-align:center;padding:6px">${celda(H.c[i + '-' + j])}</td>`).join('')}</tr>`).join('')}</table>`;
+}
+function gHorarioImprimir() { if (typeof bitVentana === 'function') bitVentana('Horario semanal', gHorarioDoc()); }
+function gHorarioWord() { descargarWord(gHorarioDoc(), 'Horario_semanal.doc'); }
+
+// Archivos que el maestro sube y consulta dentro de la app (PDF, JPG o PNG), guardados en este dispositivo
+const G_ARCH = {
+  cal: { tit: 'Calendario escolar', sub: 'Sube el calendario que te da tu escuela (PDF o foto) para tenerlo a la mano dentro de la app.', btn: '📎 Subir calendario', multi: 'Puedes subir varios, por ejemplo uno por trimestre o una hoja por mes.', vacio: 'Todavía no has subido tu calendario escolar.' },
+  horario: { tit: 'Horario semanal', sub: 'Escribe tu horario en la tabla o sube tu archivo (PDF o foto): como te sea más fácil.', btn: '📎 O sube tu horario como archivo', antes: gHorarioHTML, multi: 'Si tu horario cambia, sube el nuevo y quita el anterior.', vacio: 'Todavía no has subido tu horario.' }
+};
+function gRenderCalendario() { return gRenderArchivos('cal'); }
+async function gRenderArchivos(cat) {
+  const C = G_ARCH[cat], p = gPanel(); if (!p) return;
   let lista = [], err = '';
-  try { lista = await gCalLista(); } catch (e) { err = e.message; }
+  try { lista = await gCalLista(cat); } catch (e) { err = e.message; }
   (window.__calUrls || []).forEach(u => URL.revokeObjectURL(u)); window.__calUrls = [];
   const url = b => { const u = URL.createObjectURL(b); window.__calUrls.push(u); return u; };
-  p.innerHTML = `<div class="sec-title">Calendario escolar</div><div class="sec-sub">Sube el calendario que te da tu escuela (PDF o foto) para tenerlo a la mano dentro de la app.</div>
-  <div class="card"><div class="card-title">📎 Subir calendario</div>
-    <p style="font-size:13px;color:var(--gris);margin:0 0 10px">Acepta <b>PDF</b>, <b>JPG</b> o <b>PNG</b> (hasta 15 MB cada uno). Puedes subir varios, por ejemplo uno por trimestre o una hoja por mes. Desde el celular también puedes tomarle una foto.</p>
-    <label class="g-btn" style="display:inline-block;cursor:pointer">⬆ Elegir archivo(s)<input type="file" accept="application/pdf,image/*,.pdf,.png,.jpg,.jpeg" multiple style="display:none" onchange="gCalSubir(this)"></label>
+  p.innerHTML = `<div class="sec-title">${C.tit}</div><div class="sec-sub">${C.sub}</div>
+  ${C.antes ? C.antes() : ''}
+  <div class="card"><div class="card-title">${C.btn}</div>
+    <p style="font-size:13px;color:var(--gris);margin:0 0 10px">Acepta <b>PDF</b>, <b>JPG</b> o <b>PNG</b> (hasta 15 MB cada uno). ${C.multi} Desde el celular también puedes tomarle una foto.</p>
+    <label class="g-btn" style="display:inline-block;cursor:pointer">⬆ Subir archivo (PDF, JPG o PNG)<input type="file" accept="application/pdf,image/*,.pdf,.png,.jpg,.jpeg" multiple style="display:none" onchange="gCalSubir(this,'${cat}')"></label>
     <div id="gcal-msg" style="font-size:13px;margin-top:10px">${err ? `<span class="g-mal">${gEsc(err)}</span>` : ''}</div>
     <div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:8px">Los archivos se guardan <b>en este dispositivo</b> (igual que tus grupos). Si usas otra computadora o celular, súbelo ahí también.</div></div>
   ${lista.length ? lista.map(f => `<div class="card"><div class="card-title" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${f.tipo === 'pdf' ? '📄' : '🖼️'} <span style="flex:1;min-width:0;word-break:break-word">${gEsc(f.nombre)}</span>
       <a class="g-btn g-btn-s" href="${url(f.blob)}" target="_blank" rel="noopener" style="text-decoration:none">Abrir grande</a>
       <a class="g-btn g-btn-s" href="${url(f.blob)}" download="${gEsc(f.nombre)}" style="text-decoration:none">⬇ Descargar</a>
-      <button class="g-btn g-btn-x" onclick="gCalQuitarArchivo('${f.id}')">Quitar</button></div>
-      ${f.tipo === 'pdf' ? `<iframe src="${url(f.blob)}" style="width:100%;height:70vh;border:1px solid var(--borde);border-radius:10px" title="${gEsc(f.nombre)}"></iframe>` : `<img src="${url(f.blob)}" alt="${gEsc(f.nombre)}" style="max-width:100%;border:1px solid var(--borde);border-radius:10px">`}</div>`).join('') : `<div class="card g-vacio">Todavía no has subido tu calendario escolar.</div>`}`;
+      <button class="g-btn g-btn-x" onclick="gCalQuitarArchivo('${f.id}','${cat}')">Quitar</button></div>
+      ${f.tipo === 'pdf' ? `<iframe src="${url(f.blob)}" style="width:100%;height:70vh;border:1px solid var(--borde);border-radius:10px" title="${gEsc(f.nombre)}"></iframe>` : `<img src="${url(f.blob)}" alt="${gEsc(f.nombre)}" style="max-width:100%;border:1px solid var(--borde);border-radius:10px">`}</div>`).join('') : `<div class="card g-vacio">${C.vacio}</div>`}`;
 }
 
 // ── Libros de texto y programas de la SEP (enlaces oficiales) ──
@@ -359,7 +416,6 @@ function gRecWord() {
 // ── Menús que todavía están en construcción (se van llenando uno por uno) ──
 const G_PRONTO = {
   escaner: ['📷', 'Escáner de exámenes', 'Fotografiar el examen resuelto y obtener la calificación de cada alumno automáticamente.'],
-  horario: ['🕐', 'Horario semanal', 'Tu horario por grupo y materia, para que el pase de lista y la planeación se llenen solos.'],
 };
 function gRenderProntoTab(id) {
   const [ico, tit, desc] = G_PRONTO[id];
@@ -379,7 +435,7 @@ const G_MENU = [
   ['bitacora', '📔', 'Bitácora', 'Reportes de incidencias', true],
   ['escaner', '📷', 'Escanear examen', 'Calificar con la cámara', false],
   ['calendario', '📅', 'Calendario escolar', 'Sube el de tu escuela', true],
-  ['horario', '🕐', 'Horario', 'Tu semana por grupo', false],
+  ['horario', '🕐', 'Horario', 'Escríbelo o súbelo (PDF/foto)', true],
   ['historial', '📋', 'Historial', 'Planeaciones generadas', true],
   ['planes', '💳', 'Planes y precios', 'Suscripción desde $199 al mes', true],
   ['licencia', '🔑', 'Mi licencia', 'IA, plan y código', true],
