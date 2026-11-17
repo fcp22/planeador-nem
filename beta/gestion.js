@@ -124,12 +124,12 @@ function gRenderProntoTab(id) {
 
 // ── Pantalla de inicio con accesos directos ──
 const G_MENU = [
+  ['grupos', '👥', 'Mis grupos', 'Alumnos y listas', true],
   ['lista', '✅', 'Pasar lista', 'Asistencia, retardos y faltas', true],
   ['nueva', '📝', 'Planeación', 'Programa analítico y plano didáctico', true],
   ['trim', '🧭', 'Proyecto del trimestre', 'Fases, fechas y tiempos', true],
   ['calif', '📊', 'Calificaciones', 'Criterios y calificación del trimestre', true],
   ['examenes', '🧮', 'Exámenes', 'Crear con IA y calificar', true],
-  ['grupos', '👥', 'Mis grupos', 'Alumnos y listas', true],
   ['rezago', '🚦', 'Rezago', 'Semáforo de alumnos en riesgo', true],
   ['bitacora', '📔', 'Bitácora', 'Diario de cada clase', false],
   ['escaner', '📷', 'Escanear examen', 'Calificar con la cámara', false],
@@ -161,8 +161,8 @@ function gIco(id) { const i = G_ICONOS[id] || G_ICONOS.mas; return `<svg viewBox
 function gTinte(id) { const i = G_ICONOS[id] || G_ICONOS.mas; return `--tc:${i[1]};--tb:${i[2]}`; }
 const G_FLECHA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
-// Barra inferior para el teléfono (Inicio · Lista · Planeación · Calificaciones · Más)
-const G_NAV_INF = [['inicio', 'Inicio'], ['lista', 'Lista'], ['nueva', 'Planeación'], ['calif', 'Calificar']];
+// Barra inferior para el teléfono (Inicio · Grupos · Lista · Planeación · Más)
+const G_NAV_INF = [['inicio', 'Inicio'], ['grupos', 'Grupos'], ['lista', 'Lista'], ['nueva', 'Planeación']];
 function gArmarNavInferior() {
   const n = document.getElementById('bottom-nav'); if (!n) return;
   n.innerHTML = G_NAV_INF.map(([id, t]) => `<button type="button" data-id="${id}" onclick="gIrA('${id}')">${gIco(id)}<span>${t}</span></button>`).join('') +
