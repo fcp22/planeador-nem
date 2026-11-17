@@ -113,9 +113,9 @@ function gRender() {
 // ── Planes y precios (dentro de la app; los mismos datos que la página suscripcion.html) ──
 const G_PLANES = { correo: 'planeador.nem.docente@gmail.com', precioMes: 199, limiteIA: 60, planes: [
   { nombre: 'Mensual', meses: 1, precio: 199 },
-  { nombre: 'Trimestral', meses: 3, precio: 500 },
-  { nombre: 'Semestral', meses: 6, precio: 1000, destacado: true },
-  { nombre: 'Anual', meses: 12, precio: 1990, extra: '2 meses gratis' },
+  { nombre: 'Trimestral', meses: 3, precio: 499 },
+  { nombre: 'Semestral', meses: 6, precio: 999, destacado: true },
+  { nombre: 'Anual', meses: 12, precio: 1999 },
 ] };
 function gPlanMailto(p) {
   const u = (typeof getUsuario === 'function' && getUsuario()) || {};
