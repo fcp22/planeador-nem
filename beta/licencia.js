@@ -66,7 +66,7 @@ function licPintarChip() {
   c.style.display = 'inline-block';
   const pocos = e.restantes <= Math.max(1, Math.round(e.limite * 0.1));
   // Plan de pago: la IA está incluida (el tope mensual es solo de «uso justo» y no se muestra hasta que se acerca). La prueba sí muestra su contador.
-  c.textContent = !e.activa ? 'IA sin licencia' : e.prueba ? `IA ${e.usadas}/${e.limite}` : (pocos ? `IA: te quedan ${e.restantes}` : 'IA incluida');
+  c.textContent = !e.activa ? 'IA sin licencia' : e.prueba ? `IA ${e.usadas}/${e.limite}` : `IA: te quedan ${e.restantes}`;
   c.style.background = e.activa ? (pocos ? '#f59e0b' : 'rgba(255,255,255,.18)') : '#dc2626';
 }
 async function licCargar() {
@@ -221,8 +221,8 @@ async function licRender() {
     const color = !e.activa ? '#dc2626' : pct >= 90 ? '#f59e0b' : '#16a34a';
     h += `<div class="card"><div class="card-title">🔑 ${e.prueba ? 'Prueba gratis' : (e.plan ? 'Plan ' + gEsc(e.plan) : 'Licencia')} <span class="g-tag" style="margin-left:auto;background:${color}">${e.activa ? 'Activa' : (e.limite ? 'Vencida' : 'Sin licencia')}</span></div>
       <div style="font-size:13px;margin-bottom:12px"><b>Cuenta:</b> ${gEsc(e.correo || (u && u.email) || '')}</div>
-      ${e.limite ? (e.prueba || e.restantes <= Math.max(5, Math.round(e.limite * 0.1)) ? `<div style="font-size:13px;margin-bottom:6px"><b>Documentos con IA ${e.prueba ? 'de la prueba' : 'este mes'}:</b> ${e.usadas} de ${e.limite} <span style="color:var(--gris)">(${e.restantes} disponibles)</span></div>
-      <div style="height:10px;background:var(--gris-claro);border-radius:6px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:${pct}%;background:${color}"></div></div>` : `<div style="font-size:13px;margin-bottom:12px"><b>Documentos con IA:</b> tu plan incluye hasta <b>${e.limite}</b> al mes <span style="color:var(--gris)">(llevas ${e.usadas} este mes; se renuevan el día 1)</span></div>`) + `
+      ${e.limite ? `<div style="font-size:13px;margin-bottom:6px"><b>Documentos con IA ${e.prueba ? 'de la prueba' : 'este mes'}:</b> ${e.usadas} de ${e.limite} usados · <b>te quedan ${e.restantes}</b>${e.prueba ? '' : ' <span style="color:var(--gris)">(se renuevan el día 1 de cada mes)</span>'}</div>
+      <div style="height:10px;background:var(--gris-claro);border-radius:6px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:${pct}%;background:${color}"></div></div>` + `
       <div style="font-size:13px"><b>${e.activa ? 'Vigente hasta' : 'Venció el'}:</b> ${licFecha(e.vence)}</div>${e.prueba && e.activa ? `<div class="g-aviso" style="margin-top:12px;font-size:12.5px;line-height:1.5"><b>Tu prueba incluye:</b> ${e.limite} documentos con IA (uno de cada tipo: analítico o plano, secuencia y examen de hasta 5 reactivos), verlos completos en pantalla y crear tus grupos.<br><b>Con la licencia se abre:</b> descargar en Word, subir tu lista desde Excel, pase de lista, calificaciones y promedios, seguimiento de rezago y la IA incluida en tu plan.</div><div style="max-width:320px">${LIC_BTN_PLANES()}</div>` : ''}` : `<p style="color:var(--gris)">Tu prueba gratis ya se usó. Canjea un código para seguir usando la IA.</p>`}
     </div>`;
   }
