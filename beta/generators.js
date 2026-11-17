@@ -473,6 +473,7 @@ async function generarPlanDidacticoTrimestre(d) {
   const prompt = buildPromptPlanDidacticoTrimestre(d);
   const respuesta = await llamarGemini(prompt, 'plano');
   const ia = parsearJSON(respuesta);
+  d.iaEvid = { f1: ia.f1evidencias, f2: ia.f2evidencias, f3: ia.f3evidencias, integrador: ia.productoIntegrador };   // para crear actividades de evaluación desde el Historial
   return construirHTMLPlanDidactico(d, ia);
 }
 

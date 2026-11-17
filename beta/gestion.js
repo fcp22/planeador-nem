@@ -926,6 +926,75 @@ function gProyectoRapido() {
   gPlanTrim(g, G.trimExam).proyectos.push(gProyDef({ id, nombre, producto: (document.getElementById('gx-prod').value || '').trim(), tipo: '', met: document.getElementById('gx-met').value, esc: 'aula', prob: '', estado: 'Por planear' }));
   gGuardar(); gCrearEvalProyectoEx(id);
 }
+// ── Planeación → actividades de evaluación ────────────────
+// Al guardar un Plano Didáctico se extraen sus evidencias y su producto para poder convertirlos en actividades calificables.
+function gPartirEvidencias(txt) {
+  return String(txt || '').split(/\n|;|•|(?<=[.!?])\s+/).map(x => x.replace(/^[\s\-–—·\d.)]+/, '').replace(/[.\s]+$/, '').trim()).filter(x => x.length > 2).slice(0, 8);
+}
+function gEvalDePlano(d) {
+  const items = [];
+  const rt = (typeof rutaActual !== 'undefined') ? rutaActual : null;
+  if (rt && rt.usar && Array.isArray(rt.fases)) {
+    rt.fases.forEach(f => f.mom.forEach(m => { if (m.evi) items.push({ fase: String(f.n).split('·').pop().trim(), txt: String(m.evi).trim() }); }));
+  } else if (d.iaEvid) {
+    [['f1', 'Fase 1'], ['f2', 'Fase 2'], ['f3', 'Fase 3']].forEach(([k, f]) => gPartirEvidencias(d.iaEvid[k]).forEach(t => items.push({ fase: f, txt: t })));
+  }
+  return { proyecto: d.nombreProyecto || '', producto: d.productoIntegrador || '', trimestre: +d.trimestre || 0, grupo: d.grupo || '', items };
+}
+function gPlanAActividades(id) {
+  const h = (typeof historial !== 'undefined' ? historial : []).find(x => x.id === id); if (!h) return;
+  if (!G.data || !G.data.grupos.length) { gAviso('Primero crea tu grupo en «Mis grupos» para poder calificar. Después vuelve aquí.'); return; }
+  const ev = h.eval || { proyecto: '', producto: '', trimestre: 0, items: [] };
+  const gr = G.data.grupos;
+  const ideal = gr.find(g => String(g.grado) === String(h.grado) && g.materia === h.disciplina && (!ev.grupo || String(g.nombre).includes(ev.grupo))) || gr.find(g => String(g.grado) === String(h.grado) && g.materia === h.disciplina) || gr[0];
+  const t0 = ev.trimestre || gTrimDeFecha(gHoy());
+  G.planAct = { h, ev };
+  const fila = (txt, fase, i) => `<div class="gpa-f" style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><input type="checkbox" checked style="width:auto;flex:none;padding:0;margin:0"><input class="gpa-t" style="flex:1;padding:7px 9px;border:1.5px solid var(--borde);border-radius:8px" value="${gEsc(txt)}">${fase ? `<small style="color:var(--gris);white-space:nowrap">${gEsc(fase)}</small>` : ''}</div>`;
+  const ov = document.createElement('div'); ov.id = 'gpa-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px';
+  ov.innerHTML = `<div style="background:#fff;border-radius:14px;max-width:680px;width:100%;padding:20px">
+    <div style="font-size:17px;font-weight:700;color:var(--azul,#2563a8)">📊 Crear actividades para calificar</div>
+    <p style="font-size:13px;color:var(--gris);margin:6px 0 12px">De la planeación «${gEsc(h.nombre)}». Quita la palomita a lo que no vayas a calificar, corrige los nombres o agrega más. Después capturas la nota de cada alumno en «Calificaciones».</p>
+    <div class="f3">
+      <div class="campo"><label>Grupo</label><select id="gpa-g" onchange="gPlanActCrit()">${gr.map(g => `<option value="${g.id}"${g.id === ideal.id ? ' selected' : ''}>${gEsc(g.nombre)} · ${gEsc(g.materia)} ${g.grado}°</option>`).join('')}</select></div>
+      <div class="campo"><label>Trimestre</label><select id="gpa-t">${[1, 2, 3].map(x => `<option value="${x}"${x === t0 ? ' selected' : ''}>${G_TRIM_NOM[x]}</option>`).join('')}</select></div>
+      <div class="campo"><label>Cuentan en el criterio</label><select id="gpa-c"></select></div>
+    </div>
+    <div style="font-weight:600;font-size:13px;margin:6px 0">Evidencias del proceso</div>
+    <div id="gpa-lista">${ev.items.length ? ev.items.map((it, i) => fila(it.txt, it.fase, i)).join('') : '<div style="font-size:12.5px;color:var(--gris);margin-bottom:6px">Esta planeación no trae evidencias guardadas. Agrega las que quieras calificar.</div>'}</div>
+    <button class="g-btn g-btn-s" onclick="gPlanActMas()">+ Agregar otra</button>
+    <div style="font-weight:600;font-size:13px;margin:14px 0 6px">Producto final <small style="font-weight:400;color:var(--gris)">(cuenta en «Producto del proyecto»)</small></div>
+    <div class="gpa-f" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="gpa-pchk" ${ev.producto ? 'checked' : ''} style="width:auto;flex:none;padding:0;margin:0"><input id="gpa-prod" style="flex:1;padding:7px 9px;border:1.5px solid var(--borde);border-radius:8px" value="${gEsc(ev.producto)}" placeholder="Ej. Antología de cuentos"></div>
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end"><button class="g-btn g-btn-s" onclick="gPlanActCerrar()">Cancelar</button><button class="g-btn" onclick="gPlanActCrear()">Crear actividades</button></div></div>`;
+  document.body.appendChild(ov);
+  gPlanActCrit();
+}
+function gPlanActCerrar() { const o = document.getElementById('gpa-ov'); if (o) o.remove(); }
+function gPlanActMas() { const l = document.getElementById('gpa-lista'); if (!l.querySelector('.gpa-t')) l.innerHTML = ''; const d = document.createElement('div'); d.className = 'gpa-f'; d.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:6px'; d.innerHTML = '<input type="checkbox" checked style="width:auto;flex:none;padding:0;margin:0"><input class="gpa-t" style="flex:1;padding:7px 9px;border:1.5px solid var(--borde);border-radius:8px" placeholder="Nombre de la actividad">'; l.appendChild(d); d.querySelector('.gpa-t').focus(); }
+function gPlanActCrit() {
+  const g = G.data.grupos.find(x => x.id === document.getElementById('gpa-g').value); if (!g) return;
+  const cr = g.criterios.filter(c => !c.auto && !gEsCritExamen(c) && !(gEsCritProyecto(c)));
+  const pref = cr.find(c => /actividad/i.test(c.nombre)) || cr[0];
+  document.getElementById('gpa-c').innerHTML = cr.map(c => `<option value="${c.id}"${pref && c.id === pref.id ? ' selected' : ''}>${gEsc(c.nombre)}</option>`).join('') || '<option value="">(se creará «Actividades en clase»)</option>';
+}
+function gPlanActCrear() {
+  const g = G.data.grupos.find(x => x.id === document.getElementById('gpa-g').value); if (!g) return;
+  const t = +document.getElementById('gpa-t').value; const pid = G.planAct.h.id;
+  let cid = document.getElementById('gpa-c').value;
+  if (!cid || !g.criterios.some(c => c.id === cid)) { const c = { id: gId(), nombre: 'Actividades en clase', pct: 0 }; g.criterios.push(c); cid = c.id; }
+  const nuevas = [...document.querySelectorAll('#gpa-lista .gpa-f')].filter(f => f.querySelector('input[type=checkbox]').checked).map(f => ({ nombre: f.querySelector('.gpa-t').value.trim(), crit: cid })).filter(x => x.nombre);
+  if (document.getElementById('gpa-pchk').checked && document.getElementById('gpa-prod').value.trim()) nuevas.push({ nombre: 'Producto final: ' + document.getElementById('gpa-prod').value.trim(), crit: gCritProyecto(g).id, final: true });
+  if (!nuevas.length) { gAviso('Marca al menos una actividad.'); return; }
+  let n = 0;
+  nuevas.forEach(x => {
+    const nombre = x.nombre.length > 90 ? x.nombre.slice(0, 88) + '…' : x.nombre;
+    if (g.actividades.some(a => a.planId === pid && a.trim === t && a.nombre === nombre)) return;
+    g.actividades.push({ id: gId(), trim: t, criterioId: x.crit, nombre, max: 10, tipo: 'actividad', fecha: gHoy(), notas: {}, planId: pid }); n++;
+  });
+  gGuardar(); gPlanActCerrar();
+  G.gid = g.id; G.trimCalif = t; gIrA('calif');
+  gAviso(n ? `Listo: se crearon ${n} actividad(es) en «Calificaciones» (${G_TRIM_NOM[t]}). Captura ahí la nota de cada alumno.` : 'Esas actividades ya estaban creadas en ese grupo y trimestre.');
+}
 function gCrearEvalProyectoEx(id) { G.trimPlan = G.trimExam; gCrearEvalProyecto(id); }
 function gRenderExamenes() {
   const g = gGrupo();

@@ -1115,17 +1115,17 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   </div><!-- /layout -->
 </div><!-- /app -->
 
-<script src="firebase-config.js?v=202611171130"></script>
-<script src="correos-temporales.js?v=202611171130"></script>
-<script src="auth.js?v=202611171130"></script>
-<script src="licencia.js?v=202611171130"></script>
-<script src="curriculum.js?v=202611171130"></script>
-<script src="projects.js?v=202611171130"></script>
-<script src="generators.js?v=202611171130"></script>
-<script src="metodologias.js?v=202611171130"></script>
-<script src="ruta-ui.js?v=202611171130"></script>
-<script src="secuencias.js?v=202611171130"></script>
-<script src="sugerencias-plano.js?v=202611171130"></script>
+<script src="firebase-config.js?v=202611171200"></script>
+<script src="correos-temporales.js?v=202611171200"></script>
+<script src="auth.js?v=202611171200"></script>
+<script src="licencia.js?v=202611171200"></script>
+<script src="curriculum.js?v=202611171200"></script>
+<script src="projects.js?v=202611171200"></script>
+<script src="generators.js?v=202611171200"></script>
+<script src="metodologias.js?v=202611171200"></script>
+<script src="ruta-ui.js?v=202611171200"></script>
+<script src="secuencias.js?v=202611171200"></script>
+<script src="sugerencias-plano.js?v=202611171200"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
 // (la pantalla de acceso conserva su autocompletar para correo y contraseña).
@@ -1147,8 +1147,8 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611171130"></script>
-<script src="rezago.js?v=202611171130"></script>
+<script src="gestion.js?v=202611171200"></script>
+<script src="rezago.js?v=202611171200"></script>
 <script>
 // ── ESTADO ──────────────────────────────────────────────
 let tipoActivo='a', semAct=1, semsGen=new Set();
@@ -1806,6 +1806,7 @@ function limpiarD(){
 // ── HISTORIAL ─────────────────────────────────────────────
 async function saveHist(tipo,nombre,contenido,datos){
   const h={id:Date.now(),tipo,nombre,contenido,docente:datos.docente,grado:datos.grado,disciplina:datos.disciplina,fecha:new Date().toLocaleDateString('es-MX')};
+  try{ if(tipo==='didactico' && typeof gEvalDePlano==='function') h.eval=gEvalDePlano(datos); }catch(e){}
   try{ if(typeof gTemasGuardar==='function') gTemasGuardar(tipo,datos); }catch(e){}
   historial.unshift(h);
   localStorage.setItem(histKey(),JSON.stringify(historial.slice(0,20)));
@@ -1825,6 +1826,7 @@ function renderHist(){
       </div>
       <div class="hist-meta">
         <span>👤 ${h.docente}</span><span>📅 ${h.fecha}</span>
+        ${h.tipo==='didactico'?`<span onclick="event.stopPropagation();gPlanAActividades(${h.id})" style="color:var(--azul,#2563a8);cursor:pointer;font-weight:600;">📊 Crear actividades para calificar</span>`:''}
         <span onclick="delHist(event,${h.id})" style="color:var(--rojo);cursor:pointer;">🗑 Eliminar</span>
       </div>
     </div>`).join('');
