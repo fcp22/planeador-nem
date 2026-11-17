@@ -338,16 +338,27 @@ function gRenderGrupos() {
 // ============================================================
 // 2. PASE DE LISTA
 // ============================================================
+// Se marca alumno por alumno: al empezar nadie tiene marca. Tocar otra vez la misma letra quita la marca.
 function gMarcar(aid, code) {
   const g = gGrupo(); const f = G.fecha;
-  if (!g.asist[f]) { g.asist[f] = {}; g.alumnos.forEach(a => { g.asist[f][a.id] = 'P'; }); }
-  g.asist[f][aid] = code; gGuardar(); gRenderLista();
+  if (!g.asist[f]) g.asist[f] = {};
+  if (g.asist[f][aid] === code) delete g.asist[f][aid]; else g.asist[f][aid] = code;
+  if (!Object.keys(g.asist[f]).length) delete g.asist[f];
+  gGuardar(); gRenderListaSinSalto();
 }
+function gRenderListaSinSalto() {
+  const el = document.scrollingElement || document.documentElement, y = el.scrollTop;
+  const sc = gPanel().closest('.main, main, .content, #contenido') || null, y2 = sc ? sc.scrollTop : 0;
+  gRenderLista(); el.scrollTop = y; if (sc) sc.scrollTop = y2;
+}
+function gMarcados(g) { const d = g.asist[G.fecha]; return d ? g.alumnos.filter(a => d[a.id]).length : 0; }
 function gTodosPresentes(g) { const d = g.asist[G.fecha]; return !!(d && g.alumnos.length && g.alumnos.every(a => d[a.id] === 'P')); }
 function gTodos(code) {
   const g = gGrupo();
   if (code === 'P' && gTodosPresentes(g)) { delete g.asist[G.fecha]; gGuardar(); gRenderLista(); return; }   // segundo toque: quita la lista del día
-  g.asist[G.fecha] = {}; g.alumnos.forEach(a => { g.asist[G.fecha][a.id] = code; }); gGuardar(); gRenderLista();
+  const d = g.asist[G.fecha] || (g.asist[G.fecha] = {});
+  g.alumnos.forEach(a => { if (!d[a.id]) d[a.id] = code; });   // solo a los que faltan por marcar
+  gGuardar(); gRenderListaSinSalto();
 }
 function gBorrarDia() {
   const g = gGrupo(); if (!g.asist[G.fecha]) return;
@@ -373,16 +384,16 @@ function gRenderLista() {
   const g = gGrupo();
   if (!g) return gRenderListaInicio();
   const dia = g.asist[G.fecha];
-  let h = `<div class="sec-title">Pase de lista</div><div class="sec-sub">Toca la letra de cada alumno. Se guarda solo.</div>${gBarra()}${gTarjetaAlumnos(g)}
+  let h = `<div class="sec-title">Pase de lista</div><div class="sec-sub">Toca la letra de cada alumno: <b>✓</b> presente, <b>R</b> retardo, <b>F</b> falta, <b>J</b> justificada. Se guarda solo. Si te equivocas, toca otra vez la misma letra para quitarla.</div>${gBarra()}${gTarjetaAlumnos(g)}
   <div class="card"><div class="g-fecha">
     <button class="g-btn g-btn-s" onclick="gDia(-1)">‹</button>
     <input type="date" value="${G.fecha}" onchange="gFecha(this.value)">
     <button class="g-btn g-btn-s" onclick="gDia(1)">›</button>
     <button class="g-btn g-btn-s" onclick="gFecha(gHoy())">Hoy</button></div>
-    <div style="font-size:13px;color:var(--gris);margin:8px 0 12px;">${gFechaBonita(G.fecha)} ${dia ? '· <span style="color:var(--verde)">lista guardada</span>' : '· <span>sin registrar</span>'}</div>`;
+    <div style="font-size:13px;color:var(--gris);margin:8px 0 12px;">${gFechaBonita(G.fecha)} ${dia ? (gMarcados(g) >= g.alumnos.length ? '· <span style="color:var(--verde)">lista completa</span>' : `· <span style="color:#b45309">${gMarcados(g)} de ${g.alumnos.length} marcados — faltan ${g.alumnos.length - gMarcados(g)}</span>`) : '· <span>sin registrar</span>'}</div>`;
   if (!g.alumnos.length) h += `<p style="color:var(--gris)">Este grupo aún no tiene alumnos. Agrégalos en el recuadro de arriba: teclea los nombres o sube tu lista de Excel o Word.</p>`;
   else {
-    h += `<div style="margin-bottom:12px">${gTodosPresentes(g) ? `<button class="g-btn g-btn-s" style="border-color:var(--verde);color:var(--verde)" title="Toca otra vez para quitar la lista de este día" onclick="gTodos('P')">✓ Todos presentes — toca para quitar</button>` : `<button class="g-btn" onclick="gTodos('P')">✓ Todos presentes</button>`} ${dia ? '<button class="g-btn g-btn-x" onclick="gBorrarDia()">Borrar día</button>' : ''}</div>
+    h += `<div style="margin-bottom:12px">${gTodosPresentes(g) ? `<button class="g-btn g-btn-s" style="border-color:var(--verde);color:var(--verde)" title="Toca otra vez para quitar la lista de este día" onclick="gTodos('P')">✓ Todos presentes — toca para quitar</button>` : (gMarcados(g) >= g.alumnos.length ? '' : `<button class="g-btn" onclick="gTodos('P')">${gMarcados(g) ? `✓ Los demás presentes (${g.alumnos.length - gMarcados(g)})` : '✓ Todos presentes'}</button>`)} ${dia ? '<button class="g-btn g-btn-x" onclick="gBorrarDia()">Borrar día</button>' : ''}</div>
     <div class="g-lista">` + g.alumnos.map((a, i) => {
       const v = dia ? dia[a.id] : null;
       return `<div class="g-fila"><span class="g-n">${i + 1}</span><span class="g-nom">${gEsc(a.nombre)}</span><span class="g-st">` +
@@ -415,7 +426,8 @@ function gRenderLista() {
 }
 function gConteoDia(g, dia) {
   const c = { P: 0, R: 0, F: 0, J: 0 }; g.alumnos.forEach(a => { if (dia[a.id]) c[dia[a.id]]++; });
-  return `${c.P} ✓ · ${c.R} R · ${c.F} F · ${c.J} J`;
+  const sin = g.alumnos.length - (c.P + c.R + c.F + c.J);
+  return `${c.P} ✓ · ${c.R} R · ${c.F} F · ${c.J} J${sin > 0 ? ` · ${sin} sin marcar` : ''}`;
 }
 function gEncabezadoDoc(titulo, g, extra) {
   return `<p style="text-align:center;margin:0"><b>${gEsc(gEscuela() || 'Escuela Secundaria')}</b></p>
