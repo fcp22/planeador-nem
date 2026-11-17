@@ -399,8 +399,7 @@ function gRenderLista() {
       return `<div class="g-fila"><span class="g-n">${i + 1}</span><span class="g-nom">${gEsc(a.nombre)}</span><span class="g-st">` +
         ['P', 'R', 'F', 'J'].map(c => `<button class="g-st-${c}${v === c ? ' on' : ''}" title="${G_ESTADOS[c]}" onclick="gMarcar('${a.id}','${c}')">${c === 'P' ? '✓' : c}</button>`).join('') + '</span></div>';
     }).join('') + `</div>
-    <div class="g-leyenda"><span><b>✓</b> Presente</span><span><b>R</b> Retardo</span><span><b>F</b> Falta</span><span><b>J</b> Falta justificada</span>
-    ${dia ? `<span style="margin-left:auto">${gConteoDia(g, dia)}</span>` : ''}</div>`;
+    ${gFilaTotales(g, dia)}`;
   }
   h += '</div>';
 
@@ -423,6 +422,15 @@ function gRenderLista() {
   }
   h += '</div>';
   gPanel().innerHTML = h;
+}
+// Totales del día alineados bajo cada columna de botones (✓ R F J)
+function gFilaTotales(g, dia) {
+  const c = { P: 0, R: 0, F: 0, J: 0 }; if (dia) g.alumnos.forEach(a => { if (dia[a.id]) c[dia[a.id]]++; });
+  const sin = g.alumnos.length - (c.P + c.R + c.F + c.J);
+  const col = { P: '#16a34a', R: '#d97706', F: '#dc2626', J: '#2563a8' };
+  return `<div class="g-lista" style="margin-top:8px"><div class="g-fila g-total"><span class="g-n"></span>
+    <span class="g-nom"><b>Total del día</b><br><small style="color:var(--gris)">✓ Presentes · R Retardos · F Faltas · J Justificadas${sin > 0 && dia ? ` · <b style="color:#b45309">${sin} sin marcar</b>` : ''}</small></span>
+    <span class="g-st">${['P', 'R', 'F', 'J'].map(k => `<div title="${G_ESTADOS[k]}"><b style="color:${col[k]}">${c[k]}</b><small>${k === 'P' ? '✓' : k}</small></div>`).join('')}</span></div></div>`;
 }
 function gConteoDia(g, dia) {
   const c = { P: 0, R: 0, F: 0, J: 0 }; g.alumnos.forEach(a => { if (dia[a.id]) c[dia[a.id]]++; });
@@ -1406,7 +1414,7 @@ function gTarjetaDescarga(g) {
       <div class="campo"><label>Contenido</label><select id="ge-modo"><option value="blanco">En blanco, para pasar lista a mano</option><option value="registrada">Con la asistencia ya registrada</option></select></div>
     </div>
     <div class="campo"><label>Días de la semana que das clase</label>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px">${[[1, 'Lunes'], [2, 'Martes'], [3, 'Miércoles'], [4, 'Jueves'], [5, 'Viernes']].map(([n, t]) => `<label style="display:flex;gap:5px;align-items:center"><input type="checkbox" id="ge-d${n}" checked> ${t}</label>`).join('')}</div></div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px">${[[1, 'Lunes'], [2, 'Martes'], [3, 'Miércoles'], [4, 'Jueves'], [5, 'Viernes']].map(([n, t]) => `<label style="display:flex;gap:6px;align-items:center;margin:0;text-transform:none;letter-spacing:0;font-weight:400;font-size:13px;color:var(--gris-oscuro)"><input type="checkbox" id="ge-d${n}" checked style="width:auto;flex:none;padding:0;margin:0"> ${t}</label>`).join('')}</div></div>
     <button class="g-btn" id="ge-pdf" onclick="gExportarLista('pdf')">⬇ Descargar PDF</button>
     <button class="g-btn g-btn-s" id="ge-xls" onclick="gExportarLista('xlsx')">⬇ Descargar Excel</button>
     <div id="ge-msg" style="display:none;font-size:12.5px;margin-top:8px"></div>

@@ -413,6 +413,11 @@ input,select,textarea,button{font-family:inherit;font-size:14px;}
 .g-st .g-st-F.on{background:#dc2626;border-color:#dc2626;color:#fff;}
 .g-st .g-st-J.on{background:#2563a8;border-color:#2563a8;color:#fff;}
 .g-leyenda{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--gris);margin-top:10px;}
+.g-fila.g-total{background:#eef4fb!important;border-top:2px solid var(--borde);border-bottom:none;}
+.g-total .g-nom{font-size:13.5px;line-height:1.4;}
+.g-total .g-st>div{width:38px;text-align:center;line-height:1.05;}
+.g-total .g-st b{display:block;font-size:21px;font-weight:800;}
+.g-total .g-st small{font-size:12px;font-weight:700;color:var(--gris);}
 .g-trims{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
 .g-det{padding:14px 20px;}
 .g-det summary{cursor:pointer;font-weight:700;color:var(--azul-med);font-size:14px;}
@@ -452,7 +457,7 @@ input,select,textarea,button{font-family:inherit;font-size:14px;}
 .g-fases span{border:1.5px solid;border-radius:14px;font-size:11px;padding:2px 10px;font-weight:600;}
 .sem{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:middle;}
 .sem-v{background:#16a34a;}.sem-a{background:#f59e0b;}.sem-r{background:#dc2626;}.sem-n{background:#cbd5e1;}
-@media(max-width:640px){.g-fila{flex-wrap:wrap;}.g-st button{width:42px;height:42px;}.g-nom{flex-basis:calc(100% - 40px);}}
+@media(max-width:640px){.g-fila{flex-wrap:wrap;}.g-st button{width:42px;height:42px;}.g-total .g-st>div{width:42px;}.g-nom{flex-basis:calc(100% - 40px);}}
 </style>
 </head>
 <body>
@@ -1111,17 +1116,17 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   </div><!-- /layout -->
 </div><!-- /app -->
 
-<script src="firebase-config.js?v=202611170450"></script>
-<script src="correos-temporales.js?v=202611170450"></script>
-<script src="auth.js?v=202611170450"></script>
-<script src="licencia.js?v=202611170450"></script>
-<script src="curriculum.js?v=202611170450"></script>
-<script src="projects.js?v=202611170450"></script>
-<script src="generators.js?v=202611170450"></script>
-<script src="metodologias.js?v=202611170450"></script>
-<script src="ruta-ui.js?v=202611170450"></script>
-<script src="secuencias.js?v=202611170450"></script>
-<script src="sugerencias-plano.js?v=202611170450"></script>
+<script src="firebase-config.js?v=202611170510"></script>
+<script src="correos-temporales.js?v=202611170510"></script>
+<script src="auth.js?v=202611170510"></script>
+<script src="licencia.js?v=202611170510"></script>
+<script src="curriculum.js?v=202611170510"></script>
+<script src="projects.js?v=202611170510"></script>
+<script src="generators.js?v=202611170510"></script>
+<script src="metodologias.js?v=202611170510"></script>
+<script src="ruta-ui.js?v=202611170510"></script>
+<script src="secuencias.js?v=202611170510"></script>
+<script src="sugerencias-plano.js?v=202611170510"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
 // (la pantalla de acceso conserva su autocompletar para correo y contraseña).
@@ -1143,8 +1148,8 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611170450"></script>
-<script src="rezago.js?v=202611170450"></script>
+<script src="gestion.js?v=202611170510"></script>
+<script src="rezago.js?v=202611170510"></script>
 <script>
 // ── ESTADO ──────────────────────────────────────────────
 let tipoActivo='a', semAct=1, semsGen=new Set();
