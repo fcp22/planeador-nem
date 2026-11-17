@@ -97,7 +97,7 @@ function gGuardarPerfil() {
 function gInit() { gCargar(); if (G.tab) gRender(); }
 function gOnTab(id) {
   if (typeof licOnTab === 'function' && licOnTab(id)) { G.tab = id; return; }
-  const conocidas = ['inicio', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'calendario', ...Object.keys(G_PRONTO)];
+  const conocidas = ['inicio', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'calendario', 'libros', ...Object.keys(G_PRONTO)];
   if (!conocidas.includes(id)) return;
   if (!G.data) gCargar();
   G.tab = id;
@@ -106,7 +106,7 @@ function gOnTab(id) {
 function gRender() {
   if (licTabBloqueada(G.tab)) { gPanel().innerHTML = licHTMLBloqueo(G.tab); return; }
   if (G_PRONTO[G.tab]) return gRenderProntoTab(G.tab);
-  const f = { inicio: gRenderInicio, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, calendario: gRenderCalendario }[G.tab];
+  const f = { inicio: gRenderInicio, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, calendario: gRenderCalendario, libros: gRenderLibros }[G.tab];
   if (f) f();
 }
 
@@ -157,6 +157,41 @@ async function gRenderCalendario() {
       ${f.tipo === 'pdf' ? `<iframe src="${url(f.blob)}" style="width:100%;height:70vh;border:1px solid var(--borde);border-radius:10px" title="${gEsc(f.nombre)}"></iframe>` : `<img src="${url(f.blob)}" alt="${gEsc(f.nombre)}" style="max-width:100%;border:1px solid var(--borde);border-radius:10px">`}</div>`).join('') : `<div class="card g-vacio">Todavía no has subido tu calendario escolar.</div>`}`;
 }
 
+// ── Libros de texto y programas de la SEP (enlaces oficiales) ──
+const G_LIBROS_CICLO = 2026;   // Ciclo escolar 2026-2027 en el catálogo de la CONALITEG
+const G_LIBROS = [[1, "S0LPM", "Un libro sin recetas para la maestra y el maestro. Fase 6. Secundaria"], [1, "S1ETA", "Colección Ximhai. Ética, naturaleza y sociedades. Primer grado"], [1, "S1HPA", "Historia del pueblo mexicano. Multigrado"], [1, "S1HUA", "Colección Ximhai. De lo humano y lo comunitario. Primer grado"], [1, "S1INA", "Uérakua anapu uantakua. Projects and Readings. First grade. Secondary"], [1, "S1LEA", "Colección Ximhai. Lenguajes. Primer grado"], [1, "S1MLA", "Colección Ximhai. Múltiples lenguajes. Primer grado"], [1, "S1NLA", "Colección Ximhai. Nuestro libro de proyectos. Primer grado de secundaria"], [1, "S1SAA", "Colección Ximhai. Saberes y pensamiento científico. Primer grado"], [2, "S0LPM", "Un libro sin recetas para la maestra y el maestro. Fase 6. Secundaria"], [2, "S2ETA", "Colección Sk'asolil. Ética, naturaleza y sociedades. Segundo grado"], [2, "S2HUA", "Colección Sk'asolil. De lo humano y lo comunitario. Segundo grado"], [2, "S2INA", "Uérakua anapu uantakua. Projects and Readings. Second grade. Secondary"], [2, "S2LEA", "Colección Sk'asolil. Lenguajes. Segundo grado"], [2, "S2MLA", "Colección Sk'asolil. Múltiples lenguajes. Segundo grado"], [2, "S2NLA", "Colección Sk'asolil. Nuestro libro de proyectos. Segundo grado"], [2, "S2SAA", "Colección Sk'asolil. Saberes y pensamiento científico. Segundo grado"], [3, "S0LPM", "Un libro sin recetas para la maestra y el maestro. Fase 6. Secundaria"], [3, "S3ETA", "Colección Nanahuatzin. Ética, naturaleza y sociedades. Tercer grado"], [3, "S3HUA", "Colección Nanahuatzin. De lo humano y lo comunitario. Tercer grado"], [3, "S3INA", "Uérakua anapu uantakua. Projects and Readings. Third grade. Secondary"], [3, "S3LEA", "Colección Nanahuatzin. Lenguajes. Tercer grado"], [3, "S3MLA", "Colección Nanahuatzin. Múltiples lenguajes. Tercer grado"], [3, "S3NLA", "Colección Nanahuatzin. Nuestro libro de proyectos. Tercer grado"], [3, "S3SAA", "Colección Nanahuatzin. Saberes y pensamiento científico. Tercer grado"]];
+const G_LIBROS_URL = c => `https://libros.conaliteg.gob.mx/pdf-reader/reader.html?nivel=secundaria&ciclo=${G_LIBROS_CICLO}&clave=${c}`;
+const G_LIBROS_PORTADA = c => `https://libros.conaliteg.gob.mx/${G_LIBROS_CICLO}/m/${c}/000.jpg`;
+const G_PROGRAMAS = [
+  ['📘', 'Programa sintético · Fase 6 (secundaria)', 'Contenidos y procesos de desarrollo de aprendizaje (PDA) de 1.º a 3.º. Edición 2025.', 'https://educacionbasica.sep.gob.mx/wp-content/uploads/2025/Plan_y_programas_de_estudio_2025/WEB%20FASE%206-2025.pdf', 'PDF · pesa unos 70 MB'],
+  ['📗', 'Plan de Estudio 2025', 'Documento general del plan de estudio de educación básica.', 'https://educacionbasica.sep.gob.mx/wp-content/uploads/2025/Plan_y_programas_de_estudio_2025/Plan%20de%20Estudio%202025%20-WEB-.pdf', 'PDF'],
+  ['🗂️', 'Todos los programas sintéticos', 'Página oficial con los programas de todas las fases.', 'https://educacionbasica.sep.gob.mx/programas-sinteticos/', 'Sitio de la SEP'],
+  ['🧭', 'Marco curricular y planes', 'Marco curricular de la Nueva Escuela Mexicana.', 'https://www.sep.gob.mx/marcocurricular/', 'Sitio de la SEP'],
+  ['📚', 'Catálogo completo de libros de texto', 'Todos los libros gratuitos de secundaria en la CONALITEG.', 'https://libros.conaliteg.gob.mx/secundaria.html', 'Sitio de la CONALITEG'],
+];
+function gLibrosGrado(v) { G.libGrado = +v; gRenderLibros(); }
+function gRenderLibros() {
+  const g = gGrupo();
+  const gr = G.libGrado || (g && +g.grado) || 1;
+  const norm = t => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  let campo = ''; try { if (g) campo = gCampoDe(g.grado, g.materia) || ''; } catch (e) {}
+  const nc = norm(campo);
+  const propio = t => { if (!nc) return false; const n = norm(t); if (/multiples/.test(n)) return false;
+    return nc.startsWith('lenguajes') ? /lenguajes\. /.test(n) : nc.startsWith('saberes') ? /saberes/.test(n) : nc.startsWith('etica') ? /etica,/.test(n) : nc.startsWith('de lo humano') ? /de lo humano/.test(n) : false; };
+  const libros = G_LIBROS.filter(b => b[0] === gr).sort((a, b) => (propio(b[2]) ? 1 : 0) - (propio(a[2]) ? 1 : 0));
+  gPanel().innerHTML = `<div class="sec-title">Libros y programas SEP</div><div class="sec-sub">Abre los libros de texto gratuitos y los programas oficiales sin salir a buscarlos. Se abren en el sitio oficial de la SEP.</div>
+  <div class="card"><div class="card-title">📚 Libros de texto gratuitos — ciclo 2026-2027</div>
+    <div class="g-trims">${[1, 2, 3].map(x => `<button class="ttab${gr === x ? ' on' : ''}" onclick="gLibrosGrado(${x})">${x}.º grado</button>`).join('')}</div>
+    ${campo && g ? `<p style="font-size:12.5px;color:var(--gris);margin:0 0 10px">⭐ Primero va el libro del campo de tu grupo (<b>${gEsc(campo)}</b>, ${gEsc(g.materia)}). Los demás son de los otros campos formativos.</p>` : ''}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px">${libros.map(b => `<a href="${G_LIBROS_URL(b[1])}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;border:1.5px solid ${propio(b[2]) ? 'var(--azul-med)' : 'var(--borde)'};border-radius:12px;padding:8px;display:block;background:#fff">
+      <img src="${G_LIBROS_PORTADA(b[1])}" alt="" loading="lazy" onerror="this.style.display='none'" style="width:100%;border-radius:8px;display:block;margin-bottom:6px;background:#f1f5f9;min-height:60px">
+      <div style="font-size:12.5px;font-weight:600;line-height:1.3">${propio(b[2]) ? '⭐ ' : ''}${gEsc(b[2])}</div></a>`).join('')}</div>
+    <div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:12px">Los libros salen del catálogo oficial de la CONALITEG. Si un libro no abre, entra a «Catálogo completo de libros de texto» más abajo.</div></div>
+  <div class="card"><div class="card-title">📘 Programas y planes de estudio</div>
+    ${G_PROGRAMAS.map(([ic, t, d, u, n]) => `<a href="${u}" target="_blank" rel="noopener" style="display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit;border:1.5px solid var(--borde);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff"><span style="font-size:26px">${ic}</span><span style="flex:1"><b style="font-size:14px">${t}</b><br><span style="font-size:12.5px;color:var(--gris)">${d}</span></span><small style="color:var(--gris);white-space:nowrap">${n} ↗</small></a>`).join('')}
+    <div class="ayuda" style="font-size:11.5px;color:var(--gris)">Son enlaces oficiales de la SEP y la CONALITEG; abren en otra pestaña.</div></div>`;
+}
+
 // ── Menús que todavía están en construcción (se van llenando uno por uno) ──
 const G_PRONTO = {
   bitacora: ['📔', 'Bitácora de clase', 'Diario de cada sesión: qué se trabajó, qué pasó y a quién dar seguimiento, con evidencias fotográficas.'],
@@ -173,6 +208,7 @@ const G_MENU = [
   ['grupos', '👥', 'Mis grupos', 'Alumnos y listas', true],
   ['lista', '✅', 'Pasar lista', 'Asistencia, retardos y faltas', true],
   ['nueva', '📝', 'Planeación', 'Programa analítico y plano didáctico', true],
+  ['libros', '📚', 'Libros y programas SEP', 'Libros de texto y programas', true],
   ['calif', '📊', 'Calificaciones', 'Criterios y calificación del trimestre', true],
   ['examenes', '🧮', 'Exámenes', 'Crear con IA y calificar', true],
   ['rezago', '🚦', 'Rezago', 'Semáforo de alumnos en riesgo', true],
@@ -187,6 +223,7 @@ const G_MENU = [
 const G_ICONOS = {
   lista: ['<rect x="3" y="3" width="18" height="18" rx="4.5"/><path d="M8 12.2l3 3 5-6"/>', '#16a34a', '#dcfce7'],
   nueva: ['<path d="M2.5 5.5c3-1.4 6-1.2 9.5 1.2 3.5-2.4 6.5-2.6 9.5-1.2V19c-3-1.4-6-1.2-9.5 1.2C8.500 17.800 5.500 17.600 2.500 19z"/><path d="M12 6.700V20"/>', '#4f46e5', '#e0e7ff'],
+  libros: ['<path d="M4 4.500A2.500 2.500 0 0 1 6.500 2H20v15H6.500A2.500 2.500 0 0 0 4 19.500z"/><path d="M4 19.500A2.500 2.500 0 0 0 6.500 22H20v-5"/>', '#0e7490', '#cffafe'],
   trim: ['<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.500"/><circle cx="12" cy="12" r=".8"/>', '#7c3aed', '#ede9fe'],
   calif: ['<path d="M19 5L5 19"/><circle cx="7.200" cy="7.200" r="2.600"/><circle cx="16.800" cy="16.800" r="2.600"/>', '#ea580c', '#ffedd5'],
   examenes: ['<path d="M4 20h4L19.500 8.500l-4-4L4 16z"/><path d="M13.500 6.500l4 4"/>', '#9333ea', '#f3e8ff'],
