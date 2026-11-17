@@ -859,16 +859,18 @@ function gDescargarExamen(ex, clave) {
 }
 function gGuardarExamen() {
   const g = gGrupo(); const b = G.borrador; if (!b) return;
-  g.actividades.push({ id: gId(), trim: b.trim, criterioId: b.criterioId, nombre: b.titulo, max: gMaxExamen(b), tipo: 'examen', fecha: gHoy(), tema: b.tema, reactivos: b.reactivos, notas: {} });
-  G.borrador = null; gGuardar(); gRenderExamenes();
+  const nuevo = { id: gId(), trim: b.trim, criterioId: b.criterioId, nombre: b.titulo, max: gMaxExamen(b), tipo: 'examen', fecha: gHoy(), tema: b.tema, reactivos: b.reactivos, notas: {} };
+  g.actividades.push(nuevo); G.exAbierto = nuevo.id;
+  G.borrador = null; gGuardar(); gRenderExamenes(); gIrAExamen();
 }
 function gRegistrarExamenPapel() {
   const g = gGrupo();
   const nombre = document.getElementById('gp-nom').value.trim();
   const max = gNum(document.getElementById('gp-max').value) || 10;
   if (!nombre) { gAviso('Ponle nombre al examen.'); return; }
-  g.actividades.push({ id: gId(), trim: G.trimExam, criterioId: gCritExamen(g).id, nombre, max, tipo: 'examen', fecha: gHoy(), reactivos: null, notas: {} });
-  gGuardar(); gRenderExamenes();
+  const nuevo = { id: gId(), trim: G.trimExam, criterioId: gCritExamen(g).id, nombre, max, tipo: 'examen', fecha: gHoy(), reactivos: null, notas: {} };
+  g.actividades.push(nuevo); G.exAbierto = nuevo.id;
+  gGuardar(); gRenderExamenes(); gIrAExamen();
 }
 function gAciertos(exId, aid, el) {
   const g = gGrupo(); const ex = g.actividades.find(x => x.id === exId); if (!ex) return;
@@ -996,6 +998,23 @@ function gPlanActCrear() {
   gAviso(n ? `Listo: se crearon ${n} actividad(es) en «Calificaciones» (${G_TRIM_NOM[t]}). Captura ahí la nota de cada alumno.` : 'Esas actividades ya estaban creadas en ese grupo y trimestre.');
 }
 function gCrearEvalProyectoEx(id) { G.trimPlan = G.trimExam; gCrearEvalProyecto(id); }
+function gExamenesListaHTML(g, t) {
+  const exs = gActsTrim(g, t).filter(a => a.tipo === 'examen');
+  let h = `<div class="card" id="g-lista-ex"><div class="card-title">🧮 Capturar calificaciones de exámenes — ${G_TRIM_NOM[t]}</div>`;
+  if (!exs.length) h += `<p style="color:var(--gris);margin:0 0 10px">Aquí aparecerá la <b>lista de tus alumnos</b> para escribir lo que sacó cada uno. Primero hay que dar de alta el examen: si ya lo aplicaste en papel, regístralo; si todavía no, genéralo con IA más abajo.</p><button class="g-btn" onclick="gAbrirPapel()">📄 Registrar un examen que ya apliqué</button>`;
+  exs.forEach(ex => {
+    h += `<details class="g-ex" id="ex-${ex.id}" ${exs.length === 1 || G.exAbierto === ex.id ? 'open' : ''}><summary><b>${gEsc(ex.nombre)}</b> <span style="color:var(--gris);font-size:12px">· ${ex.max} pts · ${gEsc((g.criterios.find(c => c.id === ex.criterioId) || {}).nombre || '')}</span></summary>
+      <div id="gs-${ex.id}" class="g-statline">${gStatsExamen(g, ex)}</div>
+      <div style="margin:8px 0">${ex.reactivos ? `<button class="g-btn g-btn-s" onclick="gVerExamen('${ex.id}')">⬇ Examen</button> <button class="g-btn g-btn-s" onclick="gVerClave('${ex.id}')">⬇ Clave</button> ` : ''}
+      <button class="g-btn g-btn-s" onclick="gDescargarResultadosExamen('${ex.id}')">⬇ Resultados</button> <button class="g-btn g-btn-x" onclick="gQuitarExamen('${ex.id}')">Borrar</button></div>
+      ${g.alumnos.length ? `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th style="width:110px">Aciertos / pts (de ${ex.max})</th><th style="width:80px">Calif.</th></tr></thead><tbody>` +
+        g.alumnos.map((a, i) => { const n = ex.notas[a.id]; const v = n == null ? null : n / ex.max * 10; return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td><td><input class="g-nota" type="number" step="0.5" min="0" max="${ex.max}" value="${n == null ? '' : n}" oninput="gAciertos('${ex.id}','${a.id}',this)"></td><td id="gc-${ex.id}-${a.id}" class="${v != null && v < 6 ? 'g-mal' : ''}">${gFmt(v)}</td></tr>`; }).join('') + '</tbody></table></div>' : '<p style="color:var(--gris)">Agrega alumnos en «Mis grupos».</p>'}
+    </details>`;
+  });
+  return h + '</div>';
+}
+function gIrAExamen() { const e = G.exAbierto && document.getElementById('ex-' + G.exAbierto); if (e) { e.open = true; e.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
+function gAbrirPapel() { const d = document.getElementById('g-papel'); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'center' }); const n = document.getElementById('gp-nom'); if (n) n.focus(); } }
 function gRenderExamenes() {
   const g = gGrupo();
   if (!g) return gSinGrupo('Exámenes', 'Genera exámenes con IA y califica a tu grupo');
@@ -1003,6 +1022,7 @@ function gRenderExamenes() {
   let h = `<div class="sec-title">Exámenes</div><div class="sec-sub">Crea un examen con su clave de respuestas, captura los aciertos de cada alumno y la calificación se calcula sola.</div>${gBarra()}
   <div class="g-trims">${[1, 2, 3].map(x => `<button class="ttab${t === x ? ' on' : ''}" onclick="gTrimExam(${x})">${G_TRIM_NOM[x]}</button>`).join('')}</div>
   <div class="card"><div class="card-title">⚖️ Valor en la calificación — ${G_TRIM_NOM[t]}</div><div id="g-peso-card">${gPesoCardHTML(g, t)}</div></div>
+  ${G.evalModo === 'proyecto' ? '' : gExamenesListaHTML(g, t)}
   ${G.evalModo === 'proyecto' ? gProyectoEvalHTML(g, t) : `<div class="card"><div class="card-title">✨ Generar examen con IA — ${gEsc(g.materia)} ${g.grado}°</div>
     ${gTemasPanel(g, t)}
     <div class="campo"><label>Temas o contenidos a evaluar</label><textarea id="ge-tema" rows="4" placeholder="Ej. Ecuaciones de primer grado con una incógnita; problemas de proporcionalidad directa">${gEsc(G.temaUlt || '')}</textarea><div class="ayuda">Mientras más específico, mejor el examen. Puedes escribir tus propios temas o corregir los que marcaste.</div></div>
@@ -1032,25 +1052,12 @@ function gRenderExamenes() {
   }
 
   if (G.evalModo !== 'proyecto') {
-  h += `<details class="card g-det"><summary>📄 Ya apliqué un examen en papel (registrarlo sin IA)</summary>
+  h += `<details class="card g-det" id="g-papel"><summary>📄 Ya apliqué un examen en papel (registrarlo sin IA)</summary>
     <div class="f2" style="margin-top:12px"><div class="campo"><label>Nombre</label><input id="gp-nom" placeholder="Ej. Examen del trimestre"></div>
     <div class="campo"><label>Total de puntos / reactivos</label><input id="gp-max" type="number" min="1" value="10"></div>
     </div>
     <button class="g-btn" onclick="gRegistrarExamenPapel()">Registrar examen</button></details>`;
 
-  const exs = gActsTrim(g, t).filter(a => a.tipo === 'examen');
-  h += `<div class="card"><div class="card-title">🧮 Exámenes de este trimestre y calificación</div>`;
-  if (!exs.length) h += `<p style="color:var(--gris)">Aún no hay exámenes guardados en este trimestre.</p>`;
-  exs.forEach(ex => {
-    h += `<details class="g-ex" ${exs.length === 1 ? 'open' : ''}><summary><b>${gEsc(ex.nombre)}</b> <span style="color:var(--gris);font-size:12px">· ${ex.max} pts · ${gEsc((g.criterios.find(c => c.id === ex.criterioId) || {}).nombre || '')}</span></summary>
-      <div id="gs-${ex.id}" class="g-statline">${gStatsExamen(g, ex)}</div>
-      <div style="margin:8px 0">${ex.reactivos ? `<button class="g-btn g-btn-s" onclick="gVerExamen('${ex.id}')">⬇ Examen</button> <button class="g-btn g-btn-s" onclick="gVerClave('${ex.id}')">⬇ Clave</button> ` : ''}
-      <button class="g-btn g-btn-s" onclick="gDescargarResultadosExamen('${ex.id}')">⬇ Resultados</button> <button class="g-btn g-btn-x" onclick="gQuitarExamen('${ex.id}')">Borrar</button></div>
-      ${g.alumnos.length ? `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th style="width:110px">Aciertos / pts (de ${ex.max})</th><th style="width:80px">Calif.</th></tr></thead><tbody>` +
-        g.alumnos.map((a, i) => { const n = ex.notas[a.id]; const v = n == null ? null : n / ex.max * 10; return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td><td><input class="g-nota" type="number" step="0.5" min="0" max="${ex.max}" value="${n == null ? '' : n}" oninput="gAciertos('${ex.id}','${a.id}',this)"></td><td id="gc-${ex.id}-${a.id}" class="${v != null && v < 6 ? 'g-mal' : ''}">${gFmt(v)}</td></tr>`; }).join('') + '</tbody></table></div>' : '<p style="color:var(--gris)">Agrega alumnos en «Mis grupos».</p>'}
-    </details>`;
-  });
-  h += '</div>';
   }
   gPanel().innerHTML = h;
 }
