@@ -97,7 +97,7 @@ function gGuardarPerfil() {
 function gInit() { gCargar(); if (G.tab) gRender(); }
 function gOnTab(id) {
   if (typeof licOnTab === 'function' && licOnTab(id)) { G.tab = id; return; }
-  const conocidas = ['inicio', 'bienvenida', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'recup', 'calendario', 'libros', 'planes', 'bitacora', 'horario', ...Object.keys(G_PRONTO)];
+  const conocidas = ['inicio', 'bienvenida', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'recup', 'calendario', 'libros', 'planes', 'bitacora', 'horario', 'escaner', ...Object.keys(G_PRONTO)];
   if (!conocidas.includes(id)) return;
   if (!G.data) gCargar();
   G.tab = id;
@@ -107,7 +107,7 @@ function gOnTab(id) {
 function gRender() {
   if (licTabBloqueada(G.tab)) { gPanel().innerHTML = licHTMLBloqueo(G.tab); return; }
   if (G_PRONTO[G.tab]) return gRenderProntoTab(G.tab);
-  const f = { inicio: gRenderInicio, bienvenida: gRenderBienvenida, planes: gRenderPlanes, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, recup: gRenderRecup, calendario: gRenderCalendario, libros: gRenderLibros, bitacora: gRenderBitacora, horario: () => gRenderArchivos('horario') }[G.tab];
+  const f = { inicio: gRenderInicio, bienvenida: gRenderBienvenida, planes: gRenderPlanes, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, recup: gRenderRecup, calendario: gRenderCalendario, libros: gRenderLibros, bitacora: gRenderBitacora, horario: () => gRenderArchivos('horario'), escaner: gRenderEscaner }[G.tab];
   if (f) f();
 }
 
@@ -416,7 +416,6 @@ function gRecWord() {
 
 // ── Menús que todavía están en construcción (se van llenando uno por uno) ──
 const G_PRONTO = {
-  escaner: ['📷', 'Escáner de exámenes', 'Fotografiar el examen resuelto y obtener la calificación de cada alumno automáticamente.'],
 };
 function gRenderProntoTab(id) {
   const [ico, tit, desc] = G_PRONTO[id];
@@ -434,7 +433,7 @@ const G_MENU = [
   ['rezago', '🚦', 'Rezago', 'Semáforo de alumnos en riesgo', true],
   ['recup', '🔁', 'Recuperativos', 'Segunda oportunidad para reprobados', true],
   ['bitacora', '📔', 'Bitácora', 'Reportes de incidencias', true],
-  ['escaner', '📷', 'Escanear examen', 'Calificar con la cámara', false],
+  ['escaner', '📷', 'Escanear examen', 'Calificar con la cámara', true],
   ['calendario', '📅', 'Calendario escolar', 'Sube el de tu escuela', true],
   ['horario', '🕐', 'Horario', 'Escríbelo o súbelo (PDF/foto)', true],
   ['historial', '📋', 'Historial', 'Planeaciones generadas', true],
