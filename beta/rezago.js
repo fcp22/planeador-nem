@@ -109,7 +109,7 @@ function gRenderRezago() {
 
 function rezFicha(g, f, t) {
   f.um = rezUmbrales(g);
-  const crit = g.criterios.map(c => `<tr><td>${gEsc(c.nombre)} <span style="color:var(--gris)">(${c.pct} %)</span></td><td style="text-align:right"><b>${f.calc.porCrit[c.id] == null ? '—' : gFmt(f.calc.porCrit[c.id])}</b></td></tr>`).join('');
+  const crit = g.criterios.map(c => `<tr><td>${gEsc(c.nombre)} <span style="color:var(--gris)">(${gPct(g, c.id, t)} %)</span></td><td style="text-align:right"><b>${f.calc.porCrit[c.id] == null ? '—' : gFmt(f.calc.porCrit[c.id])}</b></td></tr>`).join('');
   const est = rezEstrategias(f);
   return `<div class="rez-ficha">
     ${f.causas.length ? `<div class="rez-bloque"><b>Por qué aparece así</b><ul>${f.causas.map(c => `<li>${gEsc(c)}</li>`).join('')}</ul></div>` : ''}
@@ -148,7 +148,7 @@ function rezReporteDireccion() {
 function rezReportePadres(aid) {
   const g = gGrupo(), t = REZ.trim, A = rezAnalizar(g, t), f = A.filas.find(x => x.al.id === aid); if (!f) return;
   f.um = A.um; const est = rezEstrategias(f);
-  const crit = g.criterios.map(c => `<tr>${rezTd(gEsc(c.nombre) + ' (' + c.pct + ' %)')}${rezTd(f.calc.porCrit[c.id] == null ? '—' : gFmt(f.calc.porCrit[c.id]), 'text-align:center')}</tr>`).join('');
+  const crit = g.criterios.map(c => `<tr>${rezTd(gEsc(c.nombre) + ' (' + gPct(g, c.id, t) + ' %)')}${rezTd(f.calc.porCrit[c.id] == null ? '—' : gFmt(f.calc.porCrit[c.id]), 'text-align:center')}</tr>`).join('');
   const html = gEncabezadoDoc('INFORME PARA MADRE, PADRE O TUTOR', g, `<b>Periodo:</b> ${G_TRIM_NOM[t]}`) +
     `<p><b>Alumno(a):</b> ${gEsc(f.al.nombre)} &nbsp; <b>Fecha:</b> ${gFechaBonita(gHoy())}</p>
     <p>Estimada familia: le compartimos cómo va su hijo(a) en la materia de ${gEsc(g.materia)} para que juntos podamos apoyarle.</p>

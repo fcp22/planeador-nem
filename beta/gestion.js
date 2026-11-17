@@ -429,14 +429,28 @@ function gDescargarAsistencia() {
 // ============================================================
 function gActsTrim(g, t) { return g.actividades.filter(a => a.trim === t); }
 // Calificación por criterio y final de un alumno en un trimestre (escala 0-10).
+// Los pesos (%) son por trimestre: g.pesos[t][criterioId]. Si un trimestre no tiene el suyo, usa el del criterio (compatibilidad con grupos anteriores).
+function gTrimActual() { return typeof G.trimCalif === 'number' ? G.trimCalif : gTrimDeFecha(gHoy()); }
+function gPct(g, cid, t) {
+  const p = g.pesos && g.pesos[t];
+  if (p && p[cid] != null) return +p[cid] || 0;
+  const c = g.criterios.find(x => x.id === cid); return c ? (+c.pct || 0) : 0;
+}
+function gPesosTrim(g, t) {
+  if (!g.pesos) g.pesos = {};
+  if (!g.pesos[t]) g.pesos[t] = {};
+  g.criterios.forEach(c => { if (g.pesos[t][c.id] == null) g.pesos[t][c.id] = +c.pct || 0; });
+  return g.pesos[t];
+}
 function gCalcAlumno(g, aid, t) {
   const porCrit = {}; let suma = 0, pcts = 0;
   g.criterios.forEach(c => {
+    const pc = gPct(g, c.id, t);
     const vals = [];
     gActsTrim(g, t).filter(a => a.criterioId === c.id).forEach(a => {
       const n = a.notas[aid]; if (n != null && a.max > 0) vals.push(n / a.max * 10);
     });
-    if (vals.length) { const s = vals.reduce((x, y) => x + y, 0) / vals.length; porCrit[c.id] = s; suma += s * c.pct; pcts += c.pct; }
+    if (vals.length) { const s = vals.reduce((x, y) => x + y, 0) / vals.length; porCrit[c.id] = s; suma += s * pc; pcts += pc; }
     else porCrit[c.id] = null;
   });
   return { porCrit, final: pcts > 0 ? suma / pcts : null, pcts };
@@ -445,50 +459,101 @@ function gCalcAnual(g, aid) {
   const bs = [1, 2, 3].map(t => gBoleta(gCalcAlumno(g, aid, t).final)).filter(b => b != null);
   return bs.length ? { prom: bs.reduce((x, y) => x + y, 0) / bs.length, n: bs.length } : null;
 }
-function gSumaPct(g) { return g.criterios.reduce((s, c) => s + (+c.pct || 0), 0); }
+function gSumaPct(g, t) { t = t || gTrimActual(); return g.criterios.reduce((s, c) => s + gPct(g, c.id, t), 0); }
 function gTrimCalif(v) { G.trimCalif = v === 'anual' ? 'anual' : +v; gRenderCalif(); }
 
 function gCriterioNombre(v, cid) { const c = gGrupo().criterios.find(x => x.id === cid); if (c && v.trim()) { c.nombre = v.trim(); gGuardar(); } }
-function gCriterioPct(cid, v) { const c = gGrupo().criterios.find(x => x.id === cid); if (c) { c.pct = Math.max(0, gNum(v) || 0); gGuardar(); gActualizarSumaPct(); gActualizarResumen(); } }
+function gCriterioPct(cid, v) { const g = gGrupo(); const c = g.criterios.find(x => x.id === cid); if (c) { gPesosTrim(g, gTrimActual())[cid] = Math.max(0, Math.min(100, gNum(v) || 0)); gGuardar(); gActualizarSumaPct(); gActualizarResumen(); } }
 function gActualizarSumaPct() {
-  const g = gGrupo(); const s = gSumaPct(g); const e = document.getElementById('g-suma');
-  if (e) { e.innerHTML = s === 100 ? `<span style="color:var(--verde)">✓ Suma 100 %</span>` : `<span class="g-mal">Suma ${s} % — debe sumar 100 %</span>`; }
+  const g = gGrupo(); const s = gSumaPct(g, gTrimActual()); const f = s === 100 ? `<span style="color:var(--verde)">✓ Suma 100 %</span>` : `<span class="g-mal">Suma ${s} % — debe sumar 100 %${s < 100 ? ` (te faltan ${100 - s} %)` : ` (te pasas ${s - 100} %)`}</span>`;
+  ['g-suma', 'g-suma2'].forEach(id => { const e = document.getElementById(id); if (e) e.innerHTML = f; });
 }
-function gAgregarCriterio() { const g = gGrupo(); g.criterios.push({ id: gId(), nombre: 'Nuevo criterio', pct: 0 }); gGuardar(); gRenderCalif(); }
+function gAgregarCriterio(nombre) { const g = gGrupo(); g.criterios.push({ id: gId(), nombre: nombre || 'Nuevo criterio', pct: 0 }); gGuardar(); gRenderCalif(); }
 function gQuitarCriterio(cid) {
   const g = gGrupo(); const n = g.actividades.filter(a => a.criterioId === cid).length;
   if (g.criterios.length <= 1) { gAviso('Debe quedar al menos un criterio.'); return; }
   if (!confirm(n ? `Este criterio tiene ${n} actividad(es). Se pasarán al primer criterio de la lista. ¿Continuar?` : '¿Quitar este criterio?')) return;
   g.criterios = g.criterios.filter(c => c.id !== cid);
+  Object.values(g.pesos || {}).forEach(p => { delete p[cid]; });
   g.actividades.forEach(a => { if (a.criterioId === cid) a.criterioId = g.criterios[0].id; });
   gGuardar(); gRenderCalif();
 }
 function gRestablecerCriterios() {
   if (!confirm('¿Volver a los criterios sugeridos (alineados al Plano Didáctico: proceso 70 % + producto 30 %)? Las actividades pasarán al primer criterio.')) return;
-  const g = gGrupo(); g.criterios = G_CRITERIOS_DEF.map(([n, p]) => ({ id: gId(), nombre: n, pct: p }));
+  const g = gGrupo(); g.criterios = G_CRITERIOS_DEF.map(([n, p]) => ({ id: gId(), nombre: n, pct: p })); g.pesos = {};
   g.actividades.forEach(a => { a.criterioId = g.criterios[a.tipo === 'examen' ? 4 : 1].id; });
   gGuardar(); gRenderCalif();
 }
-// Criterio con su peso, para el examen: el nombre dice cuánto vale dentro de la calificación del trimestre
-function gCriteriosOptsPct(g, sel) { return g.criterios.map(c => `<option value="${c.id}"${c.id === sel ? ' selected' : ''}>${gEsc(c.nombre)} — vale ${c.pct}% de la calificación del trimestre</option>`).join(''); }
-function gEsCritExamen(c) { return /exam/i.test(String(c.nombre).normalize('NFD').replace(/[\u0300-\u036f]/g, '')); }   // acepta «Examen», «Exámenes», «EXAMENES»…
-function gCritAyudaHTML(g, cid) {
-  const c = g.criterios.find(x => x.id === cid); if (!c) return '';
-  const nom = gEsc(c.nombre), pct = c.pct, aporte = Math.round(8 * pct) / 100;
-  const hay = gActsTrim(g, G.trimExam).filter(a => a.criterioId === c.id).length;
-  const suma = gSumaPct(g);
-  return `<b>¿Cómo cuenta este examen en la calificación del trimestre?</b>
-    <ol style="margin:6px 0 6px 18px;padding:0;line-height:1.55">
-      <li>El examen se califica de <b>0 a 10</b>. No importa cuántos puntos tenga en total (por ejemplo 6): al capturar los aciertos de cada alumno, la app lo convierte sola a una calificación de 0 a 10.</li>
-      <li>Esa calificación se guarda en el criterio <b>«${nom}»</b>, que vale el <b>${pct}%</b> de la calificación final del trimestre.</li>
-      <li><b>Ejemplo:</b> un alumno que saca <b>8</b> en este examen suma 8 × ${pct}% = <b>${aporte} puntos</b> de los 10 de su calificación del trimestre.</li>
-      <li>${hay ? `En este trimestre ya tienes <b>${hay}</b> actividad${hay > 1 ? 'es' : ''} en «${nom}»: se <b>promedian</b> con este examen y ese promedio es lo que vale el ${pct}%.` : `Si después guardas otro examen o actividad en «${nom}», se <b>promedian</b> entre sí y ese promedio es lo que vale el ${pct}%.`}</li>
-    </ol>
-    ${gEsCritExamen(c) ? '' : `<div style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:8px;padding:8px 10px;margin:6px 0">💡 Elegiste «${nom}», que no es el criterio de exámenes. El examen <b>no sustituye</b> lo que ya tengas ahí: se <b>promedia</b> con eso y comparten el ${pct}%. Normalmente los exámenes van en el criterio de exámenes, y el producto del proyecto se registra aparte en «Calificaciones».</div>`}
-    <span style="color:var(--gris)">Los porcentajes de cada criterio se cambian en «Calificaciones».</span>${suma !== 100 ? `<div style="color:#b45309;margin-top:6px">⚠ Tus criterios suman ${suma}% y deben sumar 100%. Ajústalos en «Calificaciones».</div>` : ''}`;
+// ── Valor del examen / proyecto en la calificación del trimestre (5 % a 100 %, de cinco en cinco) ──
+function gEsCritExamen(c) { return /exam/i.test(String(c.nombre).normalize('NFD').replace(/[̀-ͯ]/g, '')); }   // acepta «Examen», «Exámenes», «EXAMENES»…
+function gEsCritProyecto(c) { return /proyecto/i.test(String(c.nombre)); }
+function gCritExamen(g) {
+  let c = g.criterios.find(gEsCritExamen);
+  if (!c) { c = { id: gId(), nombre: 'Exámenes', pct: 0 }; g.criterios.push(c); }
+  return c;
 }
-function gCritAyuda() { const g = gGrupo(), s = document.getElementById('ge-crit'), e = document.getElementById('ge-crit-ayuda'); if (g && s && e) e.innerHTML = gCritAyudaHTML(g, s.value); }
-function gCriteriosOpts(g, sel) { return g.criterios.map(c => `<option value="${c.id}"${c.id === sel ? ' selected' : ''}>${gEsc(c.nombre)} (${c.pct}%)</option>`).join(''); }
+// El examen y el proyecto se ajustan solo desde esta pantalla; los demás criterios se acomodan para que todo sume 100 %.
+function gIdsEvaluacion(g) { const ce = g.criterios.find(gEsCritExamen), cp = g.criterios.find(c => gEsCritProyecto(c) && !gEsCritExamen(c)); return [ce && ce.id, cp && cp.id].filter(Boolean); }
+function gMaxPeso(g, t, cid) {
+  const P = gPesosTrim(g, t);
+  return Math.max(0, 100 - gIdsEvaluacion(g).filter(id => id !== cid).reduce((s, id) => s + (P[id] || 0), 0));
+}
+function gAjustarPesos(g, t, cid, nuevo) {
+  const P = gPesosTrim(g, t);
+  const fijos = new Set(gIdsEvaluacion(g)); fijos.add(cid);
+  const antes = {}; g.criterios.forEach(c => { antes[c.id] = P[c.id] || 0; });
+  const sumaFijos = [...fijos].filter(id => id !== cid).reduce((s, id) => s + (P[id] || 0), 0);
+  nuevo = Math.max(0, Math.min(100 - sumaFijos, Math.round((+nuevo || 0) / 5) * 5));
+  P[cid] = nuevo;
+  const libres = g.criterios.filter(c => !fijos.has(c.id));
+  const objetivo = 100 - nuevo - sumaFijos;
+  if (libres.length && objetivo >= 0) {
+    const u = objetivo % 5 === 0 ? 5 : 1, T = objetivo / u, S = libres.reduce((x, c) => x + (P[c.id] || 0), 0);
+    const raw = libres.map(c => S > 0 ? (P[c.id] || 0) / S * T : T / libres.length);
+    const base = raw.map(Math.floor); let resto = T - base.reduce((x, y) => x + y, 0);
+    raw.map((r, i) => [r - base[i], i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (resto > 0) { base[i]++; resto--; } });
+    libres.forEach((c, i) => { P[c.id] = base[i] * u; });
+  }
+  const cambios = g.criterios.filter(c => c.id !== cid && (P[c.id] || 0) !== antes[c.id]).map(c => ({ nombre: c.nombre, de: antes[c.id], a: P[c.id] || 0 }));
+  return { nuevo, cambios };
+}
+function gMsgCambios(r) { return r.cambios.length ? `Los demás criterios se acomodaron para que todo siga sumando 100 %: ${r.cambios.map(c => `${gEsc(c.nombre)} ${c.de}→${c.a} %`).join(' · ')}. Puedes cambiarlos en «Calificaciones».` : ''; }
+function gBarraPesos(g, t) {
+  const ce = g.criterios.find(gEsCritExamen), cp = g.criterios.find(c => gEsCritProyecto(c) && !gEsCritExamen(c));
+  const e = ce ? gPct(g, ce.id, t) : 0, p = cp ? gPct(g, cp.id, t) : 0, tot = gSumaPct(g, t), resto = Math.max(0, tot - e - p), ancho = Math.max(tot, 100);
+  const seg = (v, col) => v > 0 ? `<div style="width:${v / ancho * 100}%;background:${col}"></div>` : '';
+  const li = (col, txt) => `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:14px"><i style="width:10px;height:10px;border-radius:3px;background:${col};display:inline-block"></i>${txt}</span>`;
+  return `<div style="display:flex;height:16px;border-radius:8px;overflow:hidden;background:#e5e7eb;margin:12px 0 6px">${seg(e, '#2563eb')}${seg(p, '#7c3aed')}${seg(resto, '#94a3b8')}</div>
+    <div style="font-size:12.5px;color:var(--gris)">${li('#2563eb', `Examen <b>${e} %</b>`)}${li('#7c3aed', `Proyecto <b>${p} %</b>`)}${li('#94a3b8', `Lo demás (asistencia, tareas, participación…) <b>${resto} %</b>`)}</div>
+    ${tot === 100 ? '' : `<div style="color:#b45309;font-size:12.5px;margin-top:6px">⚠ Tus criterios suman ${tot} % y deben sumar 100 %. Ajústalos en «Calificaciones».</div>`}`;
+}
+function gPesoCardHTML(g, t) {
+  const modo = G.evalModo === 'proyecto' ? 'proyecto' : 'examen';
+  const c = modo === 'proyecto' ? g.criterios.find(x => gEsCritProyecto(x) && !gEsCritExamen(x)) : g.criterios.find(gEsCritExamen);
+  const val = c ? gPct(g, c.id, t) : 0, max = c ? gMaxPeso(g, t, c.id) : 100;
+  const ops = []; for (let v = 0; v <= max; v += 5) ops.push(v); if (!ops.includes(val)) ops.push(val); ops.sort((a, b) => a - b);
+  const nom = modo === 'proyecto' ? 'proyecto' : 'examen';
+  return `<div class="g-trims" style="margin-bottom:10px"><button class="ttab${modo === 'examen' ? ' on' : ''}" onclick="gEvalModo('examen')">📝 Examen</button><button class="ttab${modo === 'proyecto' ? ' on' : ''}" onclick="gEvalModo('proyecto')">🧩 Proyecto (en lugar de examen)</button></div>
+    <div class="campo" style="max-width:380px;margin-bottom:0"><label>¿Cuánto vale el ${nom} en la calificación de este trimestre?</label>
+      <select id="g-peso-sel" onchange="gPesoEval(this.value)">${ops.map(v => `<option value="${v}"${v === val ? ' selected' : ''}>${v === 0 ? '0 % — no cuenta este trimestre' : v + ' %'}</option>`).join('')}</select></div>
+    <div class="ayuda" style="margin-top:6px">Ejemplo: si vale <b>${val} %</b>, un alumno que saca <b>8</b> suma <b>${Math.round(8 * val) / 100}</b> de los 10 puntos de su calificación. ${modo === 'examen' ? 'Si das varios exámenes en el trimestre, <b>entre todos</b> valen ese porcentaje (se promedian).' : 'Las fases y el producto final se promedian y juntos valen ese porcentaje.'}</div>
+    ${gBarraPesos(g, t)}
+    ${G.pesoMsg ? `<div class="g-aviso" style="margin-top:8px;font-size:12.5px">ℹ️ ${G.pesoMsg}</div>` : ''}
+    <div class="ayuda" style="margin-top:8px">Todo lo demás (asistencia, tareas, participación…) lo defines en «Calificaciones»; ahí se junta todo y sale la calificación final del trimestre.</div>`;
+}
+function gPesoEval(v) {
+  const g = gGrupo(), t = G.trimExam;
+  const c = G.evalModo === 'proyecto' ? gCritProyecto(g) : gCritExamen(g);
+  G.pesoMsg = gMsgCambios(gAjustarPesos(g, t, c.id, v));
+  gGuardar(); const e = document.getElementById('g-peso-card'); if (e) e.innerHTML = gPesoCardHTML(g, t);
+}
+function gEvalModo(m) { const ta = document.getElementById('ge-tema'); if (ta) G.temaUlt = ta.value; G.evalModo = m; G.pesoMsg = ''; gRenderExamenes(); }
+function gSinExamen() {
+  const g = gGrupo(), t = G.trimExam, c = gCritExamen(g);
+  G.pesoMsg = gMsgCambios(gAjustarPesos(g, t, c.id, 0));
+  gGuardar(); gRenderExamenes();
+}
+function gCriteriosOpts(g, sel, t) { t = t || gTrimActual(); return g.criterios.map(c => `<option value="${c.id}"${c.id === sel ? ' selected' : ''}>${gEsc(c.nombre)} (${gPct(g, c.id, t)}%)</option>`).join(''); }
 
 function gAgregarActividad() {
   const g = gGrupo(); const t = G.trimCalif;
@@ -535,7 +600,7 @@ function gResumenHTML() {
   const prom = fin.length ? fin.reduce((x, y) => x + y, 0) / fin.length : null;
   const rep = calc.filter(x => x.r.final != null && gBoleta(x.r.final) < 6).length;
   let h = `<div class="g-stats"><div><b>${gFmt(prom, 2)}</b><span>Promedio del grupo</span></div><div><b>${fin.length}/${g.alumnos.length}</b><span>Alumnos con calificación</span></div><div><b class="${rep ? 'g-mal' : ''}">${rep}</b><span>Reprobados (&lt; 6)</span></div></div>`;
-  h += `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th>${g.criterios.map(c => `<th>${gEsc(c.nombre)}<br><small>${c.pct}%</small></th>`).join('')}<th>Calif.</th><th>Boleta</th></tr></thead><tbody>`;
+  h += `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th>${g.criterios.map(c => `<th>${gEsc(c.nombre)}<br><small>${gPct(g, c.id, t)}%</small></th>`).join('')}<th>Calif.</th><th>Boleta</th></tr></thead><tbody>`;
   h += calc.map(({ a, r }, i) => {
     const b = gBoleta(r.final);
     return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${g.criterios.map(c => `<td>${gFmt(r.porCrit[c.id])}</td>`).join('')}<td>${gFmt(r.final, 2)}</td><td class="${b != null && b < 6 ? 'g-mal' : ''}"><b>${b == null ? '—' : b}</b></td></tr>`;
@@ -552,20 +617,22 @@ function gRenderCalif() {
   <div class="g-trims">${[1, 2, 3].map(x => `<button class="ttab${t === x ? ' on' : ''}" onclick="gTrimCalif(${x})">${G_TRIM_NOM[x]}</button>`).join('')}<button class="ttab${t === 'anual' ? ' on' : ''}" onclick="gTrimCalif('anual')">Resumen anual</button></div>`;
 
   if (t !== 'anual') {
-    h += `<details class="card g-det"><summary>⚖️ Criterios de evaluación y ponderación <span id="g-suma" style="margin-left:10px;font-size:12px"></span></summary>
-      <p style="font-size:12px;color:var(--gris);margin:10px 0">Los sugeridos siguen el Plano Didáctico (proceso 70 % + producto 30 %). Cámbialos como los hayas acordado con tus alumnos.</p>
-      <div class="g-crit">${g.criterios.map(c => `<div class="g-crit-f"><input value="${gEsc(c.nombre)}" onchange="gCriterioNombre(this.value,'${c.id}')"><input type="number" min="0" max="100" value="${c.pct}" oninput="gCriterioPct('${c.id}',this.value)"><span>%</span><button class="g-x" onclick="gQuitarCriterio('${c.id}')">✕</button></div>`).join('')}</div>
-      <button class="g-btn g-btn-s" onclick="gAgregarCriterio()">+ Criterio</button> <button class="g-btn g-btn-s" onclick="gRestablecerCriterios()">Restablecer sugeridos</button></details>
+    const faltan = ['Asistencia', 'Tareas', 'Participación'].filter(n => !g.criterios.some(c => String(c.nombre).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().slice(0, 6))));
+    h += `<div class="card"><div class="card-title">⚖️ Criterios de evaluación — ${G_TRIM_NOM[t]} <span id="g-suma" style="margin-left:10px;font-size:12px;font-weight:600"></span></div>
+      <p style="font-size:12.5px;color:var(--gris);margin:0 0 10px">Escribe cuántos puntos de <b>100</b> vale cada cosa en este trimestre (asistencia, tareas, participación, examen, proyecto…). <b>Todo debe sumar 100 %.</b> El examen y el proyecto también se pueden ajustar desde «Exámenes». Cada trimestre tiene sus propios porcentajes.</p>
+      <div class="g-crit">${g.criterios.map(c => `<div class="g-crit-f"><input value="${gEsc(c.nombre)}" onchange="gCriterioNombre(this.value,'${c.id}')"><input type="number" min="0" max="100" step="5" value="${gPct(g, c.id, t)}" oninput="gCriterioPct('${c.id}',this.value)"><span>%</span><button class="g-x" onclick="gQuitarCriterio('${c.id}')">✕</button></div>`).join('')}</div>
+      <div style="margin-top:8px"><span id="g-suma2" style="font-size:13px;font-weight:600"></span></div>
+      <div style="margin-top:10px"><button class="g-btn g-btn-s" onclick="gAgregarCriterio()">+ Criterio</button> ${faltan.map(n => `<button class="g-btn g-btn-s" onclick="gAgregarCriterio('${n}')">+ ${n}</button>`).join(' ')} <button class="g-btn g-btn-s" onclick="gRestablecerCriterios()">Restablecer sugeridos</button></div></div>
     <div class="card"><div class="card-title">➕ Nueva actividad (${G_TRIM_NOM[t]})</div>
       <div class="f3"><div class="campo"><label>Nombre</label><input id="ga-nom" placeholder="Ej. Ensayo sobre la lectura"></div>
-      <div class="campo"><label>Criterio</label><select id="ga-crit">${gCriteriosOpts(g, g.criterios[1] ? g.criterios[1].id : '')}</select></div>
+      <div class="campo"><label>Criterio</label><select id="ga-crit">${gCriteriosOpts(g, g.criterios[1] ? g.criterios[1].id : '', t)}</select></div>
       <div class="campo"><label>Puntaje máximo</label><input id="ga-max" type="number" min="1" value="10"></div></div>
       <button class="g-btn" onclick="gAgregarActividad()">Agregar actividad</button>
       <span style="font-size:12px;color:var(--gris);margin-left:8px">Los exámenes se crean en la pestaña «Exámenes» y aparecen aquí también.</span></div>`;
     const acts = gActsTrim(g, t);
     if (acts.length && g.alumnos.length) {
       h += `<div class="card"><div class="card-title">✏️ Captura de calificaciones</div><div class="g-tabla-w"><table class="g-tabla g-cap"><thead><tr><th>#</th><th class="g-sticky">Alumno</th>` +
-        acts.map(a => `<th><div class="g-ah">${a.tipo === 'examen' ? '📝 ' : ''}${gEsc(a.nombre)}</div><small>de ${a.max}</small><select onchange="gCriterioDeAct('${a.id}',this.value)">${gCriteriosOpts(g, a.criterioId)}</select><button class="g-x" title="Borrar" onclick="gQuitarActividad('${a.id}')">✕</button></th>`).join('') + '</tr></thead><tbody>' +
+        acts.map(a => `<th><div class="g-ah">${a.tipo === 'examen' ? '📝 ' : ''}${gEsc(a.nombre)}</div><small>de ${a.max}</small><select onchange="gCriterioDeAct('${a.id}',this.value)">${gCriteriosOpts(g, a.criterioId, t)}</select><button class="g-x" title="Borrar" onclick="gQuitarActividad('${a.id}')">✕</button></th>`).join('') + '</tr></thead><tbody>' +
         g.alumnos.map((al, i) => `<tr><td>${i + 1}</td><td class="g-sticky">${gEsc(al.nombre)}</td>` + acts.map(a => `<td><input class="g-nota" type="number" step="0.1" min="0" max="${a.max}" value="${a.notas[al.id] == null ? '' : a.notas[al.id]}" oninput="gNota('${a.id}','${al.id}',this)"></td>`).join('') + '</tr>').join('') + '</tbody></table></div></div>';
     } else if (!g.alumnos.length) h += `<div class="card g-vacio">Agrega alumnos en «Mis grupos» para capturar calificaciones.</div>`;
     else h += `<div class="card g-vacio">Aún no hay actividades en este trimestre. Agrega la primera arriba.</div>`;
@@ -586,7 +653,7 @@ function gDescargarCalif() {
     nom = 'Calificaciones_anual';
   } else {
     html = gEncabezadoDoc('REGISTRO DE CALIFICACIONES — ' + G_TRIM_NOM[t].toUpperCase(), g) +
-      `<table style="width:100%;border-collapse:collapse"><tr>${['#', 'Alumno', ...g.criterios.map(c => `${gEsc(c.nombre)} (${c.pct}%)`), 'Calif.', 'Boleta'].map(th).join('')}</tr>` +
+      `<table style="width:100%;border-collapse:collapse"><tr>${['#', 'Alumno', ...g.criterios.map(c => `${gEsc(c.nombre)} (${gPct(g, c.id, t)}%)`), 'Calif.', 'Boleta'].map(th).join('')}</tr>` +
       g.alumnos.map((a, i) => { const r = gCalcAlumno(g, a.id, t); return `<tr>${[i + 1, gEsc(a.nombre), ...g.criterios.map(c => gFmt(r.porCrit[c.id])), gFmt(r.final, 2), r.final == null ? '—' : gBoleta(r.final)].map(td).join('')}</tr>`; }).join('') + '</table>';
     nom = 'Calificaciones_T' + t;
   }
@@ -600,7 +667,7 @@ const G_TIPOS_EXAM = {
   opcion_multiple: 'Opción múltiple', verdadero_falso: 'Verdadero / falso',
   respuesta_corta: 'Respuesta corta', desarrollo: 'Problema o pregunta abierta',
 };
-function gTrimExam(v) { G.trimExam = +v; G.borrador = null; G.temaUlt = ''; G.temasSel = []; gRenderExamenes(); }
+function gTrimExam(v) { G.trimExam = +v; G.pesoMsg = ''; G.borrador = null; G.temaUlt = ''; G.temasSel = []; gRenderExamenes(); }
 
 function gPromptExamen(g, o) {
   return `Eres docente experto de secundaria en México (Nueva Escuela Mexicana, Plan de Estudios 2022, Fase 6). Elabora un examen.
@@ -649,7 +716,7 @@ async function gGenerarExamen() {
     const ex = gNormalizarExamen(parsearJSON(texto), n);
     if (!ex.reactivos.length) throw new Error('La IA no devolvió reactivos válidos.');
     G.temaUlt = tema;
-    G.borrador = Object.assign(ex, { tema, trim: G.trimExam, criterioId: document.getElementById('ge-crit').value });
+    G.borrador = Object.assign(ex, { tema, trim: G.trimExam, criterioId: gCritExamen(g).id });
     gRenderExamenes();
     const b = document.getElementById('g-borrador'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (e) {
@@ -739,7 +806,7 @@ function gRegistrarExamenPapel() {
   const nombre = document.getElementById('gp-nom').value.trim();
   const max = gNum(document.getElementById('gp-max').value) || 10;
   if (!nombre) { gAviso('Ponle nombre al examen.'); return; }
-  g.actividades.push({ id: gId(), trim: G.trimExam, criterioId: document.getElementById('gp-crit').value, nombre, max, tipo: 'examen', fecha: gHoy(), reactivos: null, notas: {} });
+  g.actividades.push({ id: gId(), trim: G.trimExam, criterioId: gCritExamen(g).id, nombre, max, tipo: 'examen', fecha: gHoy(), reactivos: null, notas: {} });
   gGuardar(); gRenderExamenes();
 }
 function gAciertos(exId, aid, el) {
@@ -771,28 +838,40 @@ function gDescargarResultadosExamen(id) {
 function gVerExamen(id) { const ex = gGrupo().actividades.find(x => x.id === id); if (ex && ex.reactivos) gDescargarExamen(ex, false); }
 function gVerClave(id) { const ex = gGrupo().actividades.find(x => x.id === id); if (ex && ex.reactivos) gDescargarExamen(ex, true); }
 
+function gProyectoEvalHTML(g, t) {
+  const pl = gPlanTrim(g, t), cp = g.criterios.find(c => gEsCritProyecto(c) && !gEsCritExamen(c)), ce = g.criterios.find(gEsCritExamen);
+  let h = `<div class="card"><div class="card-title">🧩 Proyecto de este trimestre</div>
+    <p style="font-size:13px;margin:0 0 10px">Si en lugar de examen evalúas con un <b>proyecto</b>, cada fase y el producto final se califican de 0 a 10 en <b>«Calificaciones»</b> (ahí está la lista de tus alumnos). Se promedian y juntos valen el porcentaje de arriba.</p>`;
+  if (ce && gPct(g, ce.id, t) > 0) h += `<div class="g-aviso" style="margin-bottom:10px;font-size:12.5px">¿Este trimestre no vas a aplicar examen? <button class="g-btn g-btn-s" onclick="gSinExamen()">Poner el examen en 0 %</button></div>`;
+  if (!pl.proyectos.length) h += `<p style="color:var(--gris)">Aún no tienes un proyecto en este trimestre.</p><button class="g-btn" onclick="gIrA('trim')">🧭 Ir a «Proyecto del trimestre» a crearlo</button>`;
+  pl.proyectos.forEach(p => {
+    const n = g.actividades.filter(a => a.proyectoId === p.id).length;
+    h += `<div class="g-proy" style="margin-bottom:10px"><b>${gEsc(p.nombre)}</b>${p.producto ? `<div style="font-size:12.5px;color:var(--gris);margin-top:2px">Producto: ${gEsc(p.producto)}</div>` : ''}
+      <div style="margin-top:8px">${n ? `<span style="font-size:12.5px;color:var(--gris)">${n} actividades de evaluación creadas.</span> ` : ''}<button class="g-btn g-btn-s" onclick="gCrearEvalProyectoEx('${p.id}')">${n ? 'Ver y calificar en «Calificaciones»' : '+ Crear actividades de evaluación (una por fase + producto final)'}</button></div></div>`;
+  });
+  return h + '</div>';
+}
+function gCrearEvalProyectoEx(id) { G.trimPlan = G.trimExam; gCrearEvalProyecto(id); }
 function gRenderExamenes() {
   const g = gGrupo();
   if (!g) return gSinGrupo('Exámenes', 'Genera exámenes con IA y califica a tu grupo');
   const t = G.trimExam;
-  const critEx = (g.criterios.find(gEsCritExamen) || g.criterios[0]).id;
   let h = `<div class="sec-title">Exámenes</div><div class="sec-sub">Crea un examen con su clave de respuestas, captura los aciertos de cada alumno y la calificación se calcula sola.</div>${gBarra()}
   <div class="g-trims">${[1, 2, 3].map(x => `<button class="ttab${t === x ? ' on' : ''}" onclick="gTrimExam(${x})">${G_TRIM_NOM[x]}</button>`).join('')}</div>
-  <div class="card"><div class="card-title">✨ Generar examen con IA — ${gEsc(g.materia)} ${g.grado}°</div>
+  <div class="card"><div class="card-title">⚖️ Valor en la calificación — ${G_TRIM_NOM[t]}</div><div id="g-peso-card">${gPesoCardHTML(g, t)}</div></div>
+  ${G.evalModo === 'proyecto' ? gProyectoEvalHTML(g, t) : `<div class="card"><div class="card-title">✨ Generar examen con IA — ${gEsc(g.materia)} ${g.grado}°</div>
     ${gTemasPanel(g, t)}
     <div class="campo"><label>Temas o contenidos a evaluar</label><textarea id="ge-tema" rows="4" placeholder="Ej. Ecuaciones de primer grado con una incógnita; problemas de proporcionalidad directa">${gEsc(G.temaUlt || '')}</textarea><div class="ayuda">Mientras más específico, mejor el examen. Puedes escribir tus propios temas o corregir los que marcaste.</div></div>
     <div class="f3">
       <div class="campo"><label>Número de reactivos</label>${licEsPrueba() ? '<input id="ge-n" type="number" min="3" max="5" value="5"><div class="ayuda">En la prueba gratis: hasta 5 reactivos.</div>' : '<input id="ge-n" type="number" min="3" max="30" value="10">'}</div>
       <div class="campo"><label>Dificultad</label><select id="ge-dif"><option>Básica</option><option selected>Media</option><option>Alta</option></select></div>
     </div>
-    <div class="campo"><label>¿En qué parte de la calificación del trimestre cuenta este examen?</label><select id="ge-crit" onchange="gCritAyuda()">${gCriteriosOptsPct(g, critEx)}</select>
-      <div id="ge-crit-ayuda" class="g-aviso" style="margin-top:8px;font-size:12.5px">${gCritAyudaHTML(g, critEx)}</div></div>
     <div class="campo"><label>Tipos de reactivo</label><div class="g-checks">${Object.entries(G_TIPOS_EXAM).map(([k, v]) => `<label><input type="checkbox" id="ge-t-${k}" ${k !== 'desarrollo' ? 'checked' : ''}> ${v}</label>`).join('')}</div></div>
     <div class="l-err" id="ge-err" style="margin:0 0 12px"></div>
     <button class="g-btn" id="ge-btn" onclick="gGenerarExamen()">✨ Generar examen con IA</button>
-    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">⚠ Revisa el examen y la clave antes de aplicarlo: la IA puede equivocarse.</div></div>`;
+    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">⚠ Revisa el examen y la clave antes de aplicarlo: la IA puede equivocarse.</div></div>`}`;
 
-  if (G.borrador && G.borrador.trim === t) {
+  if (G.evalModo !== 'proyecto' && G.borrador && G.borrador.trim === t) {
     const b = G.borrador;
     h += `<div class="card" id="g-borrador"><div class="card-title">👀 Revisa tu examen (${gMaxExamen(b)} puntos)</div>
       <div class="ayuda" style="margin:-4px 0 10px">Este examen suma <b>${gMaxExamen(b)} puntos</b> (lo que vale cada pregunta aparece entre paréntesis). Al capturar los aciertos de cada alumno, la app lo convierte sola a una calificación de 0 a 10.</div>
@@ -808,10 +887,11 @@ function gRenderExamenes() {
        <button class="g-btn g-btn-s" onclick="gGenerarExamen()">↻ Generar otro</button></div>`;
   }
 
+  if (G.evalModo !== 'proyecto') {
   h += `<details class="card g-det"><summary>📄 Ya apliqué un examen en papel (registrarlo sin IA)</summary>
-    <div class="f3" style="margin-top:12px"><div class="campo"><label>Nombre</label><input id="gp-nom" placeholder="Ej. Examen del trimestre"></div>
+    <div class="f2" style="margin-top:12px"><div class="campo"><label>Nombre</label><input id="gp-nom" placeholder="Ej. Examen del trimestre"></div>
     <div class="campo"><label>Total de puntos / reactivos</label><input id="gp-max" type="number" min="1" value="10"></div>
-    <div class="campo"><label>¿En qué criterio cuenta?</label><select id="gp-crit">${gCriteriosOptsPct(g, critEx)}</select></div></div>
+    </div>
     <button class="g-btn" onclick="gRegistrarExamenPapel()">Registrar examen</button></details>`;
 
   const exs = gActsTrim(g, t).filter(a => a.tipo === 'examen');
@@ -827,6 +907,7 @@ function gRenderExamenes() {
     </details>`;
   });
   h += '</div>';
+  }
   gPanel().innerHTML = h;
 }
 
@@ -834,7 +915,7 @@ function gRenderExamenes() {
 // 5. PLANEACIÓN TRIMESTRAL CON PROYECTOS (según la metodología)
 // ============================================================
 function gPlanTrim(g, t) { if (!g.plan) g.plan = {}; if (!g.plan[t]) g.plan[t] = { sesiones: 25, proyectos: [] }; return g.plan[t]; }
-function gTrimPlan(v) { G.trimPlan = +v; G.sugerencias = []; gRenderTrim(); }
+function gTrimPlan(v) { G.trimPlan = +v; G.pesoMsg = ''; G.sugerencias = []; gRenderTrim(); }
 function gPlanSesiones(v) { const g = gGrupo(); gPlanTrim(g, G.trimPlan).sesiones = parseInt(v, 10) || 25; gGuardar(); }
 function gSugerirProyectos() {
   const g = gGrupo(); const campo = gCampoDe(g.grado, g.materia);
@@ -959,7 +1040,7 @@ function gCritProyecto(g) {
 }
 function gPesoProyecto(v) {
   const g = gGrupo(); const c = gCritProyecto(g);
-  c.pct = Math.max(0, Math.min(100, gNum(v) || 0)); gGuardar(); gRenderTrim();
+  G.pesoMsg = gMsgCambios(gAjustarPesos(g, G.trimPlan, c.id, v)); gGuardar(); gRenderTrim();
 }
 function gCrearEvalProyecto(id) {
   const g = gGrupo(); const p = gProyBuscar(id); const met = METODOLOGIAS[p.met]; const c = gCritProyecto(g);
@@ -1028,7 +1109,7 @@ function gRenderTrim() {
   pl.proyectos.forEach(p => {
     gProyDef(p);
     const met = METODOLOGIAS[p.met];
-    const crit = g.criterios.find(x => /proyecto/i.test(x.nombre));
+    const crit = g.criterios.find(x => gEsCritProyecto(x) && !gEsCritExamen(x));
     const nAct = g.actividades.filter(a => a.proyectoId === p.id).length;
     const fechas = gFechasClase(p);
     h += `<div class="g-proy"><div class="g-proy-h"><b>${gEsc(p.nombre)}</b>
@@ -1049,8 +1130,9 @@ function gRenderTrim() {
       </details>
       <details class="g-det" style="padding:10px 0"><summary>🎓 Cómo abona a la calificación del trimestre</summary>
         <p style="font-size:12.5px;color:var(--gris);margin:10px 0">El proyecto <b>no es la única calificación</b>: aporta un porcentaje y el resto sale de tus otros criterios (actividades, exámenes, tareas…).</p>
-        <div class="campo" style="max-width:260px"><label>Peso del proyecto en el trimestre (%)</label><input type="number" min="0" max="100" value="${crit ? crit.pct : 0}" onchange="gPesoProyecto(this.value)"></div>
-        ${gSumaPct(g) !== 100 ? `<div class="g-mal" style="font-size:12px;margin-bottom:8px">Tus criterios suman ${gSumaPct(g)} %. Ajusta los demás en «Calificaciones» para que sumen 100 %.</div>` : ''}
+        <div class="campo" style="max-width:260px"><label>Peso del proyecto en el trimestre</label><select onchange="gPesoProyecto(this.value)">${(() => { const v = crit ? gPct(g, crit.id, t) : 0, mx = crit ? gMaxPeso(g, t, crit.id) : 100, o = []; for (let i = 0; i <= mx; i += 5) o.push(i); if (!o.includes(v)) o.push(v); return o.sort((a, b) => a - b).map(i => `<option value="${i}"${i === v ? ' selected' : ''}>${i} %</option>`).join(''); })()}</select></div>
+        ${G.pesoMsg ? `<div class="g-aviso" style="font-size:12px;margin-bottom:8px">ℹ️ ${G.pesoMsg}</div>` : ''}
+        ${gSumaPct(g, t) !== 100 ? `<div class="g-mal" style="font-size:12px;margin-bottom:8px">Tus criterios suman ${gSumaPct(g, t)} %. Ajusta los demás en «Calificaciones» para que sumen 100 %.</div>` : ''}
         <button class="g-btn g-btn-s" onclick="gCrearEvalProyecto('${p.id}')">${nAct ? `Ver actividades (${nAct})` : '+ Crear actividades de evaluación (una por fase + producto final)'}</button>
       </details>
       ${met ? `<div class="g-fases">${met.fases.map(f => `<span style="border-color:${f.color};color:${f.color}">${gEsc(f.n)}</span>`).join('')}</div>` : ''}
