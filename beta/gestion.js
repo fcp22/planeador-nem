@@ -1464,19 +1464,19 @@ function gTitulosHoja(H) {
     leyenda: '✓ = Asistió    R = Retardo    F = Falta    J = Falta justificada',
   };
 }
-// Colores de las marcas: los mismos del Pase de lista en pantalla. Fuertes y en negritas para que se distingan al imprimir en blanco y negro.
+// Marcas de la lista impresa: fondo blanco y solo el símbolo (✓, R, F, J) a color y en negritas, con los colores de la app.
 const G_MARCA = {
-  P: { rgb: [22, 163, 74], hex: 'FF16A34A', txt: [255, 255, 255], txtHex: 'FFFFFFFF', nom: 'Asistió' },
-  R: { rgb: [245, 158, 11], hex: 'FFF59E0B', txt: [40, 22, 0], txtHex: 'FF281600', nom: 'Retardo' },
-  F: { rgb: [220, 38, 38], hex: 'FFDC2626', txt: [255, 255, 255], txtHex: 'FFFFFFFF', nom: 'Falta' },
-  J: { rgb: [37, 99, 168], hex: 'FF2563A8', txt: [255, 255, 255], txtHex: 'FFFFFFFF', nom: 'Falta justificada' },
+  P: { rgb: [21, 128, 61], hex: 'FF15803D', nom: 'Asistió' },
+  R: { rgb: [217, 119, 6], hex: 'FFD97706', nom: 'Retardo' },
+  F: { rgb: [220, 38, 38], hex: 'FFDC2626', nom: 'Falta' },
+  J: { rgb: [37, 99, 168], hex: 'FF2563A8', nom: 'Falta justificada' },
 };
-function gMarcaPDF(doc, k, x, y, w, h, solo) {   // rectángulo de color + ✓ dibujado o letra en negritas
+function gMarcaPDF(doc, k, x, y, w, h) {   // ✓ dibujada o letra en negritas, centrada en la casilla
   const m = G_MARCA[k]; if (!m) return;
-  if (!solo) { doc.setFillColor(...m.rgb); doc.rect(x + 0.2, y + 0.2, w - 0.4, h - 0.4, 'F'); }
-  doc.setDrawColor(...m.txt); doc.setTextColor(...m.txt);
-  if (k === 'P') { doc.setLineWidth(0.7); const a = Math.min(w, h); doc.line(x + w / 2 - a * 0.24, y + h / 2 + a * 0.02, x + w / 2 - a * 0.07, y + h / 2 + a * 0.2); doc.line(x + w / 2 - a * 0.07, y + h / 2 + a * 0.2, x + w / 2 + a * 0.27, y + h / 2 - a * 0.2); }
-  else { doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.text(k, x + w / 2, y + h / 2 + 1.2, { align: 'center' }); }
+  doc.setDrawColor(...m.rgb); doc.setTextColor(...m.rgb);
+  if (k === 'P') { doc.setLineWidth(0.9); const a = Math.min(w, h); doc.line(x + w / 2 - a * 0.26, y + h / 2 + a * 0.02, x + w / 2 - a * 0.07, y + h / 2 + a * 0.22); doc.line(x + w / 2 - a * 0.07, y + h / 2 + a * 0.22, x + w / 2 + a * 0.3, y + h / 2 - a * 0.22); }
+  else { doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.text(k, x + w / 2, y + h / 2 + 1.5, { align: 'center' }); }
+  doc.setLineWidth(0.2);
 }
 async function gListaPDF(H) {
   await gCargarLib('jspdf', 'autotable');
@@ -1505,12 +1505,11 @@ async function gListaPDF(H) {
     didDrawPage: encabezado,
     didParseCell: d => {
       if (d.section !== 'body' || d.column.index < 2 || d.column.index >= 2 + H.dias.length) return;
-      const v = d.cell.raw, m = G_MARCA[v]; if (!m) return;
-      d.cell.styles.fillColor = m.rgb; d.cell.text = [''];   // el símbolo se dibuja aparte
+      if (G_MARCA[d.cell.raw]) d.cell.text = [''];   // el símbolo se dibuja aparte, a color
     },
     didDrawCell: d => {
       if (d.section !== 'body' || d.column.index < 2 || d.column.index >= 2 + H.dias.length) return;
-      const v = d.cell.raw; if (G_MARCA[v]) gMarcaPDF(doc, v, d.cell.x, d.cell.y, d.cell.width, d.cell.height, true);
+      const v = d.cell.raw; if (G_MARCA[v]) gMarcaPDF(doc, v, d.cell.x, d.cell.y, d.cell.width, d.cell.height);
     },
   });
   const n = doc.getNumberOfPages();
@@ -1518,7 +1517,7 @@ async function gListaPDF(H) {
     doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(90);
     let x = mL;   // leyenda con las marcas de color
     ['P', 'R', 'F', 'J'].forEach(k => {
-      gMarcaPDF(doc, k, x, Hh - 10.2, 6, 5, false); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(60);
+      gMarcaPDF(doc, k, x, Hh - 10.2, 6, 5); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(60);
       const t = G_MARCA[k].nom; doc.text(t, x + 7.5, Hh - 6.6); x += 7.5 + doc.getTextWidth(t) + 7;
     });
     doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(90); doc.text('Hoja ' + i + ' de ' + n, W - mR, Hh - 7, { align: 'right' });
@@ -1553,16 +1552,16 @@ async function gListaExcel(H) {
       c.value = { formula: cod === 'P' ? `COUNTIF(${rng},"✓")+COUNTIF(${rng},"P")` : `COUNTIF(${rng},"${cod}")`, result: f.c[cod] }; c.alignment = centro;
     });
     for (let k = 1; k <= nCol; k++) { const c = row.getCell(k); c.border = borde; c.font = { size: 10 }; }
-    f.marcas.forEach((v, k) => { const m = G_MARCA[v]; if (!m) return; const c = row.getCell(3 + k); c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: m.hex } }; c.font = { bold: true, size: 11, color: { argb: m.txtHex } }; });
+    f.marcas.forEach((v, k) => { const m = G_MARCA[v]; if (!m) return; const c = row.getCell(3 + k); c.font = { bold: true, size: 13, color: { argb: m.hex } }; });
   });
   for (let k = 1; k <= nCol; k++) hr.getCell(k).border = borde;
   // Colores automáticos: si la maestra escribe ✓, R, F o J a mano, la casilla se pinta sola
   const ref = `${L(3)}${rH + 1}:${L(2 + nD)}${rH + H.filas.length}`;
-  const reglaCF = (txt, k) => ({ type: 'cellIs', operator: 'equal', formulae: [`"${txt}"`], style: { font: { bold: true, color: { argb: G_MARCA[k].txtHex } }, fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: G_MARCA[k].hex } } } });
+  const reglaCF = (txt, k) => ({ type: 'cellIs', operator: 'equal', formulae: [`"${txt}"`], style: { font: { bold: true, color: { argb: G_MARCA[k].hex } } } });
   ws.addConditionalFormatting({ ref, rules: [reglaCF('✓', 'P'), reglaCF('P', 'P'), reglaCF('R', 'R'), reglaCF('F', 'F'), reglaCF('J', 'J')] });
   // Leyenda con los mismos colores
   const rl = rH + H.filas.length + 2; const lr = ws.getRow(rl); lr.height = 20;
-  ['P', 'R', 'F', 'J'].forEach((k, i) => { const c = lr.getCell(3 + i * 5); c.value = k === 'P' ? '✓' : k; c.alignment = centro; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: G_MARCA[k].hex } }; c.font = { bold: true, size: 11, color: { argb: G_MARCA[k].txtHex } }; c.border = borde; const t = lr.getCell(4 + i * 5); t.value = G_MARCA[k].nom; t.font = { size: 9 }; });
+  ['P', 'R', 'F', 'J'].forEach((k, i) => { const c = lr.getCell(3 + i * 5); c.value = k === 'P' ? '✓' : k; c.alignment = centro; c.font = { bold: true, size: 13, color: { argb: G_MARCA[k].hex } }; c.border = borde; const t = lr.getCell(4 + i * 5); t.value = G_MARCA[k].nom; t.font = { size: 9 }; });
   ws.pageSetup.printTitlesRow = rH + ':' + rH;
   ws.views = [{ state: 'frozen', xSplit: 2, ySplit: rH }];
   ws.headerFooter.oddFooter = '&L&8' + T.leyenda + '&R&8Hoja &P de &N';
