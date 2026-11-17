@@ -182,7 +182,7 @@ async function licRender() {
     h += `<div class="card"><div class="card-title">🔑 ${e.prueba ? 'Prueba gratis' : (e.plan ? 'Plan ' + gEsc(e.plan) : 'Licencia')} <span class="g-tag" style="margin-left:auto;background:${color}">${e.activa ? 'Activa' : (e.limite ? 'Vencida' : 'Sin licencia')}</span></div>
       <div style="font-size:13px;margin-bottom:12px"><b>Cuenta:</b> ${gEsc(e.correo || (u && u.email) || '')}</div>
       ${e.limite ? (e.prueba || e.restantes <= Math.max(5, Math.round(e.limite * 0.1)) ? `<div style="font-size:13px;margin-bottom:6px"><b>Documentos con IA ${e.prueba ? 'de la prueba' : 'este mes'}:</b> ${e.usadas} de ${e.limite} <span style="color:var(--gris)">(${e.restantes} disponibles)</span></div>
-      <div style="height:10px;background:var(--gris-claro);border-radius:6px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:${pct}%;background:${color}"></div></div>` : `<div style="font-size:13px;margin-bottom:12px"><b>Documentos con IA:</b> incluidos en tu plan <span style="color:var(--gris)">(uso razonable)</span></div>`) + `
+      <div style="height:10px;background:var(--gris-claro);border-radius:6px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:${pct}%;background:${color}"></div></div>` : `<div style="font-size:13px;margin-bottom:12px"><b>Documentos con IA:</b> tu plan incluye hasta <b>${e.limite}</b> al mes <span style="color:var(--gris)">(llevas ${e.usadas} este mes; se renuevan el día 1)</span></div>`) + `
       <div style="font-size:13px"><b>${e.activa ? 'Vigente hasta' : 'Venció el'}:</b> ${licFecha(e.vence)}</div>` : `<p style="color:var(--gris)">Tu prueba gratis ya se usó. Canjea un código para seguir usando la IA.</p>`}
     </div>`;
   }
@@ -214,7 +214,7 @@ function licAdminRender() {
   <div class="card"><div class="card-title">➕ Generar códigos</div>
     <div class="f3"><div class="campo"><label>Cantidad</label><input id="la-cant" type="number" min="1" max="100" value="1"></div>
     <div class="campo"><label>Vigencia</label><select id="la-vig"><option value="m1">1 mes</option><option value="m3">3 meses</option><option value="m6">6 meses</option><option value="m12">12 meses</option><option value="d1">1 día (para probar el vencimiento)</option><option value="d3">3 días</option><option value="d7">7 días (cortesía)</option></select></div>
-    <div class="campo"><label>Tope de uso justo al mes (documentos)</label><input id="la-cuota" type="number" min="1" max="2000" value="300"><div class="ayuda" style="font-size:11px;color:var(--gris)">El maestro ve «IA incluida». Este tope solo evita abusos; con 300 no se le acaba a un uso normal. Para la prueba del ATP usa 100.</div></div></div>
+    <div class="campo"><label>Tope de uso justo al mes (documentos)</label><input id="la-cuota" type="number" min="1" max="2000" value="200"><div class="ayuda" style="font-size:11px;color:var(--gris)">Es lo que el maestro ve en «Mi licencia»: «tu plan incluye hasta N documentos con IA al mes». Un uso normal es de 30 a 60 al mes; con 200 no se le acaba. Para la prueba del ATP usa 100.</div></div></div>
     <div class="f2"><div class="campo"><label>Plan (etiqueta)</label><input id="la-plan" placeholder="Ej. Trimestral"></div><div class="campo"><label>Nota (para ti)</label><input id="la-nota" placeholder="Ej. Prof. Pérez / escuela X"></div></div>
     <div class="l-err" id="la-err" style="margin:0 0 12px"></div>
     <button class="g-btn" onclick="licAdminGenerar()">Generar códigos</button>
@@ -235,7 +235,7 @@ function licAdminErr(msg) { const e = document.getElementById('la-err'); if (e) 
 async function licAdminGenerar() {
   licAdminErr('');
   const k = licAdminClave(); if (!k) return licAdminErr('Escribe la clave de administrador.');
-  const vig = document.getElementById('la-vig').value; const body = { cantidad: +document.getElementById('la-cant').value || 1, cuota: +document.getElementById('la-cuota').value || 300, plan: document.getElementById('la-plan').value, nota: document.getElementById('la-nota').value };
+  const vig = document.getElementById('la-vig').value; const body = { cantidad: +document.getElementById('la-cant').value || 1, cuota: +document.getElementById('la-cuota').value || 200, plan: document.getElementById('la-plan').value, nota: document.getElementById('la-nota').value };
   if (vig[0] === 'm') body.meses = +vig.slice(1); else body.dias = +vig.slice(1);
   try {
     const r = await workerFetch('/admin/codigos', { metodo: 'POST', body, admin: k });
