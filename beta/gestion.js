@@ -190,7 +190,7 @@ function gRenderInicio() {
   gPanel().innerHTML = h;
 }
 function gPanel() { return document.getElementById('g-' + G.tab); }
-function gCambiarGrupo(id) { G.gid = id; G.borrador = null; G.sugerencias = []; gRender(); }
+function gCambiarGrupo(id) { G.gid = id; G.borrador = null; G.temaUlt = ''; G.temasSel = []; G.sugerencias = []; gRender(); }
 
 // Barra superior con el selector de grupo (la usan todas las pestañas)
 function gBarra() {
@@ -580,7 +580,7 @@ const G_TIPOS_EXAM = {
   opcion_multiple: 'Opción múltiple', verdadero_falso: 'Verdadero / falso',
   respuesta_corta: 'Respuesta corta', desarrollo: 'Problema o pregunta abierta',
 };
-function gTrimExam(v) { G.trimExam = +v; G.borrador = null; gRenderExamenes(); }
+function gTrimExam(v) { G.trimExam = +v; G.borrador = null; G.temaUlt = ''; G.temasSel = []; gRenderExamenes(); }
 
 function gPromptExamen(g, o) {
   return `Eres docente experto de secundaria en México (Nueva Escuela Mexicana, Plan de Estudios 2022, Fase 6). Elabora un examen.
@@ -628,6 +628,7 @@ async function gGenerarExamen() {
     const texto = await llamarGeminiJSON(gPromptExamen(g, { trim: G.trimExam, tema, n, tipos, dif: document.getElementById('ge-dif').value }), 'examen');
     const ex = gNormalizarExamen(parsearJSON(texto), n);
     if (!ex.reactivos.length) throw new Error('La IA no devolvió reactivos válidos.');
+    G.temaUlt = tema;
     G.borrador = Object.assign(ex, { tema, trim: G.trimExam, criterioId: document.getElementById('ge-crit').value });
     gRenderExamenes();
     const b = document.getElementById('g-borrador'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -636,6 +637,53 @@ async function gGenerarExamen() {
     btn.disabled = false; btn.textContent = '✨ Generar examen con IA';
   }
 }
+// ── Temas para el examen: salen de la planeación del maestro (o del programa) ──
+// Al generar un Plano o un Analítico se guardan los contenidos elegidos (solo en este dispositivo);
+// en «Exámenes» el maestro los marca y la IA arma el examen con ellos.
+function gTemasClave() { const u = (typeof getUsuario === 'function') ? getUsuario() : null; return 'nem_temas_' + ((u && u.uid) || 'anon'); }
+function gTemasLeer() { try { return JSON.parse(localStorage.getItem(gTemasClave()) || '[]'); } catch (e) { return []; } }
+function gTemasGuardar(tipo, d) {
+  try {
+    const items = [];
+    const mk = (trim, cnts, proy) => {
+      if (!Array.isArray(cnts) || !cnts.length) return;
+      items.push({ grado: String(d.grado), disciplina: d.disciplina, trim: +trim, proyecto: proy || '', fuente: tipo, contenidos: cnts.map(c => ({ num: c.num, titulo: c.titulo, pda: obtenerPDA(c, d.grado) })) });
+    };
+    if (tipo === 'analitico') [1, 2, 3].forEach(t => mk(t, (d['t' + t] || {}).contenidos, (d['t' + t] || {}).nombreProyecto));
+    else mk(d.trimestre, d.contenidos, d.nombreProyecto);
+    if (!items.length) return;
+    const resto = gTemasLeer().filter(x => !items.some(n => n.grado === x.grado && n.disciplina === x.disciplina && n.trim === x.trim && n.proyecto === x.proyecto));
+    localStorage.setItem(gTemasClave(), JSON.stringify(items.concat(resto).slice(0, 40)));
+  } catch (e) { /* sin almacenamiento */ }
+}
+function gTemasCandidatos(g, t) {
+  const grado = String(g.grado), vistos = new Set(), propios = [], programa = [];
+  gTemasLeer().filter(x => x.grado === grado && x.disciplina === g.materia && x.trim === t).forEach(x => x.contenidos.forEach(c => {
+    const k = c.num + '|' + c.titulo; if (vistos.has(k)) return; vistos.add(k); propios.push({ k, titulo: c.titulo, pda: c.pda || '', proy: x.proyecto });
+  }));
+  try { obtenerContenidos(gCampoDe(g.grado, g.materia), g.materia, grado).forEach(c => { const k = c.num + '|' + c.titulo; if (!vistos.has(k)) programa.push({ k, titulo: c.titulo, pda: obtenerPDA(c, grado) || '', proy: '' }); }); } catch (e) { /* sin programa para esta materia */ }
+  return { propios, programa };
+}
+function gTemasPanel(g, t) {
+  const { propios, programa } = gTemasCandidatos(g, t); G.temasLista = propios.concat(programa);
+  if (!G.temasLista.length) return '';
+  const sel = new Set(G.temasSel || []);
+  const fila = c => `<label class="g-tema" style="display:flex;gap:8px;align-items:flex-start;text-align:left;text-transform:none;letter-spacing:0;font-weight:400;font-size:13px;margin:0;cursor:pointer"><input type="checkbox" style="margin-top:3px;width:auto;flex:none;padding:0" ${sel.has(c.k) ? 'checked' : ''} onchange="gTemasMarcar()" data-k="${gEsc(c.k)}"> <span><b>${gEsc(c.titulo)}</b>${c.proy ? ` <small style="color:var(--gris)">· ${gEsc(c.proy)}</small>` : ''}</span></label>`;
+  return `<div class="campo"><label>${propios.length ? '📚 Temas de tu planeación de este trimestre' : '📚 Contenidos del programa'} (toca los que quieres evaluar)</label>
+    <div style="max-height:220px;overflow:auto;border:1px solid var(--gris-claro);border-radius:10px;padding:8px 10px;display:grid;gap:6px">${(propios.length ? propios : programa).map(fila).join('')}</div>
+    ${propios.length && programa.length ? `<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12.5px;color:var(--gris)">Ver otros contenidos del programa</summary><div style="max-height:200px;overflow:auto;border:1px solid var(--gris-claro);border-radius:10px;padding:8px 10px;display:grid;gap:6px;margin-top:6px">${programa.map(fila).join('')}</div></details>` : ''}
+    <div class="ayuda">Al marcarlos se escriben abajo con su aprendizaje esperado; ahí mismo los puedes cambiar o agregar los tuyos.</div></div>`;
+}
+function gTemasMarcar() {
+  const marcados = [...document.querySelectorAll('.g-tema input:checked')].map(i => i.dataset.k);
+  G.temasSel = [...new Set(marcados)];
+  const por = new Map((G.temasLista || []).map(c => [c.k, c]));
+  const txt = G.temasSel.map(k => por.get(k)).filter(Boolean).map(c => `${c.titulo}${c.pda ? ' — Aprendizaje esperado: ' + String(c.pda).replace(/\s+/g, ' ').slice(0, 260) : ''}`).join('\n');
+  const ta = document.getElementById('ge-tema'); if (ta) ta.value = txt;
+}
+// Edición del examen generado (pregunta, opciones y respuesta) antes de guardarlo o bajarlo
+function gEditReac(i, campo, v) { const r = G.borrador && G.borrador.reactivos[i]; if (r) r[campo] = v; }
+function gEditOpc(i, k, v) { const r = G.borrador && G.borrador.reactivos[i]; if (r && r.opciones) r.opciones[k] = v; }
 function gQuitarReactivo(i) { G.borrador.reactivos.splice(i, 1); if (!G.borrador.reactivos.length) G.borrador = null; gRenderExamenes(); }
 function gTituloBorrador(v) { if (G.borrador) G.borrador.titulo = v; }
 function gMaxExamen(ex) { return ex.reactivos.reduce((s, r) => s + (r.valor || 1), 0); }
@@ -711,7 +759,8 @@ function gRenderExamenes() {
   let h = `<div class="sec-title">Exámenes</div><div class="sec-sub">Crea un examen con su clave de respuestas, captura los aciertos de cada alumno y la calificación se calcula sola.</div>${gBarra()}
   <div class="g-trims">${[1, 2, 3].map(x => `<button class="ttab${t === x ? ' on' : ''}" onclick="gTrimExam(${x})">${G_TRIM_NOM[x]}</button>`).join('')}</div>
   <div class="card"><div class="card-title">✨ Generar examen con IA — ${gEsc(g.materia)} ${g.grado}°</div>
-    <div class="campo"><label>Temas o contenidos a evaluar</label><textarea id="ge-tema" rows="3" placeholder="Ej. Ecuaciones de primer grado con una incógnita; problemas de proporcionalidad directa"></textarea><div class="ayuda">Mientras más específico, mejor el examen. Puedes copiar los contenidos o PDA de tu planeación.</div></div>
+    ${gTemasPanel(g, t)}
+    <div class="campo"><label>Temas o contenidos a evaluar</label><textarea id="ge-tema" rows="4" placeholder="Ej. Ecuaciones de primer grado con una incógnita; problemas de proporcionalidad directa">${gEsc(G.temaUlt || '')}</textarea><div class="ayuda">Mientras más específico, mejor el examen. Puedes escribir tus propios temas o corregir los que marcaste.</div></div>
     <div class="f3">
       <div class="campo"><label>Número de reactivos</label>${licEsPrueba() ? '<input id="ge-n" type="number" min="3" max="5" value="5"><div class="ayuda">En la prueba gratis: hasta 5 reactivos.</div>' : '<input id="ge-n" type="number" min="3" max="30" value="10">'}</div>
       <div class="campo"><label>Dificultad</label><select id="ge-dif"><option>Básica</option><option selected>Media</option><option>Alta</option></select></div>
@@ -726,9 +775,11 @@ function gRenderExamenes() {
     const b = G.borrador;
     h += `<div class="card" id="g-borrador"><div class="card-title">👀 Revisa tu examen (${gMaxExamen(b)} puntos)</div>
       <div class="campo"><label>Título</label><input value="${gEsc(b.titulo)}" oninput="gTituloBorrador(this.value)"></div>` +
-      b.reactivos.map((r, i) => `<div class="g-reac"><button class="g-x" title="Quitar reactivo" onclick="gQuitarReactivo(${i})">✕</button><b>${i + 1}.</b> ${gEsc(r.pregunta)} <small>(${G_TIPOS_EXAM[r.tipo]}, ${r.valor} pt)</small>` +
-        (r.tipo === 'opcion_multiple' ? '<ol type="A">' + r.opciones.map(o => `<li>${gEsc(o)}</li>`).join('') + '</ol>' : '') +
-        `<div class="g-resp">Respuesta: ${gEsc(r.respuesta)}</div></div>`).join('') +
+      `<div class="ayuda" style="margin:-4px 0 10px">Puedes corregir cualquier pregunta, opción o respuesta directamente aquí, o quitar la que no te guste con ✕.</div>` +
+      b.reactivos.map((r, i) => `<div class="g-reac"><button class="g-x" title="Quitar reactivo" onclick="gQuitarReactivo(${i})">✕</button><b>${i + 1}.</b> <small>(${G_TIPOS_EXAM[r.tipo]}, ${r.valor} pt)</small>
+        <textarea rows="2" style="width:100%;margin:4px 0" oninput="gEditReac(${i},'pregunta',this.value)">${gEsc(r.pregunta)}</textarea>` +
+        (r.tipo === 'opcion_multiple' ? r.opciones.map((o, k) => `<div style="display:flex;gap:6px;align-items:center;margin:3px 0"><b style="width:18px">${'ABCD'[k]}</b><input style="flex:1" value="${gEsc(o)}" oninput="gEditOpc(${i},${k},this.value)"></div>`).join('') : '') +
+        `<div class="g-resp" style="display:flex;gap:6px;align-items:center">Respuesta: <input style="flex:1" value="${gEsc(r.respuesta)}" oninput="gEditReac(${i},'respuesta',this.value)"></div></div>`).join('') +
       `<button class="g-btn" onclick="gGuardarExamen()">💾 Guardar para calificar</button>
        <button class="g-btn g-btn-s" onclick="gDescargarExamen(G.borrador,false)">⬇ Examen (Word)</button>
        <button class="g-btn g-btn-s" onclick="gDescargarExamen(G.borrador,true)">⬇ Clave (Word)</button>
