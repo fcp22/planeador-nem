@@ -589,7 +589,7 @@ html{-webkit-text-size-adjust:100%;}
     <button class="nav-tab" onclick="showTab('examenes',this)"><span class="si">🧮</span>Exámenes</button>
     <button class="nav-tab" onclick="showTab('rezago',this)"><span class="si">🚦</span>Seguimiento de rezago</button>
     <button class="nav-tab" onclick="showTab('recup',this)"><span class="si">🔁</span>Recuperativos</button>
-    <button class="nav-tab" onclick="showTab('bitacora',this)"><span class="si">📔</span>Bitácora de clase<span class="sb-pronto">🚧</span></button>
+    <button class="nav-tab" onclick="showTab('bitacora',this)"><span class="si">📔</span>Bitácora e incidencias</button>
     <button class="nav-tab" onclick="showTab('escaner',this)"><span class="si">📷</span>Escáner de exámenes<span class="sb-pronto">🚧</span></button>
     <div class="sb-label">Mi organización</div>
     <button class="nav-tab" onclick="showTab('calendario',this)"><span class="si">📅</span>Calendario escolar</button>
@@ -1127,17 +1127,17 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   </div><!-- /layout -->
 </div><!-- /app -->
 
-<script src="firebase-config.js?v=202611172230"></script>
-<script src="correos-temporales.js?v=202611172230"></script>
-<script src="auth.js?v=202611172230"></script>
-<script src="licencia.js?v=202611172230"></script>
-<script src="curriculum.js?v=202611172230"></script>
-<script src="projects.js?v=202611172230"></script>
-<script src="generators.js?v=202611172230"></script>
-<script src="metodologias.js?v=202611172230"></script>
-<script src="ruta-ui.js?v=202611172230"></script>
-<script src="secuencias.js?v=202611172230"></script>
-<script src="sugerencias-plano.js?v=202611172230"></script>
+<script src="firebase-config.js?v=202611172310"></script>
+<script src="correos-temporales.js?v=202611172310"></script>
+<script src="auth.js?v=202611172310"></script>
+<script src="licencia.js?v=202611172310"></script>
+<script src="curriculum.js?v=202611172310"></script>
+<script src="projects.js?v=202611172310"></script>
+<script src="generators.js?v=202611172310"></script>
+<script src="metodologias.js?v=202611172310"></script>
+<script src="ruta-ui.js?v=202611172310"></script>
+<script src="secuencias.js?v=202611172310"></script>
+<script src="sugerencias-plano.js?v=202611172310"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
 // (la pantalla de acceso conserva su autocompletar para correo y contraseña).
@@ -1159,8 +1159,9 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611172230"></script>
-<script src="rezago.js?v=202611172230"></script>
+<script src="gestion.js?v=202611172310"></script>
+<script src="bitacora.js?v=202611172310"></script>
+<script src="rezago.js?v=202611172310"></script>
 <script>
 // ── ESTADO ──────────────────────────────────────────────
 let tipoActivo='a', semAct=1, semsGen=new Set();

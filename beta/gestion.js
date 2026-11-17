@@ -89,7 +89,7 @@ function gPrefillEscuela() {
 function gGuardarPerfil() {
   const p = gPerfil();
   p.escuela = document.getElementById('gp-esc').value.trim(); p.cct = document.getElementById('gp-cct').value.trim(); p.municipio = document.getElementById('gp-mun').value.trim();
-  p.tipoEscuela = document.getElementById('gp-tipo').value.trim(); p.zona = document.getElementById('gp-zona').value.trim();
+  p.estado = (document.getElementById('gp-est') || {value:''}).value.trim(); p.tipoEscuela = document.getElementById('gp-tipo').value.trim(); p.zona = document.getElementById('gp-zona').value.trim();
   gGuardar(); gPrefillEscuela(); gAviso('Listo: tus datos de escuela se usarán en tus planeaciones y documentos.');
 }
 
@@ -97,7 +97,7 @@ function gGuardarPerfil() {
 function gInit() { gCargar(); if (G.tab) gRender(); }
 function gOnTab(id) {
   if (typeof licOnTab === 'function' && licOnTab(id)) { G.tab = id; return; }
-  const conocidas = ['inicio', 'bienvenida', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'recup', 'calendario', 'libros', 'planes', ...Object.keys(G_PRONTO)];
+  const conocidas = ['inicio', 'bienvenida', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'recup', 'calendario', 'libros', 'planes', 'bitacora', ...Object.keys(G_PRONTO)];
   if (!conocidas.includes(id)) return;
   if (!G.data) gCargar();
   G.tab = id;
@@ -106,7 +106,7 @@ function gOnTab(id) {
 function gRender() {
   if (licTabBloqueada(G.tab)) { gPanel().innerHTML = licHTMLBloqueo(G.tab); return; }
   if (G_PRONTO[G.tab]) return gRenderProntoTab(G.tab);
-  const f = { inicio: gRenderInicio, bienvenida: gRenderBienvenida, planes: gRenderPlanes, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, recup: gRenderRecup, calendario: gRenderCalendario, libros: gRenderLibros }[G.tab];
+  const f = { inicio: gRenderInicio, bienvenida: gRenderBienvenida, planes: gRenderPlanes, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, recup: gRenderRecup, calendario: gRenderCalendario, libros: gRenderLibros, bitacora: gRenderBitacora }[G.tab];
   if (f) f();
 }
 
@@ -358,7 +358,6 @@ function gRecWord() {
 
 // ── Menús que todavía están en construcción (se van llenando uno por uno) ──
 const G_PRONTO = {
-  bitacora: ['📔', 'Bitácora de clase', 'Diario de cada sesión: qué se trabajó, qué pasó y a quién dar seguimiento, con evidencias fotográficas.'],
   escaner: ['📷', 'Escáner de exámenes', 'Fotografiar el examen resuelto y obtener la calificación de cada alumno automáticamente.'],
   horario: ['🕐', 'Horario semanal', 'Tu horario por grupo y materia, para que el pase de lista y la planeación se llenen solos.'],
 };
@@ -377,7 +376,7 @@ const G_MENU = [
   ['examenes', '🧮', 'Exámenes', 'Crear con IA y calificar', true],
   ['rezago', '🚦', 'Rezago', 'Semáforo de alumnos en riesgo', true],
   ['recup', '🔁', 'Recuperativos', 'Segunda oportunidad para reprobados', true],
-  ['bitacora', '📔', 'Bitácora', 'Diario de cada clase', false],
+  ['bitacora', '📔', 'Bitácora', 'Reportes de incidencias', true],
   ['escaner', '📷', 'Escanear examen', 'Calificar con la cámara', false],
   ['calendario', '📅', 'Calendario escolar', 'Sube el de tu escuela', true],
   ['horario', '🕐', 'Horario', 'Tu semana por grupo', false],
@@ -544,6 +543,7 @@ function gRenderGrupos() {
     <div class="f3"><div class="campo"><label>Nombre de la escuela</label><input id="gp-esc" value="${gEsc(gPerfil().escuela)}" placeholder="Escuela Secundaria…"></div>
     <div class="campo"><label>CCT</label><input id="gp-cct" value="${gEsc(gPerfil().cct)}" maxlength="12"></div>
     <div class="campo"><label>Municipio / localidad</label><input id="gp-mun" value="${gEsc(gPerfil().municipio)}"></div></div>
+    <div class="f2"><div class="campo"><label>Estado (para el encabezado de tus reportes)</label><input id="gp-est" value="${gEsc(gPerfil().estado || '')}" placeholder="Ej. Yucatán"></div><div></div></div>
     <div class="f2"><div class="campo"><label>Tipo de escuela (opcional)</label><input id="gp-tipo" value="${gEsc(gPerfil().tipoEscuela || '')}" placeholder="Ej. Escuela Secundaria General, Técnica, Federal, Estatal…"></div>
     <div class="campo"><label>Zona escolar (opcional)</label><input id="gp-zona" value="${gEsc(gPerfil().zona || '')}" placeholder="Ej. 08"></div></div>
     <button class="g-btn" onclick="gGuardarPerfil()">Guardar mis datos</button>
