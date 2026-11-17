@@ -21,5 +21,5 @@ window.NEM_CONFIG = {
   // la clave ADMIN_SECRET del Worker, así que esto solo muestra u oculta el menú.
   adminEmails: ['planeador.nem.docente@gmail.com'],
   // Cómo conseguir un código de licencia (se muestra en «Mi licencia»)
-  contacto: '',
+  contacto: 'Escribe a planeador.nem.docente@gmail.com',
 };

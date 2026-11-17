@@ -127,7 +127,7 @@ function licPuertaBloquear(e, errRed) {
     ${errRed ? '' : `<input id="lp-codigo" placeholder="NEM-XXXX-XXXX-XXXX" maxlength="16" oninput="this.value=this.value.toUpperCase()" style="width:100%;box-sizing:border-box;padding:12px;font-size:16px;letter-spacing:.05em;text-align:center;border:1.5px solid #cbd5e1;border-radius:10px;margin-bottom:10px">
     <div id="lp-err" style="display:none;color:#b91c1c;font-size:13px;margin-bottom:10px"></div>`}
     <button id="lp-btn" onclick="${errRed ? 'licPuertaReintentar()' : 'licPuertaCanjear()'}" style="width:100%;padding:12px;font-size:15px;font-weight:700;border:0;border-radius:10px;background:#1e3a5f;color:#fff;cursor:pointer">${errRed ? 'Reintentar' : 'Activar y entrar'}</button>
-    ${contacto ? `<p style="font-size:12.5px;color:#64748b;margin:14px 0 0">¿Aún no tienes código? ${gEsc(contacto)}</p>` : ''}
+    <p style="font-size:12.5px;color:#64748b;margin:14px 0 0">¿Aún no tienes código? ${contacto ? gEsc(contacto) + ' · ' : ''}<a href="suscripcion.html" target="_blank" rel="noopener" style="color:#1d4ed8;font-weight:600">Ver planes</a></p>
     <p style="font-size:12px;color:#64748b;margin:14px 0 0">Tus datos (grupos, calificaciones) siguen guardados en este dispositivo.</p>
     <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
       ${typeof gRespaldar === 'function' && typeof G !== 'undefined' && G.data ? '<button onclick="gRespaldar()" style="padding:8px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer;font-size:13px">⬇ Descargar mi respaldo</button>' : ''}
@@ -226,7 +226,7 @@ async function licRender() {
     <div class="campo"><label>Código de licencia</label><input id="lic-codigo" placeholder="NEM-XXXX-XXXX-XXXX" maxlength="16" oninput="this.value=this.value.toUpperCase()" style="max-width:320px;letter-spacing:.05em"></div>
     <div class="l-err" id="lic-err" style="margin:0 0 12px"></div><div class="l-ok" id="lic-ok" style="margin:0 0 12px"></div>
     <button class="g-btn" id="lic-btn" onclick="licCanjear()">Canjear código</button>
-    ${window.NEM_CONFIG && window.NEM_CONFIG.contacto ? `<div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px">¿Aún no tienes código? ${gEsc(window.NEM_CONFIG.contacto)}</div>` : ''}
+    <div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px">¿Aún no tienes código? ${window.NEM_CONFIG && window.NEM_CONFIG.contacto ? gEsc(window.NEM_CONFIG.contacto) + ' · ' : ''}<a href="suscripcion.html" target="_blank" rel="noopener">Ver planes</a></div>
     <div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px">Si ya tienes una licencia vigente, el nuevo código <b>suma</b> el tiempo. La licencia es de tu cuenta: sirve en tu celular y en tu computadora.</div></div>
     <div class="card"><div class="card-title">👤 Mi cuenta</div><div style="font-size:13px;margin-bottom:10px">${gEsc((u && u.email) || '')}</div><button class="g-btn g-btn-s" onclick="doLogout()">Cerrar sesión</button></div>`;
   p.innerHTML = h;
