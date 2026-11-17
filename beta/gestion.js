@@ -327,6 +327,7 @@ function gRenderGrupos() {
       ${g.alumnos.map((a, i) => `<tr><td>${i + 1}</td><td><input class="g-in-nom" value="${gEsc(a.nombre)}" onchange="gRenombrarAlumno('${a.id}',this.value)"></td><td><button class="g-x" title="Quitar" onclick="gQuitarAlumno('${a.id}')">✕</button></td></tr>`).join('')}
       </tbody></table></div>` : ''}
     </div>`;
+    h += gTarjetaDescarga(g);
   }
   h += `<div class="card"><div class="card-title">💾 Respaldo</div>
     <button class="g-btn" onclick="gRespaldar()">⬇ Descargar respaldo</button>
