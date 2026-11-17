@@ -1403,16 +1403,22 @@ function gTarjetaAlumnos(g) {
 // ── Descarga de la lista: PDF o Excel, carta horizontal ──
 const G_MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const G_DIA_LETRA = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+function gMesTieneAsistencia(g, mes) { return Object.keys(g.asist || {}).some(f => f.startsWith(mes) && Object.keys(g.asist[f] || {}).length); }
+function gMesLista() {   // al cambiar de mes se elige solo lo más útil: con marcas si ese mes ya tiene lista
+  const g = gGrupo(), mes = document.getElementById('ge-mes').value; G.modoLista = undefined;
+  document.getElementById('ge-modo').value = gMesTieneAsistencia(g, mes) ? 'registrada' : 'blanco';
+}
 function gTarjetaDescarga(g) {
   if (!g.alumnos.length) return '';
   const hoy = G.fecha || gHoy(); const y0 = +hoy.slice(0, 4), m0 = +hoy.slice(5, 7);
   const ini = m0 >= 8 ? y0 : y0 - 1;                       // el ciclo empieza en agosto
   const meses = []; for (let i = 0; i < 12; i++) { const m = ((7 + i) % 12) + 1, y = ini + (7 + i >= 12 ? 1 : 0); meses.push([y + '-' + String(m).padStart(2, '0'), G_MESES[m - 1] + ' ' + y]); }
   const act = hoy.slice(0, 7);
+  const modoIni = G.modoLista || (gMesTieneAsistencia(g, act) ? 'registrada' : 'blanco');   // si ya pasaste lista ese mes, sale con tus marcas
   return `<div class="card"><div class="card-title">🖨️ Descargar la lista (carta, horizontal)</div>
     <div class="f3">
-      <div class="campo"><label>Mes</label><select id="ge-mes">${meses.map(([v, t]) => `<option value="${v}"${v === act ? ' selected' : ''}>${t.charAt(0).toUpperCase() + t.slice(1)}</option>`).join('')}</select></div>
-      <div class="campo"><label>Contenido</label><select id="ge-modo"><option value="blanco">En blanco, para pasar lista a mano</option><option value="registrada">Con la asistencia ya registrada</option></select></div>
+      <div class="campo"><label>Mes</label><select id="ge-mes" onchange="gMesLista()">${meses.map(([v, t]) => `<option value="${v}"${v === act ? ' selected' : ''}>${t.charAt(0).toUpperCase() + t.slice(1)}</option>`).join('')}</select></div>
+      <div class="campo"><label>Contenido</label><select id="ge-modo" onchange="G.modoLista=this.value"><option value="registrada"${modoIni === 'registrada' ? ' selected' : ''}>Con la asistencia ya registrada (tus faltas, retardos y justificadas)</option><option value="blanco"${modoIni === 'blanco' ? ' selected' : ''}>En blanco, para pasar lista a mano</option></select></div>
     </div>
     <div class="campo"><label>Días de la semana que das clase</label>
       <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px">${[[1, 'Lunes'], [2, 'Martes'], [3, 'Miércoles'], [4, 'Jueves'], [5, 'Viernes']].map(([n, t]) => `<label style="display:flex;gap:6px;align-items:center;margin:0;text-transform:none;letter-spacing:0;font-weight:400;font-size:13px;color:var(--gris-oscuro)"><input type="checkbox" id="ge-d${n}" checked style="width:auto;flex:none;padding:0;margin:0"> ${t}</label>`).join('')}</div></div>
