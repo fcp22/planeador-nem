@@ -1180,6 +1180,7 @@ const G_CDN = {
   mammoth: ['https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js', () => window.mammoth],
   jspdf: ['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', () => window.jspdf],
   autotable: ['https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js', () => window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API && window.jspdf.jsPDF.API.autoTable],
+  pdfjs: ['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', () => window.pdfjsLib],
   exceljs: ['https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js', () => window.ExcelJS],
 };
 async function gCargarLib(...claves) {
@@ -1244,7 +1245,35 @@ function gExtraerNombres(filas) {
   return out.map(n => gLimpiarNombre(n)).filter(n => { const k = n.toLowerCase(); if (vistos.has(k)) return false; vistos.add(k); return true; }).slice(0, 200);
 }
 
-// ── Lectura de archivos: Excel, CSV, Word (.docx) o texto ──
+// ── PDF con texto (no escaneado): se reconstruyen los renglones y columnas por posición ──
+async function gFilasDePDF(f) {
+  await gCargarLib('pdfjs');
+  const W = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  try { const t = await (await fetch(W)).text(); pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([t], { type: 'text/javascript' })); }
+  catch (e) { pdfjsLib.GlobalWorkerOptions.workerSrc = W; }
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
+  const filas = [];
+  for (let n = 1; n <= pdf.numPages; n++) {
+    const tc = await (await pdf.getPage(n)).getTextContent();
+    const items = tc.items.filter(i => i.str && i.str.trim()).map(i => ({ s: i.str, x: i.transform[4], y: i.transform[5], w: i.width || 0 }));
+    items.sort((a, b) => b.y - a.y || a.x - b.x);
+    const lineas = [];
+    items.forEach(it => { const l = lineas.find(l => Math.abs(l.y - it.y) <= 3); if (l) l.it.push(it); else lineas.push({ y: it.y, it: [it] }); });
+    lineas.sort((a, b) => b.y - a.y).forEach(l => {
+      l.it.sort((a, b) => a.x - b.x);
+      const celdas = []; let ult = null;
+      l.it.forEach(it => {
+        if (ult && it.x - (ult.x + ult.w) < 6) celdas[celdas.length - 1] += (it.x - (ult.x + ult.w) > 0.5 ? ' ' : '') + it.s;
+        else celdas.push(it.s);
+        ult = it;
+      });
+      filas.push(celdas.map(gTextoCelda));
+    });
+  }
+  if (!filas.length) throw new Error('Ese PDF no trae texto (parece una foto o un escaneo), así que no puedo leerlo. Pide la lista en Excel o Word, o teclea o pega los nombres.');
+  return [filas];
+}
+// ── Lectura de archivos: Excel, CSV, Word (.docx), PDF o texto ──
 async function gFilasDeArchivo(f) {
   const ext = f.name.split('.').pop().toLowerCase();
   if (ext === 'doc') throw new Error('Los archivos «.doc» (Word antiguo) no se pueden leer. Ábrelo en Word y guárdalo como «.docx», o copia los nombres y pégalos en el recuadro.');
@@ -1259,6 +1288,7 @@ async function gFilasDeArchivo(f) {
     const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
     return wb.SheetNames.map(n => XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: false, defval: '' }));
   }
+  if (ext === 'pdf') return gFilasDePDF(f);
   if (ext === 'docx') {
     await gCargarLib('mammoth');
     const r = await mammoth.convertToHtml({ arrayBuffer: await f.arrayBuffer() });
@@ -1270,7 +1300,7 @@ async function gFilasDeArchivo(f) {
     });
     return [filas];
   }
-  throw new Error('Ese tipo de archivo no se puede leer. Usa Excel (.xlsx, .xls), Word (.docx), CSV o texto (.txt).');
+  throw new Error('Ese tipo de archivo no se puede leer. Usa Excel (.xlsx, .xls), Word (.docx), PDF, CSV o texto (.txt).');
 }
 async function gLeerArchivoAlumnos(input, idTa) {
   if (licEsPrueba()) { input.value = ''; licAvisoPrueba('Subir tu lista de alumnos desde un archivo'); return; }
@@ -1292,9 +1322,9 @@ async function gLeerArchivoAlumnos(input, idTa) {
   input.value = '';
 }
 function gUiArchivo(idTa) {
-  if (licEsPrueba()) return `<div class="g-aviso" style="margin:6px 0 10px;font-size:12.5px">🔒 Subir tu lista desde Excel, Word o CSV está disponible con tu licencia. Mientras tanto puedes teclear o pegar los nombres.</div>`;
-  return `<div style="margin:6px 0 10px"><label class="g-btn g-btn-s" style="cursor:pointer;margin:0">📂 Subir Excel, Word o CSV
-      <input type="file" accept=".xlsx,.xls,.xlsm,.ods,.csv,.docx,.txt" style="display:none" onchange="gLeerArchivoAlumnos(this,'${idTa}')"></label>
+  if (licEsPrueba()) return `<div class="g-aviso" style="margin:6px 0 10px;font-size:12.5px">🔒 Subir tu lista desde Excel, Word, PDF o CSV está disponible con tu licencia. Mientras tanto puedes teclear o pegar los nombres.</div>`;
+  return `<div style="margin:6px 0 10px"><label class="g-btn g-btn-s" style="cursor:pointer;margin:0">📂 Subir Excel, Word, PDF o CSV
+      <input type="file" accept=".xlsx,.xls,.xlsm,.ods,.csv,.docx,.pdf,.txt" style="display:none" onchange="gLeerArchivoAlumnos(this,'${idTa}')"></label>
     <span style="font-size:11.5px;color:var(--gris);margin-left:6px">Los nombres aparecen en el recuadro para que los revises antes de crear la lista.</span>
     <div id="${idTa}-msg" style="display:none;font-size:12.5px;margin-top:8px;line-height:1.4"></div></div>`;
 }
