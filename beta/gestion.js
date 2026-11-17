@@ -387,6 +387,7 @@ function gRenderLista() {
   let h = `<div class="sec-title">Pase de lista</div><div class="sec-sub">Toca la letra de cada alumno: <b>✓</b> presente, <b>R</b> retardo, <b>F</b> falta, <b>J</b> justificada. Se guarda solo. Si te equivocas, toca otra vez la misma letra para quitarla.</div>${gBarra()}${gTarjetaAlumnos(g)}
   <div class="card"><div class="g-fecha">
     <button class="g-btn g-btn-s" onclick="gDia(-1)">‹</button>
+    ${(() => { const nd = gFechaBonita(G.fecha).split(',')[0], fin = /^(Sábado|Domingo)$/.test(nd); return `<span title="${fin ? 'Fin de semana' : 'Día de la semana'}" style="display:inline-flex;align-items:center;padding:9px 14px;border-radius:10px;font-weight:800;font-size:15px;background:${fin ? '#fef3c7' : 'var(--azul)'};color:${fin ? '#92400e' : '#fff'}">${nd}</span>`; })()}
     <input type="date" value="${G.fecha}" onchange="gFecha(this.value)">
     <button class="g-btn g-btn-s" onclick="gDia(1)">›</button>
     <button class="g-btn g-btn-s" onclick="gFecha(gHoy())">Hoy</button></div>
