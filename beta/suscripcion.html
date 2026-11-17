@@ -102,8 +102,8 @@ footer{padding:26px 0;color:var(--gris);font-size:13.5px;text-align:center}
   <div class="planes" id="planes-lista"></div>
   <p class="sub" style="margin-top:12px;font-size:14px" id="nota-precios"></p>
   <div class="card" style="margin-top:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-    <div style="flex:1;min-width:230px"><b>🎁 ¿Quieres probarlo completo antes de pagar?</b><br><span>Pide una <b>prueba de 3 días</b> con todo incluido: descarga en Word, calificaciones, lista de alumnos, rezago y recuperativos.</span></div>
-    <a class="btn btn-s" id="btn-prueba" href="#">Pedir prueba de 3 días</a>
+    <div style="flex:1;min-width:230px"><b>🎁 Gánate una prueba completa de 5 días</b><br><span>Recomienda el Planeador a un compañero de tu escuela o zona y escríbenos con su nombre y correo. Te damos <b>5 días con todo incluido</b>: descarga en Word, calificaciones, lista de alumnos, rezago y recuperativos.</span></div>
+    <a class="btn btn-s" id="btn-prueba" href="#">Quiero mis 5 días</a>
   </div>
 </div></section>
 
@@ -161,7 +161,7 @@ function mailto(p) {
 }
 document.getElementById('td-ia').textContent = 'Hasta ' + LIMITE_IA + ' al mes (uso justo; no es ilimitado)';
 document.getElementById('btn-correo').href = mailto(null);
-document.getElementById('btn-prueba').href = 'mailto:' + CORREO + '?subject=' + encodeURIComponent('Quiero una prueba de 3 días del Planeador Docente NEM') + '&body=' + encodeURIComponent('Hola, quiero probar el Planeador Docente NEM durante 3 días.\n\nMi nombre: \nMi escuela: \nCorreo con el que entro a la app: ');
+document.getElementById('btn-prueba').href = 'mailto:' + CORREO + '?subject=' + encodeURIComponent('Promoción de 5 días del Planeador Docente NEM') + '&body=' + encodeURIComponent('Hola, recomendé el Planeador Docente NEM y quiero mis 5 días de prueba completa.\n\nMi nombre: \nMi escuela: \nCorreo con el que entro a la app: \n\nCompañero(a) que recomendé:\nNombre: \nCorreo: ');
 document.getElementById('txt-correo').innerHTML = 'O escribe directamente a <b>' + esc(CORREO) + '</b>';
 </script>
 </body>
