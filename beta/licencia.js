@@ -53,6 +53,7 @@ async function llamarIA(prompt, { json = false } = {}) {
       break;
     }
   }
+  if (['sin_licencia', 'vencida', 'revocada'].includes(ultimo.codigo) && !licEsAdminCuenta()) licCargar().then(e => { if (e && !e.activa) licPuertaBloquear(e); });
   const err = new Error(licMensajeIA(ultimo)); err.codigo = ultimo.codigo; throw err;
 }
 
@@ -74,6 +75,95 @@ async function licCargar() {
 function licReiniciar() { LIC.estado = null; LIC.error = ''; licPintarChip(); }
 
 function licFecha(iso) { return iso ? new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'; }
+
+// ── PUERTA DE ACCESO: sin licencia vigente, la app NO se abre ──────────────
+// Se revisa al entrar, cada 20 minutos y al volver a la pestaña. Mientras la licencia no esté vigente solo se
+// ve la pantalla de bloqueo (canjear un código, descargar el respaldo o cerrar sesión).
+// Las cuentas de administrador (adminEmails) nunca se bloquean, para poder generar códigos.
+// Nota: la app es una página estática; esta puerta frena el uso normal. La verificación fuerte de la IA sigue en el servidor.
+const LIC_PUERTA = { ultimo: 0, timer: null, activa: false };
+function licEsAdminCuenta() {
+  const u = (typeof getUsuario === 'function') ? getUsuario() : null; const em = String((u && u.email) || '').toLowerCase();
+  return !!em && ((window.NEM_CONFIG && window.NEM_CONFIG.adminEmails) || []).map(x => String(x).toLowerCase()).includes(em);
+}
+function licCacheKey() { const u = (typeof getUsuario === 'function') ? getUsuario() : null; return 'nem_lic_ok_' + ((u && (u.uid || u.email)) || 'anon'); }
+function licCacheGuardar(vence) { try { localStorage.setItem(licCacheKey(), vence || ''); } catch (e) { /* sin almacenamiento */ } }
+function licCacheVigente() { try { const v = localStorage.getItem(licCacheKey()); return !!v && Date.parse(v) > Date.now(); } catch (e) { return false; } }
+function licPuertaEl() {
+  let el = document.getElementById('lic-puerta');
+  if (!el) { el = document.createElement('div'); el.id = 'lic-puerta'; el.style.cssText = 'position:fixed;inset:0;z-index:100000;background:linear-gradient(160deg,#1e3a5f,#0f2744);display:none;align-items:center;justify-content:center;padding:16px;overflow:auto;'; document.body.appendChild(el); }
+  return el;
+}
+const LIC_TARJETA = 'background:#fff;border-radius:16px;max-width:460px;width:100%;padding:26px 24px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center;font-family:inherit;color:#1e293b;';
+function licPuertaAbrir(texto) {
+  const el = licPuertaEl(); el.style.display = 'flex';
+  el.innerHTML = `<div style="${LIC_TARJETA}"><div style="font-size:34px">🔑</div><p style="margin:10px 0 0;font-size:15px">${texto || 'Verificando tu licencia…'}</p></div>`;
+  const app = document.getElementById('app'); if (app) app.setAttribute('inert', '');
+}
+function licPuertaCerrar() {
+  const el = document.getElementById('lic-puerta'); if (el) el.style.display = 'none';
+  const app = document.getElementById('app'); if (app) app.removeAttribute('inert');
+  LIC_PUERTA.activa = true;
+}
+function licPuertaBloquear(e, errRed) {
+  LIC_PUERTA.activa = false;
+  const el = licPuertaEl(); el.style.display = 'flex';
+  const app = document.getElementById('app'); if (app) app.setAttribute('inert', '');
+  const u = (typeof getUsuario === 'function') ? getUsuario() : null;
+  let titulo, msg;
+  if (errRed) { titulo = 'No pudimos verificar tu licencia'; msg = 'Revisa tu conexión a internet e inténtalo de nuevo.'; }
+  else if (e && e.prueba) { titulo = 'Tu prueba gratis terminó'; msg = 'Para seguir usando el Planeador necesitas una licencia. Canjea tu código para continuar.'; }
+  else if (e && e.vence && Date.parse(e.vence) > Date.now()) { titulo = 'Tu licencia está desactivada'; msg = 'Contacta a quien te la vendió para reactivarla.'; }
+  else if (e && e.vence) { titulo = 'Tu licencia venció'; msg = `Venció el ${licFecha(e.vence)}. Canjea un código de renovación para seguir usando el Planeador.`; }
+  else { titulo = 'Aún no tienes una licencia'; msg = 'Tu prueba gratis ya se usó. Canjea tu código para usar el Planeador.'; }
+  const contacto = window.NEM_CONFIG && window.NEM_CONFIG.contacto;
+  el.innerHTML = `<div style="${LIC_TARJETA}">
+    <div style="font-size:38px">🔒</div>
+    <h2 style="margin:8px 0 6px;font-size:20px;color:#1e3a5f">${titulo}</h2>
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#475569">${msg}</p>
+    ${errRed ? '' : `<input id="lp-codigo" placeholder="NEM-XXXX-XXXX-XXXX" maxlength="16" oninput="this.value=this.value.toUpperCase()" style="width:100%;box-sizing:border-box;padding:12px;font-size:16px;letter-spacing:.05em;text-align:center;border:1.5px solid #cbd5e1;border-radius:10px;margin-bottom:10px">
+    <div id="lp-err" style="display:none;color:#b91c1c;font-size:13px;margin-bottom:10px"></div>`}
+    <button id="lp-btn" onclick="${errRed ? 'licPuertaReintentar()' : 'licPuertaCanjear()'}" style="width:100%;padding:12px;font-size:15px;font-weight:700;border:0;border-radius:10px;background:#1e3a5f;color:#fff;cursor:pointer">${errRed ? 'Reintentar' : 'Activar y entrar'}</button>
+    ${contacto ? `<p style="font-size:12.5px;color:#64748b;margin:14px 0 0">¿Aún no tienes código? ${gEsc(contacto)}</p>` : ''}
+    <p style="font-size:12px;color:#64748b;margin:14px 0 0">Tus datos (grupos, calificaciones) siguen guardados en este dispositivo.</p>
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      ${typeof gRespaldar === 'function' && typeof G !== 'undefined' && G.data ? '<button onclick="gRespaldar()" style="padding:8px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer;font-size:13px">⬇ Descargar mi respaldo</button>' : ''}
+      <button onclick="licPuertaSalir()" style="padding:8px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer;font-size:13px">Cerrar sesión</button>
+    </div>
+    <p style="font-size:11px;color:#94a3b8;margin:12px 0 0">Cuenta: ${gEsc((u && u.email) || '')}</p>
+  </div>`;
+}
+function licPuertaSalir() { const el = document.getElementById('lic-puerta'); if (el) el.style.display = 'none'; const app = document.getElementById('app'); if (app) app.removeAttribute('inert'); if (typeof doLogout === 'function') doLogout(); }
+async function licPuertaCanjear() {
+  const c = (document.getElementById('lp-codigo').value || '').trim(), err = document.getElementById('lp-err'), b = document.getElementById('lp-btn');
+  err.style.display = 'none';
+  if (!c) { err.textContent = 'Escribe tu código.'; err.style.display = 'block'; return; }
+  b.disabled = true; b.textContent = 'Activando…';
+  try { LIC.estado = await workerFetch('/v1/activar', { metodo: 'POST', body: { codigo: c } }); await licPuertaVerificar(); }
+  catch (e) { err.textContent = e.message; err.style.display = 'block'; b.disabled = false; b.textContent = 'Activar y entrar'; }
+}
+function licPuertaReintentar() { licPuertaVerificar(); }
+// Verifica la licencia y abre o cierra la puerta. Devuelve true si la app puede usarse.
+async function licPuertaVerificar() {
+  if (!workerUrl() || licEsAdminCuenta()) { licPuertaCerrar(); licCargar(); return true; }
+  licPuertaAbrir();
+  const e = await licCargar(); LIC_PUERTA.ultimo = Date.now();
+  if (e && e.activa) { licCacheGuardar(e.vence); licPuertaCerrar(); if (typeof G !== 'undefined' && G.tab === 'inicio' && typeof gRender === 'function') gRender(); return true; }
+  if (e) { licPuertaBloquear(e); return false; }
+  if (licCacheVigente()) { licPuertaCerrar(); return true; }   // sin conexión: se permite mientras la última licencia verificada siga vigente
+  licPuertaBloquear(null, true); return false;
+}
+// Revisión silenciosa mientras la app está abierta
+async function licPuertaRevisar() {
+  if (!workerUrl() || licEsAdminCuenta() || !(typeof getUsuario === 'function' && getUsuario())) return;
+  const e = await licCargar(); LIC_PUERTA.ultimo = Date.now();
+  if (e && e.activa) { licCacheGuardar(e.vence); return; }
+  if (e) licPuertaBloquear(e);
+}
+function licPuertaVigilar() {
+  clearInterval(LIC_PUERTA.timer); LIC_PUERTA.timer = setInterval(licPuertaRevisar, 20 * 60 * 1000);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && LIC_PUERTA.activa && Date.now() - LIC_PUERTA.ultimo > 10 * 60 * 1000) licPuertaRevisar(); });
 
 // ── Pantalla «Mi licencia» ────────────────────────────────
 async function licRender() {
