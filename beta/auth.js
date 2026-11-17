@@ -24,9 +24,9 @@ function authMensaje(e) {
     'auth/email-already-in-use': 'Ya existe una cuenta con ese correo. Usa «Entrar» o «¿Olvidaste tu contraseña?».',
     'auth/invalid-email': 'El correo no es válido.',
     'auth/weak-password': 'La contraseña es muy corta: usa al menos 6 caracteres.',
-    'auth/invalid-credential': 'Correo o contraseña incorrectos.',
-    'auth/wrong-password': 'Correo o contraseña incorrectos.',
-    'auth/user-not-found': 'Correo o contraseña incorrectos.',
+    'auth/invalid-credential': 'Correo o contraseña incorrectos. Recuerda: la contraseña de esta aplicación NO es la de tu correo (Gmail, Hotmail…). Si te registraste con Google, usa «Continuar con Google»; si no la recuerdas o nunca la creaste, toca «¿Olvidaste tu contraseña?» y crea una nueva.',
+    'auth/wrong-password': 'Correo o contraseña incorrectos. Recuerda: la contraseña de esta aplicación NO es la de tu correo (Gmail, Hotmail…). Si te registraste con Google, usa «Continuar con Google»; si no la recuerdas o nunca la creaste, toca «¿Olvidaste tu contraseña?» y crea una nueva.',
+    'auth/user-not-found': 'Correo o contraseña incorrectos. Recuerda: la contraseña de esta aplicación NO es la de tu correo (Gmail, Hotmail…). Si te registraste con Google, usa «Continuar con Google»; si no la recuerdas o nunca la creaste, toca «¿Olvidaste tu contraseña?» y crea una nueva.',
     'auth/too-many-requests': 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
     'auth/network-request-failed': 'No hay conexión. Revisa tu internet e inténtalo de nuevo.',
     'auth/popup-closed-by-user': '',
@@ -147,8 +147,8 @@ async function authRecuperar() {
   try {
     await AUTH.auth.sendPasswordResetEmail(correo);
     // Mismo mensaje exista o no la cuenta (así no se revela quién está registrado)
-    ok.textContent = 'Si ese correo tiene una cuenta, te enviamos un enlace para crear una contraseña nueva. Revisa también «Spam».'; ok.style.display = 'block';
-  } catch (e) { if (e && e.code === 'auth/user-not-found') { ok.textContent = 'Si ese correo tiene una cuenta, te enviamos un enlace para crear una contraseña nueva. Revisa también «Spam».'; ok.style.display = 'block'; } else authError('rc-err', e); }
+    ok.textContent = 'Si ese correo tiene una cuenta, te enviamos un enlace para crear una contraseña nueva de esta aplicación (no cambia la de tu correo). Revisa también «Spam».'; ok.style.display = 'block';
+  } catch (e) { if (e && e.code === 'auth/user-not-found') { ok.textContent = 'Si ese correo tiene una cuenta, te enviamos un enlace para crear una contraseña nueva de esta aplicación (no cambia la de tu correo). Revisa también «Spam».'; ok.style.display = 'block'; } else authError('rc-err', e); }
   authOcupado('btn-rec', false);
 }
 

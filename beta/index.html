@@ -499,7 +499,7 @@ input,select,textarea,button{font-family:inherit;font-size:14px;}
       <div class="fg"><label>Correo electrónico</label><input type="email" id="l-correo" placeholder="tucorreo@ejemplo.com" autocomplete="username" autocapitalize="off"></div>
       <div class="fg"><label>Contraseña</label><input type="password" id="l-pwd" placeholder="Tu contraseña" autocomplete="current-password"></div>
       <button class="btn-p" id="btn-login" onclick="authEntrar()">Entrar</button>
-      <button type="button" class="link-olvide" onclick="showAuthTab('recuperar')">¿Olvidaste tu contraseña?</button>
+      <button type="button" class="link-olvide" onclick="showAuthTab('recuperar')" style="font-weight:600;text-decoration:underline">¿Olvidaste tu contraseña o nunca la creaste? Crea una nueva</button>
       <div class="l-err" id="l-err"></div>
     </div>
 
@@ -1110,17 +1110,17 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   </div><!-- /layout -->
 </div><!-- /app -->
 
-<script src="firebase-config.js?v=202611170240"></script>
-<script src="correos-temporales.js?v=202611170240"></script>
-<script src="auth.js?v=202611170240"></script>
-<script src="licencia.js?v=202611170240"></script>
-<script src="curriculum.js?v=202611170240"></script>
-<script src="projects.js?v=202611170240"></script>
-<script src="generators.js?v=202611170240"></script>
-<script src="metodologias.js?v=202611170240"></script>
-<script src="ruta-ui.js?v=202611170240"></script>
-<script src="secuencias.js?v=202611170240"></script>
-<script src="sugerencias-plano.js?v=202611170240"></script>
+<script src="firebase-config.js?v=202611170300"></script>
+<script src="correos-temporales.js?v=202611170300"></script>
+<script src="auth.js?v=202611170300"></script>
+<script src="licencia.js?v=202611170300"></script>
+<script src="curriculum.js?v=202611170300"></script>
+<script src="projects.js?v=202611170300"></script>
+<script src="generators.js?v=202611170300"></script>
+<script src="metodologias.js?v=202611170300"></script>
+<script src="ruta-ui.js?v=202611170300"></script>
+<script src="secuencias.js?v=202611170300"></script>
+<script src="sugerencias-plano.js?v=202611170300"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
 // (la pantalla de acceso conserva su autocompletar para correo y contraseña).
@@ -1142,8 +1142,8 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611170240"></script>
-<script src="rezago.js?v=202611170240"></script>
+<script src="gestion.js?v=202611170300"></script>
+<script src="rezago.js?v=202611170300"></script>
 <script>
 // ── ESTADO ──────────────────────────────────────────────
 let tipoActivo='a', semAct=1, semsGen=new Set();
