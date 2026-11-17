@@ -343,8 +343,11 @@ function gMarcar(aid, code) {
   if (!g.asist[f]) { g.asist[f] = {}; g.alumnos.forEach(a => { g.asist[f][a.id] = 'P'; }); }
   g.asist[f][aid] = code; gGuardar(); gRenderLista();
 }
+function gTodosPresentes(g) { const d = g.asist[G.fecha]; return !!(d && g.alumnos.length && g.alumnos.every(a => d[a.id] === 'P')); }
 function gTodos(code) {
-  const g = gGrupo(); g.asist[G.fecha] = {}; g.alumnos.forEach(a => { g.asist[G.fecha][a.id] = code; }); gGuardar(); gRenderLista();
+  const g = gGrupo();
+  if (code === 'P' && gTodosPresentes(g)) { delete g.asist[G.fecha]; gGuardar(); gRenderLista(); return; }   // segundo toque: quita la lista del día
+  g.asist[G.fecha] = {}; g.alumnos.forEach(a => { g.asist[G.fecha][a.id] = code; }); gGuardar(); gRenderLista();
 }
 function gBorrarDia() {
   const g = gGrupo(); if (!g.asist[G.fecha]) return;
@@ -379,7 +382,7 @@ function gRenderLista() {
     <div style="font-size:13px;color:var(--gris);margin:8px 0 12px;">${gFechaBonita(G.fecha)} ${dia ? '· <span style="color:var(--verde)">lista guardada</span>' : '· <span>sin registrar</span>'}</div>`;
   if (!g.alumnos.length) h += `<p style="color:var(--gris)">Este grupo aún no tiene alumnos. Agrégalos en el recuadro de arriba: teclea los nombres o sube tu lista de Excel o Word.</p>`;
   else {
-    h += `<div style="margin-bottom:12px"><button class="g-btn" onclick="gTodos('P')">✓ Todos presentes</button> ${dia ? '<button class="g-btn g-btn-x" onclick="gBorrarDia()">Borrar día</button>' : ''}</div>
+    h += `<div style="margin-bottom:12px">${gTodosPresentes(g) ? `<button class="g-btn g-btn-s" style="border-color:var(--verde);color:var(--verde)" title="Toca otra vez para quitar la lista de este día" onclick="gTodos('P')">✓ Todos presentes — toca para quitar</button>` : `<button class="g-btn" onclick="gTodos('P')">✓ Todos presentes</button>`} ${dia ? '<button class="g-btn g-btn-x" onclick="gBorrarDia()">Borrar día</button>' : ''}</div>
     <div class="g-lista">` + g.alumnos.map((a, i) => {
       const v = dia ? dia[a.id] : null;
       return `<div class="g-fila"><span class="g-n">${i + 1}</span><span class="g-nom">${gEsc(a.nombre)}</span><span class="g-st">` +
