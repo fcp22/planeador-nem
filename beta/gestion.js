@@ -1461,8 +1461,22 @@ function gTitulosHoja(H) {
     escuela: gEscuela() || 'Escuela Secundaria',
     titulo: 'LISTA DE ASISTENCIA — ' + H.mesTxt.toUpperCase(),
     info: `Docente: ${gDocente()}     Grupo: ${H.g.nombre}     Materia: ${H.g.materia}     Grado: ${H.g.grado}°` + (p.cct ? `     CCT: ${p.cct}` : ''),
-    leyenda: 'P = Presente    R = Retardo    F = Falta    J = Falta justificada',
+    leyenda: '✓ = Asistió    R = Retardo    F = Falta    J = Falta justificada',
   };
+}
+// Colores de las marcas: los mismos del Pase de lista en pantalla. Fuertes y en negritas para que se distingan al imprimir en blanco y negro.
+const G_MARCA = {
+  P: { rgb: [22, 163, 74], hex: 'FF16A34A', txt: [255, 255, 255], txtHex: 'FFFFFFFF', nom: 'Asistió' },
+  R: { rgb: [245, 158, 11], hex: 'FFF59E0B', txt: [40, 22, 0], txtHex: 'FF281600', nom: 'Retardo' },
+  F: { rgb: [220, 38, 38], hex: 'FFDC2626', txt: [255, 255, 255], txtHex: 'FFFFFFFF', nom: 'Falta' },
+  J: { rgb: [37, 99, 168], hex: 'FF2563A8', txt: [255, 255, 255], txtHex: 'FFFFFFFF', nom: 'Falta justificada' },
+};
+function gMarcaPDF(doc, k, x, y, w, h, solo) {   // rectángulo de color + ✓ dibujado o letra en negritas
+  const m = G_MARCA[k]; if (!m) return;
+  if (!solo) { doc.setFillColor(...m.rgb); doc.rect(x + 0.2, y + 0.2, w - 0.4, h - 0.4, 'F'); }
+  doc.setDrawColor(...m.txt); doc.setTextColor(...m.txt);
+  if (k === 'P') { doc.setLineWidth(0.7); const a = Math.min(w, h); doc.line(x + w / 2 - a * 0.24, y + h / 2 + a * 0.02, x + w / 2 - a * 0.07, y + h / 2 + a * 0.2); doc.line(x + w / 2 - a * 0.07, y + h / 2 + a * 0.2, x + w / 2 + a * 0.27, y + h / 2 - a * 0.2); }
+  else { doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.text(k, x + w / 2, y + h / 2 + 1.2, { align: 'center' }); }
 }
 async function gListaPDF(H) {
   await gCargarLib('jspdf', 'autotable');
@@ -1489,11 +1503,25 @@ async function gListaPDF(H) {
     headStyles: { fillColor: [219, 234, 254], textColor: [26, 58, 92], halign: 'center', fontStyle: 'bold', fontSize: 7.5, minCellHeight: 9 },
     columnStyles: cs,
     didDrawPage: encabezado,
+    didParseCell: d => {
+      if (d.section !== 'body' || d.column.index < 2 || d.column.index >= 2 + H.dias.length) return;
+      const v = d.cell.raw, m = G_MARCA[v]; if (!m) return;
+      d.cell.styles.fillColor = m.rgb; d.cell.text = [''];   // el símbolo se dibuja aparte
+    },
+    didDrawCell: d => {
+      if (d.section !== 'body' || d.column.index < 2 || d.column.index >= 2 + H.dias.length) return;
+      const v = d.cell.raw; if (G_MARCA[v]) gMarcaPDF(doc, v, d.cell.x, d.cell.y, d.cell.width, d.cell.height, true);
+    },
   });
   const n = doc.getNumberOfPages();
   for (let i = 1; i <= n; i++) {
     doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(90);
-    doc.text(T.leyenda, mL, Hh - 7); doc.text('Hoja ' + i + ' de ' + n, W - mR, Hh - 7, { align: 'right' });
+    let x = mL;   // leyenda con las marcas de color
+    ['P', 'R', 'F', 'J'].forEach(k => {
+      gMarcaPDF(doc, k, x, Hh - 10.2, 6, 5, false); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(60);
+      const t = G_MARCA[k].nom; doc.text(t, x + 7.5, Hh - 6.6); x += 7.5 + doc.getTextWidth(t) + 7;
+    });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(90); doc.text('Hoja ' + i + ' de ' + n, W - mR, Hh - 7, { align: 'right' });
   }
   gDescargarBlob(doc.output('blob'), gNombreArchivo(H.g, 'pdf', H.mesTxt + (H.modo === 'blanco' ? ' en blanco' : ' con asistencia')));
 }
@@ -1518,12 +1546,23 @@ async function gListaExcel(H) {
     const r = rH + 1 + i; const row = ws.getRow(r); row.height = 20;
     row.getCell(1).value = f.n; row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
     row.getCell(2).value = f.nombre; row.getCell(2).alignment = { vertical: 'middle', wrapText: true };
-    f.marcas.forEach((v, k) => { const c = row.getCell(3 + k); c.value = v || null; c.alignment = centro; });
+    f.marcas.forEach((v, k) => { const c = row.getCell(3 + k); c.value = v ? (v === 'P' ? '✓' : v) : null; c.alignment = centro; c.dataValidation = { type: 'list', allowBlank: true, showErrorMessage: false, formulae: ['"✓,R,F,J"'] }; });
     const a = L(3), b = L(2 + nD);
-    ['P', 'R', 'F', 'J'].forEach((cod, k) => { const c = row.getCell(3 + nD + k); c.value = { formula: `COUNTIF(${a}${r}:${b}${r},"${cod}")`, result: f.c[cod] }; c.alignment = centro; });
+    ['P', 'R', 'F', 'J'].forEach((cod, k) => {
+      const c = row.getCell(3 + nD + k), rng = `${a}${r}:${b}${r}`;
+      c.value = { formula: cod === 'P' ? `COUNTIF(${rng},"✓")+COUNTIF(${rng},"P")` : `COUNTIF(${rng},"${cod}")`, result: f.c[cod] }; c.alignment = centro;
+    });
     for (let k = 1; k <= nCol; k++) { const c = row.getCell(k); c.border = borde; c.font = { size: 10 }; }
+    f.marcas.forEach((v, k) => { const m = G_MARCA[v]; if (!m) return; const c = row.getCell(3 + k); c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: m.hex } }; c.font = { bold: true, size: 11, color: { argb: m.txtHex } }; });
   });
   for (let k = 1; k <= nCol; k++) hr.getCell(k).border = borde;
+  // Colores automáticos: si la maestra escribe ✓, R, F o J a mano, la casilla se pinta sola
+  const ref = `${L(3)}${rH + 1}:${L(2 + nD)}${rH + H.filas.length}`;
+  const reglaCF = (txt, k) => ({ type: 'cellIs', operator: 'equal', formulae: [`"${txt}"`], style: { font: { bold: true, color: { argb: G_MARCA[k].txtHex } }, fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: G_MARCA[k].hex } } } });
+  ws.addConditionalFormatting({ ref, rules: [reglaCF('✓', 'P'), reglaCF('P', 'P'), reglaCF('R', 'R'), reglaCF('F', 'F'), reglaCF('J', 'J')] });
+  // Leyenda con los mismos colores
+  const rl = rH + H.filas.length + 2; const lr = ws.getRow(rl); lr.height = 20;
+  ['P', 'R', 'F', 'J'].forEach((k, i) => { const c = lr.getCell(3 + i * 5); c.value = k === 'P' ? '✓' : k; c.alignment = centro; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: G_MARCA[k].hex } }; c.font = { bold: true, size: 11, color: { argb: G_MARCA[k].txtHex } }; c.border = borde; const t = lr.getCell(4 + i * 5); t.value = G_MARCA[k].nom; t.font = { size: 9 }; });
   ws.pageSetup.printTitlesRow = rH + ':' + rH;
   ws.views = [{ state: 'frozen', xSplit: 2, ySplit: rH }];
   ws.headerFooter.oddFooter = '&L&8' + T.leyenda + '&R&8Hoja &P de &N';
