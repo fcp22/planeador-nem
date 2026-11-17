@@ -7,8 +7,8 @@
 // ── IA ────────────────────────────────────────────────────
 // Todas las llamadas pasan por el servidor de IA con licencia (licencia.js → llamarIA).
 // La llave del proveedor vive en el servidor, nunca en esta página.
-async function llamarGeminiJSON(prompt) { return llamarIA(prompt, { json: true }); }
-async function llamarGemini(prompt) { return llamarIA(prompt, { json: false }); }
+async function llamarGeminiJSON(prompt, tipo) { return llamarIA(prompt, { json: true, tipo }); }
+async function llamarGemini(prompt, tipo) { return llamarIA(prompt, { json: false, tipo }); }
 
 // ============================================================
 // HELPER — CONVIERTE TEXTO IA EN JSON SEGURO
@@ -284,7 +284,7 @@ JSON requerido:
 // ============================================================
 async function generarAnalitico(d) {
   const prompt = buildPromptAnalitico(d);
-  const respuesta = await llamarGemini(prompt);
+  const respuesta = await llamarGemini(prompt, 'analitico');
   const ia = parsearJSON(respuesta);
   return construirHTMLAnalitico(d, ia);
 }
@@ -471,7 +471,7 @@ Genera este JSON (texto en español, lenguaje NEM):
 // ============================================================
 async function generarPlanDidacticoTrimestre(d) {
   const prompt = buildPromptPlanDidacticoTrimestre(d);
-  const respuesta = await llamarGemini(prompt);
+  const respuesta = await llamarGemini(prompt, 'plano');
   const ia = parsearJSON(respuesta);
   return construirHTMLPlanDidactico(d, ia);
 }
@@ -591,6 +591,7 @@ ${marcaAgua}
   return html;
 }
 function descargarWord(htmlContenido, nombreArchivo) {
+  if (typeof licBloqueaDescarga === 'function' && licBloqueaDescarga()) return;   // en la prueba gratis no se descarga
   const html = armarHTMLWord(htmlContenido);
   const blob = new Blob([html], { type: 'application/msword' });
   const url = URL.createObjectURL(blob);

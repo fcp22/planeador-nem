@@ -1110,17 +1110,17 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   </div><!-- /layout -->
 </div><!-- /app -->
 
-<script src="firebase-config.js?v=202611162120"></script>
-<script src="correos-temporales.js?v=202611162120"></script>
-<script src="auth.js?v=202611162120"></script>
-<script src="licencia.js?v=202611162120"></script>
-<script src="curriculum.js?v=202611162120"></script>
-<script src="projects.js?v=202611162120"></script>
-<script src="generators.js?v=202611162120"></script>
-<script src="metodologias.js?v=202611162120"></script>
-<script src="ruta-ui.js?v=202611162120"></script>
-<script src="secuencias.js?v=202611162120"></script>
-<script src="sugerencias-plano.js?v=202611162120"></script>
+<script src="firebase-config.js?v=202611162250"></script>
+<script src="correos-temporales.js?v=202611162250"></script>
+<script src="auth.js?v=202611162250"></script>
+<script src="licencia.js?v=202611162250"></script>
+<script src="curriculum.js?v=202611162250"></script>
+<script src="projects.js?v=202611162250"></script>
+<script src="generators.js?v=202611162250"></script>
+<script src="metodologias.js?v=202611162250"></script>
+<script src="ruta-ui.js?v=202611162250"></script>
+<script src="secuencias.js?v=202611162250"></script>
+<script src="sugerencias-plano.js?v=202611162250"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
 // (la pantalla de acceso conserva su autocompletar para correo y contraseña).
@@ -1142,8 +1142,8 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611162120"></script>
-<script src="rezago.js?v=202611162120"></script>
+<script src="gestion.js?v=202611162250"></script>
+<script src="rezago.js?v=202611162250"></script>
 <script>
 // ── ESTADO ──────────────────────────────────────────────
 let tipoActivo='a', semAct=1, semsGen=new Set();
@@ -1722,7 +1722,7 @@ async function genDidactico(){
     }
     const txt=await (tgen==='semanal'
       ? (async()=>{
-          const respSem = await llamarGeminiJSON(prompt);
+          const respSem = await llamarGeminiJSON(prompt, 'plano');
           const iaSem = parsearJSON(respSem);
           const C='#BDD7EE';
           const th=(t,w,bg)=>`<td style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${bg||C};${w?'width:'+w+';':''}vertical-align:top;">${t}</td>`;

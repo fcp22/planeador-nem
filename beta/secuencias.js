@@ -262,12 +262,13 @@ async function generarSecuenciaDidactica(d) {
   const sinCont = cards.find(c => !c.contenidos.length);
   if (sinCont) throw new Error(`La secuencia ${sinCont.i} no tiene contenidos: marca al menos uno.`);
   d.situacion = (secEl('d-situacion') || {}).value || ''; d.recursos = ((secEl('s-rec') || {}).value || '').trim();
+  if (typeof licEsPrueba === 'function' && licEsPrueba() && cards.length > 1) throw new Error('En la prueba gratis puedes generar 1 secuencia. Deja una sola secuencia (o activa tu licencia para generar hasta 4 por trimestre).');
   const msg = secEl('gen-d-msg'), dur = secDuracion(), partes = [], fallos = [], hechas = [];
   for (const c of cards) {
     if (msg) msg.innerHTML = `Generando secuencia ${c.i} de ${todas.length}…<br><small>Inicio, desarrollo y cierre con sus tiempos (30–60 segundos cada una)</small>`;
     const h = secHorario(c.sesiones, dur);
     try {
-      const ia = parsearJSON(await llamarGeminiJSON(secPrompt(d, c, h, cards.length)));
+      const ia = parsearJSON(await llamarGeminiJSON(secPrompt(d, c, h, cards.length), 'secuencia'));
       partes.push(secBloqueHTML(d, c, h, ia, todas.length)); hechas.push(c.i);
     } catch (e) { fallos.push(`Secuencia ${c.i}: ${e.message}`); }
   }

@@ -103,6 +103,7 @@ function gOnTab(id) {
   gRender();
 }
 function gRender() {
+  if (licTabBloqueada(G.tab)) { gPanel().innerHTML = licHTMLBloqueo(G.tab); return; }
   if (G_PRONTO[G.tab]) return gRenderProntoTab(G.tab);
   const f = { inicio: gRenderInicio, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago }[G.tab];
   if (f) f();
@@ -175,7 +176,7 @@ function gRenderInicio() {
   let h = `<div class="saludo">${saludo}, ${gEsc(nombre)} 👋</div><div class="saludo-sub">${gFechaBonita(gHoy())}</div>
   <div class="sec-title" style="font-size:16px">¿Qué quieres hacer hoy?</div><div style="height:10px"></div>
   <div class="tiles">` + G_MENU.map(([id, ico, tit, desc, listo]) =>
-    `<div class="tile${listo ? '' : ' pronto'}" style="${gTinte(id)}" onclick="gIrA('${id}')">${listo ? '' : '<span class="badge">🚧 En construcción</span>'}<span class="ti">${gIco(id)}</span><div class="tt">${tit}</div><div class="td">${desc}</div>${listo ? `<span class="go">${G_FLECHA}</span>` : ''}</div>`).join('') +
+    `<div class="tile${listo ? '' : ' pronto'}" style="${gTinte(id)}" onclick="gIrA('${id}')">${listo ? (licTabBloqueada(id) ? '<span class="badge">🔒 Con licencia</span>' : '') : '<span class="badge">🚧 En construcción</span>'}<span class="ti">${gIco(id)}</span><div class="tt">${tit}</div><div class="td">${desc}</div>${listo ? `<span class="go">${G_FLECHA}</span>` : ''}</div>`).join('') +
     `<a class="tile ancho" style="${gTinte('libros')}" href="https://libros.conaliteg.gob.mx/" target="_blank" rel="noopener"><span class="ti">${gIco('libros')}</span><div class="tx"><div class="tt">Libros de texto SEP</div><div class="td">Consulta y descarga los libros gratuitos de cada grado (sitio oficial de la CONALITEG)</div></div><span class="go">${G_FLECHA}</span></a></div>`;
   const gs = G.data ? G.data.grupos : [];
   if (G.data && !gPerfil().escuela) h += `<div class="g-aviso" style="background:#fffbeb;border-color:#fde68a;color:#92400e">🏫 Falta el nombre de tu escuela. <a href="#" onclick="gIrA('grupos');return false">Captúralo en «Mis grupos»</a> para que aparezca en tus documentos.</div>`;
@@ -618,13 +619,13 @@ async function gGenerarExamen() {
   const g = gGrupo(); const err = document.getElementById('ge-err');
   err.style.display = 'none';
   const tema = document.getElementById('ge-tema').value.trim();
-  const n = Math.max(3, Math.min(30, parseInt(document.getElementById('ge-n').value, 10) || 10));
+  const n = Math.max(3, Math.min(licEsPrueba() ? 5 : 30, parseInt(document.getElementById('ge-n').value, 10) || (licEsPrueba() ? 5 : 10)));
   const tipos = Object.keys(G_TIPOS_EXAM).filter(t => document.getElementById('ge-t-' + t).checked);
   if (tema.length < 5) { err.textContent = 'Escribe los temas o contenidos que quieres evaluar.'; err.style.display = 'block'; return; }
   if (!tipos.length) { err.textContent = 'Elige al menos un tipo de reactivo.'; err.style.display = 'block'; return; }
   const btn = document.getElementById('ge-btn'); btn.disabled = true; btn.textContent = 'Generando examen…';
   try {
-    const texto = await llamarGeminiJSON(gPromptExamen(g, { trim: G.trimExam, tema, n, tipos, dif: document.getElementById('ge-dif').value }));
+    const texto = await llamarGeminiJSON(gPromptExamen(g, { trim: G.trimExam, tema, n, tipos, dif: document.getElementById('ge-dif').value }), 'examen');
     const ex = gNormalizarExamen(parsearJSON(texto), n);
     if (!ex.reactivos.length) throw new Error('La IA no devolvió reactivos válidos.');
     G.borrador = Object.assign(ex, { tema, trim: G.trimExam, criterioId: document.getElementById('ge-crit').value });
@@ -712,7 +713,7 @@ function gRenderExamenes() {
   <div class="card"><div class="card-title">✨ Generar examen con IA — ${gEsc(g.materia)} ${g.grado}°</div>
     <div class="campo"><label>Temas o contenidos a evaluar</label><textarea id="ge-tema" rows="3" placeholder="Ej. Ecuaciones de primer grado con una incógnita; problemas de proporcionalidad directa"></textarea><div class="ayuda">Mientras más específico, mejor el examen. Puedes copiar los contenidos o PDA de tu planeación.</div></div>
     <div class="f3">
-      <div class="campo"><label>Número de reactivos</label><input id="ge-n" type="number" min="3" max="30" value="10"></div>
+      <div class="campo"><label>Número de reactivos</label>${licEsPrueba() ? '<input id="ge-n" type="number" min="3" max="5" value="5"><div class="ayuda">En la prueba gratis: hasta 5 reactivos.</div>' : '<input id="ge-n" type="number" min="3" max="30" value="10">'}</div>
       <div class="campo"><label>Dificultad</label><select id="ge-dif"><option>Básica</option><option selected>Media</option><option>Alta</option></select></div>
       <div class="campo"><label>Criterio donde cuenta</label><select id="ge-crit">${gCriteriosOpts(g, critEx)}</select></div>
     </div>
@@ -1025,6 +1026,7 @@ async function gCargarLib(...claves) {
   }
 }
 function gDescargarBlob(blob, nombre) {
+  if (licBloqueaDescarga()) return;
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
@@ -1102,6 +1104,7 @@ async function gFilasDeArchivo(f) {
   throw new Error('Ese tipo de archivo no se puede leer. Usa Excel (.xlsx, .xls), Word (.docx), CSV o texto (.txt).');
 }
 async function gLeerArchivoAlumnos(input, idTa) {
+  if (licEsPrueba()) { input.value = ''; licAvisoPrueba('Subir tu lista de alumnos desde un archivo'); return; }
   const f = input.files && input.files[0]; if (!f) return;
   const msg = document.getElementById(idTa + '-msg'), ta = document.getElementById(idTa);
   const decir = (t, ok) => { if (msg) { msg.textContent = t; msg.style.color = ok ? 'var(--verde)' : 'var(--rojo)'; msg.style.display = 'block'; } };
@@ -1120,6 +1123,7 @@ async function gLeerArchivoAlumnos(input, idTa) {
   input.value = '';
 }
 function gUiArchivo(idTa) {
+  if (licEsPrueba()) return `<div class="g-aviso" style="margin:6px 0 10px;font-size:12.5px">🔒 Subir tu lista desde Excel, Word o CSV está disponible con tu licencia. Mientras tanto puedes teclear o pegar los nombres.</div>`;
   return `<div style="margin:6px 0 10px"><label class="g-btn g-btn-s" style="cursor:pointer;margin:0">📂 Subir Excel, Word o CSV
       <input type="file" accept=".xlsx,.xls,.xlsm,.ods,.csv,.docx,.txt" style="display:none" onchange="gLeerArchivoAlumnos(this,'${idTa}')"></label>
     <span style="font-size:11.5px;color:var(--gris);margin-left:6px">Los nombres aparecen en el recuadro para que los revises antes de crear la lista.</span>

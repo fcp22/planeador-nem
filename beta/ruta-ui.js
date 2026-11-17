@@ -199,7 +199,7 @@ ${moms.map((n, i) => `${i + 1}. ${n}`).join('\n')}` : ''}`;
 }
 
 async function rutaPedirComplementos(d, conMomentos) {
-  const resp = await llamarGeminiJSON(rutaPromptComplementos(d, conMomentos));
+  const resp = await llamarGeminiJSON(rutaPromptComplementos(d, conMomentos), 'plano');
   const ia = parsearJSON(resp);
   const str = v => (typeof v === 'string' ? v.trim() : '');
   return {

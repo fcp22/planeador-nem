@@ -30,19 +30,19 @@ async function workerFetch(ruta, { metodo = 'GET', body, admin } = {}) {
 }
 
 // Mensaje + a dónde ir cuando el problema es de licencia
-const LIC_CODIGOS = ['sin_licencia', 'vencida', 'cuota', 'revocada', 'correo_sin_verificar'];
+const LIC_CODIGOS = ['sin_licencia', 'vencida', 'cuota', 'tipo_prueba', 'revocada', 'correo_sin_verificar'];
 function licMensajeIA(e) {
   if (LIC_CODIGOS.includes(e.codigo)) return e.message + ' (Menú → «Mi licencia»)';
   return e.message;
 }
 
 // Pide texto a la IA. json=true pide formato JSON.
-async function llamarIA(prompt, { json = false } = {}) {
+async function llamarIA(prompt, { json = false, tipo } = {}) {
   let ultimo;
   // El servidor ya reintenta y cambia de modelo por su cuenta; aquí solo se da una segunda oportunidad a fallos de red o de saturación.
   for (let intento = 0; intento < 2; intento++) {
     try {
-      const data = await workerFetch('/v1/generar', { metodo: 'POST', body: { prompt, json } });
+      const data = await workerFetch('/v1/generar', { metodo: 'POST', body: { prompt, json, tipo } });
       if (data.cuota) { LIC.estado = Object.assign(LIC.estado || {}, { limite: data.cuota.limite, usadas: data.cuota.usadas, restantes: data.cuota.restantes, activa: true }); licPintarChip(); }
       const texto = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
       if (!texto) throw new Error('Respuesta vacía del servicio de IA');
@@ -167,13 +167,39 @@ function licPuertaVigilar() {
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && LIC_PUERTA.activa && Date.now() - LIC_PUERTA.ultimo > 10 * 60 * 1000) licPuertaRevisar(); });
 
+// ── PRUEBA GRATIS: qué incluye y qué queda para quien tiene licencia ──────────
+// Incluye: 2 documentos con IA (uno de cada tipo; el examen de hasta 5 reactivos y 1 sola secuencia), verlos en pantalla,
+// crear grupos y generar el examen. NO incluye: descargar Word/PDF/Excel, subir listas desde archivo, pase de lista,
+// calificaciones ni seguimiento de rezago (eso se abre con la licencia). El tope de documentos lo hace cumplir el servidor.
+const LIC_TABS_CON_LICENCIA = { lista: 'Pase de lista', calif: 'Calificaciones y promedios', rezago: 'Seguimiento de rezago' };
+function licEsPrueba() { const e = LIC.estado; return !!(e && e.prueba && e.activa) && !licEsAdminCuenta(); }
+function licTabBloqueada(id) { return !!LIC_TABS_CON_LICENCIA[id] && licEsPrueba(); }
+function licHTMLBloqueo(id) {
+  return `<div class="card pronto-box"><div class="pi">🔒</div><h2>${LIC_TABS_CON_LICENCIA[id]}</h2>
+    <p>Esta herramienta se abre con tu licencia: subir tu lista de alumnos desde Excel, pasar lista, calificaciones, promedios y detección de rezago.</p>
+    <p style="font-size:12.5px;color:var(--gris)">En tu prueba gratis puedes crear 2 documentos con IA (un plano o analítico y un examen) y verlos en pantalla.</p>
+    <button class="g-btn" style="margin-top:14px" onclick="gIrA('licencia')">Activar mi licencia</button></div>`;
+}
+function licAvisoPrueba(que) {
+  let el = document.getElementById('lic-aviso-prueba');
+  if (!el) { el = document.createElement('div'); el.id = 'lic-aviso-prueba'; el.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15,39,68,.6);display:flex;align-items:center;justify-content:center;padding:16px;'; document.body.appendChild(el); }
+  el.style.display = 'flex';
+  el.innerHTML = `<div style="${LIC_TARJETA}"><div style="font-size:34px">🔒</div>
+    <h2 style="margin:8px 0 6px;font-size:19px;color:#1e3a5f">Disponible con tu licencia</h2>
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#475569">${que || 'Descargar el documento'} está disponible con tu licencia. En la prueba gratis puedes ver tu documento completo en pantalla.</p>
+    <button onclick="document.getElementById('lic-aviso-prueba').style.display='none';gIrA('licencia')" style="width:100%;padding:12px;font-size:15px;font-weight:700;border:0;border-radius:10px;background:#1e3a5f;color:#fff;cursor:pointer">Activar mi licencia</button>
+    <button onclick="document.getElementById('lic-aviso-prueba').style.display='none'" style="width:100%;margin-top:8px;padding:10px;font-size:14px;border:1.5px solid #cbd5e1;border-radius:10px;background:#fff;cursor:pointer">Seguir viendo</button></div>`;
+}
+// true = en la prueba: no se descarga (y avisa)
+function licBloqueaDescarga() { if (!licEsPrueba()) return false; licAvisoPrueba('Descargar el documento'); return true; }
+
 // ── Pantalla «Mi licencia» ────────────────────────────────
 async function licRender() {
   const p = document.getElementById('g-licencia'); if (!p) return;
   const u = getUsuario();
-  p.innerHTML = `<div class="sec-title">Mi licencia</div><div class="sec-sub">Tu acceso a la IA para crear planeaciones y exámenes. Todo lo demás (pase de lista, calificaciones, grupos) no la necesita.</div><div class="card"><p style="color:var(--gris)">Consultando tu licencia…</p></div>`;
+  p.innerHTML = `<div class="sec-title">Mi licencia</div><div class="sec-sub">Tu acceso al Planeador: planeaciones y exámenes con IA, descarga en Word y las herramientas de grupo (lista, calificaciones, rezago).</div><div class="card"><p style="color:var(--gris)">Consultando tu licencia…</p></div>`;
   const e = await licCargar();
-  let h = `<div class="sec-title">Mi licencia</div><div class="sec-sub">Tu acceso a la IA para crear planeaciones y exámenes. Todo lo demás (pase de lista, calificaciones, grupos) no la necesita.</div>`;
+  let h = `<div class="sec-title">Mi licencia</div><div class="sec-sub">Tu acceso al Planeador: planeaciones y exámenes con IA, descarga en Word y las herramientas de grupo (lista, calificaciones, rezago).</div>`;
   if (!workerUrl()) h += `<div class="g-aviso" style="background:#fffbeb;border-color:#fde68a;color:#92400e">La IA aún no está conectada a un servidor (falta «workerUrl» en <code>firebase-config.js</code>).</div>`;
   else if (!e) h += `<div class="g-aviso" style="background:#fef2f2;border-color:#fecaca;color:#991b1b">${gEsc(LIC.error || 'No se pudo consultar tu licencia.')} <button class="g-btn g-btn-s" onclick="licRender()">Reintentar</button></div>`;
   else {
@@ -183,7 +209,7 @@ async function licRender() {
       <div style="font-size:13px;margin-bottom:12px"><b>Cuenta:</b> ${gEsc(e.correo || (u && u.email) || '')}</div>
       ${e.limite ? (e.prueba || e.restantes <= Math.max(5, Math.round(e.limite * 0.1)) ? `<div style="font-size:13px;margin-bottom:6px"><b>Documentos con IA ${e.prueba ? 'de la prueba' : 'este mes'}:</b> ${e.usadas} de ${e.limite} <span style="color:var(--gris)">(${e.restantes} disponibles)</span></div>
       <div style="height:10px;background:var(--gris-claro);border-radius:6px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:${pct}%;background:${color}"></div></div>` : `<div style="font-size:13px;margin-bottom:12px"><b>Documentos con IA:</b> tu plan incluye hasta <b>${e.limite}</b> al mes <span style="color:var(--gris)">(llevas ${e.usadas} este mes; se renuevan el día 1)</span></div>`) + `
-      <div style="font-size:13px"><b>${e.activa ? 'Vigente hasta' : 'Venció el'}:</b> ${licFecha(e.vence)}</div>` : `<p style="color:var(--gris)">Tu prueba gratis ya se usó. Canjea un código para seguir usando la IA.</p>`}
+      <div style="font-size:13px"><b>${e.activa ? 'Vigente hasta' : 'Venció el'}:</b> ${licFecha(e.vence)}</div>${e.prueba && e.activa ? `<div class="g-aviso" style="margin-top:12px;font-size:12.5px;line-height:1.5"><b>Tu prueba incluye:</b> ${e.limite} documentos con IA (uno de cada tipo: analítico o plano, secuencia y examen de hasta 5 reactivos), verlos completos en pantalla y crear tus grupos.<br><b>Con la licencia se abre:</b> descargar en Word, subir tu lista desde Excel, pase de lista, calificaciones y promedios, seguimiento de rezago y la IA incluida en tu plan.</div>` : ''}` : `<p style="color:var(--gris)">Tu prueba gratis ya se usó. Canjea un código para seguir usando la IA.</p>`}
     </div>`;
   }
   h += `<div class="card"><div class="card-title">🎟️ Canjear un código</div>
