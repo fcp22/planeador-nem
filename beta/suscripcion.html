@@ -101,6 +101,10 @@ footer{padding:26px 0;color:var(--gris);font-size:13.5px;text-align:center}
   <div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:15px">🎉 <b>Precio de introducción.</b> Estos precios son de lanzamiento y pueden cambiar más adelante. Quien se suscribe ahora conserva el precio durante el tiempo que contrató.</div>
   <div class="planes" id="planes-lista"></div>
   <p class="sub" style="margin-top:12px;font-size:14px" id="nota-precios"></p>
+  <div class="card" style="margin-top:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+    <div style="flex:1;min-width:230px"><b>🎁 ¿Quieres probarlo completo antes de pagar?</b><br><span>Pide una <b>prueba de 3 días</b> con todo incluido: descarga en Word, calificaciones, lista de alumnos, rezago y recuperativos.</span></div>
+    <a class="btn btn-s" id="btn-prueba" href="#">Pedir prueba de 3 días</a>
+  </div>
 </div></section>
 
 <section style="padding-top:0"><div class="wrap">
@@ -157,6 +161,7 @@ function mailto(p) {
 }
 document.getElementById('td-ia').textContent = 'Hasta ' + LIMITE_IA + ' al mes (uso justo; no es ilimitado)';
 document.getElementById('btn-correo').href = mailto(null);
+document.getElementById('btn-prueba').href = 'mailto:' + CORREO + '?subject=' + encodeURIComponent('Quiero una prueba de 3 días del Planeador Docente NEM') + '&body=' + encodeURIComponent('Hola, quiero probar el Planeador Docente NEM durante 3 días.\n\nMi nombre: \nMi escuela: \nCorreo con el que entro a la app: ');
 document.getElementById('txt-correo').innerHTML = 'O escribe directamente a <b>' + esc(CORREO) + '</b>';
 </script>
 </body>
