@@ -86,7 +86,7 @@ footer{padding:26px 0;color:var(--gris);font-size:13.5px;text-align:center}
   <p class="sub">Entra con tu cuenta de Google y pruébalo antes de decidir.</p>
   <table class="comp">
     <tr><th></th><th>Prueba gratis</th><th>Con licencia</th></tr>
-    <tr><td>Documentos con IA</td><td>2 (un plano o analítico y un examen)</td><td class="si">Incluidos (uso justo mensual)</td></tr>
+    <tr><td>Documentos con IA</td><td>2 (un plano o analítico y un examen)</td><td class="si" id="td-ia"></td></tr>
     <tr><td>Ver el documento en pantalla</td><td class="si">✓</td><td class="si">✓</td></tr>
     <tr><td>Descargar en Word</td><td class="no">—</td><td class="si">✓</td></tr>
     <tr><td>Calificaciones, lista de alumnos y rezago</td><td class="no">—</td><td class="si">✓</td></tr>
@@ -98,6 +98,7 @@ footer{padding:26px 0;color:var(--gris);font-size:13.5px;text-align:center}
 <section id="planes" style="padding-top:0"><div class="wrap">
   <h2>Planes</h2>
   <p class="sub">Elige cuánto tiempo quieres tu licencia. Al terminar puedes renovarla con un nuevo código.</p>
+  <div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:15px">🎉 <b>Precio de introducción.</b> Estos precios son de lanzamiento y pueden cambiar más adelante. Quien se suscribe ahora conserva el precio durante el tiempo que contrató.</div>
   <div class="planes" id="planes-lista"></div>
   <p class="sub" style="margin-top:12px;font-size:14px" id="nota-precios"></p>
 </div></section>
@@ -126,11 +127,13 @@ footer{padding:26px 0;color:var(--gris);font-size:13.5px;text-align:center}
 // ── Aquí se cambian los datos de venta ─────────────────────────────
 const CORREO = 'planeador.nem.docente@gmail.com';
 // precio: número en pesos (por ejemplo 99) o null mientras no esté definido
+const PRECIO_MES = 199;   // precio de introducción por mes
+const LIMITE_IA = 60;     // documentos con IA al mes (debe coincidir con la cuota de los códigos que generes)
 const PLANES = [
-  { nombre: 'Mensual',    meses: 1,  precio: null },
-  { nombre: 'Trimestral', meses: 3,  precio: null, destacado: true },
-  { nombre: 'Semestral',  meses: 6,  precio: null },
-  { nombre: 'Anual',      meses: 12, precio: null },
+  { nombre: 'Mensual',    meses: 1,  precio: 199 },
+  { nombre: 'Trimestral', meses: 3,  precio: 500 },
+  { nombre: 'Semestral',  meses: 6,  precio: 1000, destacado: true },
+  { nombre: 'Anual',      meses: 12, precio: 1990, extra: '2 meses gratis' },
 ];
 const MONEDA = 'MXN';
 // ────────────────────────────────────────────────────────────────────
@@ -142,16 +145,17 @@ document.getElementById('planes-lista').innerHTML = PLANES.map(p => `
     <h3>${esc(p.nombre)}</h3>
     <small>${p.meses === 1 ? '1 mes' : p.meses + ' meses'} de acceso</small>
     ${typeof p.precio === 'number'
-      ? `<div class="pr">$${p.precio.toLocaleString('es-MX')} <small>${MONEDA}</small></div>${p.meses > 1 ? `<small>$${Math.round(p.precio / p.meses).toLocaleString('es-MX')} por mes</small>` : ''}`
+      ? `<div class="pr">$${p.precio.toLocaleString('es-MX')} <small>${MONEDA}</small></div>${p.meses > 1 ? `<small>$${Math.round(p.precio / p.meses).toLocaleString('es-MX')} por mes</small>${PRECIO_MES * p.meses > p.precio ? `<div style="color:var(--verde);font-weight:700;font-size:14px;margin-top:4px">${p.extra || 'Ahorras'} · $${(PRECIO_MES * p.meses - p.precio).toLocaleString('es-MX')}</div>` : ''}` : ''}`
       : `<div class="pr cons">Escríbenos para conocer el precio</div>`}
     <div style="margin-top:12px"><a class="btn btn-s" style="padding:9px 16px;font-size:15px" href="${mailto(p)}">Quiero este plan</a></div>
   </div>`).join('');
-document.getElementById('nota-precios').textContent = hayPrecios ? 'Precios en pesos mexicanos.' : 'Los precios se informan por correo.';
+document.getElementById('nota-precios').innerHTML = hayPrecios ? 'Precios en pesos mexicanos (MXN). <b>El uso de IA no es ilimitado:</b> cada licencia incluye hasta ' + LIMITE_IA + ' documentos con IA al mes (planeaciones y exámenes); el tope se renueva cada mes. Lista, calificaciones, rezago, libros y calendario no gastan ese tope.' : 'Los precios se informan por correo.';
 function mailto(p) {
   const asunto = 'Quiero una licencia del Planeador Docente NEM' + (p ? ' — plan ' + p.nombre : '');
   const cuerpo = 'Hola, quiero suscribirme al Planeador Docente NEM' + (p ? ' (plan ' + p.nombre + ')' : '') + '.\n\nMi nombre: \nMi escuela: \nCorreo con el que entro a la app: ';
   return 'mailto:' + CORREO + '?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo);
 }
+document.getElementById('td-ia').textContent = 'Hasta ' + LIMITE_IA + ' al mes (uso justo; no es ilimitado)';
 document.getElementById('btn-correo').href = mailto(null);
 document.getElementById('txt-correo').innerHTML = 'O escribe directamente a <b>' + esc(CORREO) + '</b>';
 </script>
