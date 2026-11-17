@@ -458,6 +458,10 @@ input,select,textarea,button{font-family:inherit;font-size:14px;}
 .sem{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:middle;}
 .sem-v{background:#16a34a;}.sem-a{background:#f59e0b;}.sem-r{background:#dc2626;}.sem-n{background:#cbd5e1;}
 @media(max-width:640px){.g-fila{flex-wrap:wrap;}.g-st button{width:42px;height:42px;}.g-total .g-st>div{width:42px;}.g-nom{flex-basis:calc(100% - 40px);}}
+/* iPhone/iPad: Safari amplía la página al tocar un campo con letra menor de 16 px y ya no se reduce sola.
+   Con 16 px en los campos no se amplía y la pantalla siempre cabe. */
+@media(max-width:1024px){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px !important;}}
+html{-webkit-text-size-adjust:100%;}
 </style>
 </head>
 <body>
@@ -1119,17 +1123,17 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   </div><!-- /layout -->
 </div><!-- /app -->
 
-<script src="firebase-config.js?v=202611171538"></script>
-<script src="correos-temporales.js?v=202611171538"></script>
-<script src="auth.js?v=202611171538"></script>
-<script src="licencia.js?v=202611171538"></script>
-<script src="curriculum.js?v=202611171538"></script>
-<script src="projects.js?v=202611171538"></script>
-<script src="generators.js?v=202611171538"></script>
-<script src="metodologias.js?v=202611171538"></script>
-<script src="ruta-ui.js?v=202611171538"></script>
-<script src="secuencias.js?v=202611171538"></script>
-<script src="sugerencias-plano.js?v=202611171538"></script>
+<script src="firebase-config.js?v=202611171612"></script>
+<script src="correos-temporales.js?v=202611171612"></script>
+<script src="auth.js?v=202611171612"></script>
+<script src="licencia.js?v=202611171612"></script>
+<script src="curriculum.js?v=202611171612"></script>
+<script src="projects.js?v=202611171612"></script>
+<script src="generators.js?v=202611171612"></script>
+<script src="metodologias.js?v=202611171612"></script>
+<script src="ruta-ui.js?v=202611171612"></script>
+<script src="secuencias.js?v=202611171612"></script>
+<script src="sugerencias-plano.js?v=202611171612"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
 // (la pantalla de acceso conserva su autocompletar para correo y contraseña).
@@ -1151,8 +1155,8 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611171538"></script>
-<script src="rezago.js?v=202611171538"></script>
+<script src="gestion.js?v=202611171612"></script>
+<script src="rezago.js?v=202611171612"></script>
 <script>
 // ── ESTADO ──────────────────────────────────────────────
 let tipoActivo='a', semAct=1, semsGen=new Set();
