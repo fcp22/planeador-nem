@@ -59,6 +59,7 @@ async function llamarIA(prompt, { json = false, tipo } = {}) {
 
 // ── Estado de la licencia ─────────────────────────────────
 function licPintarChip() {
+  licPintarCandados();
   const c = document.getElementById('h-cuota'); if (!c) return;
   const e = LIC.estado;
   if (!e || !workerUrl()) { c.style.display = 'none'; return; }
@@ -191,6 +192,15 @@ function licAvisoPrueba(que) {
     <button onclick="document.getElementById('lic-aviso-prueba').style.display='none'" style="width:100%;margin-top:8px;padding:10px;font-size:14px;border:1.5px solid #cbd5e1;border-radius:10px;background:#fff;cursor:pointer">Seguir viendo</button></div>`;
 }
 // true = en la prueba: no se descarga (y avisa)
+// Pone (o quita) el candado en las opciones del menú que solo abre la licencia
+function licPintarCandados() {
+  document.querySelectorAll('.nav-tab').forEach(btn => {
+    const m = (btn.getAttribute('onclick') || '').match(/showTab\('(\w+)'/); if (!m || !LIC_TABS_CON_LICENCIA[m[1]]) return;
+    const hay = btn.querySelector('.sb-candado');
+    if (licTabBloqueada(m[1])) { if (!hay) { const sp = document.createElement('span'); sp.className = 'sb-pronto sb-candado'; sp.title = 'Disponible con licencia'; sp.textContent = '🔒'; btn.appendChild(sp); } }
+    else if (hay) hay.remove();
+  });
+}
 function licBloqueaDescarga() { if (!licEsPrueba()) return false; licAvisoPrueba('Descargar el documento'); return true; }
 
 // ── Pantalla «Mi licencia» ────────────────────────────────
