@@ -145,15 +145,17 @@ function gRenderPlanes() {
 // ── Pantalla de bienvenida: la información del programa, para leerla con calma y luego continuar ──
 function gRenderBienvenida() {
   const F = [['📝', 'Planeación', 'Programa analítico y plano didáctico NEM, con contenidos y PDA de la Fase 6.'], ['🧭', 'Proyectos', 'Fases, fechas y tiempos de cada proyecto.'], ['✅', 'Pase de lista', 'Asistencia, retardos y faltas en segundos.'], ['📊', 'Calificaciones', 'Tus criterios, sus porcentajes y la boleta del trimestre.'], ['🧮', 'Exámenes', 'Crea exámenes con IA y captura las calificaciones.'], ['🚦', 'Rezago y recuperativos', 'Detecta a quien está en riesgo y arma la lista de recuperativos.'], ['📚', 'Libros y programas SEP', 'Libros de texto, plan de estudio y programa sintético por campo formativo.'], ['👥', 'Mis grupos', 'Tus alumnos, tus listas y tu respaldo.']];
+  const BTN = `<button type="button" onclick="navInicio()" style="display:block;width:100%;max-width:460px;background:#fbbf24;color:#14274a;border:3px solid #fff;border-radius:16px;font-size:clamp(19px,3.4vw,24px);font-weight:800;padding:18px 26px;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.35);letter-spacing:.01em">Entrar al programa ➜</button>`;
   gPanel().innerHTML = `<div style="background:linear-gradient(160deg,#16314f,#245a96);color:#fff;border-radius:18px;padding:28px 22px;box-shadow:var(--sombra-lg)">
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:18px"><div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#3b82c4,#2563a8);display:flex;align-items:center;justify-content:center;font-size:24px">📚</div><div><b style="font-size:16px">Planeador Docente NEM</b><div style="font-size:12px;opacity:.75">Aplicación realizada por el Maestro Manuel Uitzil Cerón</div></div></div>
     <div style="display:inline-block;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;margin-bottom:14px">Nueva Escuela Mexicana · Fase 6 · Secundaria</div>
     <h1 style="font-size:clamp(24px,4vw,36px);line-height:1.15;margin-bottom:12px">Planea, pasa lista y evalúa <span style="color:#7dd3fc">en un solo lugar.</span></h1>
     <p style="font-size:15.5px;line-height:1.6;opacity:.92;max-width:680px;margin-bottom:20px">Programa analítico, plano didáctico, proyectos con fechas y tiempos, pase de lista, calificaciones y exámenes. Hecho por un maestro de secundaria, para maestros de secundaria.</p>
+    <div style="margin-bottom:22px">${BTN}</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:20px">${F.map(([i, t, d]) => `<div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:12px"><div style="font-size:24px">${i}</div><b style="font-size:14px">${t}</b><div style="font-size:12.5px;opacity:.8;margin-top:2px;line-height:1.35">${d}</div></div>`).join('')}</div>
     <div style="font-size:13px;opacity:.8;margin-bottom:18px">🔒 Los datos de tus alumnos se guardan solo en tu dispositivo. Haz tu respaldo desde «Mis grupos».</div>
-    <button class="g-btn" style="background:#f59e0b;color:#1e293b;font-size:16px;padding:13px 26px;border-radius:12px" onclick="navInicio()">Continuar al menú principal ➜</button>
-    <button type="button" onclick="gIrA('planes')" style="margin:10px 0 0 12px;background:transparent;border:2px solid rgba(255,255,255,.6);color:#fff;font-weight:600;font-size:14px;border-radius:12px;padding:11px 18px;cursor:pointer">💳 Ver planes y precios</button>
+    ${BTN}
+    <button type="button" onclick="gIrA('planes')" style="margin-top:14px;background:transparent;border:2px solid rgba(255,255,255,.6);color:#fff;font-weight:600;font-size:14px;border-radius:12px;padding:11px 18px;cursor:pointer">💳 Ver planes y precios</button>
   </div>`;
 }
 

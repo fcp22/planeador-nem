@@ -1127,17 +1127,17 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   </div><!-- /layout -->
 </div><!-- /app -->
 
-<script src="firebase-config.js?v=202611172010"></script>
-<script src="correos-temporales.js?v=202611172010"></script>
-<script src="auth.js?v=202611172010"></script>
-<script src="licencia.js?v=202611172010"></script>
-<script src="curriculum.js?v=202611172010"></script>
-<script src="projects.js?v=202611172010"></script>
-<script src="generators.js?v=202611172010"></script>
-<script src="metodologias.js?v=202611172010"></script>
-<script src="ruta-ui.js?v=202611172010"></script>
-<script src="secuencias.js?v=202611172010"></script>
-<script src="sugerencias-plano.js?v=202611172010"></script>
+<script src="firebase-config.js?v=202611172045"></script>
+<script src="correos-temporales.js?v=202611172045"></script>
+<script src="auth.js?v=202611172045"></script>
+<script src="licencia.js?v=202611172045"></script>
+<script src="curriculum.js?v=202611172045"></script>
+<script src="projects.js?v=202611172045"></script>
+<script src="generators.js?v=202611172045"></script>
+<script src="metodologias.js?v=202611172045"></script>
+<script src="ruta-ui.js?v=202611172045"></script>
+<script src="secuencias.js?v=202611172045"></script>
+<script src="sugerencias-plano.js?v=202611172045"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
 // (la pantalla de acceso conserva su autocompletar para correo y contraseña).
@@ -1159,8 +1159,8 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611172010"></script>
-<script src="rezago.js?v=202611172010"></script>
+<script src="gestion.js?v=202611172045"></script>
+<script src="rezago.js?v=202611172045"></script>
 <script>
 // ── ESTADO ──────────────────────────────────────────────
 let tipoActivo='a', semAct=1, semsGen=new Set();
@@ -1201,8 +1201,10 @@ function entrarApp(){
   document.querySelectorAll('.admin-only').forEach(el=>el.classList.toggle('hidden', !esAdmin()));
   navReiniciar();
   if(typeof gArmarNavInferior==='function') gArmarNavInferior();
+  // La primera pantalla es la de bienvenida (con la información del programa); el botón amarillo lleva al menú principal
+  const btnBienv=[...document.querySelectorAll('.sidebar .nav-tab')].find(b=>(b.getAttribute('onclick')||'').includes("'bienvenida'"));
   const btnInicio=document.querySelector('.sidebar .nav-tab');
-  if(btnInicio) showTab('inicio',btnInicio);
+  if(btnBienv) showTab('bienvenida',btnBienv); else if(btnInicio) showTab('inicio',btnInicio);
   if(typeof gPrefillEscuela==='function') gPrefillEscuela();
   historial=cargarHist();
   renderHist();
@@ -1240,7 +1242,7 @@ function navNombre(id){
 }
 function navPintar(){
   const barra=document.getElementById('nav-volver'); if(!barra) return;
-  barra.classList.toggle('visible',NAV.actual!=='inicio');
+  barra.classList.toggle('visible',NAV.actual!=='inicio'&&NAV.actual!=='bienvenida');
   document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.toggle('on',b.dataset.id===NAV.actual));
   const ant=NAV.pila.length?NAV.pila[NAV.pila.length-1]:null;
   const bt=document.getElementById('nv-ant');
