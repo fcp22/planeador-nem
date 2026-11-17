@@ -173,13 +173,16 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && LI
 // crear grupos y generar el examen. NO incluye: descargar Word/PDF/Excel, subir listas desde archivo, pase de lista,
 // calificaciones ni seguimiento de rezago (eso se abre con la licencia). El tope de documentos lo hace cumplir el servidor.
 const LIC_TABS_CON_LICENCIA = { lista: 'Pase de lista', calif: 'Calificaciones y promedios', rezago: 'Seguimiento de rezago', recup: 'Recuperativos' };
+// Botón «Ver planes y precios» (página de suscripción, en ventana aparte para no cerrar la app)
+const LIC_BTN_PLANES = (est) => `<a href="suscripcion.html" target="_blank" rel="noopener" onclick="return (typeof gAbrirVentana==='function')?gAbrirVentana(this.href):true" style="${est || 'display:block;text-align:center;text-decoration:none;margin-top:8px;padding:11px;font-size:14.5px;font-weight:700;border:2px solid #1e3a5f;border-radius:10px;background:#fff;color:#1e3a5f'}">💳 Ver planes y precios</a>`;
 function licEsPrueba() { const e = LIC.estado; return !!(e && e.prueba && e.activa) && !licEsAdminCuenta(); }
 function licTabBloqueada(id) { return !!LIC_TABS_CON_LICENCIA[id] && licEsPrueba(); }
 function licHTMLBloqueo(id) {
   return `<div class="card pronto-box"><div class="pi">🔒</div><h2>${LIC_TABS_CON_LICENCIA[id]}</h2>
     <p>Esta herramienta se abre con tu licencia: subir tu lista de alumnos desde Excel, pasar lista, calificaciones, promedios y detección de rezago.</p>
     <p style="font-size:12.5px;color:var(--gris)">En tu prueba gratis puedes crear 2 documentos con IA (un plano o analítico y un examen) y verlos en pantalla.</p>
-    <button class="g-btn" style="margin-top:14px" onclick="gIrA('licencia')">Activar mi licencia</button></div>`;
+    <button class="g-btn" style="margin-top:14px" onclick="gIrA('licencia')">Activar mi licencia</button>
+    <div style="max-width:320px;margin:8px auto 0">${LIC_BTN_PLANES()}</div></div>`;
 }
 function licAvisoPrueba(que) {
   let el = document.getElementById('lic-aviso-prueba');
@@ -189,6 +192,7 @@ function licAvisoPrueba(que) {
     <h2 style="margin:8px 0 6px;font-size:19px;color:#1e3a5f">Disponible con tu licencia</h2>
     <p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#475569">${que || 'Descargar el documento'} está disponible con tu licencia. En la prueba gratis puedes ver tu documento completo en pantalla.</p>
     <button onclick="document.getElementById('lic-aviso-prueba').style.display='none';gIrA('licencia')" style="width:100%;padding:12px;font-size:15px;font-weight:700;border:0;border-radius:10px;background:#1e3a5f;color:#fff;cursor:pointer">Activar mi licencia</button>
+    ${LIC_BTN_PLANES()}
     <button onclick="document.getElementById('lic-aviso-prueba').style.display='none'" style="width:100%;margin-top:8px;padding:10px;font-size:14px;border:1.5px solid #cbd5e1;border-radius:10px;background:#fff;cursor:pointer">Seguir viendo</button></div>`;
 }
 // true = en la prueba: no se descarga (y avisa)
@@ -219,7 +223,7 @@ async function licRender() {
       <div style="font-size:13px;margin-bottom:12px"><b>Cuenta:</b> ${gEsc(e.correo || (u && u.email) || '')}</div>
       ${e.limite ? (e.prueba || e.restantes <= Math.max(5, Math.round(e.limite * 0.1)) ? `<div style="font-size:13px;margin-bottom:6px"><b>Documentos con IA ${e.prueba ? 'de la prueba' : 'este mes'}:</b> ${e.usadas} de ${e.limite} <span style="color:var(--gris)">(${e.restantes} disponibles)</span></div>
       <div style="height:10px;background:var(--gris-claro);border-radius:6px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:${pct}%;background:${color}"></div></div>` : `<div style="font-size:13px;margin-bottom:12px"><b>Documentos con IA:</b> tu plan incluye hasta <b>${e.limite}</b> al mes <span style="color:var(--gris)">(llevas ${e.usadas} este mes; se renuevan el día 1)</span></div>`) + `
-      <div style="font-size:13px"><b>${e.activa ? 'Vigente hasta' : 'Venció el'}:</b> ${licFecha(e.vence)}</div>${e.prueba && e.activa ? `<div class="g-aviso" style="margin-top:12px;font-size:12.5px;line-height:1.5"><b>Tu prueba incluye:</b> ${e.limite} documentos con IA (uno de cada tipo: analítico o plano, secuencia y examen de hasta 5 reactivos), verlos completos en pantalla y crear tus grupos.<br><b>Con la licencia se abre:</b> descargar en Word, subir tu lista desde Excel, pase de lista, calificaciones y promedios, seguimiento de rezago y la IA incluida en tu plan.</div>` : ''}` : `<p style="color:var(--gris)">Tu prueba gratis ya se usó. Canjea un código para seguir usando la IA.</p>`}
+      <div style="font-size:13px"><b>${e.activa ? 'Vigente hasta' : 'Venció el'}:</b> ${licFecha(e.vence)}</div>${e.prueba && e.activa ? `<div class="g-aviso" style="margin-top:12px;font-size:12.5px;line-height:1.5"><b>Tu prueba incluye:</b> ${e.limite} documentos con IA (uno de cada tipo: analítico o plano, secuencia y examen de hasta 5 reactivos), verlos completos en pantalla y crear tus grupos.<br><b>Con la licencia se abre:</b> descargar en Word, subir tu lista desde Excel, pase de lista, calificaciones y promedios, seguimiento de rezago y la IA incluida en tu plan.</div><div style="max-width:320px">${LIC_BTN_PLANES()}</div>` : ''}` : `<p style="color:var(--gris)">Tu prueba gratis ya se usó. Canjea un código para seguir usando la IA.</p>`}
     </div>`;
   }
   h += `<div class="card"><div class="card-title">🎟️ Canjear un código</div>
