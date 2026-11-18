@@ -247,10 +247,12 @@ async function licCanjear() {
 // ── Panel de administración de licencias ──────────────────
 function licAdminRender() {
   const p = document.getElementById('g-licadmin'); if (!p) return;
+  if (!LIC.adminKey) { try { LIC.adminKey = localStorage.getItem('nem_admin_key') || ''; } catch (e) {} }
   p.innerHTML = `<div class="sec-title">Licencias (administrador)</div><div class="sec-sub">Genera códigos para vender, revisa quién los usó y bloquea correos temporales.</div>
   <div class="card"><div class="card-title">🛡️ Clave de administrador</div>
-    <div class="campo" style="max-width:340px"><label>Clave (ADMIN_SECRET del servidor)</label><input id="la-clave" type="password" autocomplete="off" value="${gEsc(LIC.adminKey)}" onchange="LIC.adminKey=this.value"></div>
-    <div class="ayuda" style="font-size:11px;color:var(--gris)">No se guarda: tendrás que escribirla otra vez al recargar la página.</div></div>
+    <div class="campo" style="max-width:340px"><label>Clave (ADMIN_SECRET del servidor)</label><input id="la-clave" type="password" autocomplete="off" value="${gEsc(LIC.adminKey)}" onchange="licAdminClave()"></div>
+    <div class="ayuda" style="font-size:11px;color:var(--gris)">✓ Se queda guardada en este equipo: solo la escribes una vez. Si usas una computadora que no es tuya, pulsa «Olvidar clave».</div>
+    <button class="g-btn g-btn-s" style="margin-top:8px" onclick="licAdminOlvidar()">Olvidar clave en este equipo</button></div>
   <div class="card"><div class="card-title">➕ Generar códigos</div>
     <div class="f3"><div class="campo"><label>Cantidad</label><input id="la-cant" type="number" min="1" max="100" value="1"></div>
     <div class="campo"><label>Vigencia</label><select id="la-vig"><option value="m1">1 mes</option><option value="m3">3 meses</option><option value="m6">6 meses</option><option value="m12">12 meses</option><option value="d1">1 día (para probar el vencimiento)</option><option value="d5">5 días (cupón de cortesía)</option><option value="d7">7 días (cortesía para el ATP)</option></select></div>
@@ -278,7 +280,16 @@ function licAdminRender() {
     <button class="g-btn g-btn-s" onclick="licAdminBloquear(false)">Bloquear</button> <button class="g-btn g-btn-s" onclick="licAdminBloquear(true)">Quitar bloqueo</button>
     <div class="l-ok" id="la-dom-ok" style="margin-top:10px"></div></div>`;
 }
-function licAdminClave() { const k = document.getElementById('la-clave').value; LIC.adminKey = k; return k; }
+function licAdminClave() {
+  const k = document.getElementById('la-clave').value.trim(); LIC.adminKey = k;
+  try { if (k) localStorage.setItem('nem_admin_key', k); } catch (e) {}
+  return k;
+}
+function licAdminOlvidar() {
+  LIC.adminKey = ''; try { localStorage.removeItem('nem_admin_key'); } catch (e) {}
+  const i = document.getElementById('la-clave'); if (i) i.value = '';
+  licAdminErr('Clave olvidada en este equipo.');
+}
 function licAdminErr(msg) { const e = document.getElementById('la-err'); if (e) { e.textContent = msg || ''; e.style.display = msg ? 'block' : 'none'; } }
 async function licAdminGenerar() {
   licAdminErr('');
