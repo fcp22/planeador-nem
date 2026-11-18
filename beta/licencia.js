@@ -255,7 +255,7 @@ function licAdminRender() {
     <button class="g-btn g-btn-s" style="margin-top:8px" onclick="licAdminOlvidar()">Olvidar clave en este equipo</button></div>
   <div class="card"><div class="card-title">➕ Generar códigos</div>
     <div class="f3"><div class="campo"><label>Cantidad</label><input id="la-cant" type="number" min="1" max="100" value="1"></div>
-    <div class="campo"><label>Vigencia</label><select id="la-vig"><option value="m1">1 mes</option><option value="m3">3 meses</option><option value="m6">6 meses</option><option value="m12">12 meses</option><option value="d1">1 día (para probar el vencimiento)</option><option value="d5">5 días (cupón de cortesía)</option><option value="d7">7 días (cortesía para el ATP)</option></select></div>
+    <div class="campo"><label>Vigencia</label><select id="la-vig" onchange="document.getElementById('la-dias-w').style.display=this.value==='otro'?'block':'none'"><option value="d3">3 días (prueba corta)</option><option value="d7">7 días (cortesía para el ATP)</option><option value="otro">Otro número de días…</option><option value="m1">1 mes</option><option value="m3">3 meses</option><option value="m6">6 meses</option><option value="m12">12 meses</option><option value="d1">1 día (para probar el vencimiento)</option><option value="d5">5 días (cupón de cortesía)</option></select><div id="la-dias-w" style="display:none;margin-top:6px"><input id="la-dias" type="number" min="1" max="400" placeholder="¿Cuántos días?"></div></div>
     <div class="campo"><label>Tope de uso justo al mes (documentos)</label><input id="la-cuota" type="number" min="1" max="2000" value="60"><div class="ayuda" style="font-size:11px;color:var(--gris)">Es lo que el maestro ve en «Mi licencia»: «tu plan incluye hasta N documentos con IA al mes». Un uso normal es de 30 a 60 al mes; con 200 no se le acaba. Para la prueba del ATP usa 100.</div></div></div>
     <div class="f2"><div class="campo"><label>Plan (etiqueta)</label><input id="la-plan" placeholder="Ej. Trimestral"></div><div class="campo"><label>Nota (para ti)</label><input id="la-nota" placeholder="Ej. Prof. Pérez / escuela X"></div></div>
     <div class="l-err" id="la-err" style="margin:0 0 12px"></div>
@@ -295,11 +295,11 @@ async function licAdminGenerar() {
   licAdminErr('');
   const k = licAdminClave(); if (!k) return licAdminErr('Escribe la clave de administrador.');
   const vig = document.getElementById('la-vig').value; const body = { cantidad: +document.getElementById('la-cant').value || 1, cuota: +document.getElementById('la-cuota').value || 200, plan: document.getElementById('la-plan').value, nota: document.getElementById('la-nota').value };
-  if (vig[0] === 'm') body.meses = +vig.slice(1); else body.dias = +vig.slice(1);
+  if (vig === 'otro') { const d = parseInt(document.getElementById('la-dias').value, 10); if (!(d >= 1 && d <= 400)) return licAdminErr('Escribe cuántos días (de 1 a 400).'); body.dias = d; } else if (vig[0] === 'm') body.meses = +vig.slice(1); else body.dias = +vig.slice(1);
   try {
     const r = await workerFetch('/admin/codigos', { metodo: 'POST', body, admin: k });
     LIC.ultimos = r.codigos;
-    document.getElementById('la-salida').innerHTML = `<div class="g-aviso" style="font-family:monospace;font-size:14px;line-height:1.9">${r.codigos.map(c => gEsc(c)).join('<br>')}</div>
+    document.getElementById('la-salida').innerHTML = `<div style="font-size:13px;margin-bottom:6px"><b>Vigencia de este código:</b> ${body.dias ? body.dias + ' día' + (body.dias === 1 ? '' : 's') : body.meses + ' mes' + (body.meses === 1 ? '' : 'es')} · tope ${body.cuota} documentos</div><div class="g-aviso" style="font-family:monospace;font-size:14px;line-height:1.9">${r.codigos.map(c => gEsc(c)).join('<br>')}</div>
       <button class="g-btn g-btn-s" onclick="licCopiar(this)">Copiar todos</button>`;
     licAdminListar();
   } catch (e) { licAdminErr(e.message); }
