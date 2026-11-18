@@ -1127,7 +1127,7 @@ function gRenderCalif() {
 
   if (t !== 'anual') {
     const faltan = ['Asistencia', 'Tareas', 'Participación'].filter(n => !g.criterios.some(c => String(c.nombre).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().slice(0, 6))));
-    h += `<div class="card"><div class="card-title">⚖️ Criterios de evaluación — ${G_TRIM_NOM[t]} <span id="g-suma" style="margin-left:10px;font-size:12px;font-weight:600"></span></div>
+    h += `<div class="card"><div class="card-title g-titulo-azul">⚖️ Criterios de evaluación — ${G_TRIM_NOM[t]} <span id="g-suma" style="margin-left:auto;font-size:12px;font-weight:700"></span></div>
       <div class="g-aviso" style="margin-bottom:10px;font-size:13px">💡 <b>Estos criterios son solo sugeridos.</b> Puedes <b>cambiarles el nombre</b> (escribe encima), <b>quitar con 🗑</b> el que no uses y <b>agregar</b> los que necesites con «+ Criterio». Cuando quitas uno, sus puntos se reparten entre los demás.</div>
       ${(() => { const m = G.critMsg; G.critMsg = ''; return m ? `<div class="g-aviso" style="margin-bottom:10px;font-size:12.5px;background:#ecfdf5;border-color:#6ee7b7">✓ ${m}</div>` : ''; })()}
       <p style="font-size:12.5px;color:var(--gris);margin:0 0 10px">Escribe cuántos puntos de <b>100</b> vale cada cosa en este trimestre (asistencia, tareas, participación, examen, proyecto…). <b>Todo debe sumar 100 %.</b> El examen y el proyecto también se pueden ajustar desde «Exámenes». Cada trimestre tiene sus propios porcentajes. <b>«Asistencia»</b> se calcula sola con tu Pase de lista (las faltas justificadas no restan).</p>
