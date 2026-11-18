@@ -597,7 +597,7 @@ function gCrearGrupo() {
   const ta = document.getElementById('gn-lista');
   const nombres = ta ? gNombresDeTexto(ta.value) : [];
   const g = { id: gId(), nombre, grado, materia, alumnos: nombres.map(n => ({ id: gId(), nombre: n })), asist: {}, criterios: G_CRITERIOS_DEF.map(([n, p]) => ({ id: gId(), nombre: n, pct: p })), actividades: [], plan: {} };
-  G.data.grupos.push(g); G.gid = g.id; gGuardar(); gRender();
+  G.data.grupos.push(g); G.gid = g.id; G.nuevoGrupo = false; G.editGrupo = null; gGuardar(); gRender(); window.scrollTo(0, 0);
 }
 function gBorrarGrupo(id) {
   const g = G.data.grupos.find(x => x.id === id); if (!g) return;
@@ -664,22 +664,50 @@ function gRestaurar(input) {
   r.readAsText(f);
 }
 
+const G_ORD = { 1: 'Primer', 2: 'Segundo', 3: 'Tercer' };
+function gNuevoGrupoForm(sel) {
+  const gr = sel ? String(sel.grado) : '1';
+  return `<div class="card gg-nuevo"><div class="card-title">➕ Añadir grupo
+      ${G.data.grupos.length ? `<button class="g-btn g-btn-s" style="margin:0 0 0 auto" onclick="gMostrarNuevoGrupo(false)">✕ Cancelar</button>` : ''}</div>
+    <div class="f3">
+      <div class="campo"><label>Grupo</label><input id="gg-nombre" placeholder="Ej. 3° A"></div>
+      <div class="campo"><label>Grado</label><select id="gg-grado" onchange="gActualizarMaterias()">${['1', '2', '3'].map(n => `<option value="${n}"${n === gr ? ' selected' : ''}>${n}° Secundaria</option>`).join('')}</select></div>
+      <div class="campo"><label>Materia que impartes</label><select id="gg-materia">${gMateriasOpts(gr, sel ? sel.materia : '')}</select></div>
+    </div>
+    <div class="campo"><label>Alumnos (opcional: teclea, pega o sube tu lista)</label>
+      <textarea id="gn-lista" rows="4" placeholder="1. AGUILAR PECH ANDREA&#10;2. BALAM CHAN DIEGO"></textarea></div>
+    ${gUiArchivo('gn-lista')}
+    <button class="g-btn" onclick="gCrearGrupo()">Crear grupo</button>
+    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">Si das la misma materia a varios grupos, crea uno por cada grupo. Los nombres se revisan en el recuadro antes de crear el grupo.</div>
+  </div>`;
+}
+function gMostrarNuevoGrupo(on) { G.nuevoGrupo = !!on; G.editGrupo = null; gRender(); window.scrollTo(0, 0); }
+function gElegirGrupo(id) { G.nuevoGrupo = false; G.editGrupo = null; gCambiarGrupo(id); window.scrollTo(0, 0); }
+function gGruposPanelHTML() {
+  const gs = G.data.grupos, grados = [...new Set(gs.map(x => String(x.grado)))].sort();
+  return `<div class="gg-panel">` + grados.map(gr => `<div class="gg-fila"><div class="gg-grado">${gEsc(gr)}°<small>grado</small></div><div class="gg-cols">${
+    gs.filter(x => String(x.grado) === gr).map(x => `<button class="gg-tile${x.id === G.gid && !G.nuevoGrupo ? ' on' : ''}" onclick="gElegirGrupo('${x.id}')"><b>${gEsc(x.nombre)}</b><span>${gEsc(x.materia)}</span><em>${x.alumnos.length} alumno${x.alumnos.length === 1 ? '' : 's'}</em></button>`).join('')}</div></div>`).join('')
+    + `<button class="gg-mas${G.nuevoGrupo ? ' on' : ''}" onclick="gMostrarNuevoGrupo(true)">➕ Añadir grupo</button></div>`;
+}
 function gRenderGrupos() {
+  const gs = G.data.grupos, p = gPerfil();
+  if (gs.length && !gGrupo()) G.gid = gs[0].id;   // si no hay uno seleccionado (o ya no existe), se muestra el primero
   const g = gGrupo();
+  if (g && G.editGrupo && G.editGrupo !== g.id) G.editGrupo = null;
+  const form = !gs.length || G.nuevoGrupo;
   let h = `<div class="sec-title">Mis grupos y alumnos</div>
-  <div class="sec-sub">Crea tus grupos una sola vez; la lista de alumnos se usa en el pase de lista, las calificaciones y los exámenes.</div>
-  <div class="g-aviso">🔒 Los nombres de tus alumnos se guardan <strong>solo en este dispositivo</strong> (no se suben a internet). Descarga un respaldo de vez en cuando; si cambias de celular o computadora, ahí lo restauras.</div>`;
-  if (G.data.grupos.length) {
-    h += `<div style="font-size:12px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.04em;margin:4px 0 6px">Mis grupos (toca uno para verlo o editarlo)</div><div class="g-chips">${G.data.grupos.map(x => `<button class="g-chip${x.id === G.gid ? ' on' : ''}" onclick="gCambiarGrupo('${x.id}')">${gEsc(x.nombre)} · ${gEsc(x.materia)}</button>`).join('')}</div>`;
-  }
-  if (g) {
-    const gEd = G.editGrupo === g.id;
-    h += `<div class="card"><div class="card-title">👥 ${gEsc(g.nombre)} · ${gEsc(g.materia)} — ${g.alumnos.length} alumnos
-      <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap"><button class="g-btn g-btn-s" style="margin:0" onclick="gEditarGrupo(${gEd ? 'false' : 'true'})">${gEd ? '✕ Cerrar edición' : '✏️ Editar grupo'}</button>
-      <button class="g-btn g-btn-x" style="margin:0" onclick="gBorrarGrupo('${g.id}')">Borrar grupo</button></span></div>
-      <div style="background:#eef6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:14px;line-height:1.6"><b>Grupo:</b> ${gEsc(g.nombre)} &nbsp;·&nbsp; <b>Grado:</b> ${gEsc(g.grado)}° de secundaria &nbsp;·&nbsp; <b>Materia:</b> ${gEsc(g.materia)}${gCampoDe(g.grado, g.materia) ? ' &nbsp;·&nbsp; <b>Campo formativo:</b> ' + gEsc(gCampoDe(g.grado, g.materia)) : ''} &nbsp;·&nbsp; <b>Alumnos:</b> ${g.alumnos.length}</div>
-      ${gEd ? `<div style="background:#f1f5f9;border:1.5px solid var(--borde);border-radius:10px;padding:12px 14px;margin-bottom:14px">
-        <div style="font-weight:700;margin-bottom:8px">✏️ Corregir los datos del grupo</div>
+  <div class="sec-sub">Crea tus grupos una sola vez; la lista de alumnos se usa en el pase de lista, las calificaciones y los exámenes. 🔒 Los nombres se guardan <strong>solo en este dispositivo</strong>: descarga un respaldo de vez en cuando.</div>`;
+  if (gs.length) h += gGruposPanelHTML();
+  if (form) h += gNuevoGrupoForm(g);
+  else if (g) {
+    const gEd = G.editGrupo === g.id, campo = gCampoDe(g.grado, g.materia);
+    h += `<div class="gg-banner">
+      <div class="gg-b-info"><div class="gg-b-nom">${gEsc(g.nombre)}</div>
+        <div class="gg-b-sub">${G_ORD[g.grado] || gEsc(g.grado) + '°'} grado de secundaria &nbsp;·&nbsp; <b>${gEsc(g.materia)}</b></div>
+        <div class="gg-b-tags">${campo ? `<span>${gEsc(campo)}</span>` : ''}<span>👥 ${g.alumnos.length} alumno${g.alumnos.length === 1 ? '' : 's'}</span></div></div>
+      <div class="gg-b-bot"><button onclick="gEditarGrupo(${gEd ? 'false' : 'true'})">${gEd ? '✕ Cerrar' : '✏️ Editar grupo'}</button><button class="rojo" onclick="gBorrarGrupo('${g.id}')">🗑 Borrar</button></div>
+    </div>`;
+    if (gEd) h += `<div class="card"><div class="card-title">✏️ Corregir los datos del grupo</div>
         <div class="f3">
           <div class="campo"><label>Grupo</label><input id="gge-nombre" value="${gEsc(g.nombre)}" placeholder="Ej. 3° A"></div>
           <div class="campo"><label>Grado</label><select id="gge-grado" onchange="gActualizarMateriasEd()">${['1', '2', '3'].map(n => `<option value="${n}"${String(g.grado) === n ? ' selected' : ''}>${n}° Secundaria</option>`).join('')}</select></div>
@@ -687,21 +715,22 @@ function gRenderGrupos() {
         </div>
         <button class="g-btn" onclick="gGuardarEdicionGrupo()">Guardar cambios</button>
         <button class="g-btn g-btn-s" onclick="gEditarGrupo(false)">Cancelar</button>
-        <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:6px">Tus alumnos, listas, calificaciones y exámenes se conservan. Si cambias la materia, lo nuevo que generes (exámenes, planeaciones) ya saldrá con la materia correcta.</div>
-      </div>` : ''}
-      <div class="campo"><label>Agregar alumnos (uno por renglón)</label>
-      <textarea id="gg-lista" rows="5" placeholder="Pega aquí tu lista de asistencia:&#10;1. AGUILAR PECH JUAN&#10;2. BALAM CHAN MARÍA"></textarea>
-      <div class="ayuda">Puedes copiar la lista desde Excel o Word. Se quitan solos los números del inicio y los nombres repetidos.</div></div>
-      ${gUiArchivo('gg-lista')}
-      <button class="g-btn" onclick="gAgregarAlumnos('gg-lista')">Agregar a la lista</button>
-      ${g.alumnos.length ? `<button class="g-btn g-btn-s" onclick="gOrdenarAlumnos()">Ordenar A–Z</button>
-      <div class="g-tabla-w"><table class="g-tabla" style="margin-top:14px"><thead><tr><th style="width:40px">#</th><th>Nombre (puedes corregirlo aquí)</th><th style="width:44px"></th></tr></thead><tbody>
+        <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:6px">Tus alumnos, listas, calificaciones y exámenes se conservan. Si cambias la materia, lo nuevo que generes (exámenes, planeaciones) ya saldrá con la materia correcta.</div></div>`;
+    h += `<div class="card"><div class="card-title">👥 Alumnos de ${gEsc(g.nombre)} · ${gEsc(g.materia)}
+        ${g.alumnos.length ? `<button class="g-btn g-btn-s" style="margin:0 0 0 auto" onclick="gOrdenarAlumnos()">Ordenar A–Z</button>` : ''}</div>
+      ${g.alumnos.length ? `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th style="width:40px">#</th><th>Nombre (puedes corregirlo aquí)</th><th style="width:44px"></th></tr></thead><tbody>
       ${g.alumnos.map((a, i) => `<tr><td>${i + 1}</td><td><input class="g-in-nom" value="${gEsc(a.nombre)}" onchange="gRenombrarAlumno('${a.id}',this.value)"></td><td><button class="g-x" title="Quitar" onclick="gQuitarAlumno('${a.id}')">✕</button></td></tr>`).join('')}
-      </tbody></table></div>` : ''}
+      </tbody></table></div>` : '<p style="color:var(--gris);font-size:13.5px;margin:0 0 10px">Este grupo todavía no tiene alumnos. Pega tu lista abajo o súbela desde Excel.</p>'}
+      <details class="gg-det" style="margin-top:14px" ${g.alumnos.length ? '' : 'open'}><summary>➕ Agregar alumnos</summary>
+        <div class="campo" style="margin-top:10px"><label>Uno por renglón</label>
+        <textarea id="gg-lista" rows="5" placeholder="Pega aquí tu lista de asistencia:&#10;1. AGUILAR PECH JUAN&#10;2. BALAM CHAN MARÍA"></textarea>
+        <div class="ayuda">Puedes copiar la lista desde Excel o Word. Se quitan solos los números del inicio y los nombres repetidos.</div></div>
+        ${gUiArchivo('gg-lista')}
+        <button class="g-btn" onclick="gAgregarAlumnos('gg-lista')">Agregar a la lista</button></details>
     </div>`;
     h += gTarjetaDescarga(g);
   }
-  h += `  <div class="card"><div class="card-title">🏫 Mi escuela</div>
+  h += `<details class="card gg-det" ${p.escuela ? '' : 'open'}><summary class="card-title" style="cursor:pointer">🏫 Mi escuela y datos para tus documentos</summary>
     <div class="f3"><div class="campo"><label>Nombre de la escuela</label><input id="gp-esc" value="${gEsc(gPerfil().escuela)}" placeholder="Escuela Secundaria…"></div>
     <div class="campo"><label>CCT</label><input id="gp-cct" value="${gEsc(gPerfil().cct)}" maxlength="12"></div>
     <div class="campo"><label>Municipio / localidad</label><input id="gp-mun" value="${gEsc(gPerfil().municipio)}"></div></div>
@@ -712,23 +741,11 @@ function gRenderGrupos() {
     <div class="f2"><div class="campo"><label>Tipo de escuela (opcional)</label><input id="gp-tipo" value="${gEsc(gPerfil().tipoEscuela || '')}" placeholder="Ej. Escuela Secundaria General, Técnica, Federal, Estatal…"></div>
     <div class="campo"><label>Zona escolar (opcional)</label><input id="gp-zona" value="${gEsc(gPerfil().zona || '')}" placeholder="Ej. 08"></div></div>
     <button class="g-btn" onclick="gGuardarPerfil()">Guardar mis datos</button>
-    <span style="font-size:12px;color:var(--gris);margin-left:6px">Aparecen en tus planeaciones, listas y exámenes.</span></div>
-  <details class="card" ${G.data.grupos.length ? '' : 'open'}><summary class="card-title" style="cursor:pointer">➕ Nuevo grupo</summary>
-    <div class="f3">
-      <div class="campo"><label>Grupo</label><input id="gg-nombre" placeholder="Ej. 3° A"></div>
-      <div class="campo"><label>Grado</label><select id="gg-grado" onchange="gActualizarMaterias()"><option value="1">1° Secundaria</option><option value="2">2° Secundaria</option><option value="3">3° Secundaria</option></select></div>
-      <div class="campo"><label>Materia que impartes</label><select id="gg-materia">${gMateriasOpts('1')}</select></div>
-    </div>
-    <div class="campo"><label>Alumnos (opcional: teclea, pega o sube tu lista)</label>
-      <textarea id="gn-lista" rows="4" placeholder="1. AGUILAR PECH ANDREA&#10;2. BALAM CHAN DIEGO"></textarea></div>
-    ${gUiArchivo('gn-lista')}
-    <button class="g-btn" onclick="gCrearGrupo()">Crear grupo</button>
-    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">Si das la misma materia a varios grupos, crea uno por cada grupo. Los nombres se revisan en el recuadro antes de crear el grupo.</div>
-  </details>`;
-  h += `<div class="card"><div class="card-title">💾 Respaldo</div>
+    <span style="font-size:12px;color:var(--gris);margin-left:6px">Aparecen en tus planeaciones, listas y exámenes.</span></details>`;
+  h += `<details class="card gg-det"><summary class="card-title" style="cursor:pointer">💾 Respaldo de mis grupos</summary>
     <button class="g-btn" onclick="gRespaldar()">⬇ Descargar respaldo</button>
     <label class="g-btn g-btn-s" style="display:inline-block;cursor:pointer">⬆ Restaurar respaldo<input type="file" accept=".json,application/json" style="display:none" onchange="gRestaurar(this)"></label>
-    <div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px;line-height:1.5">💡 <b>Qué se respalda:</b> todos tus grupos con su lista de alumnos, el pase de lista (asistencias, retardos, faltas y justificantes), los criterios de evaluación, las actividades, los exámenes y las calificaciones, y los recuperativos. <b>No incluye</b> el Historial de planeaciones ni el calendario escolar que hayas subido.</div></div>`;
+    <div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px;line-height:1.5">💡 <b>Qué se respalda:</b> todos tus grupos con su lista de alumnos, el pase de lista (asistencias, retardos, faltas y justificantes), los criterios de evaluación, las actividades, los exámenes y las calificaciones, y los recuperativos. <b>No incluye</b> el Historial de planeaciones ni el calendario escolar que hayas subido.</div></details>`;
   gPanel().innerHTML = h;
 }
 

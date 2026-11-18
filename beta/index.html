@@ -396,6 +396,34 @@ input,select,textarea,button{font-family:inherit;font-size:14px;}
 .g-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
 .g-chip{padding:8px 14px;border:1.5px solid var(--borde);border-radius:20px;background:var(--blanco);font-size:13px;cursor:pointer;color:var(--gris-oscuro);}
 .g-chip.on{background:var(--azul);border-color:var(--azul);color:#fff;font-weight:600;}
+/* Mis grupos: filas por grado, columnas por grupo */
+.gg-panel{background:var(--blanco);border:1px solid var(--borde);border-radius:14px;padding:14px 16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(15,23,42,.06);}
+.gg-fila{display:flex;align-items:stretch;gap:12px;padding:8px 0;border-bottom:1px dashed var(--borde);}
+.gg-fila:last-of-type{border-bottom:0;}
+.gg-grado{flex:0 0 58px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#e0ecff;color:var(--azul);border-radius:10px;font-size:22px;font-weight:800;line-height:1;}
+.gg-grado small{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:3px;opacity:.8;}
+.gg-cols{display:flex;flex-wrap:wrap;gap:8px;flex:1;}
+.gg-tile{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:128px;padding:9px 14px;border:1.5px solid var(--borde);border-radius:11px;background:#fff;cursor:pointer;text-align:left;font-family:inherit;color:var(--gris-oscuro);}
+.gg-tile b{font-size:15px;color:var(--azul);}
+.gg-tile span{font-size:12.5px;}
+.gg-tile em{font-style:normal;font-size:11px;color:var(--gris);}
+.gg-tile:hover{border-color:var(--azul-med);background:#f5f9ff;}
+.gg-tile.on{background:var(--azul);border-color:var(--azul);color:#fff;box-shadow:0 2px 8px rgba(30,64,120,.3);}
+.gg-tile.on b,.gg-tile.on em{color:#fff;}
+.gg-mas{margin-top:10px;padding:10px 16px;border:2px dashed #93b4e6;border-radius:11px;background:#f5f9ff;color:var(--azul);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;}
+.gg-mas:hover,.gg-mas.on{background:#e0ecff;border-color:var(--azul);}
+.gg-banner{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;background:linear-gradient(135deg,#1e3f7a,#2f6bc2);color:#fff;border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 3px 12px rgba(30,64,120,.25);}
+.gg-b-nom{font-size:30px;font-weight:800;line-height:1.1;}
+.gg-b-sub{font-size:15px;margin-top:4px;opacity:.95;}
+.gg-b-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.gg-b-tags span{background:rgba(255,255,255,.18);border-radius:20px;padding:3px 11px;font-size:12px;}
+.gg-b-bot{display:flex;gap:8px;flex-wrap:wrap;}
+.gg-b-bot button{padding:8px 14px;border:0;border-radius:9px;background:#fff;color:var(--azul);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;}
+.gg-b-bot button.rojo{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.5);}
+.gg-det>summary{cursor:pointer;font-weight:700;color:var(--azul-med);font-size:14px;}
+details.card>summary.card-title{margin-bottom:0;border-bottom:0;padding-bottom:0;}
+details.card[open]>summary.card-title{margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--gris-claro);}
+@media(max-width:600px){.gg-fila{flex-direction:column;gap:8px}.gg-grado{flex:none;flex-direction:row;gap:6px;padding:6px;font-size:18px}.gg-grado small{margin:0}.gg-tile{flex:1 1 44%;min-width:0}.gg-b-nom{font-size:26px}}
 .g-tabla-w{overflow-x:auto;}
 .g-tabla{width:100%;border-collapse:collapse;font-size:13px;}
 .g-tabla th{background:#eff6ff;color:var(--azul);font-weight:700;padding:8px 8px;text-align:left;border-bottom:2px solid var(--borde);vertical-align:bottom;}
@@ -1166,7 +1194,7 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611181000"></script>
+<script src="gestion.js?v=202611181100"></script>
 <script src="bitacora.js?v=202611180600"></script>
 <script src="escaner.js?v=202611180600"></script>
 <script src="rezago.js?v=202611180600"></script>
