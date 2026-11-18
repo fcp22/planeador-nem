@@ -258,7 +258,16 @@ ${tabla(tr(th('Adecuaciones / ajustes razonables', '22%'), td(secTxt(ia.adecuaci
 // Sustituye a la generación anterior (sesiones sueltas): una llamada por secuencia, con respaldo si una falla
 async function generarSecuenciaDidactica(d) {
   const todas = secLeer(); if (!todas.length) throw new Error('Elige cuántas secuencias vas a planear.');
-  const cards = todas.filter(c => c.on); if (!cards.length) throw new Error('Marca al menos una secuencia en «Incluir al generar».');
+  let cards = todas.filter(c => c.on);
+  if (!cards.length) {
+    // Ninguna casilla marcada: pasa cuando ya se generaron (se desmarcan para no repetirlas) o si se desmarcaron a mano
+    const o1 = secEl('s-' + todas[0].i + '-on'), card1 = o1 && o1.closest('.s-card');
+    if (card1) { card1.scrollIntoView({ behavior: 'smooth', block: 'center' }); card1.style.boxShadow = '0 0 0 3px #f59e0b'; setTimeout(() => { card1.style.boxShadow = ''; }, 5000); }
+    if (!confirm('Ninguna secuencia está marcada en «Incluir al generar».\n\nEsto pasa cuando ya las generaste antes (se desmarcan para no repetirlas) o si quitaste la casilla.\n\n¿Quieres marcar ' + (todas.length === 1 ? 'la secuencia' : 'todas las secuencias') + ' y generar ahora?')) throw new Error('Marca la casilla «Incluir al generar» de la secuencia que quieras generar (arriba, en su tarjeta).');
+    todas.forEach(c => { const o = secEl('s-' + c.i + '-on'); if (o) o.checked = true; });
+    cards = secLeer().filter(c => c.on);
+    if (!cards.length) throw new Error('Marca al menos una secuencia en «Incluir al generar».');
+  }
   const sinCont = cards.find(c => !c.contenidos.length);
   if (sinCont) throw new Error(`La secuencia ${sinCont.i} no tiene contenidos: marca al menos uno.`);
   d.situacion = (secEl('d-situacion') || {}).value || ''; d.recursos = ((secEl('s-rec') || {}).value || '').trim();
