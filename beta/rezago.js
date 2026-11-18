@@ -182,10 +182,11 @@ function rezEnvioCard(A) {
     <button class="g-btn" onclick="rezEnviar()">📤 Enviar…</button>
     <button class="g-btn g-btn-s" onclick="rezEnvioWA()">💬 WhatsApp</button>
     <button class="g-btn g-btn-s" onclick="rezEnvioCorreo()">✉️ Correo</button>
-    <button class="g-btn g-btn-s" onclick="rezEnvioPDF()">🖨️ PDF</button>
+    <button class="g-btn g-btn-s" onclick="rezPDFCompartir()">📲 Enviar PDF</button>
+    <button class="g-btn g-btn-s" onclick="rezPDFDescargar()">⬇ PDF</button>
     <button class="g-btn g-btn-s" onclick="rezEnvioWord()">⬇ Word</button>
     <button class="g-btn g-btn-s" onclick="rezEnvioCopiar()">📋 Copiar</button>
-    <div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:8px">El mensaje lleva la lista en texto. Si quieres entregar el documento formal, descárgalo en PDF o Word y adjúntalo en WhatsApp o en el correo.${hayContacto ? '' : ' Guarda el WhatsApp o el correo de Dirección en «Mis grupos → Mi escuela» para que se llene solo.'}</div></div>`;
+    <div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:8px"><b>⬇ PDF</b> guarda el documento formal en tu equipo para mandarlo después por WhatsApp o correo. <b>📲 Enviar PDF</b> lo manda directo (en el celular se abre el menú para elegir WhatsApp). Los otros botones envían la lista en texto.${hayContacto ? '' : ' Guarda el WhatsApp o el correo de Dirección en «Mis grupos → Mi escuela» para que se llene solo.'}</div></div>`;
   return h;
 }
 function rezTelDireccion() { const d = String(gPerfil().dirWa || '').replace(/\D/g, ''); return d.length === 10 ? '52' + d : d.length >= 11 ? d : ''; }
@@ -219,3 +220,64 @@ function rezEnvioCopiar() {
 }
 function rezEnvioPDF() { if (typeof bitVentana === 'function') bitVentana('Alumnos que requieren apoyo', rezEnvioHTML()); }
 function rezEnvioWord() { const g = gGrupo(); descargarWord(rezEnvioHTML(), `Alumnos_apoyo_Direccion_${rezSlug(g.nombre)}_${rezSlug(G_TRIM_NOM[REZ.trim])}.doc`); }
+
+
+// ── PDF real (se descarga o se comparte como archivo) ──
+let REZ_PDF_LIB = null;
+function rezCargarPDF() {
+  if (REZ_PDF_LIB) return REZ_PDF_LIB;
+  const cargar = src => new Promise((ok, mal) => { const e = document.createElement('script'); e.src = src; e.onload = ok; e.onerror = () => mal(new Error('No se pudo cargar el generador de PDF. Revisa tu conexión a internet.')); document.head.appendChild(e); });
+  REZ_PDF_LIB = (window.jspdf ? Promise.resolve() : cargar('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'))
+    .then(() => (window.jspdf && window.jspdf.jsPDF.API.autoTable) ? null : cargar('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'))
+    .catch(e => { REZ_PDF_LIB = null; throw e; });
+  return REZ_PDF_LIB;
+}
+function rezPDFNombre() { const g = gGrupo(); return `Alumnos_apoyo_Direccion_${rezSlug(g.nombre)}_${rezSlug(G_TRIM_NOM[REZ.trim])}.pdf`; }
+async function rezPDFBlob() {
+  await rezCargarPDF();
+  const { jsPDF } = window.jspdf, doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const g = gGrupo(), t = REZ.trim, filas = rezEnvioFilas(), p = gPerfil(), W = doc.internal.pageSize.getWidth(), M = 40, lim = s => String(s == null ? '' : s).replace(/[—–]/g, '-').replace(/…/g, '...');
+  let y = 46;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text(lim(gEscuela() || 'Escuela Secundaria'), W / 2, y, { align: 'center' }); y += 18;
+  doc.setFontSize(12); doc.text('ALUMNOS QUE REQUIEREN APOYO - REPORTE PARA DIRECCION'.replace('DIRECCION', 'DIRECCIÓN'), W / 2, y, { align: 'center' }); y += 20;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  const linea = (a, b) => { doc.setFont('helvetica', 'bold'); doc.text(a, M, y); const w = doc.getTextWidth(a); doc.setFont('helvetica', 'normal'); doc.text(lim(b), M + w + 4, y); y += 14; };
+  linea('Docente:', gDocente()); linea('Grupo:', `${g.nombre}    Materia: ${g.materia}    Periodo: ${G_TRIM_NOM[t]}`);
+  linea('Fecha:', gFechaBonita(gHoy()) + (p.director ? '    Dirigido a: ' + p.director : ''));
+  linea('Alumnos incluidos:', `${filas.length} (${REZ.incRiesgo ? 'en rezago y en riesgo' : 'en rezago'}) de ${g.alumnos.length} en el grupo.`);
+  const color = n => ({ rezago: [248, 203, 173], riesgo: [255, 230, 153] }[n] || [198, 224, 180]);
+  doc.autoTable({
+    startY: y + 4, margin: { left: M, right: M },
+    head: [['#', 'Alumno', 'Prom.', '% asist.', 'Faltas', 'Sin calif.', 'Situación', 'Motivo']],
+    body: filas.map((f, i) => [i + 1, lim(f.al.nombre), f.prom == null ? '-' : gFmt(f.prom), f.pct == null ? '-' : f.pct + ' %', f.c.F, f.pend.length, REZ_NIVELES[f.nivel].nom, lim(f.causas.join(' '))]),
+    styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 4, lineColor: [0, 0, 0], lineWidth: 0.5, textColor: 0 },
+    headStyles: { fillColor: [189, 215, 238], textColor: 0, fontStyle: 'bold' },
+    columnStyles: { 0: { cellWidth: 20 }, 2: { cellWidth: 34 }, 3: { cellWidth: 40 }, 4: { cellWidth: 34 }, 5: { cellWidth: 40 }, 6: { cellWidth: 52 }, 7: { cellWidth: 'auto', fontSize: 7.5 } },
+    didParseCell: d => { if (d.section === 'body' && d.column.index === 6) d.cell.styles.fillColor = color(filas[d.row.index].nivel); }
+  });
+  y = doc.lastAutoTable.finalY + 24;
+  if (y > 640) { doc.addPage(); y = 60; }
+  doc.setFont('helvetica', 'bold'); doc.text('Acciones realizadas o previstas:', M, y); y += 20;
+  doc.setDrawColor(120); for (let i = 0; i < 3; i++) { doc.line(M, y, W - M, y); y += 20; }
+  y += 36; if (y > 720) { doc.addPage(); y = 90; }
+  doc.setFont('helvetica', 'normal'); doc.line(M + 10, y, M + 210, y); doc.line(W - M - 210, y, W - M - 10, y); y += 12;
+  doc.text(lim(gDocente()), M + 110, y, { align: 'center' }); doc.text(lim(p.director || 'Director(a)'), W - M - 110, y, { align: 'center' }); y += 12;
+  doc.text('Docente', M + 110, y, { align: 'center' }); doc.text('Recibido por Dirección   Fecha: __________', W - M - 110, y, { align: 'center' });
+  return doc.output('blob');
+}
+async function rezPDFDescargar() {
+  if (typeof licBloqueaDescarga === 'function' && licBloqueaDescarga()) return;
+  try { const b = await rezPDFBlob(); rezBajar(b, rezPDFNombre()); gAviso('Listo: se guardó el PDF en tu equipo (carpeta Descargas). Ya puedes adjuntarlo en WhatsApp o en un correo.'); }
+  catch (e) { gAviso(e.message + ' Mientras tanto puedes usar «Word».'); }
+}
+function rezBajar(blob, nombre) { const u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = nombre; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); }
+async function rezPDFCompartir() {
+  if (typeof licBloqueaDescarga === 'function' && licBloqueaDescarga()) return;
+  let blob; try { blob = await rezPDFBlob(); } catch (e) { return gAviso(e.message + ' Mientras tanto puedes usar «Word».'); }
+  const f = new File([blob], rezPDFNombre(), { type: 'application/pdf' });
+  if (navigator.canShare && navigator.canShare({ files: [f] })) {
+    try { await navigator.share({ files: [f], title: 'Alumnos que requieren apoyo' }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  rezBajar(blob, rezPDFNombre());
+  gAviso('Tu equipo no permite compartir el archivo directo, así que se guardó el PDF en Descargas. Ábrelo y adjúntalo en WhatsApp o en un correo.');
+}
