@@ -1127,17 +1127,17 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   </div><!-- /layout -->
 </div><!-- /app -->
 
-<script src="firebase-config.js?v=202611180300"></script>
-<script src="correos-temporales.js?v=202611180300"></script>
-<script src="auth.js?v=202611180300"></script>
-<script src="licencia.js?v=202611180300"></script>
-<script src="curriculum.js?v=202611180300"></script>
-<script src="projects.js?v=202611180300"></script>
-<script src="generators.js?v=202611180300"></script>
-<script src="metodologias.js?v=202611180300"></script>
-<script src="ruta-ui.js?v=202611180300"></script>
-<script src="secuencias.js?v=202611180300"></script>
-<script src="sugerencias-plano.js?v=202611180300"></script>
+<script src="firebase-config.js?v=202611180320"></script>
+<script src="correos-temporales.js?v=202611180320"></script>
+<script src="auth.js?v=202611180320"></script>
+<script src="licencia.js?v=202611180320"></script>
+<script src="curriculum.js?v=202611180320"></script>
+<script src="projects.js?v=202611180320"></script>
+<script src="generators.js?v=202611180320"></script>
+<script src="metodologias.js?v=202611180320"></script>
+<script src="ruta-ui.js?v=202611180320"></script>
+<script src="secuencias.js?v=202611180320"></script>
+<script src="sugerencias-plano.js?v=202611180320"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
 // (la pantalla de acceso conserva su autocompletar para correo y contraseña).
@@ -1159,10 +1159,10 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611180300"></script>
-<script src="bitacora.js?v=202611180300"></script>
-<script src="escaner.js?v=202611180300"></script>
-<script src="rezago.js?v=202611180300"></script>
+<script src="gestion.js?v=202611180320"></script>
+<script src="bitacora.js?v=202611180320"></script>
+<script src="escaner.js?v=202611180320"></script>
+<script src="rezago.js?v=202611180320"></script>
 <script>
 // ── ESTADO ──────────────────────────────────────────────
 let tipoActivo='a', semAct=1, semsGen=new Set();
@@ -1870,6 +1870,22 @@ function hideErr(id){document.getElementById(id).style.display='none';}
 
 // Arranca el sistema de cuentas (correo, Google, Apple)
 authInit();
+</script>
+<script>
+// Auto-actualización: si la app está guardada en la pantalla de inicio (celular), el sistema suele quedarse con la versión vieja.
+// Al abrir, comparamos con la versión publicada y, si hay una más nueva, se recarga sola (una vez por versión).
+(function () {
+  try {
+    var el = document.querySelector('script[src*="licencia.js"]'), mia = el && (el.getAttribute('src').match(/v=(\d+)/) || [])[1];
+    if (!mia || !/^https?:/.test(location.protocol)) return;
+    fetch(location.pathname + '?c=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) {
+      var nueva = (t.match(/licencia\.js\?v=(\d+)/) || [])[1];
+      if (!nueva || nueva === mia || +nueva < +mia) return;
+      var k = 'nem_recarga_' + nueva; if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1');
+      location.replace(location.pathname + '?v=' + nueva);
+    }).catch(function () {});
+  } catch (e) {}
+})();
 </script>
 </body>
 </html>
