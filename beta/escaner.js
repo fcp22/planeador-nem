@@ -35,11 +35,13 @@ function gRenderEscaner() {
     <select onchange="escElegir(this.value)" style="width:100%;padding:10px;border:1.5px solid var(--borde);border-radius:8px">${exs.map(e => `<option value="${e.id}"${e.id === ex.id ? ' selected' : ''}>${gEsc(e.nombre)} (${e.reactivos.length} reactivos · ${e.max} pts)</option>`).join('')}</select>
     ${objetivos < ex.reactivos.length ? `<div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:6px">Los reactivos de <b>desarrollo</b> no se leen con la cámara: tú les pones los puntos al revisar.</div>` : ''}</div>`;
   }
-  if (ex) h += `<div class="card"><div class="card-title">2. Toma las fotos</div>
+  h += `<div class="card"><div class="card-title">2. Toma las fotos</div>
     <ul style="margin:0 0 10px 18px;padding:0;font-size:13px;color:var(--gris);line-height:1.5"><li>Una hoja por foto, completa y derecha, con buena luz y sin sombras.</li><li>Asegúrate de que se vea el <b>nombre del alumno</b>.</li><li>Puedes elegir varias fotos a la vez de la galería.</li></ul>
-    <label class="g-btn" style="cursor:pointer">📷 Tomar foto<input type="file" accept="image/*" capture="environment" style="display:none" onchange="escSubir(this)"></label>
-    <label class="g-btn g-btn-s" style="cursor:pointer">🖼️ Elegir fotos (varias)<input type="file" accept="image/*" multiple style="display:none" onchange="escSubir(this)"></label>
-    <div style="font-size:12px;color:var(--gris);margin-top:8px">${G.esc.restantes != null ? `Fotos disponibles este mes: <b>${G.esc.restantes}</b>. ` : ''}Las fotos no se guardan: solo la calificación que tú confirmes.</div></div>`;
+    <button class="g-btn" onclick="escAbrir('esc-cam')">📷 Tomar foto</button>
+    <button class="g-btn g-btn-s" onclick="escAbrir('esc-gal')">🖼️ Elegir fotos (varias)</button>
+    <input id="esc-cam" type="file" accept="image/*" capture="environment" style="display:none" onchange="escSubir(this)">
+    <input id="esc-gal" type="file" accept="image/*" multiple style="display:none" onchange="escSubir(this)">
+    <div style="font-size:12px;color:var(--gris);margin-top:8px">${man && !ex ? 'Se usará la clave que escribiste arriba: al tocar el botón se activa sola. ' : ''}${G.esc.restantes != null ? `Fotos disponibles este mes: <b>${G.esc.restantes}</b>. ` : ''}Las fotos no se guardan: solo la calificación que tú confirmes.</div></div>`;
   if (ex && vis.length) {
     const sin = escSin(), pend = vis.filter(x => x.estado === 'listo' && !x.guardada && x.aid).length;
     h += `<div class="card"><div class="card-title">3. Revisa${sin ? '' : ' y guarda'} <span style="margin-left:auto;font-size:12px;font-weight:400;color:var(--gris)">${vis.length} foto(s)</span></div>
@@ -49,6 +51,15 @@ function gRenderEscaner() {
   }
   gPanel().innerHTML = h;
   if (man) escManEstado();
+}
+// Abre la cámara o la galería. Con clave manual, primero activa la clave escrita (si no se ha activado o cambió)
+function escAbrir(id) {
+  if (G.esc.modo === 'manual') {
+    escManLeer(); const m = G.esc.man, L = escManLetras(m.clave), ex = G.esc.manEx;
+    const igual = ex && ex.clave === L && ex.max === (parseInt(m.n, 10) || 0) && ex.tipoSel === m.tipo && (ex.nombre === ((m.nombre || '').trim() || 'Examen escaneado'));
+    if (!igual && !escManUsar()) return;
+  }
+  const el = document.getElementById(id); if (el) el.click();
 }
 function escModo(m) { G.esc.modo = m; gRenderEscaner(); }
 function escElegir(id) { G.esc.exId = id; G.esc.hojas = G.esc.hojas.filter(h => h.exObj); gRenderEscaner(); }
@@ -95,12 +106,12 @@ function escManEstado() {
 function escManUsar() {
   escManLeer(); const m = G.esc.man, L = escManLetras(m.clave), n = parseInt(m.n, 10) || 0, g = gGrupo();
   const err = !L.length ? 'Escribe la clave de respuestas.' : escManError(m.tipo, L) || (n !== L.length ? `Escribiste ${L.length} letras y pusiste ${n} preguntas: deben coincidir.` : L.length > 100 ? 'Máximo 100 preguntas.' : '');
-  if (err) { gAviso(err); return; }
-  if (G.esc.hojas.some(h => h.exObj) && !confirm('Al cambiar la clave se quitan las fotos ya leídas con la clave anterior. ¿Continuar?')) return;
+  if (err) { gAviso(err); return false; }
+  if (G.esc.hojas.some(h => h.exObj) && !confirm('Al cambiar la clave se quitan las fotos ya leídas con la clave anterior. ¿Continuar?')) return false;
   G.esc.hojas = G.esc.hojas.filter(h => !h.exObj);
   const reactivos = [...L].map(c => ({ tipo: /[VF]/.test(c) && m.tipo !== 'opcion_multiple' ? 'verdadero_falso' : 'opcion_multiple', respuesta: c, valor: 1 }));
-  G.esc.manEx = { id: 'manual', nombre: (m.nombre || '').trim() || 'Examen escaneado', reactivos, max: L.length, notas: {}, gid: g ? g.id : '', actId: null, clave: L };
-  gRenderEscaner();
+  G.esc.manEx = { id: 'manual', nombre: (m.nombre || '').trim() || 'Examen escaneado', reactivos, max: L.length, notas: {}, gid: g ? g.id : '', actId: null, clave: L, tipoSel: m.tipo };
+  gRenderEscaner(); return true;
 }
 
 // ── Fotos: se reducen a 1600 px (JPEG) antes de enviarlas ──
