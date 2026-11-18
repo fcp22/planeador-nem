@@ -6,7 +6,7 @@
 // ============================================================
 
 const REZ = { trim: null, sel: null, incRiesgo: false };
-const REZ_UMBRALES_DEF = { rezago: 6, riesgo: 7, asistRezago: 70, asistRiesgo: 80, pendRiesgo: 2 };
+const REZ_UMBRALES_DEF = { rezago: 7, riesgo: 8, asistRezago: 70, asistRiesgo: 80, pendRiesgo: 2 };
 const REZ_NIVELES = {
   rezago: { nom: 'En rezago', fondo: '#fee2e2', borde: '#fca5a5', color: '#b91c1c', orden: 0 },
   riesgo: { nom: 'En riesgo', fondo: '#fef3c7', borde: '#fcd34d', color: '#b45309', orden: 1 },
@@ -14,7 +14,11 @@ const REZ_NIVELES = {
   sin: { nom: 'Sin datos', fondo: '#f1f5f9', borde: '#cbd5e1', color: '#64748b', orden: 3 },
 };
 
-function rezUmbrales(g) { return Object.assign({}, REZ_UMBRALES_DEF, g.umbrales || {}); }
+function rezUmbrales(g) {
+  // Grupos que tenían guardados los valores anteriores por defecto (6 y 7) pasan a los nuevos (7 y 8): rezago = calificaciones 5 y 6
+  if (g.umbrales && g.umbrales.rezago === 6 && (g.umbrales.riesgo === undefined || g.umbrales.riesgo === 7)) { delete g.umbrales.rezago; delete g.umbrales.riesgo; if (!Object.keys(g.umbrales).length) delete g.umbrales; }
+  return Object.assign({}, REZ_UMBRALES_DEF, g.umbrales || {});
+}
 function rezPeor(a, b) { return REZ_NIVELES[a].orden <= REZ_NIVELES[b].orden ? a : b; }
 function rezIniciales(n) { const p = String(n).trim().split(/\s+/); return ((p[0] || '')[0] || '') + ((p[1] || '')[0] || ''); }
 
@@ -85,6 +89,7 @@ function gRenderRezago() {
     <button class="g-btn" onclick="rezReporteDireccion()">⬇ Reporte para Dirección (Word)</button>
     <div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:6px">Informe formal con las cifras del grupo y los alumnos que requieren atención. El reporte de cada alumno para su familia está dentro de su ficha.</div>
     <details class="g-det" style="padding:10px 0 0"><summary style="font-size:13px">⚙️ Ajustar cómo se calcula el semáforo</summary>
+      <div class="ayuda" style="font-size:12px;color:var(--gris);margin:8px 0 4px;line-height:1.5">Por defecto: <b>en rezago</b> = promedio menor a 7 (calificaciones <b>5 y 6</b>); <b>en riesgo</b> = promedio menor a 8 (calificaciones 7.x).</div>
       <div class="rez-um">
         <label>En rezago si el promedio es menor a <input type="number" step="0.1" min="0" max="10" value="${um.rezago}" onchange="rezUmbral('rezago',this.value)"></label>
         <label>En riesgo si el promedio es menor a <input type="number" step="0.1" min="0" max="10" value="${um.riesgo}" onchange="rezUmbral('riesgo',this.value)"></label>
@@ -177,7 +182,7 @@ function rezEnvioCard(A) {
     <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin:0 0 10px"><input type="checkbox"${REZ.incRiesgo ? ' checked' : ''} onchange="REZ.incRiesgo=this.checked;gRenderRezago()"> Incluir también a los alumnos <b>en riesgo</b></label>`;
   if (!filas.length) return h + `<p style="color:#16a34a;font-weight:600;margin:0">✓ No hay alumnos ${REZ.incRiesgo ? 'en rezago ni en riesgo' : 'en rezago'} en este periodo.</p></div>`;
   h += `<div class="rez-envio" style="border:1px solid var(--borde);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:13px;max-height:190px;overflow:auto">` +
-    filas.map(f => `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px solid #f1f5f9"><span>${gEsc(f.al.nombre)}</span><span style="color:${REZ_NIVELES[f.nivel].color};white-space:nowrap"><b>${f.prom == null ? '—' : gFmt(f.prom)}</b> · ${f.pct == null ? '—' : f.pct + ' %'}</span></div>`).join('') + `</div>
+    filas.map(f => `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px solid #f1f5f9"><span>${gEsc(f.al.nombre)}</span><span style="color:${REZ_NIVELES[f.nivel].color};white-space:nowrap">Promedio <b>${f.prom == null ? '—' : gFmt(f.prom)}</b> · Asistencia <b>${f.pct == null ? '—' : f.pct + ' %'}</b></span></div>`).join('') + `</div>
     <div style="margin-bottom:6px"><b>${filas.length}</b> alumno(s) en la lista${p.director ? ' · para ' + gEsc(p.director) : ''}.</div>
     <button class="g-btn" onclick="rezEnviar()">📤 Enviar…</button>
     <button class="g-btn g-btn-s" onclick="rezEnvioWA()">💬 WhatsApp</button>
