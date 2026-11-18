@@ -670,13 +670,14 @@ function gRenderGrupos() {
   <div class="sec-sub">Crea tus grupos una sola vez; la lista de alumnos se usa en el pase de lista, las calificaciones y los exámenes.</div>
   <div class="g-aviso">🔒 Los nombres de tus alumnos se guardan <strong>solo en este dispositivo</strong> (no se suben a internet). Descarga un respaldo de vez en cuando; si cambias de celular o computadora, ahí lo restauras.</div>`;
   if (G.data.grupos.length) {
-    h += `<div class="g-chips">${G.data.grupos.map(x => `<button class="g-chip${x.id === G.gid ? ' on' : ''}" onclick="gCambiarGrupo('${x.id}')">${gEsc(x.nombre)} · ${gEsc(x.materia)}</button>`).join('')}</div>`;
+    h += `<div style="font-size:12px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.04em;margin:4px 0 6px">Mis grupos (toca uno para verlo o editarlo)</div><div class="g-chips">${G.data.grupos.map(x => `<button class="g-chip${x.id === G.gid ? ' on' : ''}" onclick="gCambiarGrupo('${x.id}')">${gEsc(x.nombre)} · ${gEsc(x.materia)}</button>`).join('')}</div>`;
   }
   if (g) {
     const gEd = G.editGrupo === g.id;
     h += `<div class="card"><div class="card-title">👥 ${gEsc(g.nombre)} · ${gEsc(g.materia)} — ${g.alumnos.length} alumnos
       <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap"><button class="g-btn g-btn-s" style="margin:0" onclick="gEditarGrupo(${gEd ? 'false' : 'true'})">${gEd ? '✕ Cerrar edición' : '✏️ Editar grupo'}</button>
       <button class="g-btn g-btn-x" style="margin:0" onclick="gBorrarGrupo('${g.id}')">Borrar grupo</button></span></div>
+      <div style="background:#eef6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:14px;line-height:1.6"><b>Grupo:</b> ${gEsc(g.nombre)} &nbsp;·&nbsp; <b>Grado:</b> ${gEsc(g.grado)}° de secundaria &nbsp;·&nbsp; <b>Materia:</b> ${gEsc(g.materia)}${gCampoDe(g.grado, g.materia) ? ' &nbsp;·&nbsp; <b>Campo formativo:</b> ' + gEsc(gCampoDe(g.grado, g.materia)) : ''} &nbsp;·&nbsp; <b>Alumnos:</b> ${g.alumnos.length}</div>
       ${gEd ? `<div style="background:#f1f5f9;border:1.5px solid var(--borde);border-radius:10px;padding:12px 14px;margin-bottom:14px">
         <div style="font-weight:700;margin-bottom:8px">✏️ Corregir los datos del grupo</div>
         <div class="f3">
