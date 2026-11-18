@@ -259,6 +259,10 @@ function licAdminRender() {
     <div class="l-err" id="la-err" style="margin:0 0 12px"></div>
     <button class="g-btn" onclick="licAdminGenerar()">Generar códigos</button>
     <div id="la-salida" style="margin-top:14px"></div></div>
+  <div class="card"><div class="card-title">👥 Quién está probando y quién está suscrito</div>
+    <div class="ayuda" style="font-size:12.5px;color:var(--gris);margin-bottom:10px">Todas las cuentas que han entrado: las que están en sus <b>3 días de prueba</b>, las <b>suscritas</b> (con licencia vigente) y las que ya <b>vencieron</b>.</div>
+    <button class="g-btn" id="la-cue-btn" onclick="licAdminCuentas()">Ver cuentas</button>
+    <div id="la-cue" style="margin-top:12px"></div></div>
   <div class="card"><div class="card-title">📋 Códigos y uso</div><button class="g-btn g-btn-s" onclick="licAdminListar()">Actualizar lista</button><div id="la-lista" style="margin-top:12px"></div></div>
   <div class="card"><div class="card-title">💳 Créditos de IA</div>
     <div class="ayuda" style="font-size:12.5px;color:var(--gris);margin-bottom:10px">Cuánto has gastado de la IA y cuánto te queda, para recargar a tiempo. Es una <b>estimación</b> con lo que gastan los maestros; el saldo exacto lo ves siempre en la consola de tu proveedor.</div>
@@ -320,6 +324,33 @@ async function licAdminProbar() {
   } catch (e) { licAdminErr(e.message); }
   b.disabled = false; b.textContent = 'Probar ahora';
 }
+// ── Cuentas: pruebas, suscritos y vencidos ──
+async function licAdminCuentas() {
+  licAdminErr(''); const k = licAdminClave(); if (!k) return licAdminErr('Escribe la clave de administrador.');
+  const o = document.getElementById('la-cue'); o.textContent = 'Cargando…';
+  try {
+    let todas = [], cur = null, n = 0;
+    do { const d = await workerFetch('/admin/cuentas' + (cur ? '?cursor=' + encodeURIComponent(cur) : ''), { admin: k }); todas = todas.concat(d.cuentas || []); cur = d.cursor; o.textContent = 'Cargando… ' + todas.length; } while (cur && ++n < 60);
+    // una fila por correo: si ya compró, se oculta su prueba anterior
+    const por = {}; todas.forEach(c => { const id = String(c.correo).toLowerCase(), p = por[id]; if (!p || (p.prueba && !c.prueba) || (p.prueba === c.prueba && Date.parse(c.activada) > Date.parse(p.activada))) por[id] = c; });
+    LIC.cuentas = Object.values(por).sort((a, b) => Date.parse(b.activada) - Date.parse(a.activada)); LIC.cueFiltro = LIC.cueFiltro || 'todas';
+    licAdminCuentasPintar();
+  } catch (e) { o.innerHTML = ''; licAdminErr(e.status === 404 ? 'El servidor todavía no tiene esta lista: pega el nuevo worker.js en Cloudflare (Edit code → Deploy).' : e.message); }
+}
+function licAdminCuentasFiltro(f) { LIC.cueFiltro = f; licAdminCuentasPintar(); }
+function licAdminCuentasPintar() {
+  const o = document.getElementById('la-cue'); if (!o || !LIC.cuentas) return;
+  const L = LIC.cuentas, ct = e => L.filter(c => c.estado === e).length, f = LIC.cueFiltro || 'todas';
+  const E = { prueba: ['🟡 Probando', '#b45309'], activa: ['🟢 Suscrito', '#16a34a'], vencida: ['⚪ Vencida', '#64748b'], revocada: ['🔴 Revocada', '#dc2626'] };
+  const chip = (k, t) => `<button class="g-chip${f === k ? ' on' : ''}" onclick="licAdminCuentasFiltro('${k}')">${t}</button>`;
+  const vis = f === 'todas' ? L : L.filter(c => c.estado === f);
+  const dias = v => { const d = Math.ceil((Date.parse(v) - Date.now()) / 86400000); return d > 0 ? `${d} día${d === 1 ? '' : 's'}` : 'ya venció'; };
+  o.innerHTML = `<div class="g-chips">${chip('todas', 'Todas (' + L.length + ')')}${chip('prueba', '🟡 Probando (' + ct('prueba') + ')')}${chip('activa', '🟢 Suscritos (' + ct('activa') + ')')}${chip('vencida', '⚪ Vencidas (' + ct('vencida') + ')')}</div>` +
+    (vis.length ? `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>Correo</th><th>Estado</th><th>Plan / nota</th><th>Le quedan</th><th>Vence</th><th>IA usada</th></tr></thead><tbody>` +
+      vis.map(c => { const e = E[c.estado] || [c.estado, '#64748b']; return `<tr><td style="word-break:break-all">${gEsc(c.correo)}</td><td style="color:${e[1]};font-weight:600;white-space:nowrap">${e[0]}</td><td>${gEsc(c.plan || '—')}${c.nota ? '<br><span style="color:var(--gris);font-size:11.5px">' + gEsc(c.nota) + '</span>' : ''}</td><td>${c.estado === 'prueba' || c.estado === 'activa' ? dias(c.vence) : '—'}</td><td style="white-space:nowrap">${licFecha(c.vence)}</td><td>${c.usadas}/${c.cuota}</td></tr>`; }).join('') + '</tbody></table></div>' : '<p style="color:var(--gris)">No hay cuentas en esta categoría.</p>') +
+    `<div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:8px">Una cuenta aparece aquí desde que entra por primera vez a la app. Las que se registran pero no abren la app, no se ven.</div>`;
+}
+
 // ── Cuadro «Créditos de IA» (estimación con los tokens que ha gastado el servidor) ──
 const LIC_CONSOLAS = {
   'api.anthropic.com': ['Anthropic', 'https://console.anthropic.com/settings/billing'],
