@@ -1143,6 +1143,7 @@ function gRenderCalif() {
   }
   h += `<div class="card"><div class="card-title">🎓 ${t === 'anual' ? 'Resumen anual' : 'Calificación del ' + G_TRIM_NOM[t].toLowerCase()}</div><div id="g-resumen">${gResumenHTML()}</div>
     ${g.alumnos.length ? `<button class="g-btn" style="margin-top:12px" onclick="gDescargarCalif()">⬇ Descargar en Word</button>` : ''}</div>`;
+  h += gConcentradoCard(g);
   gPanel().innerHTML = h;
   gActualizarSumaPct();
 }
@@ -1162,6 +1163,118 @@ function gDescargarCalif() {
     nom = 'Calificaciones_T' + t;
   }
   descargarWord(html, `${nom}_${g.nombre.replace(/\W+/g, '_')}.doc`);
+}
+
+
+// ── Concentrado de calificaciones para Dirección: Alumno · 1.º · 2.º · 3.º · Promedio final · Recuperativos ──
+// (lo que entrega el maestro a Dirección; los trimestres sin captura quedan en blanco para llenarse a mano o en el archivo)
+const G_CICLO_DOC = '2026-2027';
+function gConcentradoCard(g) {
+  if (!g.alumnos.length) return '';
+  return `<div class="card"><div class="card-title">📋 Concentrado para Dirección</div>
+    <p style="font-size:13px;color:var(--gris);margin:0 0 10px;line-height:1.5">Un solo cuadro con el <b>nombre de cada alumno</b>, su calificación del <b>1.º, 2.º y 3.er trimestre</b>, el <b>promedio final</b> y sus <b>recuperativos</b>. Los trimestres que todavía no capturas quedan <b>en blanco</b>, listos para llenarse. Descárgalo en el formato que necesites; en Word y Excel puedes <b>editarlo</b>.</p>
+    <button class="g-btn" id="gc-doc" onclick="gConcentradoExportar('doc')">⬇ Word</button>
+    <button class="g-btn" id="gc-xls" onclick="gConcentradoExportar('xlsx')">⬇ Excel</button>
+    <button class="g-btn" id="gc-pdf" onclick="gConcentradoExportar('pdf')">⬇ PDF</button>
+    <div id="gc-msg" style="display:none;font-size:12.5px;margin-top:8px"></div>
+    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">La calificación de cada trimestre es la de boleta (ya incluye el recuperativo si lo aplicaste). En el Excel, el promedio final se recalcula solo si cambias una calificación.</div></div>`;
+}
+function gConcentradoDatos(g) {
+  const num = v => (Math.round(v * 10) / 10).toString();
+  const filas = g.alumnos.map((a, i) => {
+    const tr = [1, 2, 3].map(t => gBoleta(gCalcAlumno(g, a.id, t).final));
+    const an = gCalcAnual(g, a.id), fin = an ? Math.max(5, Math.round(an.prom + 1e-9)) : null;
+    const rec = [1, 2, 3].map(t => { const R = g.recup && g.recup[t]; return R && R.notas && R.notas[a.id] != null && R.max > 0 ? `T${t}: ${num(Math.min(10, R.notas[a.id] / R.max * 10))}` : ''; }).filter(Boolean).join('   ');
+    return { n: i + 1, nombre: a.nombre, tr, fin, rec };
+  });
+  return { filas, titulo: 'CONCENTRADO DE CALIFICACIONES — CICLO ESCOLAR ' + G_CICLO_DOC, cols: ['No.', 'Alumno', '1.er trimestre', '2.º trimestre', '3.er trimestre', 'Promedio final', 'Recuperativos'] };
+}
+function gConcentradoNombre(g, ext) {
+  const lim = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '_').replace(/^_+|_+$/g, '');
+  return ['Concentrado_calificaciones', lim(g.nombre), lim(g.materia)].filter(Boolean).join('_') + '.' + ext;
+}
+function gConcentradoMsg(t, ok) { const e = document.getElementById('gc-msg'); if (!e) return; e.textContent = t; e.style.color = ok ? 'var(--verde)' : 'var(--rojo)'; e.style.display = t ? 'block' : 'none'; }
+async function gConcentradoExportar(formato) {
+  const g = gGrupo(); if (!g || !g.alumnos.length) return;
+  const btns = ['gc-doc', 'gc-xls', 'gc-pdf'].map(id => document.getElementById(id));
+  btns.forEach(b => b && (b.disabled = true)); gConcentradoMsg('Preparando tu archivo…', true);
+  try {
+    if (formato === 'doc') gConcentradoWord(g); else if (formato === 'xlsx') await gConcentradoExcel(g); else await gConcentradoPDF(g);
+    gConcentradoMsg('Listo, tu archivo se descargó.', true);
+  } catch (e) { gConcentradoMsg(e.message || 'No se pudo crear el archivo.', false); }
+  btns.forEach(b => b && (b.disabled = false));
+}
+function gConcentradoWord(g) {
+  const D = gConcentradoDatos(g), p = gPerfil();
+  const th = (x, w) => `<td style="border:1px solid #000;padding:5px;background:#BDD7EE;font-weight:bold;text-align:center${w ? ';width:' + w : ''}">${x}</td>`;
+  const td = (x, c) => `<td style="border:1px solid #000;padding:5px;height:20px${c ? ';text-align:center' : ''}">${x}</td>`;
+  const html = gEncabezadoDoc(D.titulo, g, `<b>Grado:</b> ${gEsc(g.grado)}°` + (p.cct ? ` &nbsp; <b>CCT:</b> ${gEsc(p.cct)}` : '')) +
+    `<table style="width:100%;border-collapse:collapse"><tr>${th(D.cols[0], '5%')}${th(D.cols[1], '37%')}${th(D.cols[2], '12%')}${th(D.cols[3], '12%')}${th(D.cols[4], '12%')}${th(D.cols[5], '10%')}${th(D.cols[6], '12%')}</tr>` +
+    D.filas.map(f => `<tr>${td(f.n, 1)}${td(gEsc(f.nombre))}${f.tr.map(x => td(x == null ? '' : x, 1)).join('')}${td(f.fin == null ? '' : '<b>' + f.fin + '</b>', 1)}${td(gEsc(f.rec), 1)}</tr>`).join('') + '</table>' +
+    `<p>&nbsp;</p><table style="width:100%;border-collapse:collapse"><tr><td style="width:45%;text-align:center;border-top:1px solid #000;padding-top:4px">${gEsc(gDocente())}<br>Docente</td><td style="width:10%"></td><td style="width:45%;text-align:center;border-top:1px solid #000;padding-top:4px">${gEsc(p.director || '')}<br>Director(a)</td></tr></table>`;
+  descargarWord(html, gConcentradoNombre(g, 'doc'));
+}
+async function gConcentradoExcel(g) {
+  await gCargarLib('exceljs');
+  const D = gConcentradoDatos(g), p = gPerfil();
+  const wb = new ExcelJS.Workbook(); wb.creator = 'Planeador Docente NEM';
+  const ws = wb.addWorksheet('Concentrado', { pageSetup: { paperSize: 1, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true, margins: { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 } } });
+  [5, 44, 13, 13, 13, 13, 24].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+  const centro = { horizontal: 'center', vertical: 'middle', wrapText: true };
+  const fila = (r, texto, tam, neg) => { ws.mergeCells(r, 1, r, 7); const c = ws.getCell(r, 1); c.value = texto; c.font = { bold: !!neg, size: tam }; c.alignment = { horizontal: 'center', vertical: 'middle' }; ws.getRow(r).height = tam + 9; };
+  fila(1, gEscuela() || 'Escuela Secundaria', 13, true); fila(2, D.titulo, 11, true);
+  fila(3, `Docente: ${gDocente()}     Grupo: ${g.nombre}     Materia: ${g.materia}     Grado: ${g.grado}°` + (p.cct ? `     CCT: ${p.cct}` : ''), 9.5, false);
+  const rH = 5, hr = ws.getRow(rH); hr.height = 30;
+  const borde = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+  D.cols.forEach((t, i) => { const c = hr.getCell(i + 1); c.value = t; c.font = { bold: true, size: 10, color: { argb: 'FF1A3A5C' } }; c.alignment = centro; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBDD7EE' } }; c.border = borde; });
+  D.filas.forEach((f, i) => {
+    const r = rH + 1 + i, row = ws.getRow(r); row.height = 21;
+    row.getCell(1).value = f.n; row.getCell(2).value = f.nombre;
+    f.tr.forEach((v, k) => { row.getCell(3 + k).value = v == null ? null : v; });
+    row.getCell(6).value = { formula: `IF(COUNT(C${r}:E${r})=0,"",MAX(5,ROUND(AVERAGE(C${r}:E${r}),0)))`, result: f.fin == null ? '' : f.fin };
+    row.getCell(7).value = f.rec || null;
+    for (let k = 1; k <= 7; k++) { const c = row.getCell(k); c.border = borde; c.font = { size: 10.5, bold: k === 6 }; c.alignment = k === 2 ? { vertical: 'middle', wrapText: true } : centro; }
+    for (let k = 3; k <= 6; k++) row.getCell(k).numFmt = '0';
+  });
+  // reprobados (menos de 6) en rojo, también si el maestro edita la calificación
+  const ref = `C${rH + 1}:F${rH + D.filas.length}`;
+  ws.addConditionalFormatting({ ref, rules: [{ type: 'cellIs', operator: 'lessThan', formulae: ['6'], style: { font: { bold: true, color: { argb: 'FFDC2626' } } } }] });
+  const rf = rH + D.filas.length + 4, fr = ws.getRow(rf);
+  [[2, gDocente() + '\nDocente'], [5, (p.director || '') + '\nDirector(a)']].forEach(([col, txt]) => { const c = fr.getCell(col); c.value = txt; c.alignment = { horizontal: 'center', vertical: 'top', wrapText: true }; c.border = { top: { style: 'thin' } }; c.font = { size: 10 }; });
+  ws.mergeCells(rf, 5, rf, 7); fr.height = 34;
+  ws.pageSetup.printTitlesRow = rH + ':' + rH;
+  ws.views = [{ state: 'frozen', xSplit: 2, ySplit: rH }];
+  const buf = await wb.xlsx.writeBuffer();
+  gDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), gConcentradoNombre(g, 'xlsx'));
+}
+async function gConcentradoPDF(g) {
+  await gCargarLib('jspdf', 'autotable');
+  const D = gConcentradoDatos(g), p = gPerfil();
+  const { jsPDF } = window.jspdf, doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const W = doc.internal.pageSize.getWidth(), Hh = doc.internal.pageSize.getHeight(), M = 40, lim = s => String(s == null ? '' : s).replace(/[—–]/g, '-').replace(/…/g, '...');
+  let y = 46;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text(lim(gEscuela() || 'Escuela Secundaria'), W / 2, y, { align: 'center' }); y += 18;
+  doc.setFontSize(11.5); doc.text(lim(D.titulo), W / 2, y, { align: 'center' }); y += 20;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  doc.text(lim(`Docente: ${gDocente()}     Grupo: ${g.nombre}     Materia: ${g.materia}     Grado: ${g.grado}°` + (p.cct ? `     CCT: ${p.cct}` : '')), M, y); y += 8;
+  doc.autoTable({
+    startY: y + 6, margin: { left: M, right: M, bottom: 50 },
+    head: [D.cols],
+    body: D.filas.map(f => [f.n, lim(f.nombre), ...f.tr.map(x => x == null ? '' : x), f.fin == null ? '' : f.fin, lim(f.rec)]),
+    styles: { font: 'helvetica', fontSize: 9, cellPadding: 4, lineColor: [0, 0, 0], lineWidth: 0.5, textColor: 0, minCellHeight: 18, valign: 'middle' },
+    headStyles: { fillColor: [189, 215, 238], textColor: 0, fontStyle: 'bold', halign: 'center' },
+    columnStyles: { 0: { cellWidth: 26, halign: 'center' }, 1: { cellWidth: 'auto', halign: 'left' }, 2: { cellWidth: 52, halign: 'center' }, 3: { cellWidth: 52, halign: 'center' }, 4: { cellWidth: 52, halign: 'center' }, 5: { cellWidth: 52, halign: 'center', fontStyle: 'bold' }, 6: { cellWidth: 82, halign: 'center', fontSize: 8 } },
+    didParseCell: d => { if (d.section === 'body' && d.column.index >= 2 && d.column.index <= 5 && d.cell.raw !== '' && Number(d.cell.raw) < 6) { d.cell.styles.textColor = [200, 30, 30]; d.cell.styles.fontStyle = 'bold'; } }
+  });
+  y = doc.lastAutoTable.finalY + 44;
+  if (y > Hh - 80) { doc.addPage(); y = 90; }
+  doc.setDrawColor(0); doc.line(M + 10, y, M + 210, y); doc.line(W - M - 210, y, W - M - 10, y); y += 12;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  doc.text(lim(gDocente()), M + 110, y, { align: 'center' }); doc.text(lim(p.director || 'Director(a)'), W - M - 110, y, { align: 'center' }); y += 12;
+  doc.text('Docente', M + 110, y, { align: 'center' }); doc.text('Director(a)', W - M - 110, y, { align: 'center' });
+  const n = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(100); doc.text('Hoja ' + i + ' de ' + n, W - M, Hh - 20, { align: 'right' }); }
+  gDescargarBlob(doc.output('blob'), gConcentradoNombre(g, 'pdf'));
 }
 
 // ============================================================
