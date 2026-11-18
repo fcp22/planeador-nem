@@ -375,9 +375,24 @@ function licAdminCuentasPintar() {
   const chip = (k, t) => `<button class="g-chip${f === k ? ' on' : ''}" onclick="licAdminCuentasFiltro('${k}')">${t}</button>`;
   const vis = f === 'todas' ? L : L.filter(c => c.estado === f);
   const dias = v => { const d = Math.ceil((Date.parse(v) - Date.now()) / 86400000); return d > 0 ? `${d} día${d === 1 ? '' : 's'}` : 'ya venció'; };
-  o.innerHTML = `<div class="g-chips">${chip('todas', 'Todas (' + L.length + ')')}${chip('prueba', '🟡 Probando (' + ct('prueba') + ')')}${chip('activa', '🟢 Suscritos (' + ct('activa') + ')')}${chip('vencida', '⚪ Vencidas (' + ct('vencida') + ')')}${chip('revocada', '🔴 Bloqueadas (' + ct('revocada') + ')')}</div>` +
-    (vis.length ? `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>Correo</th><th>Estado</th><th>Plan / nota</th><th>Le quedan</th><th>Vence</th><th>IA usada</th><th>Limitar</th></tr></thead><tbody>` +
-      vis.map(c => { const e = E[c.estado] || [c.estado, '#64748b']; return `<tr><td style="word-break:break-all">${gEsc(c.correo)}</td><td style="color:${e[1]};font-weight:600;white-space:nowrap">${e[0]}</td><td>${gEsc(c.plan || '—')}${c.nota ? '<br><span style="color:var(--gris);font-size:11.5px">' + gEsc(c.nota) + '</span>' : ''}</td><td>${c.estado === 'prueba' || c.estado === 'activa' ? dias(c.vence) : '—'}</td><td style="white-space:nowrap">${licFecha(c.vence)}</td><td style="white-space:nowrap">${c.usadas}/${c.cuota}</td><td style="white-space:nowrap">${c.estado === 'revocada' ? `<button class="g-btn g-btn-s" title="Reactivar" onclick="licAdminCuenta('${c.id}','reactivar')">✅ Reactivar</button>` : `<button class="g-btn g-btn-s" title="Bloquear" onclick="licAdminCuenta('${c.id}','bloquear')">🚫 Bloquear</button>`} <button class="g-btn g-btn-s" title="Cambiar el tope de documentos con IA" onclick="licAdminCuenta('${c.id}','cuota')">🔢 Tope</button></td></tr>`; }).join('') + '</tbody></table></div>' : '<p style="color:var(--gris)">No hay cuentas en esta categoría.</p>') +
+  o.innerHTML = `<style>
+.la-cuentas{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.la-cta{border:1px solid var(--borde,#e2e8f0);border-radius:12px;padding:12px 14px;background:#fff}
+.la-cta-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+.la-cta-mail{font-weight:700;font-size:14px;word-break:break-all;min-width:0}
+.la-cta-est{font-weight:700;font-size:12.5px;white-space:nowrap}
+.la-cta-datos{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:12.5px}
+.la-cta-datos span{display:block;color:var(--gris);font-size:11px}
+.la-cta-nota{margin-top:6px;font-size:12px;color:var(--gris)}
+.la-cta-bot{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+</style><div class="g-chips">${chip('todas', 'Todas (' + L.length + ')')}${chip('prueba', '🟡 Probando (' + ct('prueba') + ')')}${chip('activa', '🟢 Suscritos (' + ct('activa') + ')')}${chip('vencida', '⚪ Vencidas (' + ct('vencida') + ')')}${chip('revocada', '🔴 Bloqueadas (' + ct('revocada') + ')')}</div>` +
+    (vis.length ? '<div class="la-cuentas">' + vis.map(c => {
+      const e = E[c.estado] || [c.estado, '#64748b'], vivo = c.estado === 'prueba' || c.estado === 'activa';
+      const dato = (t, v) => `<div><span>${t}</span><b>${v}</b></div>`;
+      return `<div class="la-cta"><div class="la-cta-top"><div class="la-cta-mail">${gEsc(c.correo)}</div><div class="la-cta-est" style="color:${e[1]}">${e[0]}</div></div>
+        <div class="la-cta-datos">${dato('Plan', gEsc(c.plan || '—'))}${dato('Le quedan', vivo ? dias(c.vence) : '—')}${dato('Vence', licFecha(c.vence))}${dato('IA usada', c.usadas + ' de ' + c.cuota)}</div>
+        ${c.nota ? '<div class="la-cta-nota">' + gEsc(c.nota) + '</div>' : ''}
+        <div class="la-cta-bot">${c.estado === 'revocada' ? `<button class="g-btn g-btn-s" onclick="licAdminCuenta('${c.id}','reactivar')">✅ Reactivar</button>` : `<button class="g-btn g-btn-s" onclick="licAdminCuenta('${c.id}','bloquear')">🚫 Bloquear</button>`}<button class="g-btn g-btn-s" onclick="licAdminCuenta('${c.id}','cuota')">🔢 Cambiar tope</button></div></div>`; }).join('') + '</div>' : '<p style="color:var(--gris)">No hay cuentas en esta categoría.</p>') +
     `<div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:8px">Una cuenta aparece aquí desde que entra por primera vez a la app. Las que se registran pero no abren la app, no se ven.</div>`;
 }
 
