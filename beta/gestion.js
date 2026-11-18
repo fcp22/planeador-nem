@@ -90,6 +90,7 @@ function gGuardarPerfil() {
   const p = gPerfil();
   p.escuela = document.getElementById('gp-esc').value.trim(); p.cct = document.getElementById('gp-cct').value.trim(); p.municipio = document.getElementById('gp-mun').value.trim();
   p.estado = (document.getElementById('gp-est') || {value:''}).value.trim(); p.tipoEscuela = document.getElementById('gp-tipo').value.trim(); p.zona = document.getElementById('gp-zona').value.trim();
+  const vv = id => (document.getElementById(id) || { value: '' }).value.trim(); p.director = vv('gp-dir'); p.dirWa = vv('gp-dirwa'); p.dirCorreo = vv('gp-dircorreo');
   gGuardar(); gPrefillEscuela(); gAviso('Listo: tus datos de escuela se usarán en tus planeaciones y documentos.');
 }
 
@@ -656,6 +657,9 @@ function gRenderGrupos() {
     <div class="campo"><label>CCT</label><input id="gp-cct" value="${gEsc(gPerfil().cct)}" maxlength="12"></div>
     <div class="campo"><label>Municipio / localidad</label><input id="gp-mun" value="${gEsc(gPerfil().municipio)}"></div></div>
     <div class="f2"><div class="campo"><label>Estado (para el encabezado de tus reportes)</label><input id="gp-est" value="${gEsc(gPerfil().estado || '')}" placeholder="Ej. Yucatán"></div><div></div></div>
+    <div class="f3"><div class="campo"><label>Director(a) (opcional)</label><input id="gp-dir" value="${gEsc(gPerfil().director || '')}" placeholder="Nombre de quien dirige"></div>
+    <div class="campo"><label>WhatsApp de Dirección (opcional)</label><input id="gp-dirwa" type="tel" inputmode="tel" value="${gEsc(gPerfil().dirWa || '')}" placeholder="10 dígitos"></div>
+    <div class="campo"><label>Correo de Dirección (opcional)</label><input id="gp-dircorreo" type="email" value="${gEsc(gPerfil().dirCorreo || '')}" placeholder="direccion@escuela.edu.mx"></div></div>
     <div class="f2"><div class="campo"><label>Tipo de escuela (opcional)</label><input id="gp-tipo" value="${gEsc(gPerfil().tipoEscuela || '')}" placeholder="Ej. Escuela Secundaria General, Técnica, Federal, Estatal…"></div>
     <div class="campo"><label>Zona escolar (opcional)</label><input id="gp-zona" value="${gEsc(gPerfil().zona || '')}" placeholder="Ej. 08"></div></div>
     <button class="g-btn" onclick="gGuardarPerfil()">Guardar mis datos</button>

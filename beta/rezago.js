@@ -5,7 +5,7 @@
 // Todo se calcula en el dispositivo: no necesita internet ni IA.
 // ============================================================
 
-const REZ = { trim: null, sel: null };
+const REZ = { trim: null, sel: null, incRiesgo: false };
 const REZ_UMBRALES_DEF = { rezago: 6, riesgo: 7, asistRezago: 70, asistRiesgo: 80, pendRiesgo: 2 };
 const REZ_NIVELES = {
   rezago: { nom: 'En rezago', fondo: '#fee2e2', borde: '#fca5a5', color: '#b91c1c', orden: 0 },
@@ -93,6 +93,7 @@ function gRenderRezago() {
         <label>En riesgo si le faltan <input type="number" step="1" min="1" max="20" value="${um.pendRiesgo}" onchange="rezUmbral('pendRiesgo',this.value)"> actividades o más</label>
         <button class="g-btn g-btn-s" onclick="rezRestablecer()">Restablecer</button>
       </div></details></div>`;
+  h += rezEnvioCard(A);
   h += `<div class="card"><div class="card-title">👥 Alumnos · ${G_TRIM_NOM[t]}</div>`;
   if (!A.dias && A.filas.every(f => f.prom == null)) h += `<p style="color:var(--gris)">Todavía no hay pase de lista ni calificaciones en este trimestre. Cuando los captures, aquí aparece el semáforo de cada alumno.</p>`;
   h += `<div class="rez-lista">` + A.filas.map(f => {
@@ -161,3 +162,60 @@ function rezReportePadres(aid) {
     <p style="margin-top:30px">______________________________ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ______________________________<br>${gEsc(gDocente())} (Docente) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Madre, padre o tutor</p>`;
   descargarWord(html, `Informe_familia_${rezSlug(f.al.nombre)}_${rezSlug(G_TRIM_NOM[t])}.doc`);
 }
+
+
+// ── Enviar a Dirección: los alumnos en rezago (y, si se quiere, en riesgo) ──
+function rezEnvioFilas() {
+  const g = gGrupo(), A = rezAnalizar(g, REZ.trim);
+  return A.filas.filter(f => f.nivel === 'rezago' || (REZ.incRiesgo && f.nivel === 'riesgo'));
+}
+function rezEnvioCard(A) {
+  const p = gPerfil(), filas = rezEnvioFilas(), t = REZ.trim;
+  const tel = rezTelDireccion(), hayContacto = tel || p.dirCorreo;
+  let h = `<div class="card"><div class="card-title">📤 Enviar a Dirección</div>
+    <div class="ayuda" style="font-size:12px;color:var(--gris);margin-bottom:8px">Los alumnos que necesitan apoyo en ${G_TRIM_NOM[t]}, con su promedio, asistencia y el motivo. Revisa la lista antes de enviarla.</div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin:0 0 10px"><input type="checkbox"${REZ.incRiesgo ? ' checked' : ''} onchange="REZ.incRiesgo=this.checked;gRenderRezago()"> Incluir también a los alumnos <b>en riesgo</b></label>`;
+  if (!filas.length) return h + `<p style="color:#16a34a;font-weight:600;margin:0">✓ No hay alumnos ${REZ.incRiesgo ? 'en rezago ni en riesgo' : 'en rezago'} en este periodo.</p></div>`;
+  h += `<div class="rez-envio" style="border:1px solid var(--borde);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:13px;max-height:190px;overflow:auto">` +
+    filas.map(f => `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px solid #f1f5f9"><span>${gEsc(f.al.nombre)}</span><span style="color:${REZ_NIVELES[f.nivel].color};white-space:nowrap"><b>${f.prom == null ? '—' : gFmt(f.prom)}</b> · ${f.pct == null ? '—' : f.pct + ' %'}</span></div>`).join('') + `</div>
+    <div style="margin-bottom:6px"><b>${filas.length}</b> alumno(s) en la lista${p.director ? ' · para ' + gEsc(p.director) : ''}.</div>
+    <button class="g-btn" onclick="rezEnviar()">📤 Enviar…</button>
+    <button class="g-btn g-btn-s" onclick="rezEnvioWA()">💬 WhatsApp</button>
+    <button class="g-btn g-btn-s" onclick="rezEnvioCorreo()">✉️ Correo</button>
+    <button class="g-btn g-btn-s" onclick="rezEnvioPDF()">🖨️ PDF</button>
+    <button class="g-btn g-btn-s" onclick="rezEnvioWord()">⬇ Word</button>
+    <button class="g-btn g-btn-s" onclick="rezEnvioCopiar()">📋 Copiar</button>
+    <div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:8px">El mensaje lleva la lista en texto. Si quieres entregar el documento formal, descárgalo en PDF o Word y adjúntalo en WhatsApp o en el correo.${hayContacto ? '' : ' Guarda el WhatsApp o el correo de Dirección en «Mis grupos → Mi escuela» para que se llene solo.'}</div></div>`;
+  return h;
+}
+function rezTelDireccion() { const d = String(gPerfil().dirWa || '').replace(/\D/g, ''); return d.length === 10 ? '52' + d : d.length >= 11 ? d : ''; }
+function rezEnvioTexto(corto) {
+  const g = gGrupo(), t = REZ.trim, filas = rezEnvioFilas(), p = gPerfil();
+  const lin = filas.map((f, i) => `${i + 1}. ${f.al.nombre} (${f.nivel === 'rezago' ? 'rezago' : 'riesgo'}) — promedio ${f.prom == null ? 's/d' : gFmt(f.prom)}, asistencia ${f.pct == null ? 's/d' : f.pct + ' %'}${f.pend.length ? ', ' + f.pend.length + ' act. pendiente(s)' : ''}`);
+  let txt = `${p.director ? 'Estimado(a) ' + p.director + ':\n\n' : ''}Seguimiento de alumnos que requieren apoyo\n${gEscuela() || ''}\nGrupo ${g.nombre} · ${g.materia} · ${G_TRIM_NOM[t]}\nDocente: ${gDocente()}\n\n${REZ.incRiesgo ? 'En rezago y en riesgo' : 'En rezago'} (${filas.length}):\n${lin.join('\n')}\n\nLe comparto la información para su conocimiento y seguimiento. Quedo atento(a) a sus indicaciones.`;
+  if (corto && txt.length > corto) txt = txt.slice(0, corto - 90).replace(/\n[^\n]*$/, '') + '\n(…) La lista completa va en el documento adjunto.';
+  return txt;
+}
+function rezEnvioHTML() {
+  const g = gGrupo(), t = REZ.trim, filas = rezEnvioFilas(), p = gPerfil();
+  return gEncabezadoDoc('ALUMNOS QUE REQUIEREN APOYO — REPORTE PARA DIRECCIÓN', g, `<b>Periodo:</b> ${G_TRIM_NOM[t]}`) +
+    `<p><b>Fecha:</b> ${gFechaBonita(gHoy())}${p.director ? ' &nbsp; <b>Dirigido a:</b> ' + gEsc(p.director) : ''}</p>
+    <p><b>Alumnos incluidos:</b> ${filas.length} (${REZ.incRiesgo ? 'en rezago y en riesgo' : 'en rezago'}) de ${g.alumnos.length} en el grupo.</p>
+    <table style="width:100%;border-collapse:collapse"><tr>${['#', 'Alumno', 'Promedio', '% asistencia', 'Faltas', 'Act. sin calificar', 'Situación', 'Motivo'].map(rezTh).join('')}</tr>` +
+    filas.map((f, i) => `<tr>${[i + 1, gEsc(f.al.nombre), f.prom == null ? '—' : gFmt(f.prom), f.pct == null ? '—' : f.pct + ' %', f.c.F, f.pend.length].map(x => rezTd(x)).join('')}${rezTd(REZ_NIVELES[f.nivel].nom, rezColorNivel(f.nivel))}${rezTd(gEsc(f.causas.join(' ')), 'font-size:9pt')}</tr>`).join('') + '</table>' +
+    `<p><b>Acciones realizadas o previstas:</b></p><p>______________________________________________________________________________</p><p>______________________________________________________________________________</p><p>______________________________________________________________________________</p>
+    <table style="width:100%;margin-top:34px"><tr><td style="text-align:center;width:50%">______________________________<br>${gEsc(gDocente())}<br>Docente</td><td style="text-align:center">______________________________<br>${gEsc(p.director || 'Director(a)')}<br>Recibido por Dirección &nbsp; Fecha: ___________</td></tr></table>`;
+}
+async function rezEnviar() {
+  const txt = rezEnvioTexto();
+  if (navigator.share) { try { await navigator.share({ title: 'Alumnos que requieren apoyo', text: txt }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  rezEnvioCopiar();
+}
+function rezEnvioWA() { const tel = rezTelDireccion(); window.open('https://wa.me/' + tel + '?text=' + encodeURIComponent(rezEnvioTexto(3500)), '_blank'); }
+function rezEnvioCorreo() { location.href = 'mailto:' + encodeURIComponent(gPerfil().dirCorreo || '').replace('%40', '@') + '?subject=' + encodeURIComponent('Alumnos que requieren apoyo — ' + gGrupo().nombre + ' · ' + G_TRIM_NOM[REZ.trim]) + '&body=' + encodeURIComponent(rezEnvioTexto(1800)); }
+function rezEnvioCopiar() {
+  const txt = rezEnvioTexto(), ok = () => gAviso('Copiado. Pégalo en WhatsApp o en un correo.');
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, () => gAviso('No se pudo copiar el texto.')); else gAviso('Tu navegador no permite copiar.');
+}
+function rezEnvioPDF() { if (typeof bitVentana === 'function') bitVentana('Alumnos que requieren apoyo', rezEnvioHTML()); }
+function rezEnvioWord() { const g = gGrupo(); descargarWord(rezEnvioHTML(), `Alumnos_apoyo_Direccion_${rezSlug(g.nombre)}_${rezSlug(G_TRIM_NOM[REZ.trim])}.doc`); }
