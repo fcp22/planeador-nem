@@ -683,11 +683,12 @@ function gNuevoGrupoForm(sel) {
 }
 function gMostrarNuevoGrupo(on) { G.nuevoGrupo = !!on; G.editGrupo = null; gRender(); window.scrollTo(0, 0); }
 function gElegirGrupo(id) { G.nuevoGrupo = false; G.editGrupo = null; gCambiarGrupo(id); window.scrollTo(0, 0); }
-function gGruposPanelHTML() {
+function gGruposPanelHTML(conMas) {
+  if (conMas === undefined) conMas = true;
   const gs = G.data.grupos, grados = [...new Set(gs.map(x => String(x.grado)))].sort();
   return `<div class="gg-panel">` + grados.map(gr => `<div class="gg-fila"><div class="gg-grado">${gEsc(gr)}°<small>grado</small></div><div class="gg-cols">${
-    gs.filter(x => String(x.grado) === gr).map(x => `<button class="gg-tile${x.id === G.gid && !G.nuevoGrupo ? ' on' : ''}" onclick="gElegirGrupo('${x.id}')"><b>${gEsc(x.nombre)}</b><span>${gEsc(x.materia)}</span><em>${x.alumnos.length} alumno${x.alumnos.length === 1 ? '' : 's'}</em></button>`).join('')}</div></div>`).join('')
-    + `<button class="gg-mas${G.nuevoGrupo ? ' on' : ''}" onclick="gMostrarNuevoGrupo(true)">➕ Añadir grupo</button></div>`;
+    gs.filter(x => String(x.grado) === gr).map(x => `<button class="gg-tile${x.id === G.gid && !(conMas && G.nuevoGrupo) ? ' on' : ''}" onclick="gElegirGrupo('${x.id}')"><b>${gEsc(x.nombre)}</b><span>${gEsc(x.materia)}</span><em>${x.alumnos.length} alumno${x.alumnos.length === 1 ? '' : 's'}</em></button>`).join('')}</div></div>`).join('')
+    + (conMas ? `<button class="gg-mas${G.nuevoGrupo ? ' on' : ''}" onclick="gMostrarNuevoGrupo(true)">➕ Añadir grupo</button>` : '') + `</div>`;
 }
 function gRenderGrupos() {
   const gs = G.data.grupos, p = gPerfil();
@@ -794,11 +795,29 @@ function gResumenAsistencia(g, periodo) {
   });
   return { tr, dias, filas };
 }
+function gAsistGrupo(g, periodo) {
+  const rs = gResumenAsistencia(g, periodo);
+  let pr = 0, tot = 0;
+  rs.filas.forEach(f => { pr += f.c.P + f.c.R; tot += f.tot; });
+  return { dias: rs.dias.length, pct: tot ? Math.round(pr * 100 / tot) : null };
+}
+// Porcentaje de asistencia e inasistencia de TODOS los grupos del docente, ordenados por grado
+function gAsistTodosHTML(per) {
+  const gs = G.data.grupos.slice().sort((a, b) => String(a.grado).localeCompare(String(b.grado)) || a.nombre.localeCompare(b.nombre, 'es'));
+  if (gs.length < 2) return '';
+  const filas = gs.map(x => {
+    const r = gAsistGrupo(x, per), mal = r.pct != null && r.pct < 80;
+    return `<tr${x.id === G.gid ? ' style="background:#eef6ff"' : ''}><td><b>${gEsc(x.nombre)}</b></td><td>${G_ORD[x.grado] || x.grado + '°'} grado</td><td>${gEsc(x.materia)}</td><td>${x.alumnos.length}</td><td>${r.dias}</td><td class="${mal ? 'g-mal' : ''}"><b>${r.pct == null ? '—' : r.pct + '%'}</b></td><td class="${mal ? 'g-mal' : ''}"><b>${r.pct == null ? '—' : (100 - r.pct) + '%'}</b></td><td><button class="g-btn g-btn-s" style="margin:0;padding:4px 10px" onclick="gElegirGrupo('${x.id}')">Ver</button></td></tr>`;
+  }).join('');
+  return `<div class="card"><div class="card-title">📊 Asistencia de todos mis grupos</div>
+    <div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>Grupo</th><th>Grado</th><th>Materia</th><th>Alumnos</th><th>Días con lista</th><th>% asist.</th><th>% inasist.</th><th></th></tr></thead><tbody>${filas}</tbody></table></div>
+    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">Mismo periodo que el resumen de arriba. % de asistencia = (asistencias + retardos) ÷ registros del grupo. En rojo: menos de 80 %.</div></div>`;
+}
 function gRenderLista() {
   const g = gGrupo();
   if (!g) return gRenderListaInicio();
   const dia = g.asist[G.fecha];
-  let h = `<div class="sec-title">Pase de lista</div><div class="sec-sub">Toca la letra de cada alumno: <b>✓</b> presente, <b>R</b> retardo, <b>F</b> falta, <b>J</b> justificada. Se guarda solo. Si te equivocas, toca otra vez la misma letra para quitarla.</div>${gBarra()}${gTarjetaAlumnos(g)}
+  let h = `<div class="sec-title">Pase de lista</div><div class="sec-sub">Toca la letra de cada alumno: <b>✓</b> presente, <b>R</b> retardo, <b>F</b> falta, <b>J</b> justificada. Se guarda solo. Si te equivocas, toca otra vez la misma letra para quitarla.</div>${gGruposPanelHTML(false)}<div style="font-size:15px;font-weight:700;color:var(--azul);margin:0 2px 10px">📋 Grupo: ${gEsc(g.nombre)} · ${gEsc(g.materia)} (${G_ORD[g.grado] || g.grado + '°'} grado)</div>${gTarjetaAlumnos(g)}
   <div class="card"><div class="g-fecha">
     <button class="g-btn g-btn-s" onclick="gDia(-1)">‹</button>
     ${(() => { const nd = gFechaBonita(G.fecha).split(',')[0], fin = /^(Sábado|Domingo)$/.test(nd); return `<span title="${fin ? 'Fin de semana' : 'Día de la semana'}" style="display:inline-flex;align-items:center;padding:9px 14px;border-radius:10px;font-weight:800;font-size:15px;background:${fin ? '#fef3c7' : 'var(--azul)'};color:${fin ? '#92400e' : '#fff'}">${nd}</span>`; })()}
@@ -822,7 +841,7 @@ function gRenderLista() {
   // Resumen por alumno
   const per = G.periodoLista;
   const rs = gResumenAsistencia(g, per);
-  h += `<div class="card"><div class="card-title">📈 Resumen de asistencia por alumno</div>
+  h += `<div class="card"><div class="card-title">📈 Resumen de asistencia por alumno — ${gEsc(g.nombre)} · ${gEsc(g.materia)}</div>
     <div class="campo" style="max-width:300px"><label>Periodo</label><select onchange="gPeriodo(this.value)">
     <option value="actual"${per === 'actual' ? ' selected' : ''}>Trimestre de la fecha elegida (${G_TRIM_NOM[gTrimDeFecha(G.fecha)]})</option>
     <option value="1"${per === '1' ? ' selected' : ''}>Primer trimestre</option><option value="2"${per === '2' ? ' selected' : ''}>Segundo trimestre</option><option value="3"${per === '3' ? ' selected' : ''}>Tercer trimestre</option>
@@ -836,6 +855,7 @@ function gRenderLista() {
     <button class="g-btn" style="margin-top:12px" onclick="gDescargarAsistencia()">⬇ Descargar resumen en Word</button>`;
   }
   h += '</div>';
+  h += gAsistTodosHTML(per);
   gPanel().innerHTML = h;
 }
 // Totales del día alineados bajo cada columna de botones (✓ R F J)
