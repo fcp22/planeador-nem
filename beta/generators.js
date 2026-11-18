@@ -279,6 +279,19 @@ JSON requerido:
 }`;
 }
 
+// ── Progreso mientras la IA genera: mensaje + segundos transcurridos ──
+// iaProgreso('id-del-mensaje', 'Generando…', 'suele tardar 1–2 minutos') → { poner(titulo, detalle), parar() }
+function iaProgreso(idMsg, titulo, detalle) {
+  const el = document.getElementById(idMsg), t0 = Date.now(); let tit = titulo, det = detalle || '', timer = null;
+  const pintar = () => {
+    if (!el) return;
+    const seg = Math.round((Date.now() - t0) / 1000), m = Math.floor(seg / 60), tx = m ? `${m} min ${String(seg % 60).padStart(2, '0')} s` : `${seg} s`;
+    el.innerHTML = `${tit}<br><small>${det ? det + ' · ' : ''}<b>${tx}</b>${seg > 150 ? '<br>Está tardando más de lo normal; la IA sigue trabajando. No cierres ni recargues la página.' : ''}</small>`;
+  };
+  pintar(); timer = setInterval(pintar, 1000);
+  return { poner(a, b) { tit = a; det = b || ''; pintar(); }, parar() { if (timer) { clearInterval(timer); timer = null; } } };
+}
+
 // ============================================================
 // GENERADOR 1 — FUNCIÓN PRINCIPAL
 // ============================================================

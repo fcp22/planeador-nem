@@ -272,15 +272,29 @@ async function generarSecuenciaDidactica(d) {
   if (sinCont) throw new Error(`La secuencia ${sinCont.i} no tiene contenidos: marca al menos uno.`);
   d.situacion = (secEl('d-situacion') || {}).value || ''; d.recursos = ((secEl('s-rec') || {}).value || '').trim();
   if (typeof licEsPrueba === 'function' && licEsPrueba() && cards.length > 1) throw new Error('En la prueba gratis puedes generar 1 secuencia. Deja una sola secuencia (o activa tu licencia para generar hasta 4 por trimestre).');
-  const msg = secEl('gen-d-msg'), dur = secDuracion(), partes = [], fallos = [], hechas = [];
-  for (const c of cards) {
-    if (msg) msg.innerHTML = `Generando secuencia ${c.i} de ${todas.length}…<br><small>Inicio, desarrollo y cierre con sus tiempos (30–60 segundos cada una)</small>`;
+  const dur = secDuracion(), partes = [], fallos = [], hechas = [];
+  // Todas las secuencias se piden al mismo tiempo (cada una es independiente): tarda lo de una sola, no la suma.
+  let listas = 0; const n = cards.length;
+  const pg = iaProgreso('gen-d-msg', n === 1 ? 'Generando tu secuencia…' : `Generando ${n} secuencias al mismo tiempo…`, n === 1 ? 'inicio, desarrollo y cierre con sus tiempos · suele tardar 1 min' : 'listas 0 de ' + n + ' · suele tardar 1–2 min');
+  const una = async c => {
     const h = secHorario(c.sesiones, dur);
-    try {
-      const ia = parsearJSON(await llamarGeminiJSON(secPrompt(d, c, h, cards.length), 'secuencia'));
-      partes.push(secBloqueHTML(d, c, h, ia, todas.length)); hechas.push(c.i);
-    } catch (e) { fallos.push(`Secuencia ${c.i}: ${e.message}`); }
-  }
+    for (let intento = 0; ; intento++) {
+      try {
+        const ia = parsearJSON(await llamarGeminiJSON(secPrompt(d, c, h, n), 'secuencia'));
+        return { c, html: secBloqueHTML(d, c, h, ia, todas.length) };
+      } catch (e) {
+        // un reintento si el servicio estaba ocupado (no si es un problema de licencia o cuota)
+        const deLicencia = typeof LIC_CODIGOS !== 'undefined' && LIC_CODIGOS.includes(e.codigo);
+        if (intento === 0 && !deLicencia) { await new Promise(r => setTimeout(r, 4000)); continue; }
+        return { c, error: e.message };
+      }
+    }
+  };
+  let res;
+  try {
+    res = await Promise.all(cards.map(c => una(c).then(r => { listas++; if (n > 1) pg.poner(`Generando ${n} secuencias al mismo tiempo…`, `listas ${listas} de ${n} · suele tardar 1–2 min`); return r; })));
+  } finally { pg.parar(); }
+  res.forEach(r => { if (r.error) fallos.push(`Secuencia ${r.c.i}: ${r.error}`); else { partes.push(r.html); hechas.push(r.c.i); } });
   if (!partes.length) throw new Error(fallos[0] || 'No se pudo generar la secuencia.');
   if (fallos.length) {
     hechas.forEach(i => { const o = secEl(`s-${i}-on`); if (o) o.checked = false; });   // las que ya salieron bien no se repiten
