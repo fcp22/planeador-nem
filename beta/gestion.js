@@ -1085,26 +1085,33 @@ function gNota(actId, aid, el) {
 function gActualizarResumen() {
   const e = document.getElementById('g-resumen'); if (e) e.innerHTML = gResumenHTML();
 }
+// Nota del recuperativo (sobre 10) de un alumno en un trimestre, o '' si no tiene
+function gRecNotaTxt(g, t, aid) {
+  const R = g.recup && g.recup[t];
+  if (!R || !R.notas || R.notas[aid] == null || !(R.max > 0)) return '';
+  return String(Math.round(Math.min(10, R.notas[aid] / R.max * 10) * 10) / 10);
+}
 function gResumenHTML() {
   const g = gGrupo(); const t = G.trimCalif;
   if (t === 'anual') {
-    let h = `<table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th>Trim. 1</th><th>Trim. 2</th><th>Trim. 3</th><th>Promedio final</th></tr></thead><tbody>`;
+    let h = `<table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th>Trim. 1</th><th>Trim. 2</th><th>Trim. 3</th><th>Promedio final</th><th>Recuperativos</th></tr></thead><tbody>`;
     h += g.alumnos.map((a, i) => {
       const b = [1, 2, 3].map(x => gBoleta(gCalcAlumno(g, a.id, x).final)); const an = gCalcAnual(g, a.id);
       const fin = an ? Math.max(5, Math.round(an.prom + 1e-9)) : null;
-      return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${b.map(x => `<td class="${x != null && x < 6 ? 'g-mal' : ''}">${x == null ? '—' : x}</td>`).join('')}<td class="${fin != null && fin < 6 ? 'g-mal' : ''}"><b>${fin == null ? '—' : fin}</b>${an ? ` <span style="color:var(--gris);font-size:11px">(${gFmt(an.prom, 2)})</span>` : ''}</td></tr>`;
+      return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${b.map(x => `<td class="${x != null && x < 6 ? 'g-mal' : ''}">${x == null ? '—' : x}</td>`).join('')}<td class="${fin != null && fin < 6 ? 'g-mal' : ''}"><b>${fin == null ? '—' : fin}</b>${an ? ` <span style="color:var(--gris);font-size:11px">(${gFmt(an.prom, 2)})</span>` : ''}</td><td style="font-size:12.5px">${[1, 2, 3].map(x => { const n = gRecNotaTxt(g, x, a.id); return n ? `T${x}: <b>${n}</b>` : ''; }).filter(Boolean).join(' &nbsp; ') || '<span style="color:var(--gris)">—</span>'}</td></tr>`;
     }).join('');
-    return h + '</tbody></table>';
+    return h + `</tbody></table><div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:8px;line-height:1.5">Cada trimestre ya incluye su recuperativo, según lo que definiste. Los recuperativos se capturan en la pestaña <a href="#" onclick="gIrA('recup');return false" style="color:var(--azul-med);font-weight:600">Recuperativos</a>; aquí solo se muestran.</div>`;
   }
   const calc = g.alumnos.map(a => ({ a, r: gCalcAlumno(g, a.id, t) }));
   const fin = calc.map(x => x.r.final).filter(x => x != null);
   const prom = fin.length ? fin.reduce((x, y) => x + y, 0) / fin.length : null;
   const rep = calc.filter(x => x.r.final != null && gBoleta(x.r.final) < 6).length;
+  const hayRec = g.alumnos.some(a => gRecNotaTxt(g, t, a.id));
   let h = `<div class="g-stats"><div><b>${gFmt(prom, 2)}</b><span>Promedio del grupo</span></div><div><b>${fin.length}/${g.alumnos.length}</b><span>Alumnos con calificación</span></div><div><b class="${rep ? 'g-mal' : ''}">${rep}</b><span>Reprobados (&lt; 6)</span></div></div>`;
-  h += `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th>${g.criterios.map(c => `<th>${gEsc(c.nombre)}<br><small>${gPct(g, c.id, t)}%</small></th>`).join('')}<th>Calif.</th><th>Boleta</th></tr></thead><tbody>`;
+  h += `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th>${g.criterios.map(c => `<th>${gEsc(c.nombre)}<br><small>${gPct(g, c.id, t)}%</small></th>`).join('')}<th>Calif.</th><th>Boleta</th>${hayRec ? '<th>Recup.</th>' : ''}</tr></thead><tbody>`;
   h += calc.map(({ a, r }, i) => {
     const b = gBoleta(r.final);
-    return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${g.criterios.map(c => `<td>${gFmt(r.porCrit[c.id])}</td>`).join('')}<td>${gFmt(r.final, 2)}</td><td class="${b != null && b < 6 ? 'g-mal' : ''}"><b>${b == null ? '—' : b}</b>${r.rec ? ' <small title="Con recuperativo" style="color:var(--azul-med)">(R)</small>' : ''}</td></tr>`;
+    return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${g.criterios.map(c => `<td>${gFmt(r.porCrit[c.id])}</td>`).join('')}<td>${gFmt(r.final, 2)}</td><td class="${b != null && b < 6 ? 'g-mal' : ''}"><b>${b == null ? '—' : b}</b>${r.rec ? ' <small title="Con recuperativo" style="color:var(--azul-med)">(R)</small>' : ''}</td>${hayRec ? `<td>${gRecNotaTxt(g, t, a.id) || '—'}</td>` : ''}</tr>`;
   }).join('') + '</tbody></table></div>';
   if (fin.length && calc.some(x => x.r.pcts < 100 && x.r.final != null)) h += `<div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">Los criterios sin calificaciones todavía no cuentan: la calificación se calcula con lo registrado hasta ahora.</div>`;
   return h;
@@ -1153,8 +1160,8 @@ function gDescargarCalif() {
   const td = x => `<td style="border:1px solid #000;padding:4px">${x}</td>`;
   let html, nom;
   if (t === 'anual') {
-    html = gEncabezadoDoc('RESUMEN ANUAL DE CALIFICACIONES', g) + `<table style="width:100%;border-collapse:collapse"><tr>${['#', 'Alumno', 'Trim. 1', 'Trim. 2', 'Trim. 3', 'Promedio final'].map(th).join('')}</tr>` +
-      g.alumnos.map((a, i) => { const b = [1, 2, 3].map(x => gBoleta(gCalcAlumno(g, a.id, x).final)); const an = gCalcAnual(g, a.id); return `<tr>${[i + 1, gEsc(a.nombre), ...b.map(x => x == null ? '—' : x), an ? Math.max(5, Math.round(an.prom + 1e-9)) : '—'].map(td).join('')}</tr>`; }).join('') + '</table>';
+    html = gEncabezadoDoc('RESUMEN ANUAL DE CALIFICACIONES', g) + `<table style="width:100%;border-collapse:collapse"><tr>${['#', 'Alumno', 'Trim. 1', 'Trim. 2', 'Trim. 3', 'Promedio final', 'Recuperativos'].map(th).join('')}</tr>` +
+      g.alumnos.map((a, i) => { const b = [1, 2, 3].map(x => gBoleta(gCalcAlumno(g, a.id, x).final)); const an = gCalcAnual(g, a.id); return `<tr>${[i + 1, gEsc(a.nombre), ...b.map(x => x == null ? '—' : x), an ? Math.max(5, Math.round(an.prom + 1e-9)) : '—', [1, 2, 3].map(x => { const n = gRecNotaTxt(g, x, a.id); return n ? `T${x}: ${n}` : ''; }).filter(Boolean).join('  ')].map(td).join('')}</tr>`; }).join('') + '</table>';
     nom = 'Calificaciones_anual';
   } else {
     html = gEncabezadoDoc('REGISTRO DE CALIFICACIONES — ' + G_TRIM_NOM[t].toUpperCase(), g) +
