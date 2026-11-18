@@ -5,7 +5,7 @@
 // El maestro revisa y corrige antes de guardar. Las fotos no se guardan: solo la calificación.
 // ============================================================
 
-G.esc = { exId: null, hojas: [], cola: [], restantes: null, activo: 0, modo: '', man: { tipo: 'opcion_multiple', clave: '', n: '', nombre: '' }, manEx: null, noGuardar: false };
+G.esc = { exId: null, hojas: [], cola: [], restantes: null, activo: 0, modo: '', man: { tipo: 'opcion_multiple', clave: '', n: '', nombre: '', guardadoId: '' }, manEx: null, noGuardar: false };
 
 function escExamenes(g) { return g.actividades.filter(a => a.tipo === 'examen' && Array.isArray(a.reactivos) && a.reactivos.length); }
 function escExamen() { const g = gGrupo(); return g ? escExamenes(g).find(a => a.id === G.esc.exId) || null : null; }
@@ -19,7 +19,7 @@ function gRenderEscaner() {
   if (!G.data) gCargar();
   const g = gGrupo(), exs = g ? escExamenes(g) : [];
   if (g && !exs.find(x => x.id === G.esc.exId)) { G.esc.exId = exs.length ? exs[exs.length - 1].id : null; G.esc.hojas = G.esc.hojas.filter(h => h.exObj); }
-  if (G.esc.manEx && G.esc.manEx.gid !== (g ? g.id : '')) { G.esc.hojas = G.esc.hojas.filter(h => !h.exObj); G.esc.manEx = null; }   // cambió de grupo: la clave escrita ya no aplica
+  if (G.esc.manEx && G.esc.manEx.gid !== (g ? g.id : '')) { G.esc.hojas = G.esc.hojas.filter(h => !h.exObj); G.esc.manEx = null; G.esc.man.guardadoId = ''; }   // cambió de grupo: la clave escrita ya no aplica
   if (!G.esc.modo) G.esc.modo = exs.length ? 'examen' : 'manual';
   if (!g) G.esc.modo = 'manual';
   const man = G.esc.modo === 'manual', ex = man ? G.esc.manEx : escExamen(), vis = escHojasVis();
@@ -65,6 +65,7 @@ function escLimpiar() { G.esc.hojas = G.esc.hojas.filter(h => !h.guardada); gRen
 function escManualHTML(g) {
   const m = G.esc.man, chip = (v, t) => `<button class="g-chip${m.tipo === v ? ' on' : ''}" onclick="escManTipo('${v}')">${t}</button>`;
   return `<div class="card"><div class="card-title">2. Escribe la clave de respuestas</div>
+    ${escGuardables(g).length ? `<div class="campo"><label>Examen guardado (opcional)</label><select id="esc-guardado" onchange="escManGuardado(this.value)"><option value="">Seleccionar examen para cargar la clave…</option>${escGuardables(g).map(a => `<option value="${a.id}"${m.guardadoId === a.id ? ' selected' : ''}>${gEsc(a.nombre)}</option>`).join('')}</select><div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:4px">Si eliges uno, la clave se llena sola y las calificaciones se guardan en ese mismo examen.</div></div>` : ''}
     <div class="campo"><label>Tipo de preguntas</label><div class="g-chips">${chip('opcion_multiple', 'A – D')}${chip('verdadero_falso', 'V / F')}${chip('mixto', 'Mixto')}</div></div>
     <div class="f2"><div class="campo"><label>Número de preguntas</label><input id="esc-n" type="number" min="1" max="100" value="${gEsc(String(m.n))}" oninput="escManInput(event)"></div>
     <div class="campo"><label>Nombre del examen</label><input id="esc-nom" value="${gEsc(m.nombre)}" placeholder="Ej. Examen del trimestre" oninput="escManInput(event)"></div></div>
@@ -73,6 +74,25 @@ function escManualHTML(g) {
     ${g ? `<div class="campo"><label>Guardar las calificaciones en</label><select id="esc-guardar" onchange="escManInput(event)"><option value="g"${G.esc.noGuardar ? '' : ' selected'}>${gEsc(g.nombre)} · ${gEsc(g.materia)} (aparece en «Exámenes»)</option><option value="no"${G.esc.noGuardar ? ' selected' : ''}>No guardar: solo ver y copiar los resultados</option></select></div>` : `<div class="ayuda" style="font-size:12px;color:var(--gris);margin-bottom:8px">Sin grupo: verás las calificaciones y podrás copiarlas. Para guardarlas, crea tu grupo en «Mis grupos».</div>`}
     <div id="esc-man-est" style="font-size:13px;margin:6px 0 10px"></div>
     </div>`;
+}
+// Exámenes del grupo cuya clave se puede cargar como letras (solo opción múltiple / V-F, o los registrados antes con clave manual)
+function escGuardables(g) {
+  return g ? g.actividades.filter(a => a.tipo === 'examen' && (a.claveManual || (Array.isArray(a.reactivos) && a.reactivos.length && a.reactivos.every(r => r.tipo === 'opcion_multiple' || r.tipo === 'verdadero_falso')))) : [];
+}
+function escClaveDe(a) {
+  let L = '';
+  if (a.claveManual) L = escManLetras(a.claveManual);
+  else L = a.reactivos.map(r => r.tipo === 'verdadero_falso' ? (gNorm(r.respuesta).charAt(0) === 'v' ? 'V' : 'F') : String(r.respuesta || '').toUpperCase().charAt(0)).join('');
+  if (!L || /[^A-EVF]/.test(L)) return null;
+  return { letras: L, tipo: /^[VF]+$/.test(L) ? 'verdadero_falso' : /^[A-E]+$/.test(L) ? 'opcion_multiple' : 'mixto' };
+}
+function escManGuardado(id) {
+  escManLeer(); const m = G.esc.man, g = gGrupo(); m.guardadoId = id || '';
+  if (id) {
+    const a = g && g.actividades.find(x => x.id === id), k = a && escClaveDe(a);
+    if (!k) { m.guardadoId = ''; gAviso('No se pudo cargar la clave de ese examen.'); } else { m.clave = k.letras; m.tipo = k.tipo; m.n = String(k.letras.length); m.nombre = a.nombre; G.esc.noGuardar = false; }
+  }
+  gRenderEscaner();
 }
 function escManLetras(t) { return String(t || '').toUpperCase().replace(/[^A-Z]/g, ''); }
 function escManError(tipo, L) {
@@ -105,8 +125,9 @@ function escManUsar() {
   if (err) { gAviso(err); return false; }
   if (G.esc.hojas.some(h => h.exObj) && !confirm('Al cambiar la clave se quitan las fotos ya leídas con la clave anterior. ¿Continuar?')) return false;
   G.esc.hojas = G.esc.hojas.filter(h => !h.exObj);
-  const reactivos = [...L].map(c => ({ tipo: /[VF]/.test(c) && m.tipo !== 'opcion_multiple' ? 'verdadero_falso' : 'opcion_multiple', respuesta: c, valor: 1 }));
-  G.esc.manEx = { id: 'manual', nombre: (m.nombre || '').trim() || 'Examen escaneado', reactivos, max: L.length, notas: {}, gid: g ? g.id : '', actId: null, clave: L, tipoSel: m.tipo };
+  const lig = g && m.guardadoId ? g.actividades.find(x => x.id === m.guardadoId) : null, vals = lig && Array.isArray(lig.reactivos) && lig.reactivos.length === L.length ? lig.reactivos.map(r => r.valor || 1) : null;   // si es un examen de la app, se respetan los puntos de cada reactivo
+  const reactivos = [...L].map((c, i) => ({ tipo: /[VF]/.test(c) && m.tipo !== 'opcion_multiple' ? 'verdadero_falso' : 'opcion_multiple', respuesta: c, valor: vals ? vals[i] : 1 }));
+  G.esc.manEx = { id: 'manual', nombre: (m.nombre || '').trim() || 'Examen escaneado', reactivos, max: reactivos.reduce((t, r) => t + r.valor, 0), notas: {}, gid: g ? g.id : '', actId: (g && m.guardadoId && g.actividades.some(x => x.id === m.guardadoId)) ? m.guardadoId : null, clave: L, tipoSel: m.tipo };
   gRenderEscaner(); return true;
 }
 
@@ -140,7 +161,7 @@ async function escEscanear() {
   let ex;
   if (man) {
     escManLeer(); const m = G.esc.man, L = escManLetras(m.clave), cur = G.esc.manEx;
-    const igual = cur && cur.clave === L && cur.max === (parseInt(m.n, 10) || 0) && cur.tipoSel === m.tipo && cur.nombre === ((m.nombre || '').trim() || 'Examen escaneado');
+    const igual = cur && cur.clave === L && cur.reactivos.length === (parseInt(m.n, 10) || 0) && cur.tipoSel === m.tipo && (cur.actId || '') === (m.guardadoId || '') && cur.nombre === ((m.nombre || '').trim() || 'Examen escaneado');
     if (!igual && !escManUsar()) return;
     ex = G.esc.manEx;
   } else ex = escExamen();
