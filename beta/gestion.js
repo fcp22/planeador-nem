@@ -605,6 +605,23 @@ function gBorrarGrupo(id) {
   G.data.grupos = G.data.grupos.filter(x => x.id !== id);
   G.gid = G.data.grupos[0] ? G.data.grupos[0].id : null; gGuardar(); gRender();
 }
+function gEditarGrupo(on) { G.editGrupo = on ? G.gid : null; gRender(); }
+function gActualizarMateriasEd() {
+  const gr = document.getElementById('gge-grado').value;
+  document.getElementById('gge-materia').innerHTML = gMateriasOpts(gr);
+}
+function gGuardarEdicionGrupo() {
+  const g = gGrupo(); if (!g) return;
+  const nombre = document.getElementById('gge-nombre').value.trim();
+  const grado = document.getElementById('gge-grado').value;
+  const materia = document.getElementById('gge-materia').value;
+  if (!nombre) { gAviso('Escribe el nombre del grupo, por ejemplo «3° A».'); return; }
+  const cambioMat = g.materia !== materia || String(g.grado) !== String(grado);
+  g.nombre = nombre; g.grado = grado; g.materia = materia;
+  G.editGrupo = null; G.borrador = null; G.temaUlt = ''; G.temasSel = []; G.sugerencias = [];
+  gGuardar(); gRender();
+  if (cambioMat) setTimeout(() => gAviso('Listo. El grupo ahora es «' + nombre + ' · ' + materia + '» (' + grado + '°). Las listas, calificaciones y exámenes que ya tenías se conservan.'), 50);
+}
 function gLimpiarNombre(l) { return l.replace(/^\s*\d+\s*[.)\-:]*\s*/, '').replace(/\s+/g, ' ').trim(); }
 function gAgregarAlumnos(idTa) {
   const g = gGrupo(); if (!g) return;
@@ -651,38 +668,26 @@ function gRenderGrupos() {
   const g = gGrupo();
   let h = `<div class="sec-title">Mis grupos y alumnos</div>
   <div class="sec-sub">Crea tus grupos una sola vez; la lista de alumnos se usa en el pase de lista, las calificaciones y los exámenes.</div>
-  <div class="g-aviso">🔒 Los nombres de tus alumnos se guardan <strong>solo en este dispositivo</strong> (no se suben a internet). Descarga un respaldo de vez en cuando; si cambias de celular o computadora, ahí lo restauras.</div>
-  <div class="card"><div class="card-title">🏫 Mi escuela</div>
-    <div class="f3"><div class="campo"><label>Nombre de la escuela</label><input id="gp-esc" value="${gEsc(gPerfil().escuela)}" placeholder="Escuela Secundaria…"></div>
-    <div class="campo"><label>CCT</label><input id="gp-cct" value="${gEsc(gPerfil().cct)}" maxlength="12"></div>
-    <div class="campo"><label>Municipio / localidad</label><input id="gp-mun" value="${gEsc(gPerfil().municipio)}"></div></div>
-    <div class="f2"><div class="campo"><label>Estado (para el encabezado de tus reportes)</label><input id="gp-est" value="${gEsc(gPerfil().estado || '')}" placeholder="Ej. Yucatán"></div><div></div></div>
-    <div class="f3"><div class="campo"><label>Director(a) (opcional)</label><input id="gp-dir" value="${gEsc(gPerfil().director || '')}" placeholder="Nombre de quien dirige"></div>
-    <div class="campo"><label>WhatsApp de Dirección (opcional)</label><input id="gp-dirwa" type="tel" inputmode="tel" value="${gEsc(gPerfil().dirWa || '')}" placeholder="10 dígitos"></div>
-    <div class="campo"><label>Correo de Dirección (opcional)</label><input id="gp-dircorreo" type="email" value="${gEsc(gPerfil().dirCorreo || '')}" placeholder="direccion@escuela.edu.mx"></div></div>
-    <div class="f2"><div class="campo"><label>Tipo de escuela (opcional)</label><input id="gp-tipo" value="${gEsc(gPerfil().tipoEscuela || '')}" placeholder="Ej. Escuela Secundaria General, Técnica, Federal, Estatal…"></div>
-    <div class="campo"><label>Zona escolar (opcional)</label><input id="gp-zona" value="${gEsc(gPerfil().zona || '')}" placeholder="Ej. 08"></div></div>
-    <button class="g-btn" onclick="gGuardarPerfil()">Guardar mis datos</button>
-    <span style="font-size:12px;color:var(--gris);margin-left:6px">Aparecen en tus planeaciones, listas y exámenes.</span></div>
-  <div class="card"><div class="card-title">➕ Nuevo grupo</div>
-    <div class="f3">
-      <div class="campo"><label>Grupo</label><input id="gg-nombre" placeholder="Ej. 3° A"></div>
-      <div class="campo"><label>Grado</label><select id="gg-grado" onchange="gActualizarMaterias()"><option value="1">1° Secundaria</option><option value="2">2° Secundaria</option><option value="3">3° Secundaria</option></select></div>
-      <div class="campo"><label>Materia que impartes</label><select id="gg-materia">${gMateriasOpts('1')}</select></div>
-    </div>
-    <div class="campo"><label>Alumnos (opcional: teclea, pega o sube tu lista)</label>
-      <textarea id="gn-lista" rows="4" placeholder="1. AGUILAR PECH ANDREA&#10;2. BALAM CHAN DIEGO"></textarea></div>
-    ${gUiArchivo('gn-lista')}
-    <button class="g-btn" onclick="gCrearGrupo()">Crear grupo</button>
-    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">Si das la misma materia a varios grupos, crea uno por cada grupo. Los nombres se revisan en el recuadro antes de crear el grupo.</div>
-  </div>`;
-
+  <div class="g-aviso">🔒 Los nombres de tus alumnos se guardan <strong>solo en este dispositivo</strong> (no se suben a internet). Descarga un respaldo de vez en cuando; si cambias de celular o computadora, ahí lo restauras.</div>`;
   if (G.data.grupos.length) {
     h += `<div class="g-chips">${G.data.grupos.map(x => `<button class="g-chip${x.id === G.gid ? ' on' : ''}" onclick="gCambiarGrupo('${x.id}')">${gEsc(x.nombre)} · ${gEsc(x.materia)}</button>`).join('')}</div>`;
   }
   if (g) {
+    const gEd = G.editGrupo === g.id;
     h += `<div class="card"><div class="card-title">👥 ${gEsc(g.nombre)} · ${gEsc(g.materia)} — ${g.alumnos.length} alumnos
-      <button class="g-btn g-btn-x" style="margin-left:auto" onclick="gBorrarGrupo('${g.id}')">Borrar grupo</button></div>
+      <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap"><button class="g-btn g-btn-s" style="margin:0" onclick="gEditarGrupo(${gEd ? 'false' : 'true'})">${gEd ? '✕ Cerrar edición' : '✏️ Editar grupo'}</button>
+      <button class="g-btn g-btn-x" style="margin:0" onclick="gBorrarGrupo('${g.id}')">Borrar grupo</button></span></div>
+      ${gEd ? `<div style="background:#f1f5f9;border:1.5px solid var(--borde);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+        <div style="font-weight:700;margin-bottom:8px">✏️ Corregir los datos del grupo</div>
+        <div class="f3">
+          <div class="campo"><label>Grupo</label><input id="gge-nombre" value="${gEsc(g.nombre)}" placeholder="Ej. 3° A"></div>
+          <div class="campo"><label>Grado</label><select id="gge-grado" onchange="gActualizarMateriasEd()">${['1', '2', '3'].map(n => `<option value="${n}"${String(g.grado) === n ? ' selected' : ''}>${n}° Secundaria</option>`).join('')}</select></div>
+          <div class="campo"><label>Materia que impartes</label><select id="gge-materia">${gMateriasOpts(String(g.grado), g.materia)}</select></div>
+        </div>
+        <button class="g-btn" onclick="gGuardarEdicionGrupo()">Guardar cambios</button>
+        <button class="g-btn g-btn-s" onclick="gEditarGrupo(false)">Cancelar</button>
+        <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:6px">Tus alumnos, listas, calificaciones y exámenes se conservan. Si cambias la materia, lo nuevo que generes (exámenes, planeaciones) ya saldrá con la materia correcta.</div>
+      </div>` : ''}
       <div class="campo"><label>Agregar alumnos (uno por renglón)</label>
       <textarea id="gg-lista" rows="5" placeholder="Pega aquí tu lista de asistencia:&#10;1. AGUILAR PECH JUAN&#10;2. BALAM CHAN MARÍA"></textarea>
       <div class="ayuda">Puedes copiar la lista desde Excel o Word. Se quitan solos los números del inicio y los nombres repetidos.</div></div>
@@ -695,6 +700,30 @@ function gRenderGrupos() {
     </div>`;
     h += gTarjetaDescarga(g);
   }
+  h += `  <div class="card"><div class="card-title">🏫 Mi escuela</div>
+    <div class="f3"><div class="campo"><label>Nombre de la escuela</label><input id="gp-esc" value="${gEsc(gPerfil().escuela)}" placeholder="Escuela Secundaria…"></div>
+    <div class="campo"><label>CCT</label><input id="gp-cct" value="${gEsc(gPerfil().cct)}" maxlength="12"></div>
+    <div class="campo"><label>Municipio / localidad</label><input id="gp-mun" value="${gEsc(gPerfil().municipio)}"></div></div>
+    <div class="f2"><div class="campo"><label>Estado (para el encabezado de tus reportes)</label><input id="gp-est" value="${gEsc(gPerfil().estado || '')}" placeholder="Ej. Yucatán"></div><div></div></div>
+    <div class="f3"><div class="campo"><label>Director(a) (opcional)</label><input id="gp-dir" value="${gEsc(gPerfil().director || '')}" placeholder="Nombre de quien dirige"></div>
+    <div class="campo"><label>WhatsApp de Dirección (opcional)</label><input id="gp-dirwa" type="tel" inputmode="tel" value="${gEsc(gPerfil().dirWa || '')}" placeholder="10 dígitos"></div>
+    <div class="campo"><label>Correo de Dirección (opcional)</label><input id="gp-dircorreo" type="email" value="${gEsc(gPerfil().dirCorreo || '')}" placeholder="direccion@escuela.edu.mx"></div></div>
+    <div class="f2"><div class="campo"><label>Tipo de escuela (opcional)</label><input id="gp-tipo" value="${gEsc(gPerfil().tipoEscuela || '')}" placeholder="Ej. Escuela Secundaria General, Técnica, Federal, Estatal…"></div>
+    <div class="campo"><label>Zona escolar (opcional)</label><input id="gp-zona" value="${gEsc(gPerfil().zona || '')}" placeholder="Ej. 08"></div></div>
+    <button class="g-btn" onclick="gGuardarPerfil()">Guardar mis datos</button>
+    <span style="font-size:12px;color:var(--gris);margin-left:6px">Aparecen en tus planeaciones, listas y exámenes.</span></div>
+  <details class="card" ${G.data.grupos.length ? '' : 'open'}><summary class="card-title" style="cursor:pointer">➕ Nuevo grupo</summary>
+    <div class="f3">
+      <div class="campo"><label>Grupo</label><input id="gg-nombre" placeholder="Ej. 3° A"></div>
+      <div class="campo"><label>Grado</label><select id="gg-grado" onchange="gActualizarMaterias()"><option value="1">1° Secundaria</option><option value="2">2° Secundaria</option><option value="3">3° Secundaria</option></select></div>
+      <div class="campo"><label>Materia que impartes</label><select id="gg-materia">${gMateriasOpts('1')}</select></div>
+    </div>
+    <div class="campo"><label>Alumnos (opcional: teclea, pega o sube tu lista)</label>
+      <textarea id="gn-lista" rows="4" placeholder="1. AGUILAR PECH ANDREA&#10;2. BALAM CHAN DIEGO"></textarea></div>
+    ${gUiArchivo('gn-lista')}
+    <button class="g-btn" onclick="gCrearGrupo()">Crear grupo</button>
+    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">Si das la misma materia a varios grupos, crea uno por cada grupo. Los nombres se revisan en el recuadro antes de crear el grupo.</div>
+  </details>`;
   h += `<div class="card"><div class="card-title">💾 Respaldo</div>
     <button class="g-btn" onclick="gRespaldar()">⬇ Descargar respaldo</button>
     <label class="g-btn g-btn-s" style="display:inline-block;cursor:pointer">⬆ Restaurar respaldo<input type="file" accept=".json,application/json" style="display:none" onchange="gRestaurar(this)"></label>
