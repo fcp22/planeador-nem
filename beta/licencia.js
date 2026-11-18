@@ -250,7 +250,7 @@ function licAdminRender() {
   if (!LIC.adminKey) { try { LIC.adminKey = localStorage.getItem('nem_admin_key') || ''; } catch (e) {} }
   p.innerHTML = `<div class="sec-title">Licencias (administrador)</div><div class="sec-sub">Genera códigos para vender, revisa quién los usó y bloquea correos temporales.</div>
   <div class="card"><div class="card-title">🛡️ Clave de administrador</div>
-    <div class="campo" style="max-width:340px"><label>Clave (ADMIN_SECRET del servidor)</label><input id="la-clave" type="password" autocomplete="off" value="${gEsc(LIC.adminKey)}" onchange="licAdminClave()"></div>
+    <div class="campo" style="max-width:340px"><label>Clave (ADMIN_SECRET del servidor)</label><input id="la-clave" type="password" autocomplete="off" value="${gEsc(LIC.adminKey)}" oninput="licAdminClave()" onchange="licAdminClave()"></div>
     <div class="ayuda" style="font-size:11px;color:var(--gris)">✓ Se queda guardada en este equipo: solo la escribes una vez. Si usas una computadora que no es tuya, pulsa «Olvidar clave».</div>
     <button class="g-btn g-btn-s" style="margin-top:8px" onclick="licAdminOlvidar()">Olvidar clave en este equipo</button></div>
   <div class="card"><div class="card-title">➕ Generar códigos</div>
@@ -348,6 +348,25 @@ async function licAdminCuentas() {
     licAdminCuentasPintar();
   } catch (e) { o.innerHTML = ''; licAdminErr(e.status === 404 ? 'El servidor todavía no tiene esta lista: pega el nuevo worker.js en Cloudflare (Edit code → Deploy).' : e.message); }
 }
+async function licAdminCuenta(id, accion) {
+  licAdminErr(''); const k = licAdminClave(); if (!k) return licAdminErr('Escribe la clave de administrador.');
+  const c = (LIC.cuentas || []).find(x => x.id === id); if (!c) return;
+  const body = { id, accion };
+  if (accion === 'bloquear' && !confirm('¿Bloquear a ' + c.correo + '? Ya no podrá usar la IA hasta que la reactives.')) return;
+  if (accion === 'cuota') {
+    const v = prompt('Tope de documentos con IA para ' + c.correo + '\n(' + (c.prueba ? 'es el total de su prueba' : 'es por mes') + '; hoy: ' + c.cuota + ', usados: ' + c.usadas + ').\nEscribe un número de 0 a 2000:', c.cuota);
+    if (v === null) return;
+    const n = parseInt(v, 10); if (!(n >= 0 && n <= 2000)) return licAdminErr('El tope debe ser un número de 0 a 2000.');
+    body.cuota = n;
+  }
+  try {
+    const r = await workerFetch('/admin/cuenta', { metodo: 'POST', body, admin: k });
+    c.cuota = r.cuota;
+    if (accion === 'bloquear') { c.estadoAntes = c.estado; c.estado = 'revocada'; }
+    if (accion === 'reactivar') c.estado = Date.parse(c.vence) < Date.now() ? 'vencida' : (c.prueba ? 'prueba' : 'activa');
+    licAdminCuentasPintar();
+  } catch (e) { licAdminErr(e.status === 404 ? 'El servidor todavía no tiene esta opción: pega el nuevo worker.js en Cloudflare (Edit code → Deploy).' : e.message); }
+}
 function licAdminCuentasFiltro(f) { LIC.cueFiltro = f; licAdminCuentasPintar(); }
 function licAdminCuentasPintar() {
   const o = document.getElementById('la-cue'); if (!o || !LIC.cuentas) return;
@@ -356,9 +375,9 @@ function licAdminCuentasPintar() {
   const chip = (k, t) => `<button class="g-chip${f === k ? ' on' : ''}" onclick="licAdminCuentasFiltro('${k}')">${t}</button>`;
   const vis = f === 'todas' ? L : L.filter(c => c.estado === f);
   const dias = v => { const d = Math.ceil((Date.parse(v) - Date.now()) / 86400000); return d > 0 ? `${d} día${d === 1 ? '' : 's'}` : 'ya venció'; };
-  o.innerHTML = `<div class="g-chips">${chip('todas', 'Todas (' + L.length + ')')}${chip('prueba', '🟡 Probando (' + ct('prueba') + ')')}${chip('activa', '🟢 Suscritos (' + ct('activa') + ')')}${chip('vencida', '⚪ Vencidas (' + ct('vencida') + ')')}</div>` +
-    (vis.length ? `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>Correo</th><th>Estado</th><th>Plan / nota</th><th>Le quedan</th><th>Vence</th><th>IA usada</th></tr></thead><tbody>` +
-      vis.map(c => { const e = E[c.estado] || [c.estado, '#64748b']; return `<tr><td style="word-break:break-all">${gEsc(c.correo)}</td><td style="color:${e[1]};font-weight:600;white-space:nowrap">${e[0]}</td><td>${gEsc(c.plan || '—')}${c.nota ? '<br><span style="color:var(--gris);font-size:11.5px">' + gEsc(c.nota) + '</span>' : ''}</td><td>${c.estado === 'prueba' || c.estado === 'activa' ? dias(c.vence) : '—'}</td><td style="white-space:nowrap">${licFecha(c.vence)}</td><td>${c.usadas}/${c.cuota}</td></tr>`; }).join('') + '</tbody></table></div>' : '<p style="color:var(--gris)">No hay cuentas en esta categoría.</p>') +
+  o.innerHTML = `<div class="g-chips">${chip('todas', 'Todas (' + L.length + ')')}${chip('prueba', '🟡 Probando (' + ct('prueba') + ')')}${chip('activa', '🟢 Suscritos (' + ct('activa') + ')')}${chip('vencida', '⚪ Vencidas (' + ct('vencida') + ')')}${chip('revocada', '🔴 Bloqueadas (' + ct('revocada') + ')')}</div>` +
+    (vis.length ? `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>Correo</th><th>Estado</th><th>Plan / nota</th><th>Le quedan</th><th>Vence</th><th>IA usada</th><th>Limitar</th></tr></thead><tbody>` +
+      vis.map(c => { const e = E[c.estado] || [c.estado, '#64748b']; return `<tr><td style="word-break:break-all">${gEsc(c.correo)}</td><td style="color:${e[1]};font-weight:600;white-space:nowrap">${e[0]}</td><td>${gEsc(c.plan || '—')}${c.nota ? '<br><span style="color:var(--gris);font-size:11.5px">' + gEsc(c.nota) + '</span>' : ''}</td><td>${c.estado === 'prueba' || c.estado === 'activa' ? dias(c.vence) : '—'}</td><td style="white-space:nowrap">${licFecha(c.vence)}</td><td style="white-space:nowrap">${c.usadas}/${c.cuota}</td><td style="white-space:nowrap">${c.estado === 'revocada' ? `<button class="g-btn g-btn-s" title="Reactivar" onclick="licAdminCuenta('${c.id}','reactivar')">✅ Reactivar</button>` : `<button class="g-btn g-btn-s" title="Bloquear" onclick="licAdminCuenta('${c.id}','bloquear')">🚫 Bloquear</button>`} <button class="g-btn g-btn-s" title="Cambiar el tope de documentos con IA" onclick="licAdminCuenta('${c.id}','cuota')">🔢 Tope</button></td></tr>`; }).join('') + '</tbody></table></div>' : '<p style="color:var(--gris)">No hay cuentas en esta categoría.</p>') +
     `<div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:8px">Una cuenta aparece aquí desde que entra por primera vez a la app. Las que se registran pero no abren la app, no se ven.</div>`;
 }
 
