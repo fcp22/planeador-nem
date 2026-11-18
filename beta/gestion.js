@@ -697,6 +697,18 @@ function gRenderGrupos() {
   const form = !gs.length || G.nuevoGrupo;
   let h = `<div class="sec-title">Mis grupos y alumnos</div>
   <div class="sec-sub">Crea tus grupos una sola vez; la lista de alumnos se usa en el pase de lista, las calificaciones y los exámenes. 🔒 Los nombres se guardan <strong>solo en este dispositivo</strong>: descarga un respaldo de vez en cuando.</div>`;
+  h += `<details class="card gg-det" ${p.escuela ? '' : 'open'}><summary class="card-title" style="cursor:pointer">🏫 ${p.escuela ? gEsc(p.escuela) + (p.cct ? ' · CCT ' + gEsc(p.cct) : '') + (p.municipio ? ' · ' + gEsc(p.municipio) : '') : 'Mi escuela: escribe aquí los datos de tu escuela'} <span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--gris)">✏️ ver / editar</span></summary>
+    <div class="f3"><div class="campo"><label>Nombre de la escuela</label><input id="gp-esc" value="${gEsc(gPerfil().escuela)}" placeholder="Escuela Secundaria…"></div>
+    <div class="campo"><label>CCT</label><input id="gp-cct" value="${gEsc(gPerfil().cct)}" maxlength="12"></div>
+    <div class="campo"><label>Municipio / localidad</label><input id="gp-mun" value="${gEsc(gPerfil().municipio)}"></div></div>
+    <div class="f2"><div class="campo"><label>Estado (para el encabezado de tus reportes)</label><input id="gp-est" value="${gEsc(gPerfil().estado || '')}" placeholder="Ej. Yucatán"></div><div></div></div>
+    <div class="f3"><div class="campo"><label>Director(a) (opcional)</label><input id="gp-dir" value="${gEsc(gPerfil().director || '')}" placeholder="Nombre de quien dirige"></div>
+    <div class="campo"><label>WhatsApp de Dirección (opcional)</label><input id="gp-dirwa" type="tel" inputmode="tel" value="${gEsc(gPerfil().dirWa || '')}" placeholder="10 dígitos"></div>
+    <div class="campo"><label>Correo de Dirección (opcional)</label><input id="gp-dircorreo" type="email" value="${gEsc(gPerfil().dirCorreo || '')}" placeholder="direccion@escuela.edu.mx"></div></div>
+    <div class="f2"><div class="campo"><label>Tipo de escuela (opcional)</label><input id="gp-tipo" value="${gEsc(gPerfil().tipoEscuela || '')}" placeholder="Ej. Escuela Secundaria General, Técnica, Federal, Estatal…"></div>
+    <div class="campo"><label>Zona escolar (opcional)</label><input id="gp-zona" value="${gEsc(gPerfil().zona || '')}" placeholder="Ej. 08"></div></div>
+    <button class="g-btn" onclick="gGuardarPerfil()">Guardar mis datos</button>
+    <span style="font-size:12px;color:var(--gris);margin-left:6px">Aparecen en tus planeaciones, listas y exámenes.</span></details>`;
   if (gs.length) h += gGruposPanelHTML();
   if (form) h += gNuevoGrupoForm(g);
   else if (g) {
@@ -730,18 +742,6 @@ function gRenderGrupos() {
     </div>`;
     h += gTarjetaDescarga(g);
   }
-  h += `<details class="card gg-det" ${p.escuela ? '' : 'open'}><summary class="card-title" style="cursor:pointer">🏫 Mi escuela y datos para tus documentos</summary>
-    <div class="f3"><div class="campo"><label>Nombre de la escuela</label><input id="gp-esc" value="${gEsc(gPerfil().escuela)}" placeholder="Escuela Secundaria…"></div>
-    <div class="campo"><label>CCT</label><input id="gp-cct" value="${gEsc(gPerfil().cct)}" maxlength="12"></div>
-    <div class="campo"><label>Municipio / localidad</label><input id="gp-mun" value="${gEsc(gPerfil().municipio)}"></div></div>
-    <div class="f2"><div class="campo"><label>Estado (para el encabezado de tus reportes)</label><input id="gp-est" value="${gEsc(gPerfil().estado || '')}" placeholder="Ej. Yucatán"></div><div></div></div>
-    <div class="f3"><div class="campo"><label>Director(a) (opcional)</label><input id="gp-dir" value="${gEsc(gPerfil().director || '')}" placeholder="Nombre de quien dirige"></div>
-    <div class="campo"><label>WhatsApp de Dirección (opcional)</label><input id="gp-dirwa" type="tel" inputmode="tel" value="${gEsc(gPerfil().dirWa || '')}" placeholder="10 dígitos"></div>
-    <div class="campo"><label>Correo de Dirección (opcional)</label><input id="gp-dircorreo" type="email" value="${gEsc(gPerfil().dirCorreo || '')}" placeholder="direccion@escuela.edu.mx"></div></div>
-    <div class="f2"><div class="campo"><label>Tipo de escuela (opcional)</label><input id="gp-tipo" value="${gEsc(gPerfil().tipoEscuela || '')}" placeholder="Ej. Escuela Secundaria General, Técnica, Federal, Estatal…"></div>
-    <div class="campo"><label>Zona escolar (opcional)</label><input id="gp-zona" value="${gEsc(gPerfil().zona || '')}" placeholder="Ej. 08"></div></div>
-    <button class="g-btn" onclick="gGuardarPerfil()">Guardar mis datos</button>
-    <span style="font-size:12px;color:var(--gris);margin-left:6px">Aparecen en tus planeaciones, listas y exámenes.</span></details>`;
   h += `<details class="card gg-det"><summary class="card-title" style="cursor:pointer">💾 Respaldo de mis grupos</summary>
     <button class="g-btn" onclick="gRespaldar()">⬇ Descargar respaldo</button>
     <label class="g-btn g-btn-s" style="display:inline-block;cursor:pointer">⬆ Restaurar respaldo<input type="file" accept=".json,application/json" style="display:none" onchange="gRestaurar(this)"></label>
