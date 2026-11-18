@@ -124,7 +124,7 @@ function licPuertaBloquear(e, errRed) {
     <div style="font-size:38px">🔒</div>
     <h2 style="margin:8px 0 6px;font-size:20px;color:#1e3a5f">${titulo}</h2>
     <p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#475569">${msg}</p>
-    ${errRed ? '' : `<input id="lp-codigo" placeholder="NEM-XXXX-XXXX-XXXX" maxlength="16" oninput="this.value=this.value.toUpperCase()" style="width:100%;box-sizing:border-box;padding:12px;font-size:16px;letter-spacing:.05em;text-align:center;border:1.5px solid #cbd5e1;border-radius:10px;margin-bottom:10px">
+    ${errRed ? '' : `<input id="lp-codigo" placeholder="NEM-XXXX-XXXX-XXXX" maxlength="24" oninput="this.value=this.value.toUpperCase()" style="width:100%;box-sizing:border-box;padding:12px;font-size:16px;letter-spacing:.05em;text-align:center;border:1.5px solid #cbd5e1;border-radius:10px;margin-bottom:10px">
     <div id="lp-err" style="display:none;color:#b91c1c;font-size:13px;margin-bottom:10px"></div>`}
     <button id="lp-btn" onclick="${errRed ? 'licPuertaReintentar()' : 'licPuertaCanjear()'}" style="width:100%;padding:12px;font-size:15px;font-weight:700;border:0;border-radius:10px;background:#1e3a5f;color:#fff;cursor:pointer">${errRed ? 'Reintentar' : 'Activar y entrar'}</button>
     <p style="font-size:12.5px;color:#64748b;margin:14px 0 0">¿Aún no tienes código? ${contacto ? gEsc(contacto) + ' · ' : ''}<a href="suscripcion.html" target="_blank" rel="noopener" style="color:#1d4ed8;font-weight:600">Ver planes</a></p>
@@ -227,7 +227,7 @@ async function licRender() {
     </div>`;
   }
   h += `<div class="card"><div class="card-title">🎟️ Canjear un código</div>
-    <div class="campo"><label>Código de licencia</label><input id="lic-codigo" placeholder="NEM-XXXX-XXXX-XXXX" maxlength="16" oninput="this.value=this.value.toUpperCase()" style="max-width:320px;letter-spacing:.05em"></div>
+    <div class="campo"><label>Código de licencia</label><input id="lic-codigo" placeholder="NEM-XXXX-XXXX-XXXX" maxlength="24" oninput="this.value=this.value.toUpperCase()" style="max-width:320px;letter-spacing:.05em"></div>
     <div class="l-err" id="lic-err" style="margin:0 0 12px"></div><div class="l-ok" id="lic-ok" style="margin:0 0 12px"></div>
     <button class="g-btn" id="lic-btn" onclick="licCanjear()">Canjear código</button>
     <div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px">¿Aún no tienes código? ${window.NEM_CONFIG && window.NEM_CONFIG.contacto ? gEsc(window.NEM_CONFIG.contacto) + ' · ' : ''}<a href="suscripcion.html" target="_blank" rel="noopener">Ver planes</a></div>
