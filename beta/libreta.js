@@ -67,9 +67,12 @@ function gLibRefrescar() {
 function gLibCuerpoHTML(g, t) {
   const L = gLibreta(g, t), tot = L.n;
   if (!g.alumnos.length) return '<div class="g-vacio">Agrega alumnos en «Mis grupos» para llevar su libreta.</div>';
+  // Tamaño de los cuadros según cuántos trabajos hay: mientras más trabajos, más chicos, para que quepan en pantalla
+  const ancho = ((gPanel() && gPanel().clientWidth) || (window.innerWidth - 320)) - 64, disp = ancho - 330;
+  const sz = Math.max(14, Math.min(34, Math.floor(disp / tot) - 4)), peq = sz < 30;
   let h = `<div class="lb-resumen">Trabajos dejados este trimestre: <b>${tot}</b> · cada alumno se califica sobre <b>${tot}</b>. <button class="g-btn" style="margin:0 0 0 8px;padding:5px 12px;font-size:12.5px" onclick="gLibN(1)">＋ Agregar trabajo ${tot + 1}</button></div>`;
-  h += `<div class="g-tabla-w"><table class="g-tabla lb-t"><thead><tr><th>#</th><th class="g-sticky">Alumno</th>` +
-    Array.from({ length: tot }, (_, j) => `<th class="lb-th"><div class="lb-nj">${j + 1}</div><button class="lb-todos" title="Marcar o quitar a todo el grupo" onclick="gLibTodos(${j})">✓ todos</button></th>`).join('') +
+  h += `<div class="g-tabla-w"><table class="g-tabla lb-t${peq ? ' lb-peq' : ''}" style="--lbs:${sz}px"><thead><tr><th>#</th><th class="g-sticky">Alumno</th>` +
+    Array.from({ length: tot }, (_, j) => `<th class="lb-th"><div class="lb-nj">${j + 1}</div><button class="lb-todos" title="Marcar o quitar a todo el grupo" onclick="gLibTodos(${j})">${peq ? '✓' : '✓ todos'}</button></th>`).join('') +
     `<th class="lb-th">Entregó</th><th class="lb-th">%</th><th class="lb-th">Calif.</th></tr></thead><tbody>` +
     g.alumnos.map((a, i) => {
       const e = gLibEntregados(L, a.id), sc = e / tot * 10;
