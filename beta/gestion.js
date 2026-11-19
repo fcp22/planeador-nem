@@ -715,6 +715,7 @@ function gRestaurar(input) {
       if (!confirm(`El respaldo trae ${resumen}. Esto reemplaza lo que hay ahora en este dispositivo. ¿Continuar?`)) { input.value = ''; return; }
       if (total) {
         try { if (typeof histKey === 'function') localStorage.setItem(histKey(), JSON.stringify(d.historial || [])); } catch (e) { /* sin espacio */ }
+        try { if (typeof cargarHist === 'function' && typeof historial !== 'undefined') { historial = cargarHist(); if (typeof renderHist === 'function' && document.getElementById('hist-lista')) renderHist(); } } catch (e) { /* el historial en pantalla se actualiza al recargar */ }
         try { localStorage.setItem(gTemasClave(), JSON.stringify(d.temas || [])); } catch (e) { /* sin espacio */ }
         let malArch = 0;
         for (const x of (d.archivos || [])) { try { await gCalPoner({ id: x.id, cuenta: G.key, cat: x.cat || 'cal', nombre: x.nombre, tipo: x.tipo, mime: x.mime, blob: gB64Blob(x.b64, x.mime), t: x.t || Date.now() }); } catch (e) { malArch++; } }
