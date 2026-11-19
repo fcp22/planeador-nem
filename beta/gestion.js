@@ -98,7 +98,7 @@ function gGuardarPerfil() {
 function gInit() { gCargar(); if (G.tab) gRender(); }
 function gOnTab(id) {
   if (typeof licOnTab === 'function' && licOnTab(id)) { G.tab = id; return; }
-  const conocidas = ['inicio', 'bienvenida', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'recup', 'calendario', 'libros', 'planes', 'bitacora', 'horario', 'escaner', ...Object.keys(G_PRONTO)];
+  const conocidas = ['inicio', 'bienvenida', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'recup', 'calendario', 'libros', 'planes', 'bitacora', 'horario', 'escaner', 'trabajos', ...Object.keys(G_PRONTO)];
   if (!conocidas.includes(id)) return;
   if (!G.data) gCargar();
   G.tab = id;
@@ -108,7 +108,7 @@ function gOnTab(id) {
 function gRender() {
   if (licTabBloqueada(G.tab)) { gPanel().innerHTML = licHTMLBloqueo(G.tab); return; }
   if (G_PRONTO[G.tab]) return gRenderProntoTab(G.tab);
-  const f = { inicio: gRenderInicio, bienvenida: gRenderBienvenida, planes: gRenderPlanes, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, recup: gRenderRecup, calendario: gRenderCalendario, libros: gRenderLibros, bitacora: gRenderBitacora, horario: () => gRenderArchivos('horario'), escaner: gRenderEscaner }[G.tab];
+  const f = { inicio: gRenderInicio, bienvenida: gRenderBienvenida, planes: gRenderPlanes, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, recup: gRenderRecup, calendario: gRenderCalendario, libros: gRenderLibros, bitacora: gRenderBitacora, horario: () => gRenderArchivos('horario'), escaner: gRenderEscaner, trabajos: gRenderTrabajos }[G.tab];
   if (f) f();
 }
 
@@ -430,6 +430,7 @@ const G_MENU = [
   ['nueva', '📝', 'Planeación', 'Programa analítico y plano didáctico', true],
   ['libros', '📚', 'Libros y programas SEP', 'Libros de texto y programas', true],
   ['calif', '📊', 'Calificaciones', 'Criterios y calificación del trimestre', true],
+  ['trabajos', '📓', 'Libreta de trabajos', 'Tareas entregadas por alumno', true],
   ['examenes', '🧮', 'Exámenes', 'Crear con IA y calificar', true],
   ['rezago', '🚦', 'Rezago', 'Semáforo de alumnos en riesgo', true],
   ['recup', '🔁', 'Recuperativos', 'Segunda oportunidad para reprobados', true],
@@ -453,6 +454,7 @@ const G_ICONOS = {
   recup: ['<path d="M20 12a8 8 0 1 1-2.500-5.800"/><path d="M20 4v4.500h-4.500"/>', '#0891b2', '#cffafe'],
   rezago: ['<path d="M4 20v-6M10 20V9M16 20V4"/><path d="M2.500 20.500h19"/>', '#e11d48', '#ffe4e6'],
   bitacora: ['<rect x="5" y="4" width="14" height="17" rx="2.800"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/>', '#db2777', '#fce7f3'],
+  trabajos: ['<rect x="5" y="3" width="14" height="18" rx="2.500"/><path d="M9 8h6M9 12h6M9 16h3.500"/>', '#c2410c', '#ffedd5'],
   escaner: ['<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.500"/>', '#0284c7', '#e0f2fe'],
   calendario: ['<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>', '#0d9488', '#ccfbf1'],
   horario: ['<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.500 2"/>', '#d97706', '#fef3c7'],
@@ -923,6 +925,7 @@ function gCalcAlumno(g, aid, t, sinRec) {
     gActsTrim(g, t).filter(a => a.criterioId === c.id).forEach(a => {
       const n = a.notas[aid]; if (n != null && a.max > 0) vals.push(n / a.max * 10);
     });
+    if (typeof gLibretaScore === 'function') { const ls = gLibretaScore(g, aid, t, c.id); if (ls != null) vals.push(ls); }   // Libreta de trabajos
     if (vals.length) { const s = vals.reduce((x, y) => x + y, 0) / vals.length; porCrit[c.id] = s; suma += s * pc; pcts += pc; }
     else porCrit[c.id] = null;
   });
@@ -1140,6 +1143,7 @@ function gRenderCalif() {
       <div class="campo"><label>Puntaje máximo</label><input id="ga-max" type="number" min="1" value="10"></div></div>
       <button class="g-btn" onclick="gAgregarActividad()">Agregar actividad</button>
       <span style="font-size:12px;color:var(--gris);margin-left:8px">Los exámenes se crean en la pestaña «Exámenes» y aparecen aquí también.</span></div>`;
+    if (typeof gLibUsada === 'function' && gLibUsada(g, t)) { const cL = g.criterios.find(c => c.id === g.libreta[t].crit); if (cL) h += `<div class="g-aviso" style="margin-bottom:14px">📓 El criterio <b>${gEsc(cL.nombre)}</b> se calcula con tu <a href="#" onclick="gIrA('trabajos');return false" style="color:var(--azul-med);font-weight:600">Libreta de trabajos</a> (entregados ÷ revisados). Aquí no tienes que capturar nada para ese criterio.</div>`; }
     const acts = gActsTrim(g, t);
     if (acts.length && g.alumnos.length) {
       h += `<div class="card"><div class="card-title">✏️ Captura de calificaciones</div><div class="g-tabla-w"><table class="g-tabla g-cap"><thead><tr><th>#</th><th class="g-sticky">Alumno</th>` +
