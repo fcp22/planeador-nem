@@ -1,0 +1,16 @@
+{
+  "name": "Planeador Docente NEM — PRUEBA sin internet",
+  "short_name": "Planeador PRUEBA",
+  "description": "Planeaciones, calificaciones y gestión de grupos para secundaria (NEM, Fase 6).",
+  "lang": "es-MX",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1a3a5c",
+  "theme_color": "#1a3a5c",
+  "icons": [
+    { "src": "icons/icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

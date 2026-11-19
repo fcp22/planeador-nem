@@ -1,0 +1,1962 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1a3a5c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icono-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icono-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Planeador PRUEBA">
+<title>PRUEBA · Planeador Docente NEM — sin internet</title>
+<style>
+:root {
+  --azul:#1a3a5c; --azul-med:#2563a8; --azul-claro:#3b82c4;
+  --verde:#16a34a; --rojo:#dc2626; --fondo:#f1f5f9;
+  --blanco:#ffffff; --gris-claro:#e2e8f0; --gris:#64748b;
+  --gris-oscuro:#334155; --texto:#1e293b; --borde:#cbd5e1;
+  --sombra:0 2px 8px rgba(0,0,0,.10); --sombra-lg:0 8px 32px rgba(0,0,0,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--fondo);color:var(--texto);min-height:100vh;font-size:14px;}
+input,select,textarea,button{font-family:inherit;font-size:14px;}
+
+/* LOGIN */
+#pantalla-login{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(160deg,var(--azul) 0%,#0f2744 60%,#1a3a5c 100%);}
+.login-card{background:var(--blanco);border-radius:16px;padding:48px 40px;width:100%;max-width:420px;box-shadow:var(--sombra-lg);}
+.login-logo{text-align:center;margin-bottom:32px;}
+.login-logo .escudo{font-size:52px;display:block;margin-bottom:10px;}
+.login-logo h1{font-size:20px;font-weight:700;color:var(--azul);line-height:1.3;}
+.login-logo p{font-size:12px;color:var(--gris);margin-top:5px;}
+.fg{margin-bottom:18px;}
+.fg label{display:block;font-size:12px;font-weight:600;color:var(--gris-oscuro);margin-bottom:7px;text-transform:uppercase;letter-spacing:.04em;}
+.fg input{width:100%;padding:12px 14px;border:1.5px solid var(--borde);border-radius:8px;color:var(--texto);background:var(--fondo);outline:none;transition:border-color .2s;}
+.fg input:focus{border-color:var(--azul-med);background:var(--blanco);}
+.btn-p{width:100%;padding:13px;background:var(--azul);border:none;border-radius:8px;color:var(--blanco);font-size:15px;font-weight:600;cursor:pointer;transition:background .2s;margin-top:4px;}
+.btn-p:hover{background:var(--azul-med);}
+.l-err{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--rojo);margin-top:14px;display:none;}
+.l-ok{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;font-size:13px;color:#16a34a;margin-top:14px;display:none;}
+.auth-tabs{display:flex;gap:0;margin-bottom:28px;border-radius:10px;overflow:hidden;border:1.5px solid var(--gris-claro);}
+.auth-tab{flex:1;padding:11px;border:none;background:var(--fondo);color:var(--gris);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.auth-tab.on{background:var(--azul);color:var(--blanco);}
+.curp-hint{font-size:11px;color:var(--gris);margin-top:4px;font-style:italic;}
+.req{color:var(--rojo);margin-left:2px;}
+.fg select{width:100%;padding:12px 14px;border:1.5px solid var(--borde);border-radius:8px;color:var(--texto);background:var(--fondo);outline:none;font-size:14px;}
+.fg select:focus{border-color:var(--azul-med);background:var(--blanco);}
+.link-olvide{display:block;text-align:center;margin-top:16px;font-size:13px;color:var(--azul-med);cursor:pointer;background:none;border:none;width:100%;text-decoration:underline;}
+.link-olvide:hover{color:var(--azul);}
+.rec-pregunta{background:var(--fondo);border:1.5px solid var(--borde);border-radius:8px;padding:12px 14px;font-size:14px;color:var(--azul);font-weight:600;margin-bottom:18px;}
+.rec-info{font-size:13px;color:var(--gris);margin-bottom:18px;line-height:1.5;}
+
+/* APP */
+#app{display:none;min-height:100vh;}
+.header{background:var(--azul);color:var(--blanco);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.hbrand{display:flex;align-items:center;gap:10px;}
+.hbrand .ico{font-size:22px;}
+.hbrand h1{font-size:15px;font-weight:700;}
+.hbrand p{font-size:11px;opacity:.8;}
+.huser{display:flex;align-items:center;gap:10px;font-size:13px;}
+.avatar{width:32px;height:32px;background:var(--azul-claro);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;}
+.btn-salir{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:var(--blanco);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;}
+.btn-salir:hover{background:rgba(255,255,255,.2);}
+
+/* NAV */
+.nav-bar{background:var(--blanco);border-bottom:2px solid var(--gris-claro);padding:0 24px;display:flex;gap:2px;overflow-x:auto;}
+.nav-tab{padding:14px 18px;background:none;border:none;border-bottom:3px solid transparent;color:var(--gris);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .2s;}
+.nav-tab.activo{color:var(--azul);border-bottom-color:var(--azul);font-weight:700;}
+.nav-tab:hover:not(.activo){color:var(--azul-med);}
+
+/* MAIN */
+.main{max-width:960px;margin:0 auto;padding:28px 20px;}
+.tab-panel{display:none;}
+.tab-panel.activo{display:block;}
+.sec-title{font-size:20px;font-weight:700;color:var(--azul);margin-bottom:4px;}
+.sec-sub{font-size:13px;color:var(--gris);margin-bottom:24px;}
+
+/* CARD */
+.card{background:var(--blanco);border:1px solid var(--borde);border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:var(--sombra);}
+.card-title{font-size:14px;font-weight:700;color:var(--azul-med);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--gris-claro);display:flex;align-items:center;gap:8px;}
+
+/* FORM */
+.campo{margin-bottom:16px;}
+.campo label{display:block;font-size:12px;font-weight:600;color:var(--gris-oscuro);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;}
+.campo input,.campo select,.campo textarea{width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:8px;color:var(--texto);background:var(--blanco);outline:none;transition:border-color .2s;}
+.campo input:focus,.campo select:focus,.campo textarea:focus{border-color:var(--azul-med);}
+.campo textarea{resize:vertical;min-height:80px;}
+.campo .ayuda{font-size:11px;color:var(--gris);margin-top:4px;font-style:italic;}
+.sug-tag{color:#15803d;font-weight:600;font-size:12px;text-transform:none;letter-spacing:0;}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.f3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+
+/* CONTENIDOS */
+.cnt-item{background:var(--fondo);border:1.5px solid var(--borde);border-radius:8px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .2s;}
+.cnt-item:hover{border-color:var(--azul-claro);}
+.cnt-item.on{border-color:var(--azul);background:#eff6ff;}
+.cnt-num{font-size:11px;font-weight:700;color:var(--gris);margin-bottom:4px;}
+.cnt-tit{font-size:13px;color:var(--texto);font-weight:500;}
+.cnt-pda{font-size:12px;color:var(--gris);margin-top:6px;padding-top:6px;border-top:1px solid var(--gris-claro);display:none;}
+.cnt-item.on .cnt-pda{display:block;color:var(--azul);}
+
+/* PROYECTOS */
+.proy-lista{display:none;}
+.proy-card{border:1.5px solid var(--borde);border-radius:8px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .2s;background:var(--blanco);}
+.proy-card:hover{border-color:var(--verde);}
+.proy-card.sel{border-color:var(--verde);background:#f0fdf4;}
+.proy-nom{font-size:13px;font-weight:600;color:var(--azul);}
+.proy-pag{font-size:11px;color:var(--gris);}
+.proy-desc{font-size:12px;color:var(--gris-oscuro);margin-top:4px;}
+
+/* TIPO SELECTOR */
+.tipo-sel{display:flex;gap:12px;margin-bottom:24px;}
+.tipo-btn{flex:1;padding:16px;border:2px solid var(--borde);border-radius:12px;background:var(--blanco);cursor:pointer;text-align:center;transition:all .2s;}
+.tipo-btn.on{border-color:var(--azul);background:#eff6ff;}
+.tipo-btn .ico{font-size:28px;display:block;margin-bottom:8px;}
+.tipo-btn .tit{font-size:13px;font-weight:700;color:var(--azul);}
+.tipo-btn .desc{font-size:11px;color:var(--gris);margin-top:3px;}
+
+/* TRIM TABS */
+.ttabs{display:flex;gap:8px;margin-bottom:16px;}
+.ttab{padding:8px 16px;border:1.5px solid var(--borde);border-radius:8px;background:var(--blanco);cursor:pointer;font-size:13px;color:var(--gris);transition:all .2s;}
+.ttab.on{border-color:var(--azul);background:var(--azul);color:var(--blanco);font-weight:600;}
+/* Título de sección en banda azul con letras blancas */
+.card-title.g-titulo-azul{background:var(--azul);color:#fff;font-size:17px;font-weight:800;padding:15px 24px;margin:-24px -24px 20px;border-radius:12px 12px 0 0;border-bottom:0;flex-wrap:wrap;}
+.g-titulo-azul #g-suma{background:#fff;border-radius:20px;padding:3px 12px;}
+.lb-resumen{font-size:13px;color:var(--gris);margin:0 0 10px;line-height:1.5}
+.lb-t th,.lb-t td{padding:5px 3px}.lb-t th.lb-th,.lb-t td.lb-td{padding:4px 1px}.lb-t th.lb-th{text-align:center;min-width:calc(var(--lbs,34px) + 4px);vertical-align:bottom}.lb-t th:first-child,.lb-t td:first-child{width:28px;min-width:0;padding-left:8px;text-align:left}.lb-t th.g-sticky,.lb-t td.g-sticky{min-width:150px;max-width:190px;text-align:left;font-size:12.5px;position:sticky;left:0;background:#fff;z-index:2}.lb-t th.g-sticky{background:#eef3fb}
+.lb-nj{font-weight:800;font-size:14px;color:var(--azul)}
+.lb-th small{display:block;font-weight:400;font-size:9.5px;color:var(--gris);white-space:nowrap}
+.lb-todos{font-size:10px;padding:2px 5px;border:1px solid var(--borde);border-radius:6px;background:#fff;color:var(--azul-med);cursor:pointer;margin:2px 0;font-family:inherit}
+.lb-td{text-align:center;padding:4px 3px}
+.lb-c{width:var(--lbs,34px);height:calc(var(--lbs,34px) * .94);border:1.5px solid var(--borde);border-radius:8px;background:#fff;font-size:17px;font-weight:800;color:#fff;cursor:pointer;font-family:inherit;line-height:1}
+.lb-peq .lb-c{font-size:calc(var(--lbs,34px) * .5);border-radius:5px;border-width:1px}.lb-peq .lb-nj{font-size:11px}.lb-peq .lb-todos{padding:1px 3px;margin:1px 0}.lb-c.on{background:#16a34a;border-color:#16a34a}
+.lb-c:hover{border-color:var(--azul-med)}
+
+
+/* SEMANAS */
+.sem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:8px;}
+.sem-btn{padding:10px;border:1.5px solid var(--borde);border-radius:8px;background:var(--blanco);cursor:pointer;text-align:center;font-size:12px;color:var(--gris);transition:all .2s;}
+.sem-btn.gen{border-color:var(--verde);background:#f0fdf4;color:var(--verde);}
+.sem-btn.act{border-color:var(--azul);background:var(--azul);color:var(--blanco);}
+
+/* BOTONES */
+.btn-gen{padding:13px 28px;background:var(--verde);border:none;border-radius:8px;color:var(--blanco);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .2s;}
+.btn-gen:hover{opacity:.9;}
+.btn-gen:disabled{opacity:.5;cursor:not-allowed;}
+.btn-sec{padding:10px 20px;background:var(--blanco);border:1.5px solid var(--borde);border-radius:8px;color:var(--gris-oscuro);font-size:13px;cursor:pointer;transition:all .2s;}
+.btn-sec:hover{border-color:var(--azul-med);color:var(--azul);}
+.btn-word{padding:10px 20px;background:var(--azul-med);border:none;border-radius:8px;color:var(--blanco);font-size:13px;font-weight:600;cursor:pointer;}
+.btns{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:20px;}
+
+/* GENERANDO */
+.generando{display:none;text-align:center;padding:40px 20px;}
+.spinner{width:48px;height:48px;border:3px solid var(--gris-claro);border-top-color:var(--azul);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.generando p{color:var(--gris);font-size:14px;}
+
+/* RESULTADO */
+.resultado{display:none;background:var(--blanco);border:2px solid var(--verde);border-radius:12px;padding:24px;margin-top:20px;}
+.res-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.res-hdr h3{font-size:15px;font-weight:700;color:var(--verde);}
+.res-txt{background:var(--fondo);border-radius:8px;padding:18px;font-size:13px;line-height:1.7;white-space:pre-wrap;max-height:520px;overflow-y:auto;color:var(--gris-oscuro);font-family:'Courier New',monospace;}
+.res-txt::-webkit-scrollbar{width:6px;}
+.res-txt::-webkit-scrollbar-thumb{background:var(--borde);border-radius:3px;}
+.res-txt{user-select:none;-webkit-user-select:none;-moz-user-select:none;}
+
+/* HISTORIAL */
+.hist-item{background:var(--blanco);border:1px solid var(--borde);border-radius:8px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .2s;}
+.hist-item:hover{border-color:var(--azul-claro);}
+.hist-nom{font-size:14px;font-weight:600;color:var(--texto);}
+.hist-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--gris);margin-top:6px;}
+.htipo{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+.htipo.analitico{background:#eff6ff;color:var(--azul);}
+.htipo.didactico{background:#f0fdf4;color:var(--verde);}
+
+/* ADMIN */
+.tabla{width:100%;border-collapse:collapse;}
+.tabla th{background:var(--fondo);color:var(--gris);padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;}
+.tabla td{padding:10px 14px;border-bottom:1px solid var(--gris-claro);font-size:13px;}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;}
+.badge-a{background:#eff6ff;color:var(--azul);}
+.badge-d{background:#f0fdf4;color:var(--verde);}
+
+/* ALERTA */
+.alerta{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;}
+.alerta-err{background:#fef2f2;border:1px solid #fecaca;color:var(--rojo);}
+
+.sep{border:none;border-top:1px solid var(--gris-claro);margin:20px 0;}
+.mt12{margin-top:12px;}
+.hidden{display:none!important;}
+
+/* RUTA METODOLÓGICA */
+.badge-nuevo{background:#dcfce7;color:#166534;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em;}
+.ruta-intro{font-size:13px;color:var(--gris-oscuro);margin-bottom:16px;line-height:1.55;}
+.ruta-ref{font-size:12px;color:var(--gris-oscuro);background:var(--fondo);border:1px dashed var(--borde);border-radius:8px;padding:8px 12px;margin-bottom:14px;}
+#r-met-ayuda{font-style:normal;line-height:1.45;}
+.r-h{font-size:14px;font-weight:700;color:var(--azul);margin:26px 0 10px;padding-top:16px;border-top:1px solid var(--gris-claro);}
+.r-h small{font-weight:500;color:var(--gris);}
+.r-nota{font-size:12px;color:var(--gris);margin:6px 0 10px;line-height:1.5;}
+.r-nota-box{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:12px;line-height:1.5;}
+.r-chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;}
+.r-chip{background:#eff6ff;border:1px solid #bfdbfe;color:var(--azul);border-radius:99px;padding:5px 12px;font-size:12px;font-weight:600;}
+.r-sugs{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;}
+.r-sug{border:1.5px solid var(--borde);border-radius:10px;padding:12px 14px;cursor:pointer;background:var(--blanco);transition:all .2s;display:flex;flex-direction:column;gap:5px;}
+.r-sug:hover{border-color:var(--verde);}
+.r-sug.sel{border-color:var(--verde);background:#f0fdf4;}
+.r-sug-t{font-size:13px;font-weight:700;color:var(--azul);line-height:1.35;}
+.r-sug-m{font-size:11px;color:var(--gris);}
+.r-sug-p{font-size:12px;color:var(--gris-oscuro);flex:1;}
+.r-sug-b{font-size:11px;font-weight:700;color:var(--verde);}
+.r-tag{background:var(--azul);color:#fff;border-radius:4px;padding:1px 7px;font-weight:700;}
+.r-barra{display:flex;gap:3px;margin:8px 0;border-radius:8px;overflow:hidden;}
+.r-seg{color:#fff;padding:7px 8px;min-width:0;display:flex;flex-direction:column;gap:1px;font-size:11px;font-weight:700;overflow:hidden;}
+.r-seg span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.r-seg small{font-weight:500;opacity:.9;}
+.r-fase{border:1px solid var(--borde);border-left:6px solid var(--azul);border-radius:10px;padding:14px 16px;margin-bottom:14px;background:var(--blanco);}
+.r-fase-h{display:flex;justify-content:space-between;align-items:center;font-size:15px;}
+.r-fase-t{font-size:12px;font-weight:700;background:var(--fondo);color:var(--gris-oscuro);border-radius:99px;padding:2px 10px;}
+.r-fase-l{font-size:12px;color:var(--gris);font-style:italic;margin:2px 0 10px;}
+.r-mom{background:var(--fondo);border-radius:8px;padding:12px 14px;margin-top:10px;}
+.r-mom-h{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px;font-size:13px;color:var(--azul);}
+.r-tiempo{background:#fef3c7;color:#92400e;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700;}
+.r-retro{background:#dbeafe;color:#1e40af;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700;}
+.r-acc ul{margin:4px 0 8px 18px;font-size:12px;color:var(--gris-oscuro);line-height:1.5;}
+.r-lbl{display:block;font-size:11px;font-weight:700;color:var(--gris-oscuro);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;}
+.r-2c{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;}
+.r-ta{width:100%;padding:8px 10px;border:1.5px solid var(--borde);border-radius:8px;font-size:12px;line-height:1.5;resize:vertical;background:var(--blanco);outline:none;}
+.r-ta:focus{border-color:var(--azul-med);}
+.r-meta{font-size:12px;color:var(--gris-oscuro);line-height:1.6;background:var(--blanco);border:1px dashed var(--borde);border-radius:8px;padding:8px 10px;}
+.v-det{border:1px solid var(--borde);border-radius:10px;margin-bottom:10px;background:var(--blanco);}
+.v-det summary{cursor:pointer;padding:11px 14px;font-size:13px;color:var(--azul);display:flex;justify-content:space-between;gap:10px;align-items:center;}
+.v-cnt{font-size:11px;color:var(--gris);font-weight:600;}
+.v-sub{font-size:12px;font-weight:700;color:var(--azul-med);padding:8px 14px 2px;}
+.v-lista{list-style:none;margin:0;padding:6px 14px 12px;}
+.v-lista li{display:flex;gap:8px;font-size:12px;line-height:1.5;padding:3px 0;color:var(--texto);}
+.v-ic{flex-shrink:0;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-top:1px;}
+.v-ok{background:#dcfce7;color:#166534;} .v-par{background:#fef3c7;color:#92400e;} .v-no{background:#fee2e2;color:#991b1b;}
+.v-ayuda{color:#92400e;font-style:normal;} .v-donde{color:var(--gris);font-style:normal;}
+.r-rut{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:4px 14px 14px;font-size:12px;}
+.r-rut ul{margin:4px 0 0 16px;line-height:1.5;}
+.r-ev{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 16px;padding:0 14px 8px;}
+.r-ev label{font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.r-ev input{width:64px;padding:5px 8px;border:1.5px solid var(--borde);border-radius:6px;}
+.v-det .r-nota{padding:0 14px;}
+.r-acciones{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;}
+@media(max-width:700px){.r-2c,.r-rut{grid-template-columns:1fr;}}
+
+/* CHECKBOXES EJES Y PERFIL */
+.check-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.chk-item{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;border:1.5px solid var(--borde);border-radius:8px;cursor:pointer;transition:all .2s;background:var(--blanco);flex:1;min-width:200px;}
+.chk-item:hover{border-color:var(--azul-claro);}
+.chk-item.on{border-color:var(--azul);background:#eff6ff;}
+.chk-item input[type=checkbox]{width:16px;height:16px;flex-shrink:0;margin-top:1px;accent-color:var(--azul);cursor:pointer;}
+.chk-item span{font-size:12px;color:var(--texto);line-height:1.4;}
+.chk-item.on span{color:var(--azul);font-weight:500;}
+.perfil-grid{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
+.chk-perfil{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border:1.5px solid var(--borde);border-radius:8px;cursor:pointer;transition:all .2s;background:var(--blanco);}
+.chk-perfil:hover{border-color:var(--azul-claro);}
+.chk-perfil.on{border-color:var(--azul);background:#eff6ff;}
+.chk-perfil input[type=checkbox]{width:16px;height:16px;flex-shrink:0;margin-top:2px;accent-color:var(--azul);cursor:pointer;}
+.chk-perfil span{font-size:12px;color:var(--texto);line-height:1.5;}
+.chk-perfil.on span{color:var(--azul-med);}
+
+@media(max-width:640px){
+  .f2,.f3{grid-template-columns:1fr;}
+  .main{padding:16px 12px;}
+  .login-card{padding:32px 20px;}
+  .tipo-sel{flex-direction:column;}
+}
+
+/* ── PORTADA ───────────────────────────────────────────── */
+#pantalla-login{position:relative;overflow:hidden;background:radial-gradient(900px 500px at 8% 0%,rgba(59,130,196,.35),transparent 60%),radial-gradient(700px 500px at 100% 100%,rgba(22,163,74,.18),transparent 60%),linear-gradient(160deg,#14304d 0%,#0b1f38 70%);}
+.portada{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.15fr) 420px;gap:64px;align-items:center;max-width:1120px;width:100%;margin:0 auto;padding:40px 28px;}
+.hero{color:#fff;}
+.hero-marca{display:flex;align-items:center;gap:12px;margin-bottom:26px;}
+.hero-logo{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#3b82c4,#2563a8);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 6px 18px rgba(0,0,0,.3);}
+.hero-marca b{display:block;font-size:15px;letter-spacing:.01em;}
+.hero-marca span{font-size:11.5px;opacity:.7;}
+.hero-badge{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;margin-bottom:18px;}
+.hero h1{font-size:42px;line-height:1.1;font-weight:800;letter-spacing:-.02em;margin-bottom:16px;}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,#7dd3fc,#86efac);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.hero-sub{font-size:16px;line-height:1.55;opacity:.85;max-width:540px;margin-bottom:28px;}
+.hero-feats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:560px;margin-bottom:28px;}
+.hero-feat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:14px 10px;text-align:center;backdrop-filter:blur(4px);}
+.hero-feat i{display:block;font-style:normal;font-size:26px;margin-bottom:6px;}
+.hero-feat b{display:block;font-size:12.5px;font-weight:700;}
+.hero-feat span{display:block;font-size:10.5px;opacity:.7;margin-top:2px;line-height:1.3;}
+.hero-pie{font-size:12px;opacity:.65;line-height:1.6;}
+.portada .login-card{max-width:420px;width:100%;justify-self:end;}
+@media(max-width:940px){
+  .portada{grid-template-columns:1fr;gap:26px;padding:28px 18px;max-width:520px;}
+  .hero h1{font-size:30px;}
+  .hero-sub{font-size:14.5px;margin-bottom:20px;}
+  .hero-feats,.hero-pie{display:none;}
+  .hero-marca{margin-bottom:16px;}
+  .hero-badge{margin-bottom:12px;}
+  .portada .login-card{justify-self:stretch;max-width:none;padding:32px 22px;}
+  #pantalla-login{align-items:flex-start;}
+}
+@media(max-width:480px){.hero-sub{display:none;}.hero h1{font-size:26px;margin-bottom:0;}.portada{gap:18px;}}
+
+/* ── ACCESO CON CORREO ─────────────────────────────────── */
+.btn-social{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;margin-bottom:10px;border:1.5px solid var(--borde);border-radius:10px;background:#fff;color:var(--texto);font-size:14.5px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;}
+.btn-social:hover{background:#f8fafc;border-color:var(--azul-claro);}
+.btn-social:disabled{opacity:.5;cursor:not-allowed;}
+.btn-apple{background:#000;border-color:#000;color:#fff;}
+.btn-apple:hover{background:#1f1f1f;border-color:#1f1f1f;}
+.auth-sep{display:flex;align-items:center;gap:12px;margin:14px 0 18px;color:var(--gris);font-size:12px;}
+.auth-sep::before,.auth-sep::after{content:"";flex:1;height:1px;background:var(--gris-claro);}
+.acepto{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--gris-oscuro);margin:4px 0 12px;line-height:1.4;cursor:pointer;}
+.acepto input{margin-top:2px;}
+.chip-ia{font-size:11px;font-weight:700;border-radius:12px;padding:3px 10px;color:#fff;margin-right:4px;}
+#auth-aviso{margin:0 0 14px;}
+
+/* ── MENÚ LATERAL + INICIO ─────────────────────────────── */
+.layout{display:flex;align-items:flex-start;min-height:calc(100vh - 58px);}
+.layout .main{flex:1;min-width:0;max-width:1000px;margin:0 auto;}
+.sidebar{width:236px;flex:none;background:linear-gradient(180deg,#14304d 0%,#0f2744 100%);position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto;padding:14px 10px 24px;}
+.sb-label{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.45);padding:14px 12px 6px;}
+.sidebar .nav-tab{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;margin:1px 0;border:none;border-radius:9px;background:none;color:rgba(255,255,255,.82);font-size:13.5px;font-weight:500;cursor:pointer;white-space:normal;}
+.sidebar .nav-tab .si{font-size:17px;width:22px;text-align:center;flex:none;}
+.sidebar .nav-tab:hover:not(.activo){background:rgba(255,255,255,.09);color:#fff;}
+.sidebar .nav-tab.activo{background:var(--blanco);color:var(--azul);font-weight:700;border-bottom:none;}
+.sidebar .nav-tab.hidden{display:none;}
+.btn-menu{display:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:6px;padding:5px 10px;font-size:18px;cursor:pointer;margin-right:10px;}
+.sb-overlay{display:none;}
+.sb-pronto{margin-left:auto;font-size:12px;opacity:.75;}
+.nav-volver{display:none;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px;}
+.nav-volver.visible{display:flex;}
+.nav-volver button{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--borde);border-radius:999px;background:var(--blanco);color:var(--azul);font-size:13px;font-weight:600;cursor:pointer;}
+.nav-volver button:hover{border-color:var(--azul-claro);background:#eff6ff;}
+.nav-volver .nv-ant{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pronto-box{text-align:center;padding:48px 24px;}
+.pronto-box .pi{font-size:56px;margin-bottom:10px;}
+.pronto-box h2{color:var(--azul);margin-bottom:8px;}
+.pronto-box p{color:var(--gris);max-width:520px;margin:0 auto 6px;line-height:1.5;}
+.pronto-tag{display:inline-block;background:#fef3c7;color:#92400e;font-weight:700;font-size:12px;border-radius:10px;padding:4px 12px;margin-bottom:14px;}
+@media(max-width:900px){
+  .btn-menu{display:inline-block;}
+  .sidebar{position:fixed;left:0;top:58px;z-index:300;transform:translateX(-100%);transition:transform .2s;box-shadow:var(--sombra-lg);}
+  body.menu-open .sidebar{transform:none;}
+  body.menu-open .sb-overlay{display:block;position:fixed;inset:58px 0 0 0;background:rgba(0,0,0,.35);z-index:250;}
+  .hbrand p{display:none;}
+  #h-nom{display:none;}
+}
+.saludo{font-size:22px;font-weight:700;color:var(--azul);}
+.saludo-sub{font-size:13px;color:var(--gris);margin:2px 0 20px;}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:24px;}
+.tile{display:flex;flex-direction:column;gap:4px;text-align:left;min-height:152px;background:var(--blanco);border:1.5px solid var(--borde);border-radius:18px;padding:16px;cursor:pointer;transition:all .18s;box-shadow:var(--sombra);position:relative;text-decoration:none;color:inherit;}
+.tile:hover{border-color:var(--tc,var(--azul-claro));transform:translateY(-2px);box-shadow:var(--sombra-lg);}
+.tile .ti{width:46px;height:46px;border-radius:14px;background:var(--tb,#dbeafe);color:var(--tc,#2563a8);display:flex;align-items:center;justify-content:center;margin-bottom:8px;flex:none;}
+.tile svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.tile .tt{font-size:14px;font-weight:700;color:var(--texto);line-height:1.25;}
+.tile .td{font-size:11.5px;color:var(--gris);line-height:1.4;}
+.tile .go{margin-top:auto;align-self:flex-end;width:30px;height:30px;border-radius:50%;background:var(--tb,#dbeafe);color:var(--tc,#2563a8);display:flex;align-items:center;justify-content:center;flex:none;}
+.tile .go svg{width:16px;height:16px;stroke-width:2.2;}
+.tile.pronto{cursor:default;}
+.tile.pronto .ti,.tile.pronto .tt,.tile.pronto .td{opacity:.5;}
+.tile.pronto:hover{transform:none;border-color:var(--borde);box-shadow:var(--sombra);}
+.tile.ancho{grid-column:1/-1;flex-direction:row;align-items:center;gap:14px;min-height:0;}
+.tile.ancho .ti{margin-bottom:0;}
+.tile.ancho .tx{flex:1;min-width:0;}
+.tile.ancho .go{margin-top:0;align-self:center;}
+.tile .badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);white-space:nowrap;border:1px solid #fcd34d;background:#fef3c7;color:#92400e;font-size:10.5px;font-weight:700;border-radius:8px;padding:3px 8px;}
+.rez-chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px;}
+.rez-chip{display:inline-block;padding:7px 14px;border:1.5px solid;border-radius:999px;font-size:13px;}
+.rez-lista{display:flex;flex-direction:column;gap:8px;}
+.rez-fila{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 14px;border:1.5px solid;border-radius:14px;cursor:pointer;font:inherit;}
+.rez-ini{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none;}
+.rez-dat{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;color:var(--texto);font-size:13.5px;}
+.rez-dat small{color:var(--gris);font-size:11.5px;}
+.rez-est{font-size:12.5px;font-weight:700;white-space:nowrap;}
+.rez-fl{font-size:20px;color:var(--gris);line-height:1;}
+.rez-ficha{background:var(--blanco);border:1.5px solid var(--borde);border-radius:14px;padding:14px 16px;margin:-2px 0 6px;font-size:13px;line-height:1.5;}
+.rez-bloque{margin-bottom:12px;}
+.rez-bloque ul{margin:4px 0 0 18px;}
+.rez-um{display:flex;flex-direction:column;gap:8px;margin-top:10px;font-size:13px;}
+.rez-um input{width:70px;padding:5px 8px;border:1.5px solid var(--borde);border-radius:7px;margin:0 4px;}
+@media(max-width:560px){.rez-est{font-size:11px;}.rez-fila{padding:9px 12px;gap:10px;}}
+.bottom-nav{display:none;}
+@media(max-width:900px){
+  .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:200;background:var(--blanco);border-top:1px solid var(--borde);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -2px 14px rgba(15,39,68,.08);}
+  .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;font-size:10.5px;font-weight:600;color:var(--gris);padding:4px 2px;cursor:pointer;min-width:0;}
+  .bottom-nav button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+  .bottom-nav button.on{color:var(--azul-med);}
+  #app{padding-bottom:74px;}
+}
+@media(max-width:560px){
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  .tile{padding:14px;min-height:146px;}
+}
+.hoy-fila{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--gris-claro);font-size:13px;}
+.hoy-fila:last-child{border-bottom:none;}
+.hoy-fila b{color:var(--azul);}
+
+/* ── GESTIÓN DEL GRUPO ─────────────────────────────────── */
+.g-barra{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--blanco);border:1px solid var(--borde);border-radius:10px;padding:10px 14px;margin-bottom:16px;}
+.g-barra label{font-size:12px;font-weight:700;color:var(--gris-oscuro);text-transform:uppercase;letter-spacing:.04em;}
+.g-barra select{flex:1;min-width:160px;padding:8px 10px;border:1.5px solid var(--borde);border-radius:8px;background:var(--blanco);}
+.g-btn{display:inline-block;padding:9px 16px;border:none;border-radius:8px;background:var(--azul);color:#fff;font-size:13px;font-weight:600;cursor:pointer;margin:2px 4px 2px 0;}
+.g-btn:hover{background:var(--azul-med);}
+.g-btn:disabled{opacity:.6;cursor:wait;}
+.g-btn-s{background:var(--blanco);color:var(--azul);border:1.5px solid var(--borde);}
+.g-btn-s:hover{background:#eff6ff;border-color:var(--azul-claro);}
+.g-btn-x{background:#fef2f2;color:var(--rojo);border:1.5px solid #fecaca;}
+.g-btn-x:hover{background:#fee2e2;}
+.g-vacio{text-align:center;color:var(--gris);padding:36px 20px;}
+.g-aviso{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;font-size:13px;color:var(--azul);margin-bottom:18px;line-height:1.5;}
+.g-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.g-chip{padding:8px 14px;border:1.5px solid var(--borde);border-radius:20px;background:var(--blanco);font-size:13px;cursor:pointer;color:var(--gris-oscuro);}
+.g-chip.on{background:var(--azul);border-color:var(--azul);color:#fff;font-weight:600;}
+/* Mis grupos: filas por grado, columnas por grupo */
+.gg-panel{background:var(--blanco);border:1px solid var(--borde);border-radius:14px;padding:14px 16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(15,23,42,.06);}
+.gg-fila{display:flex;align-items:stretch;gap:12px;padding:8px 0;border-bottom:1px dashed var(--borde);}
+.gg-fila:last-of-type{border-bottom:0;}
+.gg-grado{flex:0 0 58px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#e0ecff;color:var(--azul);border-radius:10px;font-size:22px;font-weight:800;line-height:1;}
+.gg-grado small{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:3px;opacity:.8;}
+.gg-cols{display:flex;flex-wrap:wrap;gap:8px;flex:1;}
+.gg-tile{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:128px;padding:9px 14px;border:1.5px solid var(--borde);border-radius:11px;background:#fff;cursor:pointer;text-align:left;font-family:inherit;color:var(--gris-oscuro);}
+.gg-tile b{font-size:15px;color:var(--azul);}
+.gg-tile span{font-size:12.5px;}
+.gg-tile em{font-style:normal;font-size:11px;color:var(--gris);}
+.gg-tile:hover{border-color:var(--azul-med);background:#f5f9ff;}
+.gg-tile.on{background:var(--azul);border-color:var(--azul);color:#fff;box-shadow:0 2px 8px rgba(30,64,120,.3);}
+.gg-tile.on b,.gg-tile.on em{color:#fff;}
+.gg-mas{margin-top:10px;padding:10px 16px;border:2px dashed #93b4e6;border-radius:11px;background:#f5f9ff;color:var(--azul);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;}
+.gg-mas:hover,.gg-mas.on{background:#e0ecff;border-color:var(--azul);}
+.gg-banner{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;background:linear-gradient(135deg,#1e3f7a,#2f6bc2);color:#fff;border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 3px 12px rgba(30,64,120,.25);}
+.gg-b-nom{font-size:30px;font-weight:800;line-height:1.1;}
+.gg-b-sub{font-size:15px;margin-top:4px;opacity:.95;}
+.gg-b-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.gg-b-tags span{background:rgba(255,255,255,.18);border-radius:20px;padding:3px 11px;font-size:12px;}
+.gg-b-bot{display:flex;gap:8px;flex-wrap:wrap;}
+.gg-b-bot button{padding:8px 14px;border:0;border-radius:9px;background:#fff;color:var(--azul);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;}
+.gg-b-bot button.rojo{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.5);}
+.gg-det>summary{cursor:pointer;font-weight:700;color:var(--azul-med);font-size:14px;}
+details.card>summary.card-title{margin-bottom:0;border-bottom:0;padding-bottom:0;}
+details.card[open]>summary.card-title{margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--gris-claro);}
+@media(max-width:600px){.gg-fila{flex-direction:column;gap:8px}.gg-grado{flex:none;flex-direction:row;gap:6px;padding:6px;font-size:18px}.gg-grado small{margin:0}.gg-tile{flex:1 1 44%;min-width:0}.gg-b-nom{font-size:26px}}
+.g-tabla-w{overflow-x:auto;}
+.g-tabla{width:100%;border-collapse:collapse;font-size:13px;}
+.g-tabla th{background:#eff6ff;color:var(--azul);font-weight:700;padding:8px 8px;text-align:left;border-bottom:2px solid var(--borde);vertical-align:bottom;}
+.g-tabla td{padding:6px 8px;border-bottom:1px solid var(--gris-claro);vertical-align:middle;}
+.g-in-nom{width:100%;padding:6px 8px;border:1.5px solid transparent;border-radius:6px;background:transparent;}
+.g-in-nom:hover,.g-in-nom:focus{border-color:var(--borde);background:#fff;outline:none;}
+.g-x{background:none;border:none;color:var(--gris);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:6px;}
+.g-x:hover{background:#fee2e2;color:var(--rojo);}
+.g-mal{color:var(--rojo)!important;font-weight:700;}
+.g-fecha{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.g-fecha input[type=date]{padding:8px 10px;border:1.5px solid var(--borde);border-radius:8px;}
+.g-lista{border:1px solid var(--gris-claro);border-radius:10px;overflow:hidden;}
+.g-fila{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--gris-claro);}
+.g-fila:last-child{border-bottom:none;}
+.g-fila:nth-child(even){background:#f8fafc;}
+.g-n{width:24px;color:var(--gris);font-size:12px;flex:none;}
+.g-nom{flex:1;min-width:0;font-size:13.5px;}
+.g-st{display:flex;gap:6px;flex:none;}
+.g-st button{width:38px;height:38px;border:2px solid var(--borde);border-radius:10px;background:#fff;font-size:15px;font-weight:700;color:var(--gris);cursor:pointer;}
+.g-st .g-st-P.on{background:#16a34a;border-color:#16a34a;color:#fff;}
+.g-st .g-st-R.on{background:#f59e0b;border-color:#f59e0b;color:#fff;}
+.g-st .g-st-F.on{background:#dc2626;border-color:#dc2626;color:#fff;}
+.g-st .g-st-J.on{background:#2563a8;border-color:#2563a8;color:#fff;}
+.g-leyenda{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--gris);margin-top:10px;}
+.g-fila.g-total{background:#eef4fb!important;border-top:2px solid var(--borde);border-bottom:none;}
+.g-total .g-nom{font-size:13.5px;line-height:1.4;}
+.g-total .g-st>div{width:38px;text-align:center;line-height:1.05;}
+.g-total .g-st b{display:block;font-size:21px;font-weight:800;}
+.g-total .g-st small{font-size:12px;font-weight:700;color:var(--gris);}
+.g-trims{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.g-det{padding:14px 20px;}
+.g-det summary{cursor:pointer;font-weight:700;color:var(--azul-med);font-size:14px;}
+.g-crit-f{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.g-crit-f input:first-child{flex:1;padding:8px 10px;border:1.5px solid var(--borde);border-radius:8px;}
+.g-crit-f input[type=number]{width:74px;padding:8px;border:1.5px solid var(--borde);border-radius:8px;}
+.g-nota{width:70px;padding:6px;border:1.5px solid var(--borde);border-radius:6px;text-align:center;}
+.g-inval{border-color:var(--rojo)!important;background:#fef2f2;}
+.g-stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+.g-stats div{flex:1;min-width:120px;background:#f8fafc;border:1px solid var(--gris-claro);border-radius:10px;padding:10px 14px;}
+.g-stats b{display:block;font-size:22px;color:var(--azul);}
+.g-stats span{font-size:11px;color:var(--gris);}
+.g-cap th{min-width:120px;text-align:center;}
+.g-cap td{text-align:center;}
+.g-cap td:nth-child(2),.g-cap th:nth-child(2){text-align:left;}
+.g-sticky{position:sticky;left:0;background:#fff;z-index:2;min-width:170px;}
+.g-ah{font-size:12px;font-weight:700;margin-bottom:2px;}
+.g-cap select{font-size:11px;max-width:130px;margin-top:4px;}
+.g-checks{display:flex;gap:16px;flex-wrap:wrap;}
+.g-checks label{text-transform:none;font-weight:500;font-size:13px;letter-spacing:0;display:flex;gap:6px;align-items:center;}
+.g-checks input{width:auto;}
+.g-reac{position:relative;border:1px solid var(--gris-claro);border-radius:10px;padding:12px 40px 12px 14px;margin-bottom:10px;font-size:13.5px;}
+.g-reac .g-x{position:absolute;top:8px;right:8px;}
+.g-reac ol{margin:6px 0 6px 24px;}
+.g-resp{color:#166534;font-size:12px;margin-top:4px;}
+.g-ex{border:1px solid var(--gris-claro);border-radius:10px;padding:10px 14px;margin-bottom:10px;}
+.g-ex summary{cursor:pointer;}
+.g-statline{font-size:12.5px;color:var(--gris-oscuro);margin:8px 0;}
+.g-proy{border:1.5px solid var(--borde);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:#fff;}
+.g-proy-h{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;}
+.g-proy-h b{color:var(--azul);font-size:14.5px;}
+.g-proy-h select{padding:6px 8px;border:1.5px solid var(--borde);border-radius:8px;font-size:12px;}
+.g-proy-m{margin-top:6px;}
+.g-tag{display:inline-block;background:var(--azul);color:#fff;border-radius:6px;font-size:11px;font-weight:700;padding:2px 8px;margin-right:6px;}
+.g-tag2{background:#dbeafe;color:var(--azul);}
+.g-fases{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.g-fases span{border:1.5px solid;border-radius:14px;font-size:11px;padding:2px 10px;font-weight:600;}
+.sem{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+.sem-v{background:#16a34a;}.sem-a{background:#f59e0b;}.sem-r{background:#dc2626;}.sem-n{background:#cbd5e1;}
+@media(max-width:640px){.g-fila{flex-wrap:wrap;}.g-st button{width:42px;height:42px;}.g-total .g-st>div{width:42px;}.g-nom{flex-basis:calc(100% - 40px);}}
+/* iPhone/iPad: Safari amplía la página al tocar un campo con letra menor de 16 px y ya no se reduce sola.
+   Con 16 px en los campos no se amplía y la pantalla siempre cabe. */
+@media(max-width:1024px){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px !important;}}
+html{-webkit-text-size-adjust:100%;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="pantalla-login">
+ <div class="portada">
+  <section class="hero">
+    <div class="hero-marca"><div class="hero-logo">📚</div><div><b>Planeador Docente NEM</b><span>Aplicación realizada por el Maestro Manuel Uitzil Cerón</span></div></div>
+    <div class="hero-badge">Nueva Escuela Mexicana · Fase 6 · Secundaria</div>
+    <h1>Planea, pasa lista y evalúa <em>en un solo lugar.</em></h1>
+    <p class="hero-sub">Programa analítico, plano didáctico, proyectos con fechas y tiempos, pase de lista, calificaciones y exámenes. Hecho por un maestro de secundaria, para maestros de secundaria.</p>
+    <div class="hero-feats">
+      <div class="hero-feat"><i>📝</i><b>Planeación</b><span>Analítico y plano didáctico NEM</span></div>
+      <div class="hero-feat"><i>🧭</i><b>Proyectos</b><span>Fases, fechas y tiempos</span></div>
+      <div class="hero-feat"><i>✅</i><b>Pase de lista</b><span>Asistencia en segundos</span></div>
+      <div class="hero-feat"><i>📊</i><b>Calificaciones</b><span>Criterios y boleta</span></div>
+      <div class="hero-feat"><i>🧮</i><b>Exámenes</b><span>Crear con IA y calificar</span></div>
+      <div class="hero-feat"><i>👥</i><b>Mis grupos</b><span>Tus alumnos a la mano</span></div>
+    </div>
+    <div class="hero-pie">🔒 Los datos de tus alumnos se guardan solo en tu dispositivo.</div>
+  </section>
+  <div class="login-card">
+    <div class="login-logo">
+      <h1 id="login-titulo">Bienvenido, maestro</h1>
+      <p id="login-sub">Entra para continuar</p>
+    </div>
+
+<div class="l-err" id="auth-aviso"></div>
+    <div id="panel-social">
+      <button type="button" class="btn-social" onclick="authGoogle()"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Continuar con Google</span></button>
+      <button type="button" class="btn-social btn-apple" onclick="authApple()"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg><span>Continuar con Apple</span></button>
+      <div class="auth-sep"><span>o con tu correo</span></div>
+    </div>
+
+    <!-- TABS -->
+    <div class="auth-tabs" id="auth-tabs">
+      <button class="auth-tab on" id="tab-login-btn" onclick="showAuthTab('login')">Entrar</button>
+      <button class="auth-tab" id="tab-reg-btn" onclick="showAuthTab('registro')">Crear cuenta</button>
+    </div>
+
+    <!-- PANEL ENTRAR -->
+    <div id="panel-login">
+      <div class="fg"><label>Correo electrónico</label><input type="email" id="l-correo" placeholder="tucorreo@ejemplo.com" autocomplete="username" autocapitalize="off"></div>
+      <div class="fg"><label>Contraseña</label><input type="password" id="l-pwd" placeholder="Tu contraseña" autocomplete="current-password"></div>
+      <button class="btn-p" id="btn-login" onclick="authEntrar()">Entrar</button>
+      <button type="button" class="link-olvide" onclick="showAuthTab('recuperar')" style="font-weight:600;text-decoration:underline">¿Olvidaste tu contraseña o nunca la creaste? Crea una nueva</button>
+      <div class="l-err" id="l-err"></div>
+    </div>
+
+    <!-- PANEL RECUPERAR -->
+    <div id="panel-recuperar" style="display:none;">
+      <p class="rec-info">Escribe tu correo y te enviaremos un enlace para crear una contraseña nueva.</p>
+      <div class="fg"><label>Correo electrónico</label><input type="email" id="rc-correo" placeholder="tucorreo@ejemplo.com" autocapitalize="off"></div>
+      <button class="btn-p" id="btn-rec" onclick="authRecuperar()">Enviarme el enlace</button>
+      <button type="button" class="link-olvide" onclick="showAuthTab('login')">← Volver a entrar</button>
+      <div class="l-err" id="rc-err"></div>
+      <div class="l-ok" id="rc-ok"></div>
+    </div>
+
+    <!-- PANEL CREAR CUENTA -->
+    <div id="panel-registro" style="display:none;">
+      <div class="fg"><label>Nombre completo <span class="req">*</span></label><input type="text" id="r-nom" placeholder="Nombre(s) y apellidos" autocomplete="name"></div>
+      <div class="fg"><label>Nombre de tu escuela <span class="req">*</span></label><input type="text" id="r-esc" placeholder="Nombre de tu escuela"></div>
+      <div class="f2" style="gap:10px">
+        <div class="fg"><label>CCT</label><input type="text" id="r-cct" placeholder="Clave" maxlength="12" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="fg"><label>Municipio</label><input type="text" id="r-mun" placeholder="Municipio, Estado"></div>
+      </div>
+      <div class="fg"><label>Correo electrónico <span class="req">*</span></label><input type="email" id="r-correo" placeholder="tucorreo@ejemplo.com" autocomplete="email" autocapitalize="off"><div class="curp-hint">Se usa para entrar y para recuperar tu contraseña. No se aceptan correos temporales.</div></div>
+      <div class="fg"><label>Contraseña <span class="req">*</span></label><input type="password" id="r-pwd" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
+      <div class="fg"><label>Confirmar contraseña <span class="req">*</span></label><input type="password" id="r-pwd2" placeholder="Repite tu contraseña" autocomplete="new-password"></div>
+      <label class="acepto"><input type="checkbox" id="r-acepto"> <span>Acepto el aviso de privacidad y los términos de uso.</span></label>
+      <button class="btn-p" id="btn-reg" onclick="authRegistrar()">Crear mi cuenta</button>
+      <div class="l-err" id="r-err"></div>
+    </div>
+
+    <!-- PANEL VERIFICAR CORREO -->
+    <div id="panel-verificar" style="display:none;">
+      <div style="text-align:center;font-size:42px;margin-bottom:6px">📧</div>
+      <p class="rec-info" style="text-align:center">Te enviamos un enlace de confirmación a<br><b id="ver-correo"></b><br>Ábrelo y regresa aquí. Revisa también «Spam».</p>
+      <button class="btn-p" onclick="authYaVerifique()">Ya verifiqué mi correo</button>
+      <button type="button" class="link-olvide" onclick="authReenviar()">Reenviar el correo</button>
+      <button type="button" class="link-olvide" onclick="authSalir();showAuthTab('login')">← Usar otra cuenta</button>
+      <div class="l-err" id="ver-err"></div>
+      <div class="l-ok" id="ver-ok"></div>
+    </div>
+  </div>
+ </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="hbrand">
+      <button class="btn-menu" onclick="document.body.classList.toggle('menu-open')" aria-label="Menú">☰</button>
+      <span class="ico">📚</span>
+      <div>
+        <h1>Planeador Docente NEM</h1>
+        <p id="h-sub">Fase 6 · Secundaria</p>
+      </div>
+    </div>
+    <div class="huser">
+      <span class="chip-ia" id="h-cuota" style="display:none"></span>
+      <div class="avatar" id="av">M</div>
+      <span id="h-nom"></span>
+      <button class="btn-salir" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <button class="nav-tab activo" onclick="showTab('inicio',this)"><span class="si">🏠</span>Inicio</button>
+    <button class="nav-tab" onclick="showTab('bienvenida',this)"><span class="si">✨</span>Pantalla de bienvenida</button>
+    <div class="sb-label">Mi grupo</div>
+    <button class="nav-tab" onclick="showTab('grupos',this)"><span class="si">👥</span>Mis grupos</button>
+    <button class="nav-tab" onclick="showTab('lista',this)"><span class="si">✅</span>Pase de lista</button>
+    <div class="sb-label">Planeación</div>
+    <button class="nav-tab" onclick="showTab('nueva',this)"><span class="si">📝</span>Nueva planeación</button>
+    <button class="nav-tab" onclick="showTab('historial',this)"><span class="si">📋</span>Historial</button>
+    <button class="nav-tab" onclick="showTab('libros',this)"><span class="si">📚</span>Libros y programas SEP</button>
+    <div class="sb-label">Evaluación</div>
+    <button class="nav-tab" onclick="showTab('calif',this)"><span class="si">📊</span>Calificaciones y criterios de evaluación</button>
+    <button class="nav-tab" onclick="showTab('trabajos',this)"><span class="si">📓</span>Libreta de trabajos</button>
+    <button class="nav-tab" onclick="showTab('examenes',this)"><span class="si">🧮</span>Exámenes</button>
+    <button class="nav-tab" onclick="showTab('rezago',this)"><span class="si">🚦</span>Seguimiento de rezago</button>
+    <button class="nav-tab" onclick="showTab('recup',this)"><span class="si">🔁</span>Recuperativos</button>
+    <button class="nav-tab" onclick="showTab('bitacora',this)"><span class="si">📔</span>Bitácora e incidencias</button>
+    <button class="nav-tab" onclick="showTab('escaner',this)"><span class="si">📷</span>Escáner de exámenes</button>
+    <div class="sb-label">Mi organización</div>
+    <button class="nav-tab" onclick="showTab('calendario',this)"><span class="si">📅</span>Calendario escolar</button>
+    <button class="nav-tab" onclick="showTab('horario',this)"><span class="si">🕐</span>Horario semanal</button>
+    <button class="nav-tab" onclick="showTab('planes',this)"><span class="si">💳</span>Planes y precios</button>
+    <button class="nav-tab" onclick="showTab('licencia',this)"><span class="si">🔑</span>Mi licencia</button>
+    <div class="sb-label admin-only hidden">Administración</div>
+    <button class="nav-tab admin-only hidden" onclick="showTab('licadmin',this)"><span class="si">🛡️</span>Licencias</button>
+  </aside>
+  <div class="sb-overlay" onclick="document.body.classList.remove('menu-open')"></div>
+  <nav class="bottom-nav" id="bottom-nav" aria-label="Menú rápido"></nav>
+
+  <div class="main">
+    <div class="nav-volver" id="nav-volver"><button type="button" class="nv-ant" id="nv-ant" onclick="navAtras()">← Anterior</button><button type="button" onclick="navInicio()">🏠 Menú principal</button></div>
+
+    <!-- TAB INICIO -->
+    <div class="tab-panel activo" id="tab-inicio"><div id="g-inicio"></div></div>
+    <!-- PANELES DE GESTIÓN DEL GRUPO (se llenan desde gestion.js) -->
+    <div class="tab-panel" id="tab-bienvenida"><div id="g-bienvenida"></div></div>
+    <div class="tab-panel" id="tab-grupos"><div id="g-grupos"></div></div>
+    <div class="tab-panel" id="tab-lista"><div id="g-lista"></div></div>
+    <div class="tab-panel" id="tab-calif"><div id="g-calif"></div></div>
+    <div class="tab-panel" id="tab-trabajos"><div id="g-trabajos"></div></div>
+    <div class="tab-panel" id="tab-examenes"><div id="g-examenes"></div></div>
+    <div class="tab-panel" id="tab-trim"><div id="g-trim"></div></div>
+    <div class="tab-panel" id="tab-rezago"><div id="g-rezago"></div></div>
+    <div class="tab-panel" id="tab-recup"><div id="g-recup"></div></div>
+    <div class="tab-panel" id="tab-bitacora"><div id="g-bitacora"></div></div>
+    <div class="tab-panel" id="tab-escaner"><div id="g-escaner"></div></div>
+    <div class="tab-panel" id="tab-libros"><div id="g-libros"></div></div>
+    <div class="tab-panel" id="tab-calendario"><div id="g-calendario"></div></div>
+    <div class="tab-panel" id="tab-horario"><div id="g-horario"></div></div>
+    <div class="tab-panel" id="tab-planes"><div id="g-planes"></div></div>
+    <div class="tab-panel" id="tab-licencia"><div id="g-licencia"></div></div>
+    <div class="tab-panel" id="tab-licadmin"><div id="g-licadmin"></div></div>
+
+    <!-- TAB NUEVA -->
+    <div class="tab-panel" id="tab-nueva">
+      <div class="sec-title">Nueva Planeación</div>
+      <div class="sec-sub">Elige el tipo de documento que necesitas generar</div>
+
+      <div class="tipo-sel">
+        <div class="tipo-btn on" id="tbtn-a" onclick="setTipo('a')">
+          <span class="ico">📋</span>
+          <div class="tit">Programa Analítico</div>
+          <div class="desc">Planeación anual con los 3 trimestres, contexto, contenidos y productos</div>
+        </div>
+        <div class="tipo-btn" id="tbtn-d" onclick="setTipo('d')">
+          <span class="ico">📝</span>
+          <div class="tit">Plano Didáctico</div>
+          <div class="desc">Planeación por trimestre con sesiones, actividades y evaluación</div>
+        </div>
+      </div>
+
+      <!-- ANALÍTICO -->
+      <div id="sec-a">
+        <div class="card">
+          <div class="card-title">📋 Datos generales</div>
+          <div class="f2">
+            <div class="campo"><label>Nombre del docente</label><input type="text" id="a-doc" placeholder="Nombre completo"></div>
+            <div class="campo"><label>Nombre de la escuela</label><input type="text" id="a-esc" placeholder="Nombre oficial"></div>
+          </div>
+          <div class="f3">
+            <div class="campo"><label>CCT</label><input type="text" id="a-cct" placeholder="Clave de tu escuela"></div>
+            <div class="campo"><label>Turno</label><select id="a-tur"><option>Matutino</option><option>Vespertino</option><option>Nocturno</option></select></div>
+            <div class="campo"><label>Ciclo escolar</label><input type="text" id="a-cic" value="2026-2027"></div>
+          </div>
+          <div class="f3">
+            <div class="campo"><label>Grado</label>
+              <select id="a-gra" onchange="updCampos('a')">
+                <option value="">Selecciona</option>
+                <option value="1">1° Secundaria</option>
+                <option value="2">2° Secundaria</option>
+                <option value="3">3° Secundaria</option>
+              </select>
+            </div>
+            <div class="campo"><label>Campo formativo</label>
+              <select id="a-cam" onchange="updDisc('a')"><option value="">Primero elige grado</option></select>
+            </div>
+            <div class="campo"><label>Disciplina</label>
+              <select id="a-dis" onchange="loadCntsA()"><option value="">Primero elige campo</option></select>
+            </div>
+          </div>
+          <div class="f2">
+            <div class="campo"><label>Municipio / Localidad</label><input type="text" id="a-mun" placeholder="Municipio, Estado"></div>
+            <div class="campo"><label>Escuela indígena</label><select id="a-ind"><option value="no">No</option><option value="si">Sí</option></select></div>
+          </div>
+        </div>
+
+        <!-- CARD DOCENTES POR DISCIPLINA -->
+        <div class="card">
+          <div class="card-title">👥 Docentes por disciplina del campo</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:16px;">Escribe el nombre de cada docente según su disciplina. Se imprimirá tal como lo escribas.</p>
+          <div id="tabla-docentes-campo">
+            <p style="font-size:13px;color:var(--gris);">Primero selecciona el campo formativo arriba.</p>
+          </div>
+        </div>
+
+        <!-- CARD CONTEXTO SOCIOEDUCATIVO -->
+        <div class="card">
+          <div class="card-title">🏫 Contexto socioeducativo — PLANO UNO</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:16px;">&#9888;&#65039; Este texto lo escribe el maestro. La IA <strong>no</strong> lo genera. Se imprimirá exactamente como lo capturas aquí.</p>
+
+          <div class="campo">
+            <label>1. Datos de identificación de la escuela</label>
+            <textarea id="ctx-1" rows="4" placeholder="Ej: La escuela secundaria general «Nombre de tu escuela», CCT ______, está ubicada en la calle ___ de tu localidad. La matrícula es de ___ alumnos atendidos por ___ maestros."></textarea>
+            <div class="ayuda">Dirección, CCT, matrícula, número de maestros</div>
+          </div>
+
+          <div class="campo">
+            <label>2. Descripción del contexto escolar</label>
+            <textarea id="ctx-2" rows="4" placeholder="Ej: Funciona de 07:00 a.m. a 13:10 p.m. con 7 módulos de 50 minutos. Consta de 18 aulas, 1 biblioteca, 2 sanitarios, 1 plaza cívica..."></textarea>
+            <div class="ayuda">Horario, aulas, instalaciones, plantilla docente, ambiente de trabajo</div>
+          </div>
+
+          <div class="campo">
+            <label>3. Contexto familiar, sociocultural y lingüístico</label>
+            <textarea id="ctx-3" rows="4" placeholder="Ej: La encuesta socioeconómica indica clase media baja y baja. Actividad económica: maquila de artesanías y zapatería. 100% habla español como lengua materna."></textarea>
+            <div class="ayuda">Nivel económico, actividades de los padres, lengua materna, riesgos sociales</div>
+          </div>
+
+          <div class="campo">
+            <label>4. Características y necesidades de los alumnos</label>
+            <textarea id="ctx-4" rows="4" placeholder="Ej: La reprobación es del 12%, rezago del 2%, deserción del 5%. Se atenderán alumnos con NEE. La principal barrera es la situación económica."></textarea>
+            <div class="ayuda">Reprobación, rezago, deserción, NEE, barreras de aprendizaje</div>
+          </div>
+
+          <div class="campo">
+            <label>5. Características de los ambientes de aprendizaje</label>
+            <textarea id="ctx-5" rows="3" placeholder="Ej: Se planean clases para todos los estilos de aprendizaje. Se detectó incremento en uso de dispositivos móviles que afecta atención y pensamiento crítico."></textarea>
+            <div class="ayuda">Estilos de aprendizaje, uso de tecnología, estrategias compensatorias</div>
+          </div>
+
+          <div class="campo">
+            <label>6. Resultados de evaluaciones internas y externas (IDAESY u otras)</label>
+            <textarea id="ctx-6" rows="4" placeholder="Ej: IDAESY — Español: Inicial 22.3%, Básico 16.3%, Intermedio 42.1%, Avanzado 19.3%. Matemáticas: Inicial 40.1%, Básico 16.8%, Intermedio 21.8%, Avanzado 21.3%."></textarea>
+            <div class="ayuda">Porcentajes por nivel de logro en cada materia evaluada</div>
+          </div>
+
+          <div class="campo">
+            <label>7. Problemática detectada y jerarquizada</label>
+            <textarea id="ctx-7" rows="5" placeholder="Problemática 1: Expresión escrita y comprensión lectora. Los estudiantes presentan dificultades para redactar textos...
+
+Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textarea>
+            <div class="ayuda">Lista y describe las problemáticas en orden de prioridad. La primera se usa para sugerirte el nombre y el producto de los proyectos.</div>
+          </div>
+        </div>
+
+        <!-- CARD SESIONES POR DISCIPLINA -->
+        <div class="card">
+          <div class="card-title">&#128197; Sesiones por disciplina y evaluación</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:16px;">Indica cuántas sesiones tiene cada disciplina en cada trimestre y el instrumento de evaluación al cierre.</p>
+          <div id="tabla-sesiones-disciplinas">
+            <p style="font-size:13px;color:var(--gris);">Primero selecciona el campo formativo arriba.</p>
+          </div>
+        </div>
+
+        <!-- CARD EJES Y PERFIL — ANALÍTICO -->
+        <div class="card">
+          <div class="card-title">🧭 Ejes articuladores y Perfil de egreso</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:16px;">Selecciona los que aplican a tu planeación anual. Puedes elegir más de uno.</p>
+
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin:0 0 14px;font-size:13px;color:#166534;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;">
+            <span><b>La app te propone</b> los ejes articuladores y el perfil de egreso, y el nombre, propósito y producto de cada trimestre, según los contenidos que elijas. Todo aparece como <i>(sugerido)</i>: déjalo, cámbialo o escribe el tuyo.</span>
+            <button class="btn-sec" type="button" style="padding:7px 14px;font-size:12.5px;" onclick="sugpPlanoA(true)">💡 Sugerir ejes y perfil</button>
+          </div>
+          <div class="campo">
+            <label>Ejes articuladores (selecciona los que aplican)</label>
+            <div class="check-grid" id="a-ejes-grid"></div>
+          </div>
+
+          <div class="campo" style="margin-top:16px;">
+            <label>Perfil de egreso (selecciona los rasgos que se desarrollan)</label>
+            <div class="perfil-grid" id="a-perfil-grid"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📚 Contenidos por trimestre</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:16px;">Selecciona los contenidos de cada trimestre. El PDA aparece al seleccionar.</p>
+          <div class="ttabs">
+            <button class="ttab on" onclick="showTrim(this,'at1','at2','at3')">1er Trimestre</button>
+            <button class="ttab" onclick="showTrim(this,'at2','at1','at3')">2do Trimestre</button>
+            <button class="ttab" onclick="showTrim(this,'at3','at1','at2')">3er Trimestre</button>
+          </div>
+          <div id="at1"></div>
+          <div id="at2" class="hidden"></div>
+          <div id="at3" class="hidden"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🎯 Proyectos del Libro NEM</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:12px;">Proyectos sugeridos del Libro de Proyectos NEM. Selecciona uno o escribe el tuyo.</p>
+          <div class="ttabs">
+            <button class="ttab on" onclick="showTrim(this,'apt1','apt2','apt3')">1er Trimestre</button>
+            <button class="ttab" onclick="showTrim(this,'apt2','apt1','apt3')">2do Trimestre</button>
+            <button class="ttab" onclick="showTrim(this,'apt3','apt1','apt2')">3er Trimestre</button>
+          </div>
+
+          <div id="apt1">
+            <div class="proy-lista" id="ps-a-t1"></div>
+            <div class="f3 mt12">
+              <div class="campo"><label>Nombre del proyecto o de la secuencia (T1)</label><input type="text" id="a-pn1" placeholder="Escribe o elige arriba"></div>
+              <div class="campo"><label>Modalidad (T1)</label><select id="a-pm1" onchange="aSugerirProyecto(1)"><option>Aprendizaje en proyectos comunitarios</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>Aprendizaje Basado en Problemas (ABP)</option><option>Aprendizaje basado en indagación (enfoque STEAM)</option><option>Aprendizaje servicio</option></select></div>
+              <div class="campo"><label>Duración aproximada (opcional)</label><input type="text" id="a-pd1" placeholder="Ej. 5 semanas · 15 sesiones"></div>
+            </div>
+            <div class="campo"><label>Propósito (T1)</label><textarea id="a-pp1" rows="3" placeholder="Propósito del primer trimestre (se sugiere uno al elegir el proyecto; puedes escribir el tuyo)..."></textarea></div>
+            <div style="margin:2px 0 10px;"><button class="btn-sec" type="button" style="padding:6px 12px;font-size:12px;" onclick="aSugerirProyecto(1,true)">💡 Sugerir otro nombre y producto</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Se basan en la problemática y la modalidad que elegiste; puedes cambiarlos.</span></div>
+            <div class="campo"><label>Productos / evidencias (T1)</label><input type="text" id="a-pr1" placeholder="Ej. Cartel, ensayo, presentación..."></div>
+            <div id="a-extras1"></div>
+            <div style="margin:6px 0 4px;"><button class="btn-sec" type="button" style="padding:7px 14px;font-size:12.5px;" onclick="aAgregarActividad(1)">➕ Agregar otro proyecto o secuencia didáctica de este trimestre</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Ej.: un proyecto y dos secuencias didácticas. El Programa Analítico los enlista de forma general.</span></div>
+            <div style="margin:4px 0 10px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12.5px;">
+              <b>Cuando termines este trimestre, pasa al Plano Didáctico</b> con todo ya cargado (contenidos, ejes, perfil, nombre, propósito y producto):<br>
+              <button class="btn-sec" type="button" style="margin-top:6px;padding:7px 14px;font-size:12.5px;" onclick="secDesdeAnalitico(1,'secuencia')">📝 Planear las secuencias didácticas del trimestre 1</button>
+              <button class="btn-sec" type="button" style="margin-top:6px;padding:7px 14px;font-size:12.5px;" onclick="secDesdeAnalitico(1,'proyecto')">📋 Planear el proyecto del trimestre 1</button>
+            </div>
+          </div>
+          <hr class="sep">
+          <div id="apt2" class="hidden">
+            <div class="proy-lista" id="ps-a-t2"></div>
+            <div class="f3 mt12">
+              <div class="campo"><label>Nombre del proyecto o de la secuencia (T2)</label><input type="text" id="a-pn2" placeholder="Escribe o elige arriba"></div>
+              <div class="campo"><label>Modalidad (T2)</label><select id="a-pm2" onchange="aSugerirProyecto(2)"><option>Aprendizaje en proyectos comunitarios</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>Aprendizaje Basado en Problemas (ABP)</option><option>Aprendizaje basado en indagación (enfoque STEAM)</option><option>Aprendizaje servicio</option></select></div>
+              <div class="campo"><label>Duración aproximada (opcional)</label><input type="text" id="a-pd2" placeholder="Ej. 5 semanas · 15 sesiones"></div>
+            </div>
+            <div class="campo"><label>Propósito (T2)</label><textarea id="a-pp2" rows="3" placeholder="Propósito del segundo trimestre (se sugiere uno al elegir el proyecto; puedes escribir el tuyo)..."></textarea></div>
+            <div style="margin:2px 0 10px;"><button class="btn-sec" type="button" style="padding:6px 12px;font-size:12px;" onclick="aSugerirProyecto(2,true)">💡 Sugerir otro nombre y producto</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Se basan en la problemática y la modalidad que elegiste; puedes cambiarlos.</span></div>
+            <div class="campo"><label>Productos / evidencias (T2)</label><input type="text" id="a-pr2" placeholder="Ej. Maqueta, reportaje, dramatización..."></div>
+            <div id="a-extras2"></div>
+            <div style="margin:6px 0 4px;"><button class="btn-sec" type="button" style="padding:7px 14px;font-size:12.5px;" onclick="aAgregarActividad(2)">➕ Agregar otro proyecto o secuencia didáctica de este trimestre</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Ej.: un proyecto y dos secuencias didácticas. El Programa Analítico los enlista de forma general.</span></div>
+            <div style="margin:4px 0 10px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12.5px;">
+              <b>Cuando termines este trimestre, pasa al Plano Didáctico</b> con todo ya cargado (contenidos, ejes, perfil, nombre, propósito y producto):<br>
+              <button class="btn-sec" type="button" style="margin-top:6px;padding:7px 14px;font-size:12.5px;" onclick="secDesdeAnalitico(2,'secuencia')">📝 Planear las secuencias didácticas del trimestre 2</button>
+              <button class="btn-sec" type="button" style="margin-top:6px;padding:7px 14px;font-size:12.5px;" onclick="secDesdeAnalitico(2,'proyecto')">📋 Planear el proyecto del trimestre 2</button>
+            </div>
+          </div>
+          <hr class="sep">
+          <div id="apt3" class="hidden">
+            <div class="proy-lista" id="ps-a-t3"></div>
+            <div class="f3 mt12">
+              <div class="campo"><label>Nombre del proyecto o de la secuencia (T3)</label><input type="text" id="a-pn3" placeholder="Escribe o elige arriba"></div>
+              <div class="campo"><label>Modalidad (T3)</label><select id="a-pm3" onchange="aSugerirProyecto(3)"><option>Aprendizaje en proyectos comunitarios</option><option>Proyecto de aula</option><option>Proyecto escolar</option><option>Secuencia didáctica</option><option>Aprendizaje Basado en Problemas (ABP)</option><option>Aprendizaje basado en indagación (enfoque STEAM)</option><option>Aprendizaje servicio</option></select></div>
+              <div class="campo"><label>Duración aproximada (opcional)</label><input type="text" id="a-pd3" placeholder="Ej. 5 semanas · 15 sesiones"></div>
+            </div>
+            <div class="campo"><label>Propósito (T3)</label><textarea id="a-pp3" rows="3" placeholder="Propósito del tercer trimestre (se sugiere uno al elegir el proyecto; puedes escribir el tuyo)..."></textarea></div>
+            <div style="margin:2px 0 10px;"><button class="btn-sec" type="button" style="padding:6px 12px;font-size:12px;" onclick="aSugerirProyecto(3,true)">💡 Sugerir otro nombre y producto</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Se basan en la problemática y la modalidad que elegiste; puedes cambiarlos.</span></div>
+            <div class="campo"><label>Productos / evidencias (T3)</label><input type="text" id="a-pr3" placeholder="Ej. Podcast, documental, historieta..."></div>
+            <div id="a-extras3"></div>
+            <div style="margin:6px 0 4px;"><button class="btn-sec" type="button" style="padding:7px 14px;font-size:12.5px;" onclick="aAgregarActividad(3)">➕ Agregar otro proyecto o secuencia didáctica de este trimestre</button> <span style="font-size:11px;color:var(--gris);font-style:italic;">Ej.: un proyecto y dos secuencias didácticas. El Programa Analítico los enlista de forma general.</span></div>
+            <div style="margin:4px 0 10px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12.5px;">
+              <b>Cuando termines este trimestre, pasa al Plano Didáctico</b> con todo ya cargado (contenidos, ejes, perfil, nombre, propósito y producto):<br>
+              <button class="btn-sec" type="button" style="margin-top:6px;padding:7px 14px;font-size:12.5px;" onclick="secDesdeAnalitico(3,'secuencia')">📝 Planear las secuencias didácticas del trimestre 3</button>
+              <button class="btn-sec" type="button" style="margin-top:6px;padding:7px 14px;font-size:12.5px;" onclick="secDesdeAnalitico(3,'proyecto')">📋 Planear el proyecto del trimestre 3</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="alerta alerta-err" id="err-a"></div>
+        <div class="btns">
+          <button class="btn-gen" id="bga" onclick="genAnalitico()"><span>✨</span> Generar Programa Analítico</button>
+        </div>
+        <div class="generando" id="gen-a"><div class="spinner"></div><p id="gen-a-msg">Generando Programa Analítico...<br><small>Esto puede tardar 30-60 segundos</small></p></div>
+        <div class="resultado" id="res-a">
+          <div class="res-hdr">
+            <h3>✅ Programa Analítico generado</h3>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-word" id="btn-dl-a" onclick="dlRes('a','Prog_Analitico')">⬇️ Descargar Word</button>
+              <span id="badge-dl-a" style="font-size:12px;color:var(--gris);"></span>
+              <button class="btn-sec" onclick="document.getElementById('res-a').style.display='none'">Cerrar</button>
+            </div>
+          </div>
+          <div class="res-txt" id="ra-txt" oncontextmenu="return false;"></div>
+        </div>
+      </div><!-- /sec-a -->
+
+      <!-- DIDÁCTICO -->
+      <div id="sec-d" class="hidden">
+        <div class="card">
+          <div class="card-title">📋 Datos del plano</div>
+          <div class="f2">
+            <div class="campo"><label>Nombre del docente</label><input type="text" id="d-doc" placeholder="Nombre completo"></div>
+            <div class="campo"><label>Nombre de la escuela</label><input type="text" id="d-esc" placeholder="Nombre oficial"></div>
+          </div>
+          <div class="f3">
+            <div class="campo"><label>CCT</label><input type="text" id="d-cct" placeholder="Clave de tu escuela"></div>
+            <div class="campo"><label>Ciclo escolar</label><input type="text" id="d-cic" value="2026-2027"></div>
+            <div class="campo"><label>Grado y grupo</label><input type="text" id="d-grp" placeholder="Ej. 3° A, B, C"></div>
+          </div>
+          <div class="f2">
+            <div class="campo"><label>Tipo de escuela (opcional)</label><input type="text" id="d-tipoesc" placeholder="Ej. Escuela Secundaria General, Técnica, Federal, Estatal…"><div class="ayuda">Se imprime en el encabezado de tus documentos. Si lo dejas vacío, no aparece.</div></div>
+            <div class="campo"><label>Zona escolar (opcional)</label><input type="text" id="d-zona" placeholder="Ej. 08"></div>
+          </div>
+          <div class="f3">
+            <div class="campo"><label>Grado</label>
+              <select id="d-gra" onchange="updCampos('d')">
+                <option value="">Selecciona</option>
+                <option value="1">1° Secundaria</option>
+                <option value="2">2° Secundaria</option>
+                <option value="3">3° Secundaria</option>
+              </select>
+            </div>
+            <div class="campo"><label>Campo formativo</label>
+              <select id="d-cam" onchange="updDisc('d')"><option value="">Primero elige grado</option></select>
+            </div>
+            <div class="campo"><label>Disciplina</label>
+              <select id="d-dis" onchange="loadCntsD()"><option value="">Primero elige campo</option></select>
+            </div>
+          </div>
+          <div class="f2">
+            <div class="campo"><label>Trimestre</label>
+              <select id="d-tri">
+                <option value="1">Primer Trimestre (Sep - Nov)</option>
+                <option value="2">Segundo Trimestre (Dic - Mar)</option>
+                <option value="3">Tercer Trimestre (Abr - Jun)</option>
+              </select>
+            </div>
+            <div class="campo"><label>Número de sesiones de la planeación trimestral</label>
+              <select id="d-ses" onchange="sesOtroCambio()">
+                <option value="9">~9 sesiones</option>
+                <option value="15">~15 sesiones</option>
+                <option value="20">~20 sesiones</option>
+                <option value="25" selected>~25 sesiones</option>
+                <option value="36">~36 sesiones</option>
+                <option value="50">~50 sesiones</option>
+                <option value="64">~64 sesiones</option>
+                <option value="otro">Otro (escribir el número)…</option>
+              </select>
+              <div id="d-ses-otro-box" class="hidden" style="margin-top:6px;"><input type="number" id="d-ses-otro" min="1" max="200" step="1" placeholder="Escribe el número de sesiones" oninput="sesOtroEscribir()"></div>
+              <div class="ayuda">Son las sesiones que vas a usar en el trimestre. Si no está tu número, elige «Otro».</div>
+            </div>
+          </div>
+          <div class="f2">
+            <div class="campo"><label>Duración por sesión</label>
+              <select id="d-dur">
+                <option value="45">45 minutos</option>
+                <option value="50" selected>50 minutos</option>
+                <option value="60">60 minutos</option>
+              </select>
+            </div>
+            <div class="campo"><label>Tipo de generación</label>
+              <select id="d-tgen" onchange="toggleSems()">
+                <option value="trimestre">Trimestre completo</option>
+                <option value="semanal">Por semana</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📚 Contenidos y PDAs</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:12px;">Selecciona los contenidos del trimestre. El PDA aparece al seleccionar.</p>
+          <div id="d-cnt-lista"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🎯 Modalidad y datos pedagógicos</div>
+
+          <!-- SELECTOR PRINCIPAL: Proyecto o Secuencia Didáctica -->
+          <div style="display:flex;gap:12px;margin-bottom:20px;">
+            <div class="tipo-btn on" id="mbtn-p" onclick="setModalidadD('proyecto')" style="flex:1;padding:14px;">
+              <span class="ico" style="font-size:22px;">📋</span>
+              <div class="tit">Proyecto</div>
+              <div class="desc">F1 Planeación · F2 Acción · F3 Intervención</div>
+            </div>
+            <div class="tipo-btn" id="mbtn-s" onclick="setModalidadD('secuencia')" style="flex:1;padding:14px;">
+              <span class="ico" style="font-size:22px;">📝</span>
+              <div class="tit">Secuencia Didáctica</div>
+              <div class="desc">Inicio · Desarrollo · Cierre por sesión</div>
+            </div>
+          </div>
+
+          <!-- CAMPOS COMUNES -->
+          <div class="campo">
+            <label>Modalidad / Metodología</label>
+            <select id="d-mod">
+              <option>Aprendizaje en proyectos comunitarios</option>
+              <option>Proyecto de aula</option>
+              <option>Proyecto escolar</option>
+              <option>Secuencia didáctica</option>
+              <option>Aprendizaje Basado en Problemas (ABP)</option>
+              <option>Aprendizaje basado en indagación (enfoque STEAM)</option>
+              <option>Aprendizaje servicio</option>
+            </select>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin:0 0 14px;font-size:13px;color:#166534;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;">
+            <span><b>La app te propone</b> los ejes, el perfil, el propósito, el proyecto, la problematización y el producto según tus contenidos. Todo aparece como <i>(sugerido)</i>: déjalo, cámbialo o escribe el tuyo.</span>
+            <button class="btn-sec" type="button" style="padding:7px 14px;font-size:12.5px;" onclick="sugpPlanoD(false,true)">💡 Sugerir todo</button>
+          </div>
+          <div class="campo">
+            <label>Ejes articuladores (selecciona los que aplican)</label>
+            <div class="check-grid" id="d-ejes-grid"></div>
+            <input type="hidden" id="d-ejes">
+          </div>
+
+          <div class="campo" style="margin-top:4px;">
+            <label>Perfil de egreso (selecciona los rasgos que se desarrollan)</label>
+            <div class="perfil-grid" id="d-perfil-grid"></div>
+            <input type="hidden" id="d-perfil">
+          </div>
+
+          <div class="campo"><label>Propósito u objetivo</label><textarea id="d-prop" placeholder="¿Qué lograrán los alumnos al finalizar este trimestre?"></textarea></div>
+          <div class="campo"><label>Interdisciplinariedad (opcional)</label>
+            <textarea id="d-inter" placeholder="Ej. Inglés: Contenido X | PDA X | Producto: Texto en inglés"></textarea>
+            <div class="ayuda">Describe cómo se vinculan otras disciplinas del campo formativo</div>
+          </div>
+          <div class="campo"><label>Contenidos de codiseño (opcional)</label>
+            <textarea id="d-codis" placeholder="Ej. Contenido que no está en el programa sintético pero responde a tu contexto, con su justificación"></textarea>
+            <div class="ayuda">Contenidos y PDA que agregas según las necesidades de tu grupo y que no vienen en los programas sintéticos. Anota también por qué los incluyes.</div>
+          </div>
+
+          <!-- SOLO PROYECTO -->
+          <div id="campos-proyecto">
+            <div class="proy-lista" id="ps-d"></div>
+            <div class="campo mt12"><label>Nombre del proyecto</label><input type="text" id="d-proy" placeholder="Se sugiere uno; escribe el tuyo o elige de la lista">
+              <div style="margin-top:6px;"><button class="btn-sec" type="button" style="padding:6px 12px;font-size:12px;" onclick="sugpPlanoD(true)">💡 Sugerir otro nombre y producto</button></div></div>
+            <div class="campo"><label>Problematización de la realidad</label><textarea id="d-prob" placeholder="Describe la problemática o situación de aprendizaje que da origen al proyecto..."></textarea></div>
+            <div class="campo"><label>Producto integrador</label><input type="text" id="d-prod" placeholder="Ej. Cartel, Ensayo literario, Podcast, Maqueta..."></div>
+          </div>
+
+          <!-- SOLO SECUENCIA DIDÁCTICA -->
+          <div id="campos-secuencia" class="hidden"><div id="s-form"></div></div>
+        </div>
+
+        <!-- RUTA METODOLÓGICA SOCIOCRÍTICA (solo modalidad Proyecto) -->
+        <div class="card" id="card-ruta">
+          <div class="card-title">🧭 Asistente para armar tu proyecto <span class="badge-nuevo">Nuevo</span></div>
+          <p class="ruta-intro"><strong>¿Qué es esto?</strong> Es tu punto de partida para planear un proyecto. Cuéntame la <strong>problemática de tu grupo o comunidad</strong> y yo te armo un <strong>borrador de proyecto</strong>: <strong>qué proyecto puedes hacer</strong> y su producto, las <strong>fases de la metodología</strong> del campo formativo, las <strong>actividades del docente y de los estudiantes</strong>, los <strong>recursos</strong> y en <strong>qué sesiones y semanas</strong> toca cada momento, según tus sesiones disponibles.<br><strong>¿Cómo se usa?</strong> 1) Escribe la problemática y pulsa «Armar mi proyecto». 2) Elige el proyecto que más te guste y edita lo que quieras. 3) Pulsa «Pasar este proyecto al Plano Didáctico» y se llenan los campos de arriba. Este paso <strong>no gasta IA</strong>; la IA se usa hasta que pulses «Generar Plano Didáctico». Al final también revisa si cumple lo que se evalúa en la Observación de la intervención didáctica, el Programa Analítico y el Plano Didáctico.</p>
+
+          <div class="f2">
+            <div class="campo">
+              <label>Metodología sociocrítica</label>
+              <select id="r-met" onchange="rutaCambioMet()">
+                <option value="abpc">Aprendizaje basado en proyectos comunitarios (Lenguajes)</option>
+                <option value="steam">Aprendizaje basado en indagación · STEAM (Saberes y Pensamiento Científico)</option>
+                <option value="abp">Aprendizaje basado en problemas · ABP (Ética, Naturaleza y Sociedades)</option>
+                <option value="as">Aprendizaje servicio (De lo Humano y lo Comunitario)</option>
+              </select>
+              <div class="ayuda" id="r-met-ayuda"></div>
+            </div>
+            <div class="campo">
+              <label>Escenario del proyecto</label>
+              <select id="r-esc">
+                <option value="aula">Aula · proyecto áulico</option>
+                <option value="escuela">Escuela · proyecto escolar</option>
+                <option value="comunidad">Comunidad · proyecto comunitario</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label>Problemática de tu contexto</label>
+            <textarea id="r-prob" rows="4" placeholder="Ej. En mi grupo de 1° A, 12 de 35 estudiantes no comprenden lo que leen y evitan participar en clase. En la comunidad casi no hay espacios de lectura y muchas familias no cuentan con libros en casa."></textarea>
+            <div class="ayuda">Respóndete: ¿qué pasa?, ¿a quién afecta?, ¿cómo se nota en el aula o en la comunidad? Usa datos reales de tu grupo.</div>
+          </div>
+
+          <div class="f2">
+            <div class="campo">
+              <label>Sesiones por semana</label>
+              <select id="r-sps">
+                <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
+                <option value="4">4</option><option value="5">5</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label>Espacios que usarás (opcional)</label>
+              <input type="text" id="r-espacios" placeholder="Ej. Aula, patio, biblioteca, sala de cómputo">
+            </div>
+          </div>
+          <div class="f2">
+            <div class="campo">
+              <label>BAP y diversidad de tu grupo (opcional)</label>
+              <textarea id="r-bap" rows="2" placeholder="Ej. 2 estudiantes con dislexia, 1 con TDAH, 4 hablantes de maya, situación económica limitada"></textarea>
+            </div>
+            <div class="campo">
+              <label>Recursos con los que cuentas (opcional)</label>
+              <textarea id="r-rec" rows="2" placeholder="Ej. Libros de texto, biblioteca escolar, proyector, 5 computadoras, celulares del alumnado"></textarea>
+            </div>
+          </div>
+
+          <div class="ruta-ref" id="r-ref"></div>
+          <div class="alerta alerta-err" id="ruta-err"></div>
+          <button class="btn-gen" type="button" onclick="disenarRuta()"><span>🧭</span> Armar mi proyecto</button>
+          <div id="ruta-out"></div>
+        </div>
+
+        <div class="card hidden" id="card-sems">
+          <div class="card-title">📅 Selecciona la semana a generar</div>
+          <p style="font-size:13px;color:var(--gris);margin-bottom:12px;">Las semanas generadas aparecen en verde.</p>
+          <div class="sem-grid" id="sem-grid"></div>
+          <div class="campo mt12"><label>Sesiones en esta semana</label>
+            <select id="d-semsem">
+              <option value="1">1 sesión</option>
+              <option value="2">2 sesiones</option>
+              <option value="3" selected>3 sesiones</option>
+              <option value="4">4 sesiones</option>
+              <option value="5">5 sesiones</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="alerta alerta-err" id="err-d"></div>
+        <div class="btns">
+          <button class="btn-gen" id="bgd" onclick="genDidactico()"><span>✨</span> Generar Plano Didáctico</button>
+          <button class="btn-sec" onclick="limpiarD()">🔄 Limpiar y empezar de nuevo</button>
+        </div>
+        <div class="generando" id="gen-d"><div class="spinner"></div><p id="gen-d-msg">Generando Plano Didáctico...<br><small>Esto puede tardar 30-90 segundos</small></p></div>
+        <div class="resultado" id="res-d">
+          <div class="res-hdr">
+            <h3>✅ Plano Didáctico generado</h3>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn-word" id="btn-dl-d" onclick="dlRes('d','Plano_Didactico')">⬇️ Descargar Word</button>
+              <span id="badge-dl-d" style="font-size:12px;color:var(--gris);"></span>
+              <button class="btn-sec" onclick="document.getElementById('res-d').style.display='none'">Cerrar</button>
+            </div>
+          </div>
+          <div class="res-txt" id="rd-txt" oncontextmenu="return false;"></div>
+        </div>
+      </div><!-- /sec-d -->
+    </div><!-- /tab-nueva -->
+
+    <!-- TAB HISTORIAL -->
+    <div class="tab-panel" id="tab-historial">
+      <div class="sec-title">Historial de planeaciones</div>
+      <div class="sec-sub">Documentos generados en este dispositivo</div>
+      <div id="hist-lista">
+        <div style="text-align:center;padding:60px;color:var(--gris);">
+          <div style="font-size:48px;margin-bottom:12px;">📋</div>
+          <div>Aún no tienes planeaciones guardadas.</div>
+        </div>
+      </div>
+    </div>
+
+
+  </div><!-- /main -->
+  </div><!-- /layout -->
+</div><!-- /app -->
+
+<script src="firebase-config.js?v=202611180600"></script>
+<script src="correos-temporales.js?v=202611180600"></script>
+<script src="auth.js?v=202611180600"></script>
+<script src="licencia.js?v=202611182100"></script>
+<script src="curriculum.js?v=202611180600"></script>
+<script src="projects.js?v=202611180600"></script>
+<script src="generators.js?v=202611181600"></script>
+<script src="metodologias.js?v=202611180600"></script>
+<script src="ruta-ui.js?v=202611180600"></script>
+<script src="secuencias.js?v=202611181600"></script>
+<script src="sugerencias-plano.js?v=202611180600"></script>
+<script>
+// Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
+// (la pantalla de acceso conserva su autocompletar para correo y contraseña).
+(function () {
+  function sinAutocompletar(raiz) {
+    try {
+      raiz.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=hidden]), textarea').forEach(function (e) {
+        if (e.closest('#pantalla-login') || e.hasAttribute('autocomplete')) return;
+        e.setAttribute('autocomplete', 'off');
+        e.setAttribute('data-lpignore', 'true');
+      });
+    } catch (_e) {}
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    sinAutocompletar(document);
+    new MutationObserver(function (muts) {
+      muts.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) { if (n.matches && n.matches('input,textarea')) sinAutocompletar(n.parentNode || document); else sinAutocompletar(n); } }); });
+    }).observe(document.body, { childList: true, subtree: true });
+  });
+})();
+</script>
+<script src="gestion.js?v=202611182330"></script>
+<script src="bitacora.js?v=202611180600"></script>
+<script src="escaner.js?v=202611180600"></script>
+<script src="libreta.js?v=202611182230"></script>
+<script src="rezago.js?v=202611181700"></script>
+<script>
+// ── ESTADO ──────────────────────────────────────────────
+let tipoActivo='a', semAct=1, semsGen=new Set();
+let cA={t1:[],t2:[],t3:[]}, cD=[];
+let historial=[];
+
+// ── ACCESO ────────────────────────────────────────────────
+function showAuthTab(tab){
+  const vis = (id, on) => { const e = document.getElementById(id); if(e) e.style.display = on ? 'block' : 'none'; };
+  vis('panel-login', tab==='login'); vis('panel-registro', tab==='registro');
+  vis('panel-recuperar', tab==='recuperar'); vis('panel-verificar', tab==='verificar');
+  vis('panel-social', tab==='login' || tab==='registro');
+  const t = document.getElementById('auth-tabs'); if(t) t.style.display = (tab==='login' || tab==='registro') ? 'flex' : 'none';
+  document.getElementById('tab-login-btn').classList.toggle('on', tab==='login');
+  document.getElementById('tab-reg-btn').classList.toggle('on', tab==='registro');
+  ['l-err','r-err','rc-err','rc-ok','ver-err','ver-ok'].forEach(id => { const e=document.getElementById(id); if(e) e.style.display='none'; });
+  const sub = {login:['Bienvenido, maestro','Entra para continuar'], registro:['Crea tu cuenta','Solo toma un minuto'], recuperar:['Recupera tu acceso','Te enviamos un enlace a tu correo'], verificar:['Revisa tu correo','Un último paso para activar tu cuenta']}[tab];
+  if(sub){ const h=document.getElementById('login-titulo'), p=document.getElementById('login-sub'); if(h) h.textContent=sub[0]; if(p) p.textContent=sub[1]; }
+  if(tab==='recuperar'){ const c=document.getElementById('rc-correo'); if(c && !c.value) c.value=document.getElementById('l-correo').value||''; }
+}
+
+// Historial de planeaciones: solo en este dispositivo, separado por cuenta
+function histKey(){ const u=getUsuario(); return 'nem_hist_'+((u&&u.uid)||'anon'); }
+function cargarHist(){ try{ return JSON.parse(localStorage.getItem(histKey())||'[]'); }catch(e){ return []; } }
+
+// Se llama cuando ya hay sesión válida (correo verificado)
+function entrarApp(){
+  const usr=getUsuario(); if(!usr) return;
+  if(typeof licPuertaAbrir==='function') licPuertaAbrir();   // la app no se ve hasta confirmar la licencia
+  document.getElementById('pantalla-login').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('h-nom').textContent=usr.nombre;
+  document.getElementById('av').textContent=usr.nombre.charAt(0).toUpperCase();
+  document.getElementById('a-doc').value=usr.nombre;
+  document.getElementById('d-doc').value=usr.nombre;
+  renderEjesYPerfil();
+  if(typeof gCargar==='function') gCargar();
+  document.querySelectorAll('.admin-only').forEach(el=>el.classList.toggle('hidden', !esAdmin()));
+  navReiniciar();
+  if(typeof gArmarNavInferior==='function') gArmarNavInferior();
+  // La primera pantalla es la de bienvenida (con la información del programa); el botón amarillo lleva al menú principal
+  const btnBienv=[...document.querySelectorAll('.sidebar .nav-tab')].find(b=>(b.getAttribute('onclick')||'').includes("'bienvenida'"));
+  const btnInicio=document.querySelector('.sidebar .nav-tab');
+  if(btnBienv) showTab('bienvenida',btnBienv); else if(btnInicio) showTab('inicio',btnInicio);
+  if(typeof gPrefillEscuela==='function') gPrefillEscuela();
+  historial=cargarHist();
+  renderHist();
+  licReiniciar();
+  if(typeof licPuertaVerificar==='function'){ licPuertaVerificar(); licPuertaVigilar(); }
+  else licCargar().then(()=>{ if(typeof G!=='undefined' && G.tab==='inicio') gRender(); });
+}
+// Se llama cuando no hay sesión
+function salirApp(){
+  usuarioActivo=null;
+  { const lp=document.getElementById('lic-puerta'); if(lp) lp.style.display='none'; const ap=document.getElementById('app'); if(ap) ap.removeAttribute('inert'); if(typeof LIC_PUERTA!=='undefined'){ LIC_PUERTA.activa=false; clearInterval(LIC_PUERTA.timer); } }
+  if(typeof G!=='undefined'){ G.data=null; G.gid=null; G.tab=null; }
+  historial=[];
+  if(typeof licReiniciar==='function') licReiniciar();
+  document.getElementById('app').style.display='none';
+  document.getElementById('pantalla-login').style.display='flex';
+  document.body.classList.remove('menu-open');
+  ['l-pwd','r-pwd','r-pwd2'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
+  if(!document.getElementById('panel-verificar') || document.getElementById('panel-verificar').style.display==='none') showAuthTab('login');
+}
+function doLogout(){ if(AUTH && AUTH.auth) authSalir(); else salirApp(); }
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter' || document.getElementById('pantalla-login').style.display==='none') return;
+  const on = id => { const x=document.getElementById(id); return x && x.style.display!=='none'; };
+  if(on('panel-registro')) authRegistrar(); else if(on('panel-recuperar')) authRecuperar(); else if(on('panel-login')) authEntrar();
+});
+
+// ── TABS ─────────────────────────────────────────────────
+// Historial de pantallas para los botones «Anterior» y «Menú principal»
+const NAV={actual:'inicio',pila:[],volviendo:false};
+function navNombre(id){
+  const b=[...document.querySelectorAll('.sidebar .nav-tab')].find(x=>(x.getAttribute('onclick')||'').includes("'"+id+"'"));
+  if(!b) return id==='inicio'?'Menú principal':id;
+  const c=b.cloneNode(true); c.querySelectorAll('.si,.sb-pronto').forEach(e=>e.remove()); return c.textContent.trim();
+}
+function navPintar(){
+  const barra=document.getElementById('nav-volver'); if(!barra) return;
+  barra.classList.toggle('visible',NAV.actual!=='inicio'&&NAV.actual!=='bienvenida');
+  document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.toggle('on',b.dataset.id===NAV.actual));
+  const ant=NAV.pila.length?NAV.pila[NAV.pila.length-1]:null;
+  const bt=document.getElementById('nv-ant');
+  bt.style.display=(ant&&ant!=='inicio')?'':'none';
+  if(ant&&ant!=='inicio') bt.textContent='← '+navNombre(ant);
+}
+function navAtras(){
+  const ant=NAV.pila.pop(); NAV.volviendo=true;
+  if(typeof gIrA==='function') gIrA(ant||'inicio');
+}
+function navInicio(){ NAV.pila=[]; NAV.volviendo=true; if(typeof gIrA==='function') gIrA('inicio'); }
+function navReiniciar(){ NAV.actual='inicio'; NAV.pila=[]; NAV.volviendo=false; }
+function showTab(id,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('activo'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('activo'));
+  document.getElementById('tab-'+id).classList.add('activo');
+  btn.classList.add('activo');
+  document.body.classList.remove('menu-open');
+  if(NAV.actual!==id){
+    if(!NAV.volviendo){ NAV.pila.push(NAV.actual); if(NAV.pila.length>30) NAV.pila.shift(); }
+    NAV.actual=id;
+  }
+  NAV.volviendo=false;
+  navPintar();
+  window.scrollTo({top:0});
+  if(typeof gOnTab==='function') gOnTab(id);
+}
+
+// ── NÚMERO DE SESIONES: «Otro» permite escribir cualquier número ─────
+function sesOtroCambio(){
+  const sel=document.getElementById('d-ses'), box=document.getElementById('d-ses-otro-box'), inp=document.getElementById('d-ses-otro');
+  const custom=sel.options[sel.selectedIndex]&&sel.options[sel.selectedIndex].dataset.custom==='1';
+  box.classList.toggle('hidden', !(sel.value==='otro'||custom));
+  if(sel.value==='otro'){ inp.value=''; inp.focus(); }
+  else if(custom) inp.value=sel.value;
+}
+function sesOtroEscribir(){
+  const sel=document.getElementById('d-ses'), inp=document.getElementById('d-ses-otro');
+  let n=parseInt(inp.value,10);
+  let o=[...sel.options].find(x=>x.dataset.custom==='1');
+  if(isNaN(n)||n<1){ if(o) o.remove(); sel.value='otro'; return; }
+  n=Math.min(200,n);
+  if(!o){ o=document.createElement('option'); o.dataset.custom='1'; sel.insertBefore(o, sel.querySelector('option[value="otro"]')); }
+  o.value=String(n); o.textContent=`${n} sesiones (otro)`; sel.value=String(n);
+  sel.dispatchEvent(new Event('change',{bubbles:true}));   // avisa a quien dependa del número (secuencias, ruta)
+}
+
+// ── TIPO ─────────────────────────────────────────────────
+function setTipo(t){
+  tipoActivo=t;
+  document.getElementById('tbtn-a').classList.toggle('on',t==='a');
+  document.getElementById('tbtn-d').classList.toggle('on',t==='d');
+  document.getElementById('sec-a').classList.toggle('hidden',t!=='a');
+  document.getElementById('sec-d').classList.toggle('hidden',t!=='d');
+}
+
+// ── MODALIDAD DIDÁCTICO: Proyecto vs Secuencia ────────────
+let modalidadD = 'proyecto';
+function setModalidadD(m){
+  modalidadD = m;
+  document.getElementById('mbtn-p').classList.toggle('on', m==='proyecto');
+  document.getElementById('mbtn-s').classList.toggle('on', m==='secuencia');
+  document.getElementById('campos-proyecto').classList.toggle('hidden', m!=='proyecto');
+  document.getElementById('campos-secuencia').classList.toggle('hidden', m!=='secuencia');
+  // La ruta metodológica solo aplica a Proyecto
+  const cr=document.getElementById('card-ruta'); if(cr) cr.classList.toggle('hidden', m!=='proyecto');
+  // Sincronizar el select de modalidad
+  const sel = document.getElementById('d-mod');
+  if(m==='secuencia') sel.value = 'Secuencia didáctica';
+  else if(sel.value==='Secuencia didáctica') sel.value = 'Aprendizaje en proyectos comunitarios';
+}
+
+// ── TRIM TABS ─────────────────────────────────────────────
+function showTrim(btn,show,h1,h2){
+  const card=btn.closest('.card');
+  card.querySelectorAll('.ttab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  [show,h1,h2].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('hidden',i!==0);
+  });
+}
+
+// ── CAMPOS/DISCIPLINAS ────────────────────────────────────
+function updCampos(pfx){
+  const g=document.getElementById(pfx+'-gra').value;
+  const s=document.getElementById(pfx+'-cam');
+  s.innerHTML='<option value="">Selecciona</option>';
+  document.getElementById(pfx+'-dis').innerHTML='<option value="">Primero elige campo</option>';
+  if(!g) return;
+  Object.keys(CAMPOS_POR_GRADO[g]||{}).forEach(c=>{
+    const o=document.createElement('option');o.value=c;o.textContent=c;s.appendChild(o);
+  });
+}
+function updDisc(pfx){
+  const g=document.getElementById(pfx+'-gra').value;
+  const c=document.getElementById(pfx+'-cam').value;
+  const s=document.getElementById(pfx+'-dis');
+  s.innerHTML='<option value="">Selecciona</option>';
+  if(!g||!c) return;
+  (CAMPOS_POR_GRADO[g]?.[c]||[]).forEach(d=>{
+    const o=document.createElement('option');o.value=d;o.textContent=d;s.appendChild(o);
+  });
+  if(pfx==='a') { renderTablaDocentes(c,g); renderTablaSesiones(c,g); }
+}
+
+// ── EJES Y PERFIL — CHECKBOXES ───────────────────────────
+function renderEjesYPerfil(){
+  // Analítico
+  const ga = document.getElementById('a-ejes-grid');
+  const pa = document.getElementById('a-perfil-grid');
+  // Didáctico
+  const gd = document.getElementById('d-ejes-grid');
+  const pd = document.getElementById('d-perfil-grid');
+
+  if(ga) ga.innerHTML = EJES_ARTICULADORES.map((eje,i)=>`
+    <label class="chk-item" id="ae-${i}" onclick="togChk(this,'a-ejes-grid')">
+      <input type="checkbox" value="${eje}"> <span>${eje}</span>
+    </label>`).join('');
+
+  if(pa) pa.innerHTML = PERFIL_EGRESO.map((p,i)=>`
+    <label class="chk-perfil" id="ap-${i}" onclick="togChk(this,'a-perfil-grid')">
+      <input type="checkbox" value="${p}"> <span>${p}</span>
+    </label>`).join('');
+
+  if(gd) gd.innerHTML = EJES_ARTICULADORES.map((eje,i)=>`
+    <label class="chk-item" id="de-${i}" onclick="togChkHid(this,'d-ejes-grid','d-ejes')">
+      <input type="checkbox" value="${eje}"> <span>${eje}</span>
+    </label>`).join('');
+
+  if(pd) pd.innerHTML = PERFIL_EGRESO.map((p,i)=>`
+    <label class="chk-perfil" id="dp-${i}" onclick="togChkHid(this,'d-perfil-grid','d-perfil')">
+      <input type="checkbox" value="${p}"> <span>${p}</span>
+    </label>`).join('');
+}
+
+function togChk(label, gridId){
+  const chk = label.querySelector('input[type=checkbox]');
+  // El click del label ya activa/desactiva el checkbox nativamente
+  // Solo actualizamos la clase visual en el siguiente tick
+  setTimeout(()=>{
+    label.classList.toggle('on', chk.checked);
+  }, 0);
+}
+
+function togChkHid(label, gridId, hidId){
+  setTimeout(()=>{
+    const chk = label.querySelector('input[type=checkbox]');
+    label.classList.toggle('on', chk.checked);
+    // Actualizar input hidden con los valores seleccionados
+    const grid = document.getElementById(gridId);
+    if(!grid) return;
+    const vals = [...grid.querySelectorAll('input:checked')].map(c=>c.value);
+    const hid = document.getElementById(hidId);
+    if(hid) hid.value = vals.join(' | ');
+  }, 0);
+}
+
+function getEjesSeleccionados(gridId){
+  const grid = document.getElementById(gridId);
+  if(!grid) return '';
+  return [...grid.querySelectorAll('input:checked')].map(c=>c.value).join(', ');
+}
+
+function getPerfilSeleccionado(gridId){
+  const grid = document.getElementById(gridId);
+  if(!grid) return '';
+  return [...grid.querySelectorAll('input:checked')].map(c=>c.value).join('\n\n');
+}
+
+// ── TABLA DOCENTES DINAMICA ───────────────────────────────
+function renderTablaDocentes(campo, grado){
+  const cont = document.getElementById('tabla-docentes-campo');
+  if(!cont) return;
+  const disciplinas = CAMPOS_POR_GRADO[grado]?.[campo] || [];
+  if(!disciplinas.length){ cont.innerHTML='<p style="font-size:13px;color:var(--gris);">Sin disciplinas detectadas.</p>'; return; }
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">';
+  disciplinas.forEach(d=>{
+    const id = 'doc-'+d.toLowerCase().replace(/[^a-z0-9]/g,'');
+    html += `<div class="campo">
+      <label>Docente(s) de ${d}</label>
+      <textarea id="${id}" rows="3" data-disc="${d}" placeholder="Nombre completo del docente de ${d}"></textarea>
+    </div>`;
+  });
+  html += '</div>';
+  cont.innerHTML = html;
+}
+
+// ── TABLA SESIONES POR DISCIPLINA ────────────────────────
+function renderTablaSesiones(campo, grado){
+  const cont = document.getElementById('tabla-sesiones-disciplinas');
+  if(!cont) return;
+  const disciplinas = CAMPOS_POR_GRADO[grado]?.[campo] || [];
+  if(!disciplinas.length){ cont.innerHTML='<p style="font-size:13px;color:var(--gris);">Sin disciplinas detectadas.</p>'; return; }
+  let html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">';
+  html += '<thead><tr>';
+  html += '<th style="border:1px solid #cbd5e1;padding:8px;background:#f1f5f9;font-size:12px;text-align:left;">Trimestre</th>';
+  disciplinas.forEach(d=>{
+    html += `<th style="border:1px solid #cbd5e1;padding:8px;background:#f1f5f9;font-size:12px;">${d}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+  const trims = ['Primero (Sep-Nov)','Segundo (Dic-Mar)','Tercero (Abr-Jun)'];
+  trims.forEach((tnom,ti)=>{
+    html += `<tr><td style="border:1px solid #cbd5e1;padding:8px;font-size:12px;font-weight:600;background:#f8fafc;">${tnom}</td>`;
+    disciplinas.forEach(d=>{
+      const id = `ses-t${ti+1}-`+d.toLowerCase().replace(/[^a-z0-9]/g,'');
+      html += `<td style="border:1px solid #cbd5e1;padding:4px;"><input type="number" id="${id}" data-trim="${ti+1}" data-disc="${d}" min="1" max="100" placeholder="0" style="width:100%;padding:6px;border:1.5px solid #cbd5e1;border-radius:6px;text-align:center;"></td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '<div style="margin-top:14px;" class="campo"><label>Instrumento de evaluación</label>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:6px;">';
+  disciplinas.forEach(d=>{
+    const id = 'instr-'+d.toLowerCase().replace(/[^a-z0-9]/g,'');
+    html += `<div class="campo" style="margin:0;">
+      <label style="font-size:11px;">${d}</label>
+      <select id="${id}" data-disc="${d}" style="width:100%;padding:8px;border:1.5px solid #cbd5e1;border-radius:6px;">
+        <option>Escala estimativa</option>
+        <option>Lista de cotejo</option>
+        <option>Rúbrica</option>
+        <option>Guía de observación</option>
+        <option>Portafolio</option>
+        <option>Prueba escrita</option>
+        <option>Registro anecdótico</option>
+      </select>
+    </div>`;
+  });
+  html += '</div></div>';
+  cont.innerHTML = html;
+}
+
+// ── LEER DATOS DOCENTES Y SESIONES ───────────────────────
+function getDatosDisciplinas(grado, campo){
+  const disciplinas = CAMPOS_POR_GRADO[grado]?.[campo] || [];
+  const docentes = {};
+  const sesiones = { t1:{}, t2:{}, t3:{} };
+  const instrumentos = {};
+  disciplinas.forEach(d=>{
+    const idDoc = 'doc-'+d.toLowerCase().replace(/[^a-z0-9]/g,'');
+    const elDoc = document.getElementById(idDoc);
+    docentes[d] = elDoc ? elDoc.value.trim() : '';
+    [1,2,3].forEach(ti=>{
+      const idSes = `ses-t${ti}-`+d.toLowerCase().replace(/[^a-z0-9]/g,'');
+      const elSes = document.getElementById(idSes);
+      sesiones['t'+ti][d] = elSes ? (elSes.value||'') : '';
+    });
+    const idInstr = 'instr-'+d.toLowerCase().replace(/[^a-z0-9]/g,'');
+    const elInstr = document.getElementById(idInstr);
+    instrumentos[d] = elInstr ? elInstr.value : 'Escala estimativa';
+  });
+  return { disciplinas, docentes, sesiones, instrumentos };
+}
+
+// ── LEER CONTEXTO SOCIOEDUCATIVO ─────────────────────────
+function getContexto(){
+  return {
+    c1: document.getElementById('ctx-1')?.value?.trim()||'',
+    c2: document.getElementById('ctx-2')?.value?.trim()||'',
+    c3: document.getElementById('ctx-3')?.value?.trim()||'',
+    c4: document.getElementById('ctx-4')?.value?.trim()||'',
+    c5: document.getElementById('ctx-5')?.value?.trim()||'',
+    c6: document.getElementById('ctx-6')?.value?.trim()||'',
+    c7: document.getElementById('ctx-7')?.value?.trim()||''
+  };
+}
+
+// ── CONTENIDOS ANALÍTICO ──────────────────────────────────
+function loadCntsA(){
+  const g=document.getElementById('a-gra').value;
+  const c=document.getElementById('a-cam').value;
+  const d=document.getElementById('a-dis').value;
+  if(!g||!c||!d) return;
+  const cnts=obtenerContenidos(c,d,g);
+  cA={t1:[],t2:[],t3:[]};
+  ['t1','t2','t3'].forEach(t=>{
+    const lista=document.getElementById('a'+t);
+    lista.innerHTML='';
+    cnts.forEach(cnt=>{
+      const pda=obtenerPDA(cnt,g);
+      const div=document.createElement('div');
+      div.className='cnt-item';
+      div.innerHTML=`<div class="cnt-num">Contenido ${cnt.num}</div><div class="cnt-tit">${cnt.titulo}</div><div class="cnt-pda">📌 PDA: ${pda}</div>`;
+      div.onclick=()=>togCntA(div,cnt,t);
+      lista.appendChild(div);
+    });
+  });
+  updProysA();
+}
+function togCntA(el,cnt,t){
+  el.classList.toggle('on');
+  if(el.classList.contains('on')){if(!cA[t].find(x=>x.id===cnt.id)) cA[t].push(cnt);}
+  else cA[t]=cA[t].filter(x=>x.id!==cnt.id);
+  updProysA();
+}
+function updProysA(){
+  const g=document.getElementById('a-gra').value;
+  const cam=document.getElementById('a-cam').value;
+  const d=document.getElementById('a-dis').value;
+  if(!g||!cam||!d) return;
+  ['t1','t2','t3'].forEach((t,i)=>{
+    const ids=cA[t].map(c=>c.id);
+    const proys=obtenerProyectosSugeridos(g,cam,d,ids);
+    const cont=document.getElementById('ps-a-'+t);
+    if(!cont) return;
+    if(!proys.length){cont.style.display='none';return;}
+    cont.style.display='block';
+    cont.innerHTML='<p style="font-size:12px;color:var(--gris);margin-bottom:8px;"><strong>Proyectos sugeridos del Libro NEM:</strong></p>'+
+      proys.slice(0,4).map(p=>`<div class="proy-card" onclick="elejirProyA(this,'${t}','${p.nombre.replace(/'/g,"\\'")}')">
+        <div class="proy-nom">${p.nombre}</div>
+        <div class="proy-pag">📄 Pág. ${p.pagina} — Libro de Proyectos NEM</div>
+        <div class="proy-desc">${p.descripcion}</div></div>`).join('');
+  });
+}
+function elejirProyA(el,t,nom){
+  el.closest('.proy-lista').querySelectorAll('.proy-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('a-pn'+t.slice(-1)).value=nom;
+  if(typeof sugMarcar==='function') sugMarcar('a-pn'+t.slice(-1),false);
+}
+
+// ── CONTENIDOS DIDÁCTICO ──────────────────────────────────
+function loadCntsD(){
+  const g=document.getElementById('d-gra').value;
+  const c=document.getElementById('d-cam').value;
+  const d=document.getElementById('d-dis').value;
+  if(!g||!c||!d) return;
+  const cnts=obtenerContenidos(c,d,g);
+  cD=[];
+  const lista=document.getElementById('d-cnt-lista');
+  lista.innerHTML='';
+  cnts.forEach(cnt=>{
+    const pda=obtenerPDA(cnt,g);
+    const div=document.createElement('div');
+    div.className='cnt-item';
+    div.innerHTML=`<div class="cnt-num">Contenido ${cnt.num}</div><div class="cnt-tit">${cnt.titulo}</div><div class="cnt-pda">📌 PDA: ${pda}</div>`;
+    div.onclick=()=>togCntD(div,cnt);
+    lista.appendChild(div);
+  });
+  updProysD();
+}
+function togCntD(el,cnt){
+  el.classList.toggle('on');
+  if(el.classList.contains('on')){if(!cD.find(x=>x.id===cnt.id)) cD.push(cnt);}
+  else cD=cD.filter(x=>x.id!==cnt.id);
+  updProysD();
+}
+function updProysD(){
+  const g=document.getElementById('d-gra').value;
+  const cam=document.getElementById('d-cam').value;
+  const d=document.getElementById('d-dis').value;
+  if(!g||!cam||!d) return;
+  const ids=cD.map(c=>c.id);
+  const proys=obtenerProyectosSugeridos(g,cam,d,ids);
+  const cont=document.getElementById('ps-d');
+  if(!proys.length){cont.style.display='none';return;}
+  cont.style.display='block';
+  cont.innerHTML='<p style="font-size:12px;color:var(--gris);margin-bottom:8px;"><strong>Proyectos sugeridos del Libro NEM:</strong></p>'+
+    proys.slice(0,5).map(p=>`<div class="proy-card" onclick="elejirProyD(this,'${p.nombre.replace(/'/g,"\\'")}')">
+      <div class="proy-nom">${p.nombre}</div>
+      <div class="proy-pag">📄 Pág. ${p.pagina} — Libro de Proyectos NEM</div>
+      <div class="proy-desc">${p.descripcion}</div></div>`).join('');
+}
+function elejirProyD(el,nom){
+  document.getElementById('ps-d').querySelectorAll('.proy-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('d-proy').value=nom;
+  if(typeof sugMarcar==='function') sugMarcar('d-proy',false);
+}
+
+// ── SEMANAS ───────────────────────────────────────────────
+function toggleSems(){
+  const t=document.getElementById('d-tgen').value;
+  document.getElementById('card-sems').classList.toggle('hidden',t!=='semanal');
+  if(t==='semanal') buildSemGrid();
+}
+function buildSemGrid(){
+  const n=Math.ceil((parseInt(document.getElementById('d-ses').value)||25)/3);
+  const g=document.getElementById('sem-grid');
+  g.innerHTML='';
+  for(let i=1;i<=n;i++){
+    const b=document.createElement('button');
+    b.className='sem-btn'+(semsGen.has(i)?' gen':'')+(i===semAct?' act':'');
+    b.textContent='Semana '+i;
+    b.onclick=()=>{semAct=i;buildSemGrid();};
+    g.appendChild(b);
+  }
+}
+
+// ── GENERAR ANALÍTICO ─────────────────────────────────────
+async function genAnalitico(){
+  const doc=document.getElementById('a-doc').value;
+  const g=document.getElementById('a-gra').value;
+  const cam=document.getElementById('a-cam').value;
+  const dis=document.getElementById('a-dis').value;
+  if(!doc||!g||!cam||!dis){showErr('err-a','Completa: docente, grado, campo y disciplina.');return;}
+  hideErr('err-a');
+  document.getElementById('bga').disabled=true;
+  document.getElementById('gen-a').style.display='block';
+  document.getElementById('res-a').style.display='none';
+  const datosDisciplinas = getDatosDisciplinas(g, cam);
+  const contexto = getContexto();
+  const d={
+    docente:doc,grado:g,campo:cam,disciplina:dis,
+    escuela:document.getElementById('a-esc').value,
+    cct:document.getElementById('a-cct').value,
+    turno:document.getElementById('a-tur').value,
+    cicloEscolar:document.getElementById('a-cic').value,
+    municipio:document.getElementById('a-mun').value,
+    problematica:(document.getElementById('ctx-7')||{}).value||'',
+    ejesSeleccionados: getEjesSeleccionados('a-ejes-grid'),
+    perfilSeleccionado: getPerfilSeleccionado('a-perfil-grid'),
+    disciplinasDelCampo: datosDisciplinas.disciplinas,
+    docentesPorDisc: datosDisciplinas.docentes,
+    sesionesPorDisc: datosDisciplinas.sesiones,
+    instrumentosPorDisc: datosDisciplinas.instrumentos,
+    contexto: contexto,
+    t1:Object.assign({contenidos:cA.t1,modalidad:document.getElementById('a-pm1').value,nombreProyecto:document.getElementById('a-pn1').value,proposito:document.getElementById('a-pp1').value,productos:document.getElementById('a-pr1').value},{actividades:aActividades(1)}),
+    t2:Object.assign({contenidos:cA.t2,modalidad:document.getElementById('a-pm2').value,nombreProyecto:document.getElementById('a-pn2').value,proposito:document.getElementById('a-pp2').value,productos:document.getElementById('a-pr2').value},{actividades:aActividades(2)}),
+    t3:Object.assign({contenidos:cA.t3,modalidad:document.getElementById('a-pm3').value,nombreProyecto:document.getElementById('a-pn3').value,proposito:document.getElementById('a-pp3').value,productos:document.getElementById('a-pr3').value},{actividades:aActividades(3)}),
+  };
+  const _pgA=iaProgreso('gen-a-msg','Generando Programa Analítico…','suele tardar 1–2 minutos');
+  try{
+    const txt=await generarAnalitico(d);
+    _pgA.parar();
+    document.getElementById('ra-txt').innerHTML=txt;
+    document.getElementById('res-a').style.display='block';
+    document.getElementById('gen-a').style.display='none';
+    document.getElementById('bga').disabled=false;
+    document.getElementById('res-a').scrollIntoView({behavior:'smooth'});
+    actualizarBadgeDescarga('a');
+    saveHist('analitico',`Prog. Analítico — ${dis} ${g}° — ${d.t1.nombreProyecto||''}`,txt,d);
+  }catch(err){
+    _pgA.parar();
+    document.getElementById('gen-a').style.display='none';
+    document.getElementById('bga').disabled=false;
+    showErr('err-a','Error: '+err.message);
+  }
+}
+
+// ── GENERAR DIDÁCTICO ─────────────────────────────────────
+async function genDidactico(){
+  const doc=document.getElementById('d-doc').value;
+  const g=document.getElementById('d-gra').value;
+  const cam=document.getElementById('d-cam').value;
+  const dis=document.getElementById('d-dis').value;
+  if(!doc||!g||!cam||!dis){showErr('err-d','Completa: docente, grado, campo y disciplina.');return;}
+  if(!cD.length){showErr('err-d','Selecciona al menos un contenido.');return;}
+  if(document.getElementById('d-ses').value==='otro'){showErr('err-d','Escribe el número de sesiones (elegiste «Otro»).');return;}
+  hideErr('err-d');
+  document.getElementById('bgd').disabled=true;
+  document.getElementById('gen-d').style.display='block';
+  document.getElementById('res-d').style.display='none';
+  const tgen=(modalidadD==='secuencia')?'trimestre':document.getElementById('d-tgen').value;
+  const d={
+    docente:doc,grado:g,campo:cam,disciplina:dis,
+    escuela:document.getElementById('d-esc').value,
+    cct:document.getElementById('d-cct').value,
+    cicloEscolar:document.getElementById('d-cic').value,
+    tipoEscuela:(document.getElementById('d-tipoesc')||{}).value||'',
+    zona:(document.getElementById('d-zona')||{}).value||'',
+    codiseno:(document.getElementById('d-codis')||{}).value||'',
+    productoSecundario:(document.getElementById('d-prod-sec')||{}).value||'',
+    grupo:document.getElementById('d-grp').value,
+    trimestre:document.getElementById('d-tri').value,
+    numSesiones:document.getElementById('d-ses').value,
+    duracionSesion:document.getElementById('d-dur').value,
+    nombreProyecto:document.getElementById('d-proy').value||'Proyecto del trimestre',
+    modalidad:document.getElementById('d-mod').value,
+    ejes: getEjesSeleccionados('d-ejes-grid') || document.getElementById('d-ejes').value,
+    perfil: getPerfilSeleccionado('d-perfil-grid'),
+    problematizacion:document.getElementById('d-prob').value,
+    proposito:document.getElementById('d-prop').value,
+    productoIntegrador: modalidadD==='secuencia'
+      ? (document.getElementById('d-prod-sec').value||'')
+      : (document.getElementById('d-prod').value||''),
+    problematizacion: modalidadD==='proyecto'
+      ? (document.getElementById('d-prob')?.value||'')
+      : (document.getElementById('d-situacion')?.value||''),
+    disciplinasAdicionales:document.getElementById('d-inter').value,
+    contenidos:cD,
+    tipoPlano: modalidadD,
+  };
+  let _pgD=null;
+  try{
+    let prompt,nomDoc;
+    if(tgen==='semanal'){
+      const ses=parseInt(document.getElementById('d-semsem').value)||3;
+      document.getElementById('gen-d-msg').innerHTML=`Generando — Semana ${semAct}...<br><small>20-40 segundos</small>`;
+      prompt=buildPromptPlanDidacticoSemanal(d,semAct,ses);
+      nomDoc=`Plano_Sem${semAct}_${dis}_${g}`;
+      semsGen.add(semAct);
+    }else{
+      if(modalidadD==='secuencia'){
+        document.getElementById('gen-d-msg').innerHTML=`Generando secuencias didácticas...<br><small>Inicio, desarrollo y cierre con sus tiempos</small>`;
+      } else {
+        document.getElementById('gen-d-msg').innerHTML=`Generando Plano Didáctico...<br><small>40-90 segundos</small>`;
+      }
+      nomDoc=`Plano_T${d.trimestre}_${dis}_${g}`;
+    }
+    if(modalidadD!=='secuencia') _pgD=iaProgreso('gen-d-msg', tgen==='semanal'?`Generando — Semana ${semAct}…`:'Generando Plano Didáctico…', tgen==='semanal'?'suele tardar 20–40 segundos':'suele tardar 1–2 minutos');
+    const txt=await (tgen==='semanal'
+      ? (async()=>{
+          const respSem = await llamarGeminiJSON(prompt, 'plano');
+          const iaSem = parsearJSON(respSem);
+          const C='#BDD7EE';
+          const th=(t,w,bg)=>`<td style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${bg||C};${w?'width:'+w+';':''}vertical-align:top;">${t}</td>`;
+          const td=(t,w)=>`<td style="border:1px solid #000;padding:5px 8px;vertical-align:top;${w?'width:'+w+';':''}">${t||'&nbsp;'}</td>`;
+          const sesHTML=(iaSem.sesiones||[]).map((s,i)=>`
+<p style="font-weight:bold;margin-top:10px;">Sesión ${s.num||i+1}${s.titulo?' — '+s.titulo:''}</p>
+<table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
+<tr>${th('INICIO (10 min)','15%','#FFF3CD')}${td(s.inicio,'85%')}</tr>
+<tr>${th('DESARROLLO (30 min)','15%','#D4EDDA')}${td(s.desarrollo,'85%')}</tr>
+<tr>${th('CIERRE (10 min)','15%','#D1ECF1')}${td(s.cierre,'85%')}</tr>
+<tr>${th('Materiales','15%')}${td(s.materiales,'85%')}</tr>
+</table>`).join('');
+          const trNom = d.trimestre==='1'?'PRIMER':d.trimestre==='2'?'SEGUNDO':'TERCER';
+          const thS=(t,w)=>`<td style="border:1px solid #000;padding:5px 8px;font-weight:bold;background:${C};${w?'width:'+w+';':''  }vertical-align:top;">${t}</td>`;
+          const tdS=(t)=>`<td style="border:1px solid #000;padding:5px 8px;vertical-align:top;">${t||''}</td>`;
+          const encHTML=`
+<h2 style="text-align:center;font-weight:bold;">Plano Didáctico — Semana ${semAct}</h2>
+<p><strong>ESCUELA:</strong> ${d.escuela}, CCT ${d.cct||''}, CICLO ${d.cicloEscolar||'2026-2027'}</p>
+<p><strong>CAMPO FORMATIVO:</strong> ${d.campo} &nbsp;&nbsp; <strong>DISCIPLINA:</strong> ${d.disciplina}</p>
+<p><strong>GRADO Y GRUPO:</strong> ${d.grado}° ${d.grupo||'A, B, C'} &nbsp;&nbsp; <strong>DOCENTE(S):</strong> ${d.docente}</p>
+<p><strong>PERIODO:</strong> ${trNom} TRIMESTRE &nbsp;&nbsp; <strong>MODALIDAD:</strong> ${d.modalidad||'Proyectos comunitarios'}</p>
+<p><strong>NOMBRE DEL PROYECTO:</strong> ${d.nombreProyecto}</p>
+<table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
+<tr>${thS('Problematización de la realidad','30%')}${tdS(d.problematizacion)}</tr>
+<tr>${thS('Propósito u Objetivo')}${tdS(d.proposito)}</tr>
+<tr>${thS('Ejes Articuladores')}${tdS('Inclusión | Pensamiento crítico | Interculturalidad crítica | Igualdad de género | Vida saludable | Apropiación de las culturas a través de la lectura y la escritura | Artes y Experiencias estéticas')}</tr>
+</table>`;
+          return encHTML + sesHTML;
+        })()
+      : modalidadD==='secuencia'
+        ? generarSecuenciaDidactica(d)
+        : (typeof rutaActual!=='undefined' && rutaActual && rutaActual.usar)
+          ? rutaGenerarPlano(d)   // Plano en formato oficial con la ruta metodológica
+          : generarPlanDidacticoTrimestre(d));
+    if(_pgD)_pgD.parar();
+    document.getElementById('rd-txt').innerHTML=txt;
+    document.getElementById('res-d').style.display='block';
+    document.getElementById('gen-d').style.display='none';
+    document.getElementById('bgd').disabled=false;
+    document.getElementById('res-d').scrollIntoView({behavior:'smooth'});
+    actualizarBadgeDescarga('d');
+    if(tgen==='semanal') buildSemGrid();
+    saveHist('didactico',`Plano Didáctico — ${dis} ${g}° T${d.trimestre}${tgen==='semanal'?' Sem'+semAct:''}`,txt,d);
+  }catch(err){
+    if(_pgD)_pgD.parar();
+    document.getElementById('gen-d').style.display='none';
+    document.getElementById('bgd').disabled=false;
+    showErr('err-d','Error: '+err.message);
+  }
+}
+
+// ── DESCARGA ──────────────────────────────────────────────
+function actualizarBadgeDescarga(pfx) {
+  const badge = document.getElementById('badge-dl-'+pfx);
+  const btn = document.getElementById('btn-dl-'+pfx);
+  if(badge) badge.textContent = '';
+  if(btn){ btn.disabled = false; btn.style.opacity = '1'; }
+}
+
+function dlRes(pfx, nom) {
+  const txt = document.getElementById('r'+pfx+'-txt').innerHTML;
+  if(!txt) return;
+  const g = document.getElementById(pfx+'-gra').value;
+  const d = document.getElementById(pfx+'-dis').value;
+  const f = new Date().toLocaleDateString('es-MX').replace(/\//g,'-');
+  descargarWord(txt, `${nom}_${d}_${g}grado_${f}.doc`);
+}
+
+function limpiarD(){
+  cD=[];
+  document.getElementById('d-cnt-lista').innerHTML='';
+  document.getElementById('ps-d').style.display='none';
+  document.getElementById('res-d').style.display='none';
+  ['d-proy','d-prob','d-prop','d-prod','d-inter','d-codis'].forEach(id=>{const e=document.getElementById(id); if(e) e.value='';});
+  if(typeof sugMarcar==='function'){ ['d-proy','d-prod','d-prob','d-prop','d-inter','d-ejes-grid','d-perfil-grid'].forEach(id=>sugMarcar(id,false)); }
+}
+
+// ── HISTORIAL ─────────────────────────────────────────────
+async function saveHist(tipo,nombre,contenido,datos){
+  const h={id:Date.now(),tipo,nombre,contenido,docente:datos.docente,grado:datos.grado,disciplina:datos.disciplina,fecha:new Date().toLocaleDateString('es-MX')};
+  try{ if(tipo==='didactico' && typeof gEvalDePlano==='function') h.eval=gEvalDePlano(datos); }catch(e){}
+  try{ if(typeof gTemasGuardar==='function') gTemasGuardar(tipo,datos); }catch(e){}
+  historial.unshift(h);
+  localStorage.setItem(histKey(),JSON.stringify(historial.slice(0,20)));
+  renderHist();
+}
+function renderHist(){
+  const el=document.getElementById('hist-lista');
+  if(!historial.length){
+    el.innerHTML='<div style="text-align:center;padding:60px;color:var(--gris);"><div style="font-size:48px;margin-bottom:12px;">📋</div><div>Aún no tienes planeaciones guardadas.</div></div>';
+    return;
+  }
+  el.innerHTML=historial.map(h=>`
+    <div class="hist-item" onclick="verHist(${h.id})">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="htipo ${h.tipo}">${h.tipo==='analitico'?'📋 Analítico':'📝 Didáctico'}</span>
+        <div class="hist-nom">${h.nombre}</div>
+      </div>
+      <div class="hist-meta">
+        <span>👤 ${h.docente}</span><span>📅 ${h.fecha}</span>
+        ${h.tipo==='didactico'?`<span onclick="event.stopPropagation();gPlanAActividades(${h.id})" style="color:var(--azul,#2563a8);cursor:pointer;font-weight:600;">📊 Crear actividades para calificar</span>`:''}
+        <span onclick="delHist(event,${h.id})" style="color:var(--rojo);cursor:pointer;">🗑 Eliminar</span>
+      </div>
+    </div>`).join('');
+}
+function verHist(id){
+  const h=historial.find(x=>x.id===id);
+  if(!h) return;
+  const pfx=h.tipo==='analitico'?'a':'d';
+  setTipo(pfx);
+  document.getElementById('r'+pfx+'-txt').innerHTML=h.contenido;
+  document.getElementById('res-'+pfx).style.display='block';
+  document.querySelector('.nav-tab').click();
+}
+function delHist(e,id){
+  e.stopPropagation();
+  if(!confirm('¿Eliminar esta planeación del historial?')) return;
+  historial=historial.filter(h=>h.id!==id);
+  localStorage.setItem(histKey(),JSON.stringify(historial));
+  renderHist();
+}
+
+// ── UTILS ─────────────────────────────────────────────────
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+function hideErr(id){document.getElementById(id).style.display='none';}
+
+// Arranca el sistema de cuentas (correo, Google, Apple)
+authInit();
+</script>
+<script>
+// Auto-actualización: si la app está guardada en la pantalla de inicio (celular), el sistema suele quedarse con la versión vieja.
+// Al abrir, comparamos con la versión publicada y, si hay una más nueva, se recarga sola (una vez por versión).
+(function () {
+  try {
+    var el = document.querySelector('script[src*="licencia.js"]'), mia = el && (el.getAttribute('src').match(/v=(\d+)/) || [])[1];
+    if (!mia || !/^https?:/.test(location.protocol)) return;
+    fetch(location.pathname + '?c=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) {
+      var nueva = (t.match(/licencia\.js\?v=(\d+)/) || [])[1];
+      if (!nueva || nueva === mia || +nueva < +mia) return;
+      var k = 'nem_recarga_' + nueva; if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1');
+      location.replace(location.pathname + '?v=' + nueva);
+    }).catch(function () {});
+  } catch (e) {}
+})();
+</script>
+<style>
+#nem-sin-red{display:none;position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#fef3c7;color:#78350f;border-top:2px solid #f59e0b;padding:9px 14px;font-size:13px;line-height:1.4;text-align:center}
+#nem-badge-prueba{position:fixed;top:6px;right:6px;z-index:99998;background:#f59e0b;color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.04em;padding:3px 8px;border-radius:999px;pointer-events:none}
+</style>
+<div id="nem-badge-prueba">VERSIÓN DE PRUEBA</div>
+<div id="nem-sin-red">📴 <b>Sin internet.</b> Puedes seguir pasando lista, usando la libreta y capturando calificaciones: se guardan en este equipo. La IA necesita conexión.</div>
+<script>
+(function () {
+  function r() { var e = document.getElementById('nem-sin-red'); if (e) e.style.display = navigator.onLine ? 'none' : 'block'; }
+  addEventListener('online', r); addEventListener('offline', r); r();
+  if ('serviceWorker' in navigator) addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+})();
+</script>
+</body>
+</html>
