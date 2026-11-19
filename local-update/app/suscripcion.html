@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suscripción — Planeador Docente NEM</title>
+<meta name="description" content="Planeador Docente NEM para secundaria, Fase 6: planeaciones y exámenes con IA, lista, calificaciones y más. Prueba gratis y suscripción.">
+<style>
+:root{--azul:#1a3a5c;--azul-med:#2563a8;--fondo:#f1f5f9;--blanco:#fff;--gris:#64748b;--borde:#cbd5e1;--texto:#1e293b;--verde:#16a34a;--ambar:#f59e0b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--fondo);color:var(--texto);font-size:16px;line-height:1.5}
+a{color:var(--azul-med)}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+header{background:var(--azul);color:#fff;padding:14px 0}
+header .wrap{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap}
+header b{font-size:17px}
+.btn{display:inline-block;text-decoration:none;font-weight:700;border-radius:10px;padding:12px 20px;font-size:16px;border:2px solid transparent;cursor:pointer}
+.btn-p{background:var(--ambar);color:#1e293b}
+.btn-s{background:#fff;color:var(--azul);border-color:var(--borde)}
+.btn-o{background:transparent;color:#fff;border-color:rgba(255,255,255,.6)}
+.hero{background:linear-gradient(160deg,var(--azul),#245a96);color:#fff;padding:44px 0 52px;text-align:center}
+.hero h1{font-size:clamp(26px,5vw,40px);line-height:1.2;margin-bottom:12px}
+.hero p{font-size:clamp(16px,2.4vw,19px);max-width:640px;margin:0 auto 22px;opacity:.95}
+.hero .acc{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+section{padding:36px 0}
+h2{font-size:clamp(22px,3.5vw,28px);color:var(--azul);margin-bottom:6px}
+.sub{color:var(--gris);margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.card{background:var(--blanco);border:1.5px solid var(--borde);border-radius:14px;padding:16px}
+.card .ic{font-size:28px;margin-bottom:4px}
+.card b{display:block;margin-bottom:2px}
+.card span{color:var(--gris);font-size:14.5px}
+.planes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.plan{background:#fff;border:2px solid var(--borde);border-radius:14px;padding:20px 16px;text-align:center}
+.plan.dest{border-color:var(--azul-med);box-shadow:0 8px 24px rgba(37,99,168,.18)}
+.plan h3{color:var(--azul);font-size:19px}
+.plan .pr{font-size:28px;font-weight:800;margin:8px 0 2px;color:var(--texto)}
+.plan .pr.cons{font-size:16px;font-weight:600;color:var(--gris);padding:10px 0}
+.plan small{color:var(--gris)}
+.plan .tag{display:inline-block;background:#dbeafe;color:var(--azul-med);font-size:12px;font-weight:700;border-radius:20px;padding:2px 10px;margin-bottom:6px}
+.pasos{counter-reset:p;display:grid;gap:12px}
+.pasos li{list-style:none;background:#fff;border:1.5px solid var(--borde);border-radius:12px;padding:14px 14px 14px 56px;position:relative}
+.pasos li::before{counter-increment:p;content:counter(p);position:absolute;left:14px;top:12px;width:30px;height:30px;border-radius:50%;background:var(--azul-med);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.comp{width:100%;border-collapse:collapse;background:#fff;border:1.5px solid var(--borde);border-radius:12px;overflow:hidden;font-size:15px}
+.comp th,.comp td{padding:10px 12px;border-bottom:1px solid var(--borde);text-align:center}
+.comp th:first-child,.comp td:first-child{text-align:left}
+.comp th{background:#eef2f7;color:var(--azul)}
+.si{color:var(--verde);font-weight:800}.no{color:#94a3b8}
+.cta{background:var(--azul);color:#fff;text-align:center;border-radius:16px;padding:28px 18px}
+.cta p{margin:6px 0 16px;opacity:.95}
+footer{padding:26px 0;color:var(--gris);font-size:13.5px;text-align:center}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <b>📚 Planeador Docente NEM</b>
+  <a class="btn btn-o" style="padding:8px 14px;font-size:14px" href="index.html">Entrar a la app</a>
+</div></header>
+
+<div class="hero"><div class="wrap">
+  <h1>Planea, evalúa y organiza tu grupo con la Nueva Escuela Mexicana</h1>
+  <p>Hecho por un maestro de secundaria para la Fase 6: planeaciones, exámenes, lista, calificaciones y rezago en un solo lugar, con apoyo de inteligencia artificial.</p>
+  <div class="acc">
+    <a class="btn btn-p" href="index.html">Probar gratis</a>
+    <a class="btn btn-o" href="#planes">Ver planes</a>
+  </div>
+</div></div>
+
+<section><div class="wrap">
+  <h2>Qué puedes hacer</h2>
+  <p class="sub">Todo pensado para el trabajo real de un maestro de secundaria.</p>
+  <div class="grid">
+    <div class="card"><div class="ic">📝</div><b>Planeación con IA</b><span>Programa analítico y plano didáctico por trimestre, con contenidos y PDA del Programa Sintético de la Fase 6 y descarga en Word.</span></div>
+    <div class="card"><div class="ic">✏️</div><b>Exámenes</b><span>Crea exámenes con IA, captura las calificaciones de cada alumno y se suman solas a tu evaluación.</span></div>
+    <div class="card"><div class="ic">✅</div><b>Pase de lista</b><span>Asistencias, retardos, faltas y justificantes por grupo.</span></div>
+    <div class="card"><div class="ic">📊</div><b>Calificaciones y boleta</b><span>Tú decides los criterios y cuánto vale cada uno; el sistema calcula la calificación del trimestre.</span></div>
+    <div class="card"><div class="ic">🚦</div><b>Rezago y recuperativos</b><span>Detecta a los alumnos en riesgo y arma la lista de quienes presentan recuperativo, con su calificación nueva.</span></div>
+    <div class="card"><div class="ic">📘</div><b>Libros y programas SEP</b><span>Libros de texto, plan de estudio y programa sintético, con acceso directo a las páginas de tu campo formativo.</span></div>
+    <div class="card"><div class="ic">🗓️</div><b>Calendario escolar</b><span>Sube el calendario que te dan en PDF o imagen y consúltalo dentro de la app.</span></div>
+    <div class="card"><div class="ic">🔒</div><b>Tus datos son tuyos</b><span>Listas y calificaciones se guardan en tu dispositivo y puedes respaldarlas cuando quieras.</span></div>
+  </div>
+</div></section>
+
+<section style="padding-top:0"><div class="wrap">
+  <h2>Prueba gratis y licencia</h2>
+  <p class="sub"><b>Todos tienen 3 días de prueba gratis.</b> Entra con tu cuenta de Google y pruébalo antes de decidir.</p>
+  <table class="comp">
+    <tr><th></th><th>Prueba gratis (3 días)</th><th>Con licencia</th></tr>
+    <tr><td>Documentos con IA</td><td>2 (un plano o analítico y un examen)</td><td class="si" id="td-ia"></td></tr>
+    <tr><td>Ver el documento en pantalla</td><td class="si">✓</td><td class="si">✓</td></tr>
+    <tr><td>Descargar en Word</td><td class="no">—</td><td class="si">✓</td></tr>
+    <tr><td>Calificaciones, lista de alumnos y rezago</td><td class="no">—</td><td class="si">✓</td></tr>
+    <tr><td>Reportes de incidencia escolar (PDF) y protocolos</td><td class="no">—</td><td class="si">✓</td></tr>
+    <tr><td>Recuperativos</td><td class="no">—</td><td class="si">✓</td></tr>
+    <tr><td>Libros y programas SEP, calendario</td><td class="si">✓</td><td class="si">✓</td></tr>
+  </table>
+</div></section>
+
+<section id="planes" style="padding-top:0"><div class="wrap">
+  <h2>Planes</h2>
+  <p class="sub">Elige cuánto tiempo quieres tu licencia. <b>¿Solo quieres probar un mes? El plan Mensual es para ti:</b> no hay cobro automático ni compromiso; al terminar, si te gustó, la renuevas con un nuevo código.</p>
+  <div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:15px">🎉 <b>Precio de introducción.</b> Estos precios son de lanzamiento y pueden cambiar más adelante. Quien se suscribe ahora conserva el precio durante el tiempo que contrató.</div>
+  <div class="planes" id="planes-lista"></div>
+  <p class="sub" style="margin-top:12px;font-size:14px" id="nota-precios"></p>
+</div></section>
+
+<section style="padding-top:0"><div class="wrap">
+  <h2>Cómo suscribirte</h2>
+  <ol class="pasos" style="margin-top:14px">
+    <li><b>Escríbenos por correo</b> diciendo qué plan quieres y tu nombre.</li>
+    <li><b>Te decimos cómo pagar</b> y, una vez recibido el pago, te enviamos tu código de licencia (<code>NEM-XXXX-XXXX-XXXX</code>).</li>
+    <li><b>Canjea tu código</b> en la app: menú «Mi licencia». Tu licencia queda activa de inmediato.</li>
+  </ol>
+</div></section>
+
+<section style="padding-top:0"><div class="wrap">
+  <div class="cta">
+    <h2 style="color:#fff">¿Listo para empezar?</h2>
+    <p>Escríbenos y te respondemos con los pasos para activar tu licencia.</p>
+    <a class="btn btn-p" id="btn-correo" href="#">✉️ Escribir por correo</a>
+    <p style="margin-top:14px;font-size:14px" id="txt-correo"></p>
+  </div>
+</div></section>
+
+<footer><div class="wrap">Planeador Docente NEM · Secundaria · Fase 6 · Es una herramienta independiente de apoyo docente y no es una página oficial de la SEP.</div></footer>
+
+<script>
+// ── Aquí se cambian los datos de venta ─────────────────────────────
+const CORREO = 'planeador.nem.docente@gmail.com';
+// precio: número en pesos (por ejemplo 99) o null mientras no esté definido
+const PRECIO_MES = 199;   // precio de introducción por mes
+const LIMITE_IA = 60;     // documentos con IA al mes (debe coincidir con la cuota de los códigos que generes)
+const PLANES = [
+  { nombre: 'Mensual',    meses: 1,  precio: 199 },
+  { nombre: 'Trimestral', meses: 3,  precio: 499 },
+  { nombre: 'Semestral',  meses: 6,  precio: 999, destacado: true },
+  { nombre: 'Anual',      meses: 12, precio: 1999 },
+];
+const MONEDA = 'MXN';
+// ────────────────────────────────────────────────────────────────────
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const hayPrecios = PLANES.some(p => typeof p.precio === 'number');
+document.getElementById('planes-lista').innerHTML = PLANES.map(p => `
+  <div class="plan${p.destacado ? ' dest' : ''}">
+    ${p.destacado ? '<span class="tag">Más elegido</span>' : ''}
+    <h3>${esc(p.nombre)}</h3>
+    <small>${p.meses === 1 ? '1 mes' : p.meses + ' meses'} de acceso</small>
+    ${typeof p.precio === 'number'
+      ? `<div class="pr">$${p.precio.toLocaleString('es-MX')} <small>${MONEDA}</small></div>${p.meses > 1 ? `<small>$${Math.round(p.precio / p.meses).toLocaleString('es-MX')} por mes</small>${PRECIO_MES * p.meses > p.precio ? `<div style="color:var(--verde);font-weight:700;font-size:14px;margin-top:4px">${p.extra || 'Ahorras'} · $${(PRECIO_MES * p.meses - p.precio).toLocaleString('es-MX')}</div>` : ''}` : ''}`
+      : `<div class="pr cons">Escríbenos para conocer el precio</div>`}
+    <div style="margin-top:12px"><a class="btn btn-s" style="padding:9px 16px;font-size:15px" href="${mailto(p)}">Quiero este plan</a></div>
+  </div>`).join('');
+document.getElementById('nota-precios').innerHTML = hayPrecios ? 'Precios en pesos mexicanos (MXN). <b>El uso de IA no es ilimitado:</b> cada licencia incluye hasta ' + LIMITE_IA + ' documentos con IA al mes (planeaciones y exámenes); el tope se renueva cada mes. Lista, calificaciones, rezago, libros y calendario no gastan ese tope.' : 'Los precios se informan por correo.';
+function mailto(p) {
+  const asunto = 'Quiero una licencia del Planeador Docente NEM' + (p ? ' — plan ' + p.nombre : '');
+  const cuerpo = 'Hola, quiero suscribirme al Planeador Docente NEM' + (p ? ' (plan ' + p.nombre + ')' : '') + '.\n\nMi nombre: \nMi escuela: \nCorreo con el que entro a la app: ';
+  return 'mailto:' + CORREO + '?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo);
+}
+document.getElementById('td-ia').textContent = 'Hasta ' + LIMITE_IA + ' al mes (uso justo; no es ilimitado)';
+document.getElementById('btn-correo').href = mailto(null);
+document.getElementById('txt-correo').innerHTML = 'O escribe directamente a <b>' + esc(CORREO) + '</b>';
+</script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+{
+ "version": "2971accab52d4800",
+ "fecha": "2026-11-19T08:14:41",
+ "servidorMin": 1,
+ "archivos": [
+  {
+   "p": "auth.js",
+   "h": "69775aa63a974a7e08c80fb1cfc701cb7d46734e0c467845a6641ee0f253dd0b",
+   "s": 12411
+  },
+  {
+   "p": "bitacora.js",
+   "h": "123fce268e5e99bfea761e8d5ef3cd820354b23e078a7ed5922d45bfe5d471d7",
+   "s": 30082
+  },
+  {
+   "p": "correos-temporales.js",
+   "h": "dc26c99aed36ee805a0fec828c295e8b16fd322d060c37e62fd5c25d37284461",
+   "s": 2992
+  },
+  {
+   "p": "curriculum.js",
+   "h": "8efd06cf39f61c8d74d1ffc910f3b3cf343bd47462127940763b443f822ab274",
+   "s": 140770
+  },
+  {
+   "p": "docs/plan-de-estudio-2022.pdf",
+   "h": "e52a6ea3e74d7aa979fde7199ba4acfa09cff8c8e13bcfa86e457da2dfa6d7ec",
+   "s": 3237904
+  },
+  {
+   "p": "docs/programa-f6-campo-etica.pdf",
+   "h": "fc1273f4264e440d18c5d1db04f71adb00f2b941a246a2abd48d8cfb68810ee7",
+   "s": 472196
+  },
+  {
+   "p": "docs/programa-f6-campo-humano.pdf",
+   "h": "3347f4e006fa79f73c7fe29bd6e5161e00311ac9ab672409d86e999393b7ec18",
+   "s": 373839
+  },
+  {
+   "p": "docs/programa-f6-campo-lenguajes.pdf",
+   "h": "0451f985550b409b88ea5df5e5389c2b7cac0c24024aa582d9d23a57df121c3c",
+   "s": 354536
+  },
+  {
+   "p": "docs/programa-f6-campo-saberes.pdf",
+   "h": "9a1efa291c556d30a2d8199c336f618941f28d24f7e34cfd3865ca1e27a746b1",
+   "s": 327760
+  },
+  {
+   "p": "docs/programa-f6-evaluacion-formativa.pdf",
+   "h": "51de33f015be63c3df2dee662074da5c8b09719719eaa030b987545f768f28d0",
+   "s": 131084
+  },
+  {
+   "p": "docs/programa-f6-intro-elementos.pdf",
+   "h": "482e875dac90a697ae9965e45b9b30a9ea90c602d32171a2e8967525d297890e",
+   "s": 181292
+  },
+  {
+   "p": "docs/programa-f6-materiales-apoyo.pdf",
+   "h": "ecf2d0893faace31bd4019ac7d97376a02767bf2ecd0a818a59801968184dcd3",
+   "s": 177777
+  },
+  {
+   "p": "docs/programa-f6-panorama-contenidos.pdf",
+   "h": "87a272fbe15609dea0c5253c45cf048c37ad9fb53fe767ebd93a9e15beceabb4",
+   "s": 109042
+  },
+  {
+   "p": "docs/programa-f6-programa-analitico.pdf",
+   "h": "19f7a062cb5a44df32d9cb712080a30e556949ce9321852dd395df518ba0599d",
+   "s": 259243
+  },
+  {
+   "p": "docs/programa-sintetico-fase6.pdf",
+   "h": "8e907bd1968369a34858f88c87aa0fbc500a7f60048a26e2d5af50df3fbc928d",
+   "s": 2961238
+  },
+  {
+   "p": "docs/protocolo-acoso-escolar-segey-yucatan.pdf",
+   "h": "376f2abbd9f50979d30fa71a1088927b6bcabe2103be79d1fe7bc6bd808f6cfd",
+   "s": 727481
+  },
+  {
+   "p": "escaner.js",
+   "h": "5b9c71eeeddfffc633e0420ff80279f9f8541600a599f6f82434d3211171f9bf",
+   "s": 28805
+  },
+  {
+   "p": "firebase-config.js",
+   "h": "2215f33dc4cd264260024cf255262b9a848bebe74a9a936259555e7923888901",
+   "s": 1653
+  },
+  {
+   "p": "generators.js",
+   "h": "a9af15ef554b399498706d30255cdbc02ad73dd6c10dc7d32db5bc8d5a60a9ba",
+   "s": 36756
+  },
+  {
+   "p": "gestion.js",
+   "h": "e8af2fb594c1fa7c785f2384c120f209b3d6e31fd67345e9c554cc41ed5ea9f5",
+   "s": 225273
+  },
+  {
+   "p": "icons/icono-180.png",
+   "h": "8b5561812e137290f71e704b46c50b4979e58754e44113640e18c66398186876",
+   "s": 18766
+  },
+  {
+   "p": "icons/icono-192.png",
+   "h": "12fa50c52b84a618f41ae99c5de20d49adcd06a945fccaacccec302e21f82428",
+   "s": 15538
+  },
+  {
+   "p": "icons/icono-32.png",
+   "h": "cf7d3a7ccd5ff10bbb99354bbf1b7ab1b7be2f1e346476a7881471b47fdc8a66",
+   "s": 1628
+  },
+  {
+   "p": "icons/icono-512.png",
+   "h": "a754a3df01a4aacd546e6ff3f994f9dff3241e900b961f483cf1faa4b723c58e",
+   "s": 72767
+  },
+  {
+   "p": "icons/icono.svg",
+   "h": "5aa4bdcc62a61cce9ab0e1d14906d96828d9ca45b17ed9500aac0190f77ed17b",
+   "s": 1809
+  },
+  {
+   "p": "index.html",
+   "h": "ea653aa5c21bd4a7d17f5b4fa5937406c5f52ec6eedcae85db3266b713724c21",
+   "s": 138036
+  },
+  {
+   "p": "libreta.js",
+   "h": "2a9b212ea299d8465ec40bcd0c22a4cacc0691d66a1d43c5f9b727241efc8a57",
+   "s": 19462
+  },
+  {
+   "p": "licencia.js",
+   "h": "ac454a52ae403f8bc2ca75037d6884b0f3c70ad483e50813650d31137e8e7717",
+   "s": 54328
+  },
+  {
+   "p": "local-shim.js",
+   "h": "20b1e5d5bf98281fe6d31ba436e29ff6dc60cb74628757ad59534ce24e57a2b6",
+   "s": 9086
+  },
+  {
+   "p": "manifest.webmanifest",
+   "h": "424cdc77f60970c06fa0832b572eaa0aa6d2854c2147bd721cf9632c08ceb6f6",
+   "s": 642
+  },
+  {
+   "p": "metodologias.js",
+   "h": "0ba2cdd08cbaa209a1a39e7750939c4fbc7cfa985669e4517883e0c28574e971",
+   "s": 81122
+  },
+  {
+   "p": "privacidad.js",
+   "h": "0236f1390bb686addd3e91b372155b9dd1fbdaf55a4cc2d32b91ba5e53ecdecf",
+   "s": 12429
+  },
+  {
+   "p": "projects.js",
+   "h": "da026f9c1b91fa3ada49043c90e557a020c3ba787e10f3f70b1f3797e36a17b4",
+   "s": 27218
+  },
+  {
+   "p": "rezago.js",
+   "h": "1cb2d583d5edc06e17202f24b4d6c4563273ef5f360637588279434e873aa0ad",
+   "s": 28128
+  },
+  {
+   "p": "ruta-ui.js",
+   "h": "750972856e2681e2acf750b19c32e6faf26e5712a2ed36dc5705579cfbc9f89f",
+   "s": 37291
+  },
+  {
+   "p": "secuencias.js",
+   "h": "187c8ce093116e53c455e15401dd92ef1e81b8713e2fe26974edf20808137ed8",
+   "s": 31019
+  },
+  {
+   "p": "sugerencias-plano.js",
+   "h": "949a2ec35c417b967fea1a69daf09dc438009031cdd5b481e5a235693378437b",
+   "s": 11126
+  },
+  {
+   "p": "suscripcion.html",
+   "h": "c9498abf912c78dc102f5ad3bb5ae87a6a7a6e7b837f96eba935b1d804ff2d14",
+   "s": 12217
+  },
+  {
+   "p": "sw.js",
+   "h": "e7aed9cd50047563431654137ff4d30f3be24b214dea6bc8c8e90a4d994a4363",
+   "s": 4951
+  }
+ ]
+}
