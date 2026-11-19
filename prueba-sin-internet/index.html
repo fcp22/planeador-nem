@@ -1950,12 +1950,53 @@ authInit();
 #nem-badge-prueba{position:fixed;top:6px;right:6px;z-index:99998;background:#f59e0b;color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.04em;padding:3px 8px;border-radius:999px;pointer-events:none}
 </style>
 <div id="nem-badge-prueba">VERSIÓN DE PRUEBA</div>
-<div id="nem-sin-red">📴 <b>Sin internet.</b> Puedes seguir pasando lista, usando la libreta y capturando calificaciones: se guardan en este equipo. La IA necesita conexión.</div>
+<div id="nem-sin-red">📴 <b>Sin internet.</b> Puedes seguir pasando lista, usando la libreta, anotando incidencias y capturando calificaciones: todo se guarda en este equipo. Lo que usa IA necesita conexión.</div>
 <script>
+// ── Avisos de internet (solo en la versión de prueba sin internet) ──
+// Lo básico (pase de lista, libreta, calificaciones, incidencias, horario…) funciona sin conexión.
+// Lo que usa IA o necesita internet muestra un aviso arriba y, si se intenta sin conexión, explica por qué no se puede.
 (function () {
-  function r() { var e = document.getElementById('nem-sin-red'); if (e) e.style.display = navigator.onLine ? 'none' : 'block'; }
-  addEventListener('online', r); addEventListener('offline', r); r();
-  if ('serviceWorker' in navigator) addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  var AVISOS = {
+    nueva: 'Generar el Programa analítico, el Plano didáctico y las secuencias usa <b>inteligencia artificial</b> y necesita <b>internet</b>. Hazlo cuando tengas conexión. Lo que ya generaste está en el Historial y se puede ver y descargar sin internet.',
+    examenes: 'Crear un examen con <b>inteligencia artificial</b> necesita <b>internet</b>. Capturar aciertos y calificaciones sí funciona sin conexión.',
+    escaner: 'El escáner de exámenes usa <b>inteligencia artificial</b> y necesita <b>internet</b>. Hazlo cuando tengas conexión.',
+    libros: 'Los libros y programas se abren desde <b>internet</b>. Cuando tengas conexión podrás abrirlos.',
+    planes: 'Ver planes, precios o canjear un código necesita <b>internet</b>.',
+    licencia: 'Activar o renovar tu licencia necesita <b>internet</b>.'
+  };
+  var ERR = {
+    '/v1/generar': '📴 Sin internet: esto usa inteligencia artificial y necesita conexión. Inténtalo cuando tengas internet; no se perdió nada de lo que capturaste.',
+    '/v1/escanear': '📴 Sin internet: el escáner usa inteligencia artificial y necesita conexión. Inténtalo cuando tengas internet.',
+    '/v1/activar': '📴 Sin internet: para canjear un código necesitas conexión. Inténtalo cuando tengas internet.'
+  };
+  function barra() {
+    var e = document.getElementById('nem-aviso-ia');
+    if (!e) {
+      e = document.createElement('div'); e.id = 'nem-aviso-ia';
+      e.style.cssText = 'display:none;position:sticky;top:0;z-index:50;background:#fef3c7;color:#78350f;border:1.5px solid #f59e0b;border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:13.5px;line-height:1.45';
+      var p = document.querySelector('.tab-panel'); if (p && p.parentNode) p.parentNode.insertBefore(e, p);
+    }
+    return e;
+  }
+  function actualizar() {
+    var off = !navigator.onLine, sb = document.getElementById('nem-sin-red'); if (sb) sb.style.display = off ? 'block' : 'none';
+    var act = document.querySelector('.tab-panel.activo'), id = act ? act.id.replace(/^tab-/, '') : '', e = barra();
+    if (off && AVISOS[id]) { e.innerHTML = '📴 <b>Sin internet.</b> ' + AVISOS[id]; e.style.display = 'block'; } else e.style.display = 'none';
+  }
+  addEventListener('online', actualizar); addEventListener('offline', actualizar);
+  addEventListener('load', function () {
+    actualizar();
+    var cont = document.querySelector('.tab-panel'); if (cont && cont.parentNode) new MutationObserver(actualizar).observe(cont.parentNode, { subtree: true, attributes: true, attributeFilter: ['class'] });
+    // Si se intenta algo que necesita internet sin conexión, se explica en lugar de mostrar un error técnico
+    if (typeof workerFetch === 'function') {
+      var wf = workerFetch;
+      window.workerFetch = function (ruta) {
+        if (!navigator.onLine && ERR[ruta]) { var e = new Error(ERR[ruta]); e.codigo = 'sin_internet'; return Promise.reject(e); }
+        return wf.apply(this, arguments);
+      };
+    }
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
 })();
 </script>
 </body>
