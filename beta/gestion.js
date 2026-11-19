@@ -669,23 +669,54 @@ function gRespAvisoHTML() {
   return `<div class="g-aviso g-resp-aviso" style="background:#fffbeb;border-color:#fde68a;color:#92400e;margin-bottom:14px">💾 <b>Haz tu respaldo.</b> <span class="g-resp-fecha">${gRespTexto()}</span> Tus grupos, alumnos y calificaciones están <b>solo en esta computadora</b>; si se borran los datos del navegador o cambias de equipo, sin respaldo se pierden.
     <div style="margin-top:8px"><button class="g-btn" style="margin:0" onclick="gRespaldar()">⬇ Descargar respaldo ahora</button> <span style="font-size:12px">Se guarda en tu carpeta de <b>Descargas</b>; muévelo a una carpeta tuya (por ejemplo «Respaldos Planeador») o mándalo a tu correo.</span></div></div>`;
 }
-function gRespaldar() {
-  const blob = new Blob([JSON.stringify(G.data)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'respaldo-planeador-nem-' + gHoy() + '.json'; a.click(); URL.revokeObjectURL(a.href);
-  try { localStorage.setItem(G.key + '_resp', String(Date.now())); } catch (e) {}
-  document.querySelectorAll('.g-resp-aviso').forEach(e => { e.style.background = '#f0fdf4'; e.style.borderColor = '#bbf7d0'; e.style.color = '#166534'; e.innerHTML = '✅ <b>Respaldo descargado.</b> Revisa tu carpeta de <b>Descargas</b> y guárdalo en un lugar seguro (una carpeta tuya, una USB o tu correo).'; });
-  document.querySelectorAll('.g-resp-fecha').forEach(e => { if (!e.closest('.g-resp-aviso')) e.textContent = gRespTexto(); });
+// ── Respaldo TOTAL ──
+// Incluye todo lo del maestro en este equipo: grupos (alumnos, asistencias, calificaciones, libreta, exámenes, recuperativos),
+// datos de la escuela, horario semanal, bitácora, historial de planeaciones, temas guardados y los archivos subidos (calendario, etc.).
+function gBlobB64(blob) { return new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => mal(r.error); r.readAsDataURL(blob); }); }
+function gB64Blob(b64, mime) { const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], { type: mime || 'application/octet-stream' }); }
+async function gArchivosTodos() {   // todos los archivos subidos de esta cuenta (calendario, horario…)
+  try { const db = await gIdb(); return await new Promise(ok => { const q = db.transaction('cal').objectStore('cal').getAll(); q.onsuccess = () => ok((q.result || []).filter(x => x.cuenta === G.key)); q.onerror = () => ok([]); }); }
+  catch (e) { return []; }
+}
+async function gRespaldoPaquete() {
+  const lee = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+  const arch = [];
+  for (const r of await gArchivosTodos()) { try { arch.push({ id: r.id, cat: r.cat || 'cal', nombre: r.nombre, tipo: r.tipo, mime: r.mime, t: r.t, b64: await gBlobB64(r.blob) }); } catch (e) { /* un archivo dañado no impide el respaldo */ } }
+  return { app: 'planeador-nem', v: 2, total: true, fecha: new Date().toISOString(), datos: G.data, historial: (typeof histKey === 'function' ? lee(histKey()) : null) || [], temas: lee(gTemasClave()) || [], archivos: arch };
+}
+async function gRespaldar() {
+  const btns = [...document.querySelectorAll('[onclick="gRespaldar()"]')]; btns.forEach(b => { b.disabled = true; });
+  try {
+    const paq = await gRespaldoPaquete();
+    const blob = new Blob([JSON.stringify(paq)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'respaldo-planeador-nem-' + gHoy() + '.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    try { localStorage.setItem(G.key + '_resp', String(Date.now())); } catch (e) {}
+    document.querySelectorAll('.g-resp-aviso').forEach(e => { e.style.background = '#f0fdf4'; e.style.borderColor = '#bbf7d0'; e.style.color = '#166534'; e.innerHTML = '✅ <b>Respaldo total descargado.</b> Revisa tu carpeta de <b>Descargas</b> y guárdalo en un lugar seguro (una carpeta tuya, una USB o tu correo).'; });
+    document.querySelectorAll('.g-resp-fecha').forEach(e => { if (!e.closest('.g-resp-aviso')) e.textContent = gRespTexto(); });
+  } catch (e) { gAviso('No se pudo crear el respaldo: ' + (e.message || e)); }
+  btns.forEach(b => { b.disabled = false; });
 }
 function gRestaurar(input) {
   const f = input.files[0]; if (!f) return;
   const r = new FileReader();
-  r.onload = () => {
+  r.onload = async () => {
     try {
       const d = JSON.parse(r.result);
-      if (!d || !Array.isArray(d.grupos)) throw new Error('formato');
-      if (!confirm(`El respaldo trae ${d.grupos.length} grupo(s). Esto reemplaza lo que hay ahora en este dispositivo. ¿Continuar?`)) return;
-      G.data = d; G.gid = d.grupos[0] ? d.grupos[0].id : null; gGuardar(); gRender();
+      const total = !!(d && d.v === 2 && d.datos && Array.isArray(d.datos.grupos)), datos = total ? d.datos : d;   // también acepta respaldos anteriores (solo grupos)
+      if (!datos || !Array.isArray(datos.grupos)) throw new Error('formato');
+      const nh = total && Array.isArray(d.historial) ? d.historial.length : 0, na = total && Array.isArray(d.archivos) ? d.archivos.length : 0;
+      const resumen = `${datos.grupos.length} grupo(s)` + (total ? `, ${nh} planeación(es) en el historial y ${na} archivo(s) subido(s)` : ' (respaldo anterior: solo grupos y calificaciones)');
+      if (!confirm(`El respaldo trae ${resumen}. Esto reemplaza lo que hay ahora en este dispositivo. ¿Continuar?`)) { input.value = ''; return; }
+      if (total) {
+        try { if (typeof histKey === 'function') localStorage.setItem(histKey(), JSON.stringify(d.historial || [])); } catch (e) { /* sin espacio */ }
+        try { localStorage.setItem(gTemasClave(), JSON.stringify(d.temas || [])); } catch (e) { /* sin espacio */ }
+        let malArch = 0;
+        for (const x of (d.archivos || [])) { try { await gCalPoner({ id: x.id, cuenta: G.key, cat: x.cat || 'cal', nombre: x.nombre, tipo: x.tipo, mime: x.mime, blob: gB64Blob(x.b64, x.mime), t: x.t || Date.now() }); } catch (e) { malArch++; } }
+        if (malArch) gAviso(`No se pudieron restaurar ${malArch} archivo(s) subido(s); lo demás sí se restauró.`);
+      }
+      G.data = datos; G.gid = datos.grupos[0] ? datos.grupos[0].id : null; gGuardar(); gRender();
+      gAviso('Listo: tu respaldo se restauró.');
     } catch (e) { gAviso('El archivo no es un respaldo válido del Planeador.'); }
     input.value = '';
   };
@@ -776,7 +807,7 @@ function gRenderGrupos() {
     <p class="g-resp-fecha" style="margin:0 0 10px;font-weight:600;color:var(--azul)">${gRespTexto()}</p>
     <button class="g-btn" onclick="gRespaldar()">⬇ Descargar respaldo</button>
     <label class="g-btn g-btn-s" style="display:inline-block;cursor:pointer">⬆ Restaurar respaldo<input type="file" accept=".json,application/json" style="display:none" onchange="gRestaurar(this)"></label>
-    <div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px;line-height:1.5">💡 <b>Qué se respalda:</b> todos tus grupos con su lista de alumnos, el pase de lista (asistencias, retardos, faltas y justificantes), los criterios de evaluación, las actividades, los exámenes y las calificaciones, y los recuperativos. <b>No incluye</b> el Historial de planeaciones ni el calendario escolar que hayas subido.<br><br>🛡️ <b>Cuida tu información:</b> tus datos se guardan solo en este equipo, por eso conviene respaldar seguido (por ejemplo cada semana y siempre antes de borrar datos del navegador, formatear o cambiar de computadora). El archivo se descarga en <b>Descargas</b>: guárdalo en una carpeta tuya, en una USB o mándalo a tu correo.<br>📱 <b>Celular u otra computadora:</b> la información no se sincroniza sola. Para verla en otro equipo, descarga el respaldo aquí, pásalo a ese equipo (AirDrop, correo o WhatsApp) y usa «Restaurar respaldo» allá. Restaurar reemplaza lo que ya haya en ese equipo.</div></details>`;
+    <div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px;line-height:1.5">💡 <b>Qué se respalda (todo):</b> tus grupos con su lista de alumnos, el pase de lista, los criterios, actividades, libreta de trabajos, exámenes, calificaciones y recuperativos; los datos de tu escuela, tu horario, la bitácora, el historial de planeaciones, los temas guardados y los archivos que subiste (calendario escolar, etc.). Los respaldos hechos antes de esta versión solo traían grupos y calificaciones, y también se pueden restaurar.<br><br>🛡️ <b>Cuida tu información:</b> tus datos se guardan solo en este equipo, por eso conviene respaldar seguido (por ejemplo cada semana y siempre antes de borrar datos del navegador, formatear o cambiar de computadora). El archivo se descarga en <b>Descargas</b>: guárdalo en una carpeta tuya, en una USB o mándalo a tu correo.<br>📱 <b>Celular u otra computadora:</b> la información no se sincroniza sola. Para verla en otro equipo, descarga el respaldo aquí, pásalo a ese equipo (AirDrop, correo o WhatsApp) y usa «Restaurar respaldo» allá. Restaurar reemplaza lo que ya haya en ese equipo.</div></details>`;
   gPanel().innerHTML = h;
 }
 
