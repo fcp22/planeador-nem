@@ -429,7 +429,7 @@ const G_MENU = [
   ['lista', '✅', 'Pasar lista', 'Asistencia, retardos y faltas', true],
   ['nueva', '📝', 'Planeación', 'Programa analítico y plano didáctico', true],
   ['libros', '📚', 'Libros y programas SEP', 'Libros de texto y programas', true],
-  ['calif', '📊', 'Calificaciones', 'Criterios y calificación del trimestre', true],
+  ['calif', '📊', 'Calificaciones y criterios de evaluación', 'Criterios y calificación del trimestre', true],
   ['trabajos', '📓', 'Libreta de trabajos', 'Tareas entregadas por alumno', true],
   ['examenes', '🧮', 'Exámenes', 'Crear con IA y calificar', true],
   ['rezago', '🚦', 'Rezago', 'Semáforo de alumnos en riesgo', true],
@@ -1125,7 +1125,7 @@ function gRenderCalif() {
   const g = gGrupo();
   if (!g) return gSinGrupo('Calificaciones', 'Criterios con ponderación, actividades y calificación del trimestre');
   const t = G.trimCalif;
-  let h = `<div class="sec-title">Calificaciones</div><div class="sec-sub">Define tus criterios, captura las notas y el sistema calcula la calificación del trimestre.</div>${gBarra()}
+  let h = `<div class="sec-title">Calificaciones y criterios de evaluación</div><div class="sec-sub">Define tus criterios, captura las notas y el sistema calcula la calificación del trimestre.</div>${gBarra()}
   <div class="g-trims">${[1, 2, 3].map(x => `<button class="ttab${t === x ? ' on' : ''}" onclick="gTrimCalif(${x})">${G_TRIM_NOM[x]}</button>`).join('')}<button class="ttab${t === 'anual' ? ' on' : ''}" onclick="gTrimCalif('anual')">Resumen anual</button></div>`;
 
   if (t !== 'anual') {
@@ -1143,7 +1143,7 @@ function gRenderCalif() {
       <div class="campo"><label>Puntaje máximo</label><input id="ga-max" type="number" min="1" value="10"></div></div>
       <button class="g-btn" onclick="gAgregarActividad()">Agregar actividad</button>
       <span style="font-size:12px;color:var(--gris);margin-left:8px">Los exámenes se crean en la pestaña «Exámenes» y aparecen aquí también.</span></div>`;
-    if (typeof gLibUsada === 'function' && gLibUsada(g, t)) { const cL = g.criterios.find(c => c.id === g.libreta[t].crit); if (cL) h += `<div class="g-aviso" style="margin-bottom:14px">📓 El criterio <b>${gEsc(cL.nombre)}</b> se calcula con tu <a href="#" onclick="gIrA('trabajos');return false" style="color:var(--azul-med);font-weight:600">Libreta de trabajos</a> (entregados ÷ revisados). Aquí no tienes que capturar nada para ese criterio.</div>`; }
+    if (typeof gLibUsada === 'function' && gLibUsada(g, t)) { const cL = g.criterios.find(c => c.id === g.libreta[t].crit); if (cL) h += `<div class="g-aviso" style="margin-bottom:14px">📓 El criterio <b>${gEsc(cL.nombre)}</b> se calcula con tu <a href="#" onclick="gIrA('trabajos');return false" style="color:var(--azul-med);font-weight:600">Libreta de trabajos</a> (entregados ÷ trabajos dejados). Aquí no tienes que capturar nada para ese criterio.</div>`; }
     const acts = gActsTrim(g, t);
     if (acts.length && g.alumnos.length) {
       h += `<div class="card"><div class="card-title">✏️ Captura de calificaciones</div><div class="g-tabla-w"><table class="g-tabla g-cap"><thead><tr><th>#</th><th class="g-sticky">Alumno</th>` +
