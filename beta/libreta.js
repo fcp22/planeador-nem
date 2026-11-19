@@ -68,9 +68,9 @@ function gLibRefrescar() {
 function gLibCuerpoHTML(g, t) {
   const L = gLibreta(g, t), rev = gLibRevisados(g, L), crit = g.criterios.find(c => c.id === L.crit), pct = crit ? gPct(g, crit.id, t) : 0;
   if (!g.alumnos.length) return '<div class="g-vacio">Agrega alumnos en «Mis grupos» para llevar su libreta.</div>';
-  let h = `<div class="lb-resumen"><b>${rev}</b> trabajo${rev === 1 ? '' : 's'} revisado${rev === 1 ? '' : 's'} de ${L.n} casillas${rev ? ` · cada alumno se califica sobre <b>${rev}</b>` : ' · marca ✓ en los trabajos que cada alumno entregó'}</div>`;
-  h += `<div class="g-tabla-w"><table class="g-tabla g-cap lb-t"><thead><tr><th>#</th><th class="g-sticky">Alumno</th>` +
-    Array.from({ length: L.n }, (_, j) => { const c = g.alumnos.filter(a => L.marks[a.id] && L.marks[a.id][j]).length; return `<th class="lb-th"><div class="lb-nj">${j + 1}</div><button class="lb-todos" title="Marcar o quitar a todo el grupo" onclick="gLibTodos(${j})">✓ todos</button><small>${c}/${g.alumnos.length}</small></th>`; }).join('') +
+  let h = `<div class="lb-resumen"><b>${rev}</b> trabajo${rev === 1 ? '' : 's'} revisado${rev === 1 ? '' : 's'} de ${L.n} casillas${rev ? ` · cada alumno se califica sobre <b>${rev}</b>` : ' · marca ✓ en los trabajos que cada alumno entregó'}<br><small>Debajo de cada número de trabajo verás cuántos alumnos lo entregaron (ej. «3 de 36» = 3 alumnos de los 36 del grupo).</small></div>`;
+  h += `<div class="g-tabla-w"><table class="g-tabla lb-t"><thead><tr><th>#</th><th class="g-sticky">Alumno</th>` +
+    Array.from({ length: L.n }, (_, j) => { const c = g.alumnos.filter(a => L.marks[a.id] && L.marks[a.id][j]).length; return `<th class="lb-th"><div class="lb-nj">${j + 1}</div><button class="lb-todos" title="Marcar o quitar a todo el grupo" onclick="gLibTodos(${j})">✓ todos</button><small title="Alumnos que entregaron este trabajo, de ${g.alumnos.length} en el grupo">${c} de ${g.alumnos.length}</small></th>`; }).join('') +
     `<th class="lb-th">Entregó</th><th class="lb-th">Calif.</th></tr></thead><tbody>` +
     g.alumnos.map((a, i) => {
       const e = gLibEntregados(L, a.id), sc = rev ? e / rev * 10 : null;
