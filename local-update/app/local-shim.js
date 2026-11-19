@@ -87,7 +87,7 @@
       if (vCargada === null) vCargada = d.version;
       if (d.version !== vCargada) { aviso('✅ <b>La versión ha sido actualizada.</b> Recarga para usar la versión nueva (tus datos no se tocan).', [['Recargar ahora', function () { location.reload(); }]]); return; }
       if (d.aviso && d.aviso.version === d.version) { aviso('✅ <b>La versión ha sido actualizada.</b> Ya estás usando la versión nueva.', [['Entendido', marcarVisto]]); return; }
-      if (d.necesitaReinstalar) aviso('🔄 Hay una versión nueva que necesita el <b>paquete de instalación nuevo</b>. Pídeselo al maestro Manuel.', [['Entendido', cerrarAviso]]);
+      if (d.necesitaReinstalar) aviso('🔄 Hay una versión nueva que necesita el <b>paquete de instalación nuevo</b>. Pídelo por correo a planeador.nem.docente@gmail.com.', [['Entendido', cerrarAviso]]);
     }).catch(function () { /* sin servidor: no pasa nada */ });
   }
   function buscarYConsultar() { if (Date.now() - pidioBuscar > 10 * 60 * 1000 && navigator.onLine) { pidioBuscar = Date.now(); fetch('/api/buscar-actualizacion', { method: 'POST', headers: H }).catch(function () {}); } consultarVersion(); }

@@ -1,6 +1,6 @@
 {
- "version": "2971accab52d4800",
- "fecha": "2026-11-19T08:14:41",
+ "version": "7b64d3d8c3129e2f",
+ "fecha": "2026-11-19T08:24:49",
  "servidorMin": 1,
  "archivos": [
   {
@@ -95,13 +95,13 @@
   },
   {
    "p": "generators.js",
-   "h": "a9af15ef554b399498706d30255cdbc02ad73dd6c10dc7d32db5bc8d5a60a9ba",
-   "s": 36756
+   "h": "29794f35aa7d3738a94449c696a71249ddd535a71a24b1993b922be9e33555b6",
+   "s": 36755
   },
   {
    "p": "gestion.js",
-   "h": "e8af2fb594c1fa7c785f2384c120f209b3d6e31fd67345e9c554cc41ed5ea9f5",
-   "s": 225273
+   "h": "11f6dbddea8b142e5d144f9198bc3ee7d2e7a4da9cd757525f7a96b7128a1156",
+   "s": 225733
   },
   {
    "p": "icons/icono-180.png",
@@ -130,8 +130,8 @@
   },
   {
    "p": "index.html",
-   "h": "ea653aa5c21bd4a7d17f5b4fa5937406c5f52ec6eedcae85db3266b713724c21",
-   "s": 138036
+   "h": "1d7d341cc0a3391197265dafbeb82dd8ac5cd62e6f75b8ad9b2f93ab38484766",
+   "s": 138059
   },
   {
    "p": "libreta.js",
@@ -145,8 +145,8 @@
   },
   {
    "p": "local-shim.js",
-   "h": "20b1e5d5bf98281fe6d31ba436e29ff6dc60cb74628757ad59534ce24e57a2b6",
-   "s": 9086
+   "h": "9a6311dcf626bf1587c17e83bbaa288766c2a33eef576c1984f23796c2e539ad",
+   "s": 9111
   },
   {
    "p": "manifest.webmanifest",
@@ -195,7 +195,7 @@
   },
   {
    "p": "sw.js",
-   "h": "e7aed9cd50047563431654137ff4d30f3be24b214dea6bc8c8e90a4d994a4363",
+   "h": "dbdfb23e6e1be082f061391f70de861d1082609a0520febbbe4e6b152c1334c5",
    "s": 4951
   }
  ]

@@ -48,11 +48,19 @@ function gAviso(msg) { alert(msg); }
 
 // ── Almacenamiento ────────────────────────────────────────
 function gClave() { const u = (typeof getUsuario === 'function') ? getUsuario() : null; return 'nem_gestion_' + ((u && (u.curp || u.nombre)) || 'anon'); }
+// Criterio «Asistencia»: siempre se calcula solo con el Pase de lista (nombre exacto «Asistencia»)
+function gCritDef([n, p]) { const c = { id: gId(), nombre: n, pct: p }; if (/^\s*asistencia\s*$/i.test(n)) c.auto = 'asistencia'; return c; }
+function gMigrarAsistAuto(data) {
+  let cambio = false;
+  ((data && data.grupos) || []).forEach(g => (g.criterios || []).forEach(c => { if (!c.auto && /^\s*asistencia\s*$/i.test(c.nombre || '')) { c.auto = 'asistencia'; cambio = true; } }));
+  return cambio;
+}
 function gCargar() {
   G.key = gClave();
   try { G.data = JSON.parse(localStorage.getItem(G.key) || 'null'); } catch (e) { G.data = null; }
   if (!G.data || !Array.isArray(G.data.grupos)) G.data = { v: 1, grupos: [] };
   gSembrarPerfil();
+  if (gMigrarAsistAuto(G.data)) gGuardar();
   G.gid = G.data.grupos[0] ? G.data.grupos[0].id : null; G.gidManual = false;
   G.fecha = gHoy();
   G.borrador = null; G.sugerencias = [];
@@ -149,7 +157,7 @@ function gRenderBienvenida() {
   const F = [['📝', 'Planeación', 'Programa analítico y plano didáctico NEM, con contenidos y PDA de la Fase 6.'], ['🧭', 'Proyectos', 'Fases, fechas y tiempos de cada proyecto.'], ['✅', 'Pase de lista', 'Asistencia, retardos y faltas en segundos.'], ['📊', 'Calificaciones', 'Tus criterios, sus porcentajes y la boleta del trimestre.'], ['🧮', 'Exámenes', 'Crea exámenes con IA y captura las calificaciones.'], ['🚦', 'Rezago y recuperativos', 'Detecta a quien está en riesgo y arma la lista de recuperativos.'], ['📚', 'Libros y programas SEP', 'Libros de texto, plan de estudio y programa sintético por campo formativo.'], ['👥', 'Mis grupos', 'Tus alumnos, tus listas y tu respaldo.']];
   const BTN = `<button type="button" onclick="navInicio()" style="display:block;width:100%;max-width:460px;background:#fbbf24;color:#14274a;border:3px solid #fff;border-radius:16px;font-size:clamp(19px,3.4vw,24px);font-weight:800;padding:18px 26px;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.35);letter-spacing:.01em">Entrar al programa ➜</button>`;
   gPanel().innerHTML = `<div style="background:linear-gradient(160deg,#16314f,#245a96);color:#fff;border-radius:18px;padding:28px 22px;box-shadow:var(--sombra-lg)">
-    <div style="display:flex;gap:12px;align-items:center;margin-bottom:18px"><div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#3b82c4,#2563a8);display:flex;align-items:center;justify-content:center;font-size:24px">📚</div><div><b style="font-size:16px">Planeador Docente NEM</b><div style="font-size:12px;opacity:.75">Aplicación realizada por el Maestro Manuel Uitzil Cerón</div></div></div>
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:18px"><div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#3b82c4,#2563a8);display:flex;align-items:center;justify-content:center;font-size:24px">📚</div><div><b style="font-size:16px">Planeador Docente NEM</b><div style="font-size:12px;opacity:.75">Realizado por Planeador Docente NEM · Contacto: planeador.nem.docente@gmail.com</div></div></div>
     <div style="display:inline-block;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;margin-bottom:14px">Nueva Escuela Mexicana · Fase 6 · Secundaria</div>
     <h1 style="font-size:clamp(24px,4vw,36px);line-height:1.15;margin-bottom:12px">Planea, pasa lista y evalúa <span style="color:#7dd3fc">en un solo lugar.</span></h1>
     <p style="font-size:15.5px;line-height:1.6;opacity:.92;max-width:680px;margin-bottom:20px">Programa analítico, plano didáctico, proyectos con fechas y tiempos, pase de lista, calificaciones y exámenes. Hecho por un maestro de secundaria, para maestros de secundaria.</p>
@@ -599,7 +607,7 @@ function gCrearGrupo() {
   if (!nombre) { gAviso('Escribe el nombre del grupo, por ejemplo «3° A».'); return; }
   const ta = document.getElementById('gn-lista');
   const nombres = ta ? gNombresDeTexto(ta.value) : [];
-  const g = { id: gId(), nombre, grado, materia, alumnos: nombres.map(n => ({ id: gId(), nombre: n })), asist: {}, criterios: G_CRITERIOS_DEF.map(([n, p]) => ({ id: gId(), nombre: n, pct: p })), actividades: [], plan: {} };
+  const g = { id: gId(), nombre, grado, materia, alumnos: nombres.map(n => ({ id: gId(), nombre: n })), asist: {}, criterios: G_CRITERIOS_DEF.map(gCritDef), actividades: [], plan: {} };
   G.data.grupos.push(g); G.gid = g.id; G.nuevoGrupo = false; G.editGrupo = null; gGuardar(); gRender(); window.scrollTo(0, 0);
 }
 function gBorrarGrupo(id) {
@@ -1049,7 +1057,7 @@ function gQuitarCriterio(cid) {
 }
 function gRestablecerCriterios() {
   if (!confirm('¿Volver a los criterios sugeridos (alineados al Plano Didáctico: proceso 70 % + producto 30 %)? Las actividades pasarán al primer criterio.')) return;
-  const g = gGrupo(); g.criterios = G_CRITERIOS_DEF.map(([n, p]) => ({ id: gId(), nombre: n, pct: p })); g.pesos = {};
+  const g = gGrupo(); g.criterios = G_CRITERIOS_DEF.map(gCritDef); g.pesos = {};
   g.actividades.forEach(a => { a.criterioId = g.criterios[a.tipo === 'examen' ? 4 : 1].id; });
   gGuardar(); gRenderCalif();
 }
@@ -2282,7 +2290,7 @@ function gCrearGrupoRapido() {
   if (!nombre) { gAviso('Escribe el nombre del grupo, por ejemplo «2° B».'); return; }
   const nombres = gNombresDeTexto(document.getElementById('gl-lista').value);
   if (!nombres.length) { gAviso('Teclea, pega o sube al menos un nombre de alumno.'); return; }
-  const g = { id: gId(), nombre, grado, materia, alumnos: nombres.map(n => ({ id: gId(), nombre: n })), asist: {}, criterios: G_CRITERIOS_DEF.map(([n, p]) => ({ id: gId(), nombre: n, pct: p })), actividades: [], plan: {} };
+  const g = { id: gId(), nombre, grado, materia, alumnos: nombres.map(n => ({ id: gId(), nombre: n })), asist: {}, criterios: G_CRITERIOS_DEF.map(gCritDef), actividades: [], plan: {} };
   G.data.grupos.push(g); G.gid = g.id; gGuardar(); gRender();
 }
 // ── Tarjeta para agregar alumnos desde el Pase de lista ──

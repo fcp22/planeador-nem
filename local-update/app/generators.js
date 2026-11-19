@@ -562,7 +562,7 @@ function armarHTMLWord(htmlContenido) {
   
   const marcaAgua = nombreMaestro ? `
 <div style="text-align:right;font-size:8pt;color:#888;border-top:1px solid #ddd;padding-top:4px;margin-top:12px;">
-  Documento generado para: <strong>${nombreMaestro}</strong> · ${fechaGen} · Planeador Docente NEM — Aplicación realizada por el Mtro. Manuel Uitzil Cerón
+  Documento generado para: <strong>${nombreMaestro}</strong> · ${fechaGen} · Realizado por Planeador Docente NEM · Contacto: planeador.nem.docente@gmail.com
 </div>` : '';
 
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
