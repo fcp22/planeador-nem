@@ -492,7 +492,7 @@ function gRenderInicio() {
   h += gRespAvisoHTML();
   h += gHoyTocaHTML();
   h += `<div class="card"><div class="card-title">📌 Hoy en mis grupos</div>`;
-  if (!gs.length) h += `<p style="color:var(--gris)">Aún no tienes grupos. <a href="#" onclick="gIrA('grupos');return false">Crea el primero</a> para pasar lista, calificar y crear exámenes.</p>`;
+  if (!gs.length) h += `<p style="color:var(--gris)">Aún no tienes grupos. <a href="#" onclick="gIrA('grupos');return false">Crea el primero</a> para pasar lista, calificar y crear exámenes, o <a href="#" onclick="gIrA('grupos');return false"><b>restaura tu respaldo</b></a> si ya los tenías en otro equipo.</p>`;
   else h += gs.map(g => {
     const dia = g.asist[gHoy()];
     return `<div class="hoy-fila"><b>${gEsc(g.nombre)} · ${gEsc(g.materia)}</b><span style="color:var(--gris)">${g.alumnos.length} alumnos</span><span style="margin-left:auto">${dia ? `<span style="color:var(--verde)">✓ Lista de hoy: ${gConteoDia(g, dia)}</span>` : `<button class="g-btn g-btn-s" onclick="gCambiarGrupo('${g.id}');gIrA('lista')">Pasar lista de hoy</button>`}</span></div>`;
@@ -697,6 +697,11 @@ async function gRespaldar() {
   } catch (e) { gAviso('No se pudo crear el respaldo: ' + (e.message || e)); }
   btns.forEach(b => { b.disabled = false; });
 }
+// Tarjeta bien visible para quien entra con una cuenta sin datos en este equipo (equipo nuevo, otro navegador…)
+function gRestaurarTarjetaHTML() {
+  return `<div class="g-aviso" style="background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a;margin-bottom:14px">📥 <b>¿Ya tenías tus grupos en otro equipo o navegador?</b> Aquí puedes traerlos con tu archivo de respaldo (el que descargaste con «Descargar respaldo»).
+    <div style="margin-top:8px"><label class="g-btn" style="display:inline-block;cursor:pointer;margin:0">⬆ Restaurar respaldo<input type="file" accept=".json,application/json" style="display:none" onchange="gRestaurar(this)"></label></div></div>`;
+}
 function gRestaurar(input) {
   const f = input.files[0]; if (!f) return;
   const r = new FileReader();
@@ -758,6 +763,7 @@ function gRenderGrupos() {
   let h = `<div class="sec-title">Mis grupos y alumnos</div>
   <div class="sec-sub">Crea tus grupos una sola vez; la lista de alumnos se usa en el pase de lista, las calificaciones y los exámenes. 🔒 Los nombres se guardan <strong>solo en este dispositivo</strong>: descarga un respaldo de vez en cuando.</div>`;
   h += gRespAvisoHTML();
+  if (!gs.length) h += gRestaurarTarjetaHTML();
   h += `<details class="card gg-det" ${p.escuela ? '' : 'open'}><summary class="card-title" style="cursor:pointer">🏫 ${p.escuela ? gEsc(p.escuela) + (p.cct ? ' · CCT ' + gEsc(p.cct) : '') + (p.municipio ? ' · ' + gEsc(p.municipio) : '') : 'Mi escuela: escribe aquí los datos de tu escuela'} <span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--gris)">✏️ ver / editar</span></summary>
     <div class="f3"><div class="campo"><label>Nombre de la escuela</label><input id="gp-esc" value="${gEsc(gPerfil().escuela)}" placeholder="Escuela Secundaria…"></div>
     <div class="campo"><label>CCT</label><input id="gp-cct" value="${gEsc(gPerfil().cct)}" maxlength="12"></div>
@@ -803,7 +809,7 @@ function gRenderGrupos() {
     </div>`;
     h += gTarjetaDescarga(g);
   }
-  h += `<details class="card gg-det"><summary class="card-title" style="cursor:pointer">💾 Respaldo de mis grupos</summary>
+  h += `<details class="card gg-det"${gs.length ? '' : ' open'}><summary class="card-title" style="cursor:pointer">💾 Respaldo de mis grupos</summary>
     <p class="g-resp-fecha" style="margin:0 0 10px;font-weight:600;color:var(--azul)">${gRespTexto()}</p>
     <button class="g-btn" onclick="gRespaldar()">⬇ Descargar respaldo</button>
     <label class="g-btn g-btn-s" style="display:inline-block;cursor:pointer">⬆ Restaurar respaldo<input type="file" accept=".json,application/json" style="display:none" onchange="gRestaurar(this)"></label>
