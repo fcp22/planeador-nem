@@ -59,7 +59,7 @@ function gCargar() {
   G.trimCalif = G.trimExam = G.trimPlan = gTrimDeFecha(gHoy());
 }
 function gGuardar() {
-  try { localStorage.setItem(G.key, JSON.stringify(G.data)); }
+  try { localStorage.setItem(G.key, JSON.stringify(G.data)); try { localStorage.setItem(G.key + '_mod', String(Date.now())); } catch (e2) {} }
   catch (e) { gAviso('No se pudo guardar en este dispositivo (¿almacenamiento lleno o bloqueado?). Descarga un respaldo desde «Mis grupos».'); }
 }
 function gGrupo() { return (G.data && G.data.grupos.find(g => g.id === G.gid)) || null; }
@@ -489,6 +489,7 @@ function gRenderInicio() {
     `<a class="tile ancho" style="${gTinte('libros')}" href="https://libros.conaliteg.gob.mx/" target="_blank" rel="noopener"><span class="ti">${gIco('libros')}</span><div class="tx"><div class="tt">Libros de texto SEP</div><div class="td">Consulta y descarga los libros gratuitos de cada grado (sitio oficial de la CONALITEG)</div></div><span class="go">${G_FLECHA}</span></a></div>`;
   const gs = G.data ? G.data.grupos : [];
   if (G.data && !gPerfil().escuela) h += `<div class="g-aviso" style="background:#fffbeb;border-color:#fde68a;color:#92400e">🏫 Falta el nombre de tu escuela. <a href="#" onclick="gIrA('grupos');return false">Captúralo en «Mis grupos»</a> para que aparezca en tus documentos.</div>`;
+  h += gRespAvisoHTML();
   h += gHoyTocaHTML();
   h += `<div class="card"><div class="card-title">📌 Hoy en mis grupos</div>`;
   if (!gs.length) h += `<p style="color:var(--gris)">Aún no tienes grupos. <a href="#" onclick="gIrA('grupos');return false">Crea el primero</a> para pasar lista, calificar y crear exámenes.</p>`;
@@ -646,10 +647,35 @@ function gQuitarAlumno(aid) {
   gGuardar(); gRender();
 }
 function gOrdenarAlumnos() { const g = gGrupo(); g.alumnos.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')); gGuardar(); gRender(); }
+// ── Recordatorio de respaldo ──
+// Los datos viven solo en este dispositivo; la app avisa cuándo fue el último respaldo y lo descarga en un clic.
+const G_RESP_DIAS = 7;   // a partir de cuántos días sin respaldar (con cambios) se avisa
+function gRespUltimo() { try { const v = +localStorage.getItem(G.key + '_resp'); return v > 0 ? v : null; } catch (e) { return null; } }
+function gRespUltimoCambio() { try { const v = +localStorage.getItem(G.key + '_mod'); return v > 0 ? v : null; } catch (e) { return null; } }
+function gRespTexto() {
+  const t = gRespUltimo(); if (!t) return 'Todavía no has descargado ningún respaldo.';
+  const d = Math.floor((Date.now() - t) / 86400000);
+  return 'Último respaldo: ' + (d <= 0 ? 'hoy' : d === 1 ? 'ayer' : 'hace ' + d + ' días') + ' (' + new Date(t).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) + ').';
+}
+// ¿Toca avisar? Hay grupos y (nunca se ha respaldado, o hay cambios sin respaldar y ya pasaron G_RESP_DIAS días)
+function gRespToca() {
+  if (!G.data || !G.data.grupos.length) return false;
+  const t = gRespUltimo(); if (!t) return true;
+  const mod = gRespUltimoCambio() || 0;
+  return mod > t && (Date.now() - t) >= G_RESP_DIAS * 86400000;
+}
+function gRespAvisoHTML() {
+  if (!gRespToca()) return '';
+  return `<div class="g-aviso g-resp-aviso" style="background:#fffbeb;border-color:#fde68a;color:#92400e;margin-bottom:14px">💾 <b>Haz tu respaldo.</b> <span class="g-resp-fecha">${gRespTexto()}</span> Tus grupos, alumnos y calificaciones están <b>solo en esta computadora</b>; si se borran los datos del navegador o cambias de equipo, sin respaldo se pierden.
+    <div style="margin-top:8px"><button class="g-btn" style="margin:0" onclick="gRespaldar()">⬇ Descargar respaldo ahora</button> <span style="font-size:12px">Se guarda en tu carpeta de <b>Descargas</b>; muévelo a una carpeta tuya (por ejemplo «Respaldos Planeador») o mándalo a tu correo.</span></div></div>`;
+}
 function gRespaldar() {
   const blob = new Blob([JSON.stringify(G.data)], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'respaldo-planeador-nem-' + gHoy() + '.json'; a.click(); URL.revokeObjectURL(a.href);
+  try { localStorage.setItem(G.key + '_resp', String(Date.now())); } catch (e) {}
+  document.querySelectorAll('.g-resp-aviso').forEach(e => { e.style.background = '#f0fdf4'; e.style.borderColor = '#bbf7d0'; e.style.color = '#166534'; e.innerHTML = '✅ <b>Respaldo descargado.</b> Revisa tu carpeta de <b>Descargas</b> y guárdalo en un lugar seguro (una carpeta tuya, una USB o tu correo).'; });
+  document.querySelectorAll('.g-resp-fecha').forEach(e => { if (!e.closest('.g-resp-aviso')) e.textContent = gRespTexto(); });
 }
 function gRestaurar(input) {
   const f = input.files[0]; if (!f) return;
@@ -700,6 +726,7 @@ function gRenderGrupos() {
   const form = !gs.length || G.nuevoGrupo;
   let h = `<div class="sec-title">Mis grupos y alumnos</div>
   <div class="sec-sub">Crea tus grupos una sola vez; la lista de alumnos se usa en el pase de lista, las calificaciones y los exámenes. 🔒 Los nombres se guardan <strong>solo en este dispositivo</strong>: descarga un respaldo de vez en cuando.</div>`;
+  h += gRespAvisoHTML();
   h += `<details class="card gg-det" ${p.escuela ? '' : 'open'}><summary class="card-title" style="cursor:pointer">🏫 ${p.escuela ? gEsc(p.escuela) + (p.cct ? ' · CCT ' + gEsc(p.cct) : '') + (p.municipio ? ' · ' + gEsc(p.municipio) : '') : 'Mi escuela: escribe aquí los datos de tu escuela'} <span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--gris)">✏️ ver / editar</span></summary>
     <div class="f3"><div class="campo"><label>Nombre de la escuela</label><input id="gp-esc" value="${gEsc(gPerfil().escuela)}" placeholder="Escuela Secundaria…"></div>
     <div class="campo"><label>CCT</label><input id="gp-cct" value="${gEsc(gPerfil().cct)}" maxlength="12"></div>
@@ -746,9 +773,10 @@ function gRenderGrupos() {
     h += gTarjetaDescarga(g);
   }
   h += `<details class="card gg-det"><summary class="card-title" style="cursor:pointer">💾 Respaldo de mis grupos</summary>
+    <p class="g-resp-fecha" style="margin:0 0 10px;font-weight:600;color:var(--azul)">${gRespTexto()}</p>
     <button class="g-btn" onclick="gRespaldar()">⬇ Descargar respaldo</button>
     <label class="g-btn g-btn-s" style="display:inline-block;cursor:pointer">⬆ Restaurar respaldo<input type="file" accept=".json,application/json" style="display:none" onchange="gRestaurar(this)"></label>
-    <div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px;line-height:1.5">💡 <b>Qué se respalda:</b> todos tus grupos con su lista de alumnos, el pase de lista (asistencias, retardos, faltas y justificantes), los criterios de evaluación, las actividades, los exámenes y las calificaciones, y los recuperativos. <b>No incluye</b> el Historial de planeaciones ni el calendario escolar que hayas subido.</div></details>`;
+    <div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px;line-height:1.5">💡 <b>Qué se respalda:</b> todos tus grupos con su lista de alumnos, el pase de lista (asistencias, retardos, faltas y justificantes), los criterios de evaluación, las actividades, los exámenes y las calificaciones, y los recuperativos. <b>No incluye</b> el Historial de planeaciones ni el calendario escolar que hayas subido.<br><br>🛡️ <b>Cuida tu información:</b> tus datos se guardan solo en este equipo, por eso conviene respaldar seguido (por ejemplo cada semana y siempre antes de borrar datos del navegador, formatear o cambiar de computadora). El archivo se descarga en <b>Descargas</b>: guárdalo en una carpeta tuya, en una USB o mándalo a tu correo.<br>📱 <b>Celular u otra computadora:</b> la información no se sincroniza sola. Para verla en otro equipo, descarga el respaldo aquí, pásalo a ese equipo (AirDrop, correo o WhatsApp) y usa «Restaurar respaldo» allá. Restaurar reemplaza lo que ya haya en ese equipo.</div></details>`;
   gPanel().innerHTML = h;
 }
 
