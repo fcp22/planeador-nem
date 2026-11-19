@@ -65,9 +65,9 @@ function licPintarChip() {
   const e = LIC.estado;
   if (!e || !workerUrl()) { c.style.display = 'none'; return; }
   c.style.display = 'inline-block';
-  const pocos = e.restantes <= Math.max(1, Math.round(e.limite * 0.1));
+  const pocos = !e.admin && e.restantes <= Math.max(1, Math.round(e.limite * 0.1));
   // Plan de pago: la IA está incluida (el tope mensual es solo de «uso justo» y no se muestra hasta que se acerca). La prueba sí muestra su contador.
-  c.textContent = !e.activa ? 'IA sin licencia' : e.prueba ? `IA ${e.usadas}/${e.limite}` : `IA: te quedan ${e.restantes}`;
+  c.textContent = e.admin ? 'IA: administrador' : !e.activa ? 'IA sin licencia' : e.prueba ? `IA ${e.usadas}/${e.limite}` : `IA: te quedan ${e.restantes}`;
   c.style.background = e.activa ? (pocos ? '#f59e0b' : 'rgba(255,255,255,.18)') : '#dc2626';
 }
 async function licCargar() {
@@ -238,7 +238,8 @@ async function licRender() {
   else {
     const pct = e.limite ? Math.min(100, Math.round(e.usadas * 100 / e.limite)) : 0;
     const color = !e.activa ? '#dc2626' : pct >= 90 ? '#f59e0b' : '#16a34a';
-    h += `<div class="card"><div class="card-title">🔑 ${e.prueba ? 'Prueba gratis' : (e.plan ? 'Plan ' + gEsc(e.plan) : 'Licencia')} <span class="g-tag" style="margin-left:auto;background:${color}">${e.activa ? 'Activa' : (e.limite ? 'Vencida' : 'Sin licencia')}</span></div>
+    if (e.admin) h += `<div class="card"><div class="card-title">🔑 Administrador <span class="g-tag" style="margin-left:auto;background:#16a34a">Activa</span></div><div style="font-size:13px;margin-bottom:8px"><b>Cuenta:</b> ${gEsc(e.correo || (u && u.email) || '')}</div><div style="font-size:13px">Tu cuenta de administrador usa la IA y todas las herramientas sin licencia y sin tope de documentos.</div></div>`;
+    else h += `<div class="card"><div class="card-title">🔑 ${e.prueba ? 'Prueba gratis' : (e.plan ? 'Plan ' + gEsc(e.plan) : 'Licencia')} <span class="g-tag" style="margin-left:auto;background:${color}">${e.activa ? 'Activa' : (e.limite ? 'Vencida' : 'Sin licencia')}</span></div>
       <div style="font-size:13px;margin-bottom:12px"><b>Cuenta:</b> ${gEsc(e.correo || (u && u.email) || '')}</div>
       ${e.limite ? `<div style="font-size:13px;margin-bottom:6px"><b>Documentos con IA ${e.prueba ? 'de la prueba' : 'este mes'}:</b> ${e.usadas} de ${e.limite} usados · <b>te quedan ${e.restantes}</b>${e.prueba ? '' : ' <span style="color:var(--gris)">(se renuevan el día 1 de cada mes)</span>'}</div>
       <div style="height:10px;background:var(--gris-claro);border-radius:6px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:${pct}%;background:${color}"></div></div>` + `
