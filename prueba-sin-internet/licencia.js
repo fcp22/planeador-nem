@@ -515,4 +515,4 @@ async function licAdminAutorizar(valor, quitar) {
 function licCopiar(btn) { navigator.clipboard.writeText((LIC.ultimos || []).join('\n')).then(() => { btn.textContent = '✓ Copiados'; }); }
 
 // Enrutado desde el menú
-function licOnTab(id) { if (id === 'licencia') { licRender(); return true; } if (id === 'licadmin') { licAdminRender(); return true; } return false; }
+function licOnTab(id) { if (id === 'privacidad' && typeof privRender === 'function') { privRender(); return true; } if (id === 'licencia') { licRender(); return true; } if (id === 'licadmin') { licAdminRender(); return true; } return false; }

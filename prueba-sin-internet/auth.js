@@ -127,7 +127,7 @@ async function authRegistrar() {
   if (esCorreoTemporal(correo)) return authError('r-err', 'No se aceptan correos temporales. Usa tu correo personal, Google o Apple.');
   if (pwd.length < 6) return authError('r-err', 'La contraseña debe tener al menos 6 caracteres.');
   if (pwd !== pwd2) return authError('r-err', 'Las contraseñas no coinciden.');
-  if (!document.getElementById('r-acepto').checked) return authError('r-err', 'Debes aceptar el aviso de privacidad y los términos de uso.');
+  if (!document.getElementById('r-acepto').checked) return authError('r-err', 'Debes leer y aceptar el aviso de privacidad.');
   authOcupado('btn-reg', true, 'Creando cuenta…');
   try {
     const cred = await AUTH.auth.createUserWithEmailAndPassword(correo, pwd);

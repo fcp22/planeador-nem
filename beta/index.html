@@ -600,7 +600,7 @@ html{-webkit-text-size-adjust:100%;}
       <div class="fg"><label>Correo electrónico <span class="req">*</span></label><input type="email" id="r-correo" placeholder="tucorreo@ejemplo.com" autocomplete="email" autocapitalize="off"><div class="curp-hint">Se usa para entrar y para recuperar tu contraseña. Usa tu correo de Gmail, Hotmail, Outlook, Yahoo, iCloud o Prodigy (o el de tu escuela). No se aceptan correos temporales; si el tuyo es de otro tipo, avísanos para autorizarlo.</div></div>
       <div class="fg"><label>Contraseña <span class="req">*</span></label><input type="password" id="r-pwd" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
       <div class="fg"><label>Confirmar contraseña <span class="req">*</span></label><input type="password" id="r-pwd2" placeholder="Repite tu contraseña" autocomplete="new-password"></div>
-      <label class="acepto"><input type="checkbox" id="r-acepto"> <span>Acepto el aviso de privacidad y los términos de uso.</span></label>
+      <label class="acepto"><input type="checkbox" id="r-acepto"> <span>He leído y acepto el <a href="#" onclick="privAbrir(true);return false" style="color:#1d4ed8;font-weight:600;text-decoration:underline">aviso de privacidad</a>, incluido que soy responsable de los datos de mis alumnos.</span></label>
       <button class="btn-p" id="btn-reg" onclick="authRegistrar()">Crear mi cuenta</button>
       <div class="l-err" id="r-err"></div>
     </div>
@@ -663,6 +663,7 @@ html{-webkit-text-size-adjust:100%;}
     <button class="nav-tab" onclick="showTab('calendario',this)"><span class="si">📅</span>Calendario escolar</button>
     <button class="nav-tab" onclick="showTab('horario',this)"><span class="si">🕐</span>Horario semanal</button>
     <button class="nav-tab" onclick="showTab('planes',this)"><span class="si">💳</span>Planes y precios</button>
+    <button class="nav-tab" onclick="showTab('privacidad',this)"><span class="si">🔒</span>Aviso de privacidad</button>
     <button class="nav-tab" onclick="showTab('licencia',this)"><span class="si">🔑</span>Mi licencia</button>
     <div class="sb-label admin-only hidden">Administración</div>
     <button class="nav-tab admin-only hidden" onclick="showTab('licadmin',this)"><span class="si">🛡️</span>Licencias</button>
@@ -691,6 +692,7 @@ html{-webkit-text-size-adjust:100%;}
     <div class="tab-panel" id="tab-calendario"><div id="g-calendario"></div></div>
     <div class="tab-panel" id="tab-horario"><div id="g-horario"></div></div>
     <div class="tab-panel" id="tab-planes"><div id="g-planes"></div></div>
+    <div class="tab-panel" id="tab-privacidad"><div id="g-privacidad"></div></div>
     <div class="tab-panel" id="tab-licencia"><div id="g-licencia"></div></div>
     <div class="tab-panel" id="tab-licadmin"><div id="g-licadmin"></div></div>
 
@@ -1198,8 +1200,9 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
 
 <script src="firebase-config.js?v=202611180600"></script>
 <script src="correos-temporales.js?v=202611180600"></script>
-<script src="auth.js?v=202611180600"></script>
-<script src="licencia.js?v=202611191400"></script>
+<script src="privacidad.js?v=202611191500"></script>
+<script src="auth.js?v=202611191500"></script>
+<script src="licencia.js?v=202611191500"></script>
 <script src="curriculum.js?v=202611180600"></script>
 <script src="projects.js?v=202611180600"></script>
 <script src="generators.js?v=202611181600"></script>
@@ -1282,6 +1285,7 @@ function entrarApp(){
   renderHist();
   licReiniciar();
   if(typeof licPuertaVerificar==='function'){ licPuertaVerificar(); licPuertaVigilar(); }
+  if(typeof privVerificar==='function') privVerificar();   // aviso de privacidad: se muestra una sola vez por cuenta
   else licCargar().then(()=>{ if(typeof G!=='undefined' && G.tab==='inicio') gRender(); });
 }
 // Se llama cuando no hay sesión
