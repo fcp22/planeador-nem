@@ -30,7 +30,7 @@ async function workerFetch(ruta, { metodo = 'GET', body, admin } = {}) {
 }
 
 // Mensaje + a dónde ir cuando el problema es de licencia
-const LIC_CODIGOS = ['sin_licencia', 'vencida', 'cuota', 'tipo_prueba', 'revocada', 'correo_sin_verificar'];
+const LIC_CODIGOS = ['sin_licencia', 'vencida', 'cuota', 'tipo_prueba', 'revocada', 'correo_sin_verificar', 'correo_no_autorizado'];
 function licMensajeIA(e) {
   if (LIC_CODIGOS.includes(e.codigo)) return e.message + ' (Menú → «Mi licencia»)';
   return e.message;
@@ -54,6 +54,7 @@ async function llamarIA(prompt, { json = false, tipo } = {}) {
     }
   }
   if (['sin_licencia', 'vencida', 'revocada'].includes(ultimo.codigo) && !licEsAdminCuenta()) licCargar().then(e => { if (e && !e.activa) licPuertaBloquear(e); });
+  if (ultimo.codigo === 'correo_no_autorizado' && !licEsAdminCuenta()) licPuertaVerificar();
   const err = new Error(licMensajeIA(ultimo)); err.codigo = ultimo.codigo; throw err;
 }
 
@@ -71,8 +72,8 @@ function licPintarChip() {
 }
 async function licCargar() {
   if (!workerUrl()) return null;
-  try { LIC.estado = await workerFetch('/v1/estado'); LIC.error = ''; }
-  catch (e) { LIC.estado = null; LIC.error = e.message; }
+  try { LIC.estado = await workerFetch('/v1/estado'); LIC.error = ''; LIC.codigo = ''; }
+  catch (e) { LIC.estado = null; LIC.error = e.message; LIC.codigo = e.codigo || ''; }
   licPintarChip(); return LIC.estado;
 }
 function licReiniciar() { LIC.estado = null; LIC.error = ''; licPintarChip(); }
@@ -136,6 +137,22 @@ function licPuertaBloquear(e, errRed) {
     <p style="font-size:11px;color:#94a3b8;margin:12px 0 0">Cuenta: ${gEsc((u && u.email) || '')}</p>
   </div>`;
 }
+// Correo que todavía no está autorizado: no se puede usar ni la prueba ni canjear código hasta que el administrador lo autorice
+function licPuertaCorreo(msg) {
+  LIC_PUERTA.activa = false;
+  const el = licPuertaEl(); el.style.display = 'flex';
+  const app = document.getElementById('app'); if (app) app.setAttribute('inert', '');
+  const u = (typeof getUsuario === 'function') ? getUsuario() : null, contacto = window.NEM_CONFIG && window.NEM_CONFIG.contacto;
+  el.innerHTML = `<div style="${LIC_TARJETA}">
+    <div style="font-size:38px">✉️</div>
+    <h2 style="margin:8px 0 6px;font-size:20px;color:#1e3a5f">Tu correo todavía no está autorizado</h2>
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#475569">${gEsc(msg || 'Avísale a quien te compartió la app para que lo autorice.')}</p>
+    ${contacto ? `<p style="margin:0 0 14px;font-size:13px;color:#475569">Contacto: <b>${gEsc(contacto)}</b></p>` : ''}
+    <button onclick="licPuertaReintentar()" style="width:100%;padding:12px;font-size:15px;font-weight:700;border:0;border-radius:10px;background:#1e3a5f;color:#fff;cursor:pointer">Ya me autorizaron, reintentar</button>
+    <div style="margin-top:12px"><button onclick="licPuertaSalir()" style="padding:8px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer;font-size:13px">Cerrar sesión</button></div>
+    <p style="font-size:11px;color:#94a3b8;margin:12px 0 0">Cuenta: ${gEsc((u && u.email) || '')}</p>
+  </div>`;
+}
 function licPuertaSalir() { const el = document.getElementById('lic-puerta'); if (el) el.style.display = 'none'; const app = document.getElementById('app'); if (app) app.removeAttribute('inert'); if (typeof doLogout === 'function') doLogout(); }
 async function licPuertaCanjear() {
   const c = (document.getElementById('lp-codigo').value || '').trim(), err = document.getElementById('lp-err'), b = document.getElementById('lp-btn');
@@ -153,6 +170,7 @@ async function licPuertaVerificar() {
   const e = await licCargar(); LIC_PUERTA.ultimo = Date.now();
   if (e && e.activa) { licCacheGuardar(e.vence); licPuertaCerrar(); if (typeof G !== 'undefined' && G.tab === 'inicio' && typeof gRender === 'function') gRender(); return true; }
   if (e) { licPuertaBloquear(e); return false; }
+  if (LIC.codigo === 'correo_no_autorizado') { licCacheGuardar(''); licPuertaCorreo(LIC.error); return false; }
   if (licCacheVigente()) { licPuertaCerrar(); return true; }   // sin conexión: se permite mientras la última licencia verificada siga vigente
   licPuertaBloquear(null, true); return false;
 }
@@ -162,6 +180,7 @@ async function licPuertaRevisar() {
   const e = await licCargar(); LIC_PUERTA.ultimo = Date.now();
   if (e && e.activa) { licCacheGuardar(e.vence); return; }
   if (e) licPuertaBloquear(e);
+  else if (LIC.codigo === 'correo_no_autorizado') { licCacheGuardar(''); licPuertaCorreo(LIC.error); }
 }
 function licPuertaVigilar() {
   clearInterval(LIC_PUERTA.timer); LIC_PUERTA.timer = setInterval(licPuertaRevisar, 20 * 60 * 1000);
@@ -275,6 +294,11 @@ function licAdminRender() {
     <div class="campo" style="max-width:340px"><label>Modelo (opcional, para probar uno en particular)</label><input id="la-modelo" placeholder="Vacío = el configurado en el servidor"></div>
     <button class="g-btn" id="la-prb" onclick="licAdminProbar()">Probar ahora</button>
     <div id="la-prb-out" style="margin-top:12px"></div></div>
+  <div class="card"><div class="card-title">✉️ Correos por autorizar</div>
+    <div class="ayuda" style="font-size:12.5px;color:var(--gris);margin-bottom:10px">De entrada solo entran correos de <b>Gmail, Hotmail, Outlook, Yahoo, iCloud, Prodigy y escuelas (.edu.mx / .gob.mx)</b>. Si un maestro tiene otro correo, te avisa y lo autorizas aquí. También aparecen solos los que lo intentaron.</div>
+    <div class="campo" style="max-width:380px"><label>Autorizar un correo o un dominio</label><input id="la-aut" placeholder="maestra@escuela.org   o   @escuela.org"></div>
+    <button class="g-btn g-btn-s" onclick="licAdminAutorizar(document.getElementById('la-aut').value,false)">Autorizar</button> <button class="g-btn g-btn-s" onclick="licAdminCorreos()">Ver pendientes y autorizados</button>
+    <div id="la-corr" style="margin-top:12px"></div></div>
   <div class="card"><div class="card-title">🚫 Bloquear un dominio de correo</div>
     <div class="campo" style="max-width:340px"><label>Dominio</label><input id="la-dom" placeholder="ejemplo-temporal.com"></div>
     <button class="g-btn g-btn-s" onclick="licAdminBloquear(false)">Bloquear</button> <button class="g-btn g-btn-s" onclick="licAdminBloquear(true)">Quitar bloqueo</button>
@@ -469,6 +493,25 @@ async function licAdminBloquear(quitar) {
   catch (e) { licAdminErr(e.message); }
 }
 
+async function licAdminCorreos() {
+  const k = licAdminClave(); const o = document.getElementById('la-corr'); licAdminErr(''); if (!k) return licAdminErr('Escribe la clave de administrador.');
+  o.textContent = 'Cargando…';
+  try {
+    const d = await workerFetch('/admin/correos', { admin: k });
+    const fila = (txt, sub, btn) => `<div style="display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--gris-claro);border-radius:8px;padding:8px 12px;margin-bottom:6px;flex-wrap:wrap"><div><b>${gEsc(txt)}</b>${sub ? `<div style="font-size:11.5px;color:var(--gris)">${gEsc(sub)}</div>` : ''}</div>${btn}</div>`;
+    o.innerHTML = `<div style="font-weight:700;margin:4px 0 6px">⏳ Pendientes (${d.pendientes.length})</div>` +
+      (d.pendientes.length ? d.pendientes.map(p => fila(p.correo, (p.nombre ? p.nombre + ' · ' : '') + 'intentó entrar el ' + licFecha(p.fecha), `<button class="g-btn g-btn-s" data-c="${gEsc(p.correo)}" onclick="licAdminAutorizar(this.dataset.c,false)">✅ Autorizar</button>`)).join('') : '<div style="color:var(--gris);font-size:13px;margin-bottom:8px">Nadie está esperando.</div>') +
+      `<div style="font-weight:700;margin:12px 0 6px">✅ Autorizados por ti (${d.autorizados.length})</div>` +
+      (d.autorizados.length ? d.autorizados.map(a => fila(a.clave, a.fecha ? 'desde el ' + licFecha(a.fecha) : '', `<button class="g-btn g-btn-s" data-c="${gEsc(a.clave)}" onclick="licAdminAutorizar(this.dataset.c,true)">Quitar</button>`)).join('') : '<div style="color:var(--gris);font-size:13px">Aún no has autorizado ninguno.</div>');
+  } catch (e) { o.textContent = ''; licAdminErr(e.message); }
+}
+async function licAdminAutorizar(valor, quitar) {
+  const k = licAdminClave(); licAdminErr(''); if (!k) return licAdminErr('Escribe la clave de administrador.');
+  valor = String(valor || '').trim(); if (!valor) return licAdminErr('Escribe el correo o el dominio.');
+  if (quitar && !confirm('¿Quitar la autorización de ' + valor + '?')) return;
+  try { await workerFetch('/admin/autorizar', { metodo: 'POST', body: { correo: valor, quitar: !!quitar }, admin: k }); const i = document.getElementById('la-aut'); if (i && !quitar) i.value = ''; await licAdminCorreos(); }
+  catch (e) { licAdminErr(e.message); }
+}
 function licCopiar(btn) { navigator.clipboard.writeText((LIC.ultimos || []).join('\n')).then(() => { btn.textContent = '✓ Copiados'; }); }
 
 // Enrutado desde el menú
