@@ -1015,7 +1015,7 @@ function gCriterioNombre(v, cid) { const c = gGrupo().criterios.find(x => x.id =
 function gCriterioPct(cid, v) { const g = gGrupo(); const c = g.criterios.find(x => x.id === cid); if (c) { gPesosTrim(g, gTrimActual())[cid] = Math.max(0, Math.min(100, gNum(v) || 0)); gGuardar(); gActualizarSumaPct(); gActualizarResumen(); } }
 function gActualizarSumaPct() {
   const g = gGrupo(); const s = gSumaPct(g, gTrimActual()); const f = s === 100 ? `<span style="color:var(--verde)">✓ Suma 100 %</span>` : `<span class="g-mal">Suma ${s} % — debe sumar 100 %${s < 100 ? ` (te faltan ${100 - s} %)` : ` (te pasas ${s - 100} %)`}</span>`;
-  ['g-suma', 'g-suma2'].forEach(id => { const e = document.getElementById(id); if (e) e.innerHTML = f; });
+  ['g-suma', 'g-suma2', 'g-suma3'].forEach(id => { const e = document.getElementById(id); if (e) e.innerHTML = f; });
 }
 function gAgregarCriterio(nombre) { const g = gGrupo(); const c = { id: gId(), nombre: nombre || 'Nuevo criterio', pct: 0 }; if (nombre === 'Asistencia') c.auto = 'asistencia'; g.criterios.push(c); gGuardar(); gRenderCalif(); const ins = document.querySelectorAll('.g-crit-f input:first-child'); const ult = ins[ins.length - 1]; if (ult) { ult.focus(); ult.select(); } }
 // Reparte `objetivo` puntos entre los criterios `ids` (proporcional a lo que ya tienen, múltiplos de 5 cuando se puede).
@@ -1138,7 +1138,7 @@ function gQuitarActividad(id) {
   if (!confirm(`¿Borrar «${a.nombre}» y sus calificaciones?`)) return;
   g.actividades = g.actividades.filter(x => x.id !== id); gGuardar(); gRender();
 }
-function gCriterioDeAct(id, cid) { const a = gGrupo().actividades.find(x => x.id === id); if (a) { a.criterioId = cid; gGuardar(); gActualizarResumen(); } }
+function gCriterioDeAct(id, cid) { const a = gGrupo().actividades.find(x => x.id === id); if (a) { a.criterioId = cid; gGuardar(); gRenderCalifSinSalto(); } }
 function gNota(actId, aid, el) {
   const g = gGrupo(); const a = g.actividades.find(x => x.id === actId); if (!a) return;
   const raw = el.value.trim();
@@ -1153,6 +1153,158 @@ function gNota(actId, aid, el) {
 }
 function gActualizarResumen() {
   const e = document.getElementById('g-resumen'); if (e) e.innerHTML = gResumenHTML();
+  gActualizarCap();
+}
+
+// ── Hoja de captura por criterio: cada criterio es un grupo de columnas con su % arriba; al final, la calificación final ──
+function gCapColumnas(g, t) {
+  const acts = gActsTrim(g, t);
+  const L = g.libreta && g.libreta[t];
+  const libCrit = (typeof gLibUsada === 'function' && gLibUsada(g, t)) ? L.crit : null;
+  return g.criterios.map(c => {
+    const cols = [];
+    if (c.auto === 'asistencia') cols.push({ tipo: 'auto' });
+    else {
+      if (c.id === libCrit) cols.push({ tipo: 'lib' });
+      acts.filter(a => a.criterioId === c.id).forEach(a => cols.push({ tipo: 'act', a }));
+      if (!cols.length) cols.push({ tipo: 'directa' });
+    }
+    const prom = cols.length > 1;
+    return { c, cols, prom, span: cols.length + (prom ? 1 : 0) };
+  });
+}
+function gCapFinalHTML(r) { const b = gBoleta(r.final); return `<b>${b == null ? '—' : b}</b>${r.final == null ? '' : `<small>${gFmt(r.final, 1)}</small>`}`; }
+function gCapHTML(g, t) {
+  const grupos = gCapColumnas(g, t);
+  let h1 = `<tr><th rowspan="2" class="g-c-n">#</th><th rowspan="2" class="g-sticky">Alumno</th>`, h2 = '<tr>';
+  grupos.forEach(gr => {
+    const c = gr.c;
+    h1 += `<th colspan="${gr.span}" class="g-gh"><div class="g-gh-n" id="gh-${c.id}" contenteditable="true" spellcheck="false" title="Escribe encima para cambiar el nombre de este criterio" onblur="gCapNombre(this,'${c.id}')" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">${gEsc(c.nombre)}</div><div class="g-gh-p" title="Su porcentaje se cambia arriba, en «Criterios de evaluación»">${gPct(g, c.id, t)}%</div></th>`;
+    gr.cols.forEach(col => {
+      if (col.tipo === 'lib') h2 += `<th class="g-sub"><div class="g-ah">📓 Libreta</div><small>entregados ÷ dejados</small></th>`;
+      else if (col.tipo === 'auto') h2 += `<th class="g-sub"><div class="g-ah">🤖 Pase de lista</div></th>`;
+      else if (col.tipo === 'directa') h2 += `<th class="g-sub"><div class="g-ah">Calif.</div><small>de 10</small></th>`;
+      else { const a = col.a; h2 += `<th class="g-sub"><div class="g-ah" title="${gEsc(a.nombre)}">${a.tipo === 'examen' ? '📝 ' : ''}${gEsc(a.nombre)}</div><small>de ${a.max}</small>${a.tipo === 'directa' ? '' : `<select title="Criterio de esta actividad" onchange="gCriterioDeAct('${a.id}',this.value)">${gCriteriosOpts(g, a.criterioId, t)}</select><button class="g-x" title="Borrar esta actividad" onclick="gQuitarActividad('${a.id}')">✕</button>`}</th>`; }
+    });
+    if (gr.prom) h2 += `<th class="g-sub g-prom-h"><div class="g-ah">Prom.</div><small>del criterio</small></th>`;
+  });
+  h1 += `<th rowspan="2" class="g-fin g-fin-h">Calificación<br>final</th></tr>`; h2 += '</tr>';
+  const filas = g.alumnos.map((al, i) => {
+    const r = gCalcAlumno(g, al.id, t); let tds = '';
+    grupos.forEach(gr => {
+      gr.cols.forEach(col => {
+        if (col.tipo === 'lib') { const sc = gLibretaScore(g, al.id, t, gr.c.id); tds += `<td class="g-ro" title="Viene de tu Libreta de trabajos">${sc == null ? '—' : gFmt(sc)}</td>`; }
+        else if (col.tipo === 'auto') { const sc = gAsistNota(g, al.id, t); tds += `<td class="g-ro" title="Viene de tu Pase de lista">${sc == null ? '—' : gFmt(sc)}</td>`; }
+        else if (col.tipo === 'act') { const a = col.a; tds += `<td><input class="g-nota" type="number" step="0.1" min="0" max="${a.max}" value="${a.notas[al.id] == null ? '' : a.notas[al.id]}" oninput="gNota('${a.id}','${al.id}',this)"></td>`; }
+        else tds += `<td><input class="g-nota" type="number" step="0.1" min="0" max="10" value="" oninput="gNotaDirecta('${gr.c.id}','${al.id}',this)"></td>`;
+      });
+      if (gr.prom) tds += `<td class="g-ro g-prom" id="gp-${gr.c.id}-${al.id}">${gFmt(r.porCrit[gr.c.id])}</td>`;
+    });
+    const b = gBoleta(r.final);
+    return `<tr><td class="g-c-n">${i + 1}</td><td class="g-sticky">${gEsc(al.nombre)}</td>${tds}<td class="g-fin${b != null && b < 6 ? ' g-mal' : ''}" id="gf-${al.id}">${gCapFinalHTML(r)}</td></tr>`;
+  }).join('');
+  const msg = G.capMsg ? `<div class="g-aviso" style="margin-bottom:10px;font-size:12.5px;background:#ecfdf5;border-color:#6ee7b7">✓ ${G.capMsg}</div>` : ''; G.capMsg = '';
+  return `<div class="card" id="g-cap2-card"><div class="card-title">✏️ Captura de calificaciones — ${G_TRIM_NOM[t]} <span id="g-suma3" style="margin-left:auto;font-size:12px;font-weight:700"></span></div>
+    <p style="font-size:12.5px;color:var(--gris);margin:0 0 10px;line-height:1.5">Cada bloque es un criterio, con su <b>porcentaje arriba</b>. Escribe las notas y la <b>calificación final</b> se calcula sola. Puedes cambiar el nombre de un criterio escribiendo encima de su título.</p>${msg}
+    <div class="g-tabla-w"><table class="g-tabla g-cap2" id="g-cap2"><thead>${h1}${h2}</thead><tbody>${filas}</tbody></table></div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="g-btn g-btn-s" onclick="gAgregarColumna()">＋ Otro criterio (columna que tú nombras)</button>
+      <button class="g-btn" id="gcap-pdf" onclick="gCapPDF()">⬇ PDF de la hoja completa</button>
+      <button class="g-btn" id="gcap-dir" onclick="gConcentradoExportar('pdf',${t})">⬇ PDF para Dirección (solo ${G_TRIM_NOM[t].toLowerCase()})</button>
+    </div><div id="gcap-msg" style="display:none;font-size:12.5px;margin-top:8px"></div>
+    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">El «PDF para Dirección» lleva solo la calificación de este trimestre y deja en blanco los otros dos y el promedio final.</div></div>`;
+}
+function gActualizarCap() {
+  if (!document.getElementById('g-cap2')) return;
+  const g = gGrupo(), t = G.trimCalif; if (!g || t === 'anual') return;
+  g.alumnos.forEach(al => {
+    const r = gCalcAlumno(g, al.id, t);
+    g.criterios.forEach(c => { const e = document.getElementById('gp-' + c.id + '-' + al.id); if (e) e.textContent = gFmt(r.porCrit[c.id]); });
+    const f = document.getElementById('gf-' + al.id);
+    if (f) { f.innerHTML = gCapFinalHTML(r); const b = gBoleta(r.final); f.classList.toggle('g-mal', b != null && b < 6); }
+  });
+}
+// Captura directa para un criterio que todavía no tiene actividades (crea la actividad al escribir la primera nota)
+function gNotaDirecta(cid, aid, el) {
+  const g = gGrupo(), t = G.trimCalif;
+  let a = gActsTrim(g, t).find(x => x.tipo === 'directa' && x.criterioId === cid);
+  if (!a) {
+    if (el.value.trim() === '') return;
+    const c = g.criterios.find(x => x.id === cid);
+    a = { id: gId(), trim: t, criterioId: cid, nombre: c ? c.nombre : 'Calificación', max: 10, tipo: 'directa', fecha: gHoy(), notas: {} };
+    g.actividades.push(a);
+  }
+  gNota(a.id, aid, el);
+}
+function gCapNombre(el, cid) {
+  const c = gGrupo().criterios.find(x => x.id === cid); if (!c) return;
+  const v = el.textContent.replace(/\s+/g, ' ').trim();
+  if (!v) { el.textContent = c.nombre; return; }
+  if (v !== c.nombre) gCriterioNombre(v, cid);
+}
+function gAgregarColumna() {
+  const g = gGrupo(); const c = { id: gId(), nombre: 'Otro', pct: 0 }; g.criterios.push(c);
+  G.capMsg = 'Agregaste la columna «Otro»: escríbele su nombre en el título de la columna y ponle su porcentaje arriba, en «Criterios de evaluación». Todo debe sumar 100 %.';
+  gGuardar(); gRenderCalifSinSalto();
+  const e = document.getElementById('gh-' + c.id); if (e) { e.focus(); const r = document.createRange(); r.selectNodeContents(e); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+}
+function gCapMsg(t, ok) { const e = document.getElementById('gcap-msg'); if (!e) return; e.textContent = t; e.style.color = ok ? 'var(--verde)' : 'var(--rojo)'; e.style.display = t ? 'block' : 'none'; }
+async function gCapPDF() {
+  const g = gGrupo(), t = G.trimCalif; if (!g || t === 'anual' || !g.alumnos.length) return;
+  const btn = document.getElementById('gcap-pdf'); if (btn) btn.disabled = true; gCapMsg('Preparando tu PDF…', true);
+  try {
+    await gCargarLib('jspdf', 'autotable');
+    const p = gPerfil(), { jsPDF } = window.jspdf, doc = new jsPDF({ unit: 'pt', format: 'letter', orientation: 'landscape' });
+    const W = doc.internal.pageSize.getWidth(), Hh = doc.internal.pageSize.getHeight(), M = 30, lim = s => String(s == null ? '' : s).replace(/[—–]/g, '-').replace(/…/g, '...').replace(/[📝📓🤖]/gu, '').trim();
+    const grupos = gCapColumnas(g, t);
+    const head1 = [{ content: '#', rowSpan: 2 }, { content: 'Alumno', rowSpan: 2 }], head2 = [];
+    grupos.forEach(gr => {
+      head1.push({ content: lim(gr.c.nombre) + '\n' + gPct(g, gr.c.id, t) + '%', colSpan: gr.span });
+      gr.cols.forEach(col => head2.push(col.tipo === 'lib' ? 'Libreta' : col.tipo === 'auto' ? 'Pase de lista' : col.tipo === 'directa' ? 'Calif.' : lim(col.a.nombre).slice(0, 40) + (col.a.max !== 10 ? ' (de ' + col.a.max + ')' : '')));
+      if (gr.prom) head2.push('Prom.');
+    });
+    head1.push({ content: 'Calificación\nfinal', rowSpan: 2 });
+    const calc = g.alumnos.map(a => ({ a, r: gCalcAlumno(g, a.id, t) }));
+    const body = calc.map(({ a, r }, i) => {
+      const fila = [i + 1, lim(a.nombre)];
+      grupos.forEach(gr => {
+        gr.cols.forEach(col => {
+          if (col.tipo === 'lib') { const sc = gLibretaScore(g, a.id, t, gr.c.id); fila.push(sc == null ? '' : gFmt(sc)); }
+          else if (col.tipo === 'auto') { const sc = gAsistNota(g, a.id, t); fila.push(sc == null ? '' : gFmt(sc)); }
+          else if (col.tipo === 'act') fila.push(col.a.notas[a.id] == null ? '' : String(col.a.notas[a.id]));
+          else fila.push('');
+        });
+        if (gr.prom) fila.push(r.porCrit[gr.c.id] == null ? '' : gFmt(r.porCrit[gr.c.id]));
+      });
+      const b = gBoleta(r.final); fila.push(b == null ? '' : String(b)); return fila;
+    });
+    const nCols = 3 + grupos.reduce((x, gr) => x + gr.span, 0) - 0, fs = nCols > 20 ? 6.5 : nCols > 14 ? 7.5 : 9, ult = nCols - 1;
+    const fin = calc.map(x => x.r.final).filter(x => x != null), prom = fin.length ? fin.reduce((x, y) => x + y, 0) / fin.length : null;
+    let y = 36;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text(lim(gEscuela() || 'Escuela Secundaria'), W / 2, y, { align: 'center' }); y += 16;
+    doc.setFontSize(11.5); doc.text(lim('REGISTRO DE CALIFICACIONES - ' + G_TRIM_NOM[t].toUpperCase() + ' - CICLO ESCOLAR ' + G_CICLO_DOC), W / 2, y, { align: 'center' }); y += 16;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5);
+    doc.text(lim(`Docente: ${gDocente()}     Grupo: ${g.nombre}     Materia: ${g.materia}     Grado: ${g.grado}°` + (p.cct ? `     CCT: ${p.cct}` : '') + (prom != null ? `     Promedio del grupo: ${gFmt(prom, 2)}` : '')), M, y);
+    const colSt = { 0: { cellWidth: 20, halign: 'center' }, 1: { cellWidth: 118, halign: 'left' } }; colSt[ult] = { cellWidth: 54, halign: 'center', fontStyle: 'bold' };
+    doc.autoTable({
+      startY: y + 8, margin: { left: M, right: M, bottom: 44, top: 30 }, head: [head1, head2], body,
+      styles: { font: 'helvetica', fontSize: fs, cellPadding: 2.5, lineColor: [0, 0, 0], lineWidth: 0.4, textColor: 0, minCellHeight: 15, valign: 'middle', halign: 'center', overflow: 'linebreak' },
+      headStyles: { fillColor: [189, 215, 238], textColor: 0, fontStyle: 'bold', halign: 'center', valign: 'middle' },
+      columnStyles: colSt,
+      didParseCell: d => { if (d.section === 'body' && d.column.index === ult && d.cell.raw !== '' && Number(d.cell.raw) < 6) { d.cell.styles.textColor = [200, 30, 30]; } }
+    });
+    y = doc.lastAutoTable.finalY + 40;
+    if (y > Hh - 60) { doc.addPage(); y = 90; }
+    doc.setDrawColor(0); doc.line(M + 20, y, M + 230, y); doc.line(W - M - 230, y, W - M - 20, y); y += 12;
+    doc.setFontSize(10); doc.text(lim(gDocente()), M + 125, y, { align: 'center' }); doc.text(lim(p.director || 'Director(a)'), W - M - 125, y, { align: 'center' }); y += 12;
+    doc.text('Docente', M + 125, y, { align: 'center' }); doc.text('Director(a)', W - M - 125, y, { align: 'center' });
+    const n = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(100); doc.text('Hoja ' + i + ' de ' + n, W - M, Hh - 18, { align: 'right' }); }
+    const limp = x => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '_').replace(/^_+|_+$/g, '');
+    gDescargarBlob(doc.output('blob'), ['Calificaciones_T' + t, limp(g.nombre), limp(g.materia)].filter(Boolean).join('_') + '.pdf');
+    gCapMsg('Listo, tu PDF se descargó.', true);
+  } catch (e) { gCapMsg(e.message || 'No se pudo crear el PDF.', false); }
+  if (btn) btn.disabled = false;
 }
 // Nota del recuperativo (sobre 10) de un alumno en un trimestre, o '' si no tiene
 function gRecNotaTxt(g, t, aid) {
@@ -1210,13 +1362,8 @@ function gRenderCalif() {
       <button class="g-btn" onclick="gAgregarActividad()">Agregar actividad</button>
       <span style="font-size:12px;color:var(--gris);margin-left:8px">Los exámenes se crean en la pestaña «Exámenes» y aparecen aquí también.</span></div>`;
     if (typeof gLibUsada === 'function' && gLibUsada(g, t)) { const cL = g.criterios.find(c => c.id === g.libreta[t].crit); if (cL) h += `<div class="g-aviso" style="margin-bottom:14px">📓 El criterio <b>${gEsc(cL.nombre)}</b> se calcula con tu <a href="#" onclick="gIrA('trabajos');return false" style="color:var(--azul-med);font-weight:600">Libreta de trabajos</a> (entregados ÷ trabajos dejados). Aquí no tienes que capturar nada para ese criterio.</div>`; }
-    const acts = gActsTrim(g, t);
-    if (acts.length && g.alumnos.length) {
-      h += `<div class="card"><div class="card-title">✏️ Captura de calificaciones</div><div class="g-tabla-w"><table class="g-tabla g-cap"><thead><tr><th>#</th><th class="g-sticky">Alumno</th>` +
-        acts.map(a => `<th><div class="g-ah">${a.tipo === 'examen' ? '📝 ' : ''}${gEsc(a.nombre)}</div><small>de ${a.max}</small><select onchange="gCriterioDeAct('${a.id}',this.value)">${gCriteriosOpts(g, a.criterioId, t)}</select><button class="g-x" title="Borrar" onclick="gQuitarActividad('${a.id}')">✕</button></th>`).join('') + '</tr></thead><tbody>' +
-        g.alumnos.map((al, i) => `<tr><td>${i + 1}</td><td class="g-sticky">${gEsc(al.nombre)}</td>` + acts.map(a => `<td><input class="g-nota" type="number" step="0.1" min="0" max="${a.max}" value="${a.notas[al.id] == null ? '' : a.notas[al.id]}" oninput="gNota('${a.id}','${al.id}',this)"></td>`).join('') + '</tr>').join('') + '</tbody></table></div></div>';
-    } else if (!g.alumnos.length) h += `<div class="card g-vacio">Agrega alumnos en «Mis grupos» para capturar calificaciones.</div>`;
-    else h += `<div class="card g-vacio">Aún no hay actividades en este trimestre. Agrega la primera arriba.</div>`;
+    if (g.alumnos.length) h += gCapHTML(g, t);
+    else h += `<div class="card g-vacio">Agrega alumnos en «Mis grupos» para capturar calificaciones.</div>`;
   }
   h += `<div class="card"><div class="card-title">🎓 ${t === 'anual' ? 'Resumen anual' : 'Calificación del ' + G_TRIM_NOM[t].toLowerCase()}</div><div id="g-resumen">${gResumenHTML()}</div>
     ${g.alumnos.length ? `<button class="g-btn" style="margin-top:12px" onclick="gDescargarCalif()">⬇ Descargar en Word</button>` : ''}</div>`;
@@ -1250,50 +1397,55 @@ function gConcentradoCard(g) {
   if (!g.alumnos.length) return '';
   return `<div class="card"><div class="card-title">📋 Concentrado para Dirección</div>
     <p style="font-size:13px;color:var(--gris);margin:0 0 10px;line-height:1.5">Un solo cuadro con el <b>nombre de cada alumno</b>, su calificación del <b>1.º, 2.º y 3.er trimestre</b>, el <b>promedio final</b> y sus <b>recuperativos</b>. Los trimestres que todavía no capturas quedan <b>en blanco</b>, listos para llenarse. Descárgalo en el formato que necesites; en Word y Excel puedes <b>editarlo</b>.</p>
+    <div class="campo" style="max-width:340px;margin-bottom:10px"><label>¿Qué trimestres lleva?</label><select id="gc-solo"><option value="todos">Todos los que ya tengan calificación</option><option value="1">Solo el 1.er trimestre (los demás y el promedio final en blanco)</option><option value="2">Solo el 2.º trimestre (los demás y el promedio final en blanco)</option><option value="3">Solo el 3.er trimestre (los demás y el promedio final en blanco)</option></select></div>
     <button class="g-btn" id="gc-doc" onclick="gConcentradoExportar('doc')">⬇ Word</button>
     <button class="g-btn" id="gc-xls" onclick="gConcentradoExportar('xlsx')">⬇ Excel</button>
     <button class="g-btn" id="gc-pdf" onclick="gConcentradoExportar('pdf')">⬇ PDF</button>
     <div id="gc-msg" style="display:none;font-size:12.5px;margin-top:8px"></div>
     <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">La calificación de cada trimestre es la de boleta (ya incluye el recuperativo si lo aplicaste). En el Excel, el promedio final se recalcula solo si cambias una calificación.</div></div>`;
 }
-function gConcentradoDatos(g) {
+function gConcentradoDatos(g, solo) {   // solo = 1, 2 o 3: únicamente ese trimestre; los demás y el promedio final quedan en blanco
   const num = v => (Math.round(v * 10) / 10).toString();
   const filas = g.alumnos.map((a, i) => {
-    const tr = [1, 2, 3].map(t => gBoleta(gCalcAlumno(g, a.id, t).final));
-    const an = gCalcAnual(g, a.id), fin = an ? Math.max(5, Math.round(an.prom + 1e-9)) : null;
-    const rec = [1, 2, 3].map(t => { const R = g.recup && g.recup[t]; return R && R.notas && R.notas[a.id] != null && R.max > 0 ? `T${t}: ${num(Math.min(10, R.notas[a.id] / R.max * 10))}` : ''; }).filter(Boolean).join('   ');
+    const tr = [1, 2, 3].map(t => solo && t !== solo ? null : gBoleta(gCalcAlumno(g, a.id, t).final));
+    const an = solo ? null : gCalcAnual(g, a.id), fin = an ? Math.max(5, Math.round(an.prom + 1e-9)) : null;
+    const rec = [1, 2, 3].map(t => { if (solo && t !== solo) return ''; const R = g.recup && g.recup[t]; return R && R.notas && R.notas[a.id] != null && R.max > 0 ? `T${t}: ${num(Math.min(10, R.notas[a.id] / R.max * 10))}` : ''; }).filter(Boolean).join('   ');
     return { n: i + 1, nombre: a.nombre, tr, fin, rec };
   });
-  return { filas, titulo: 'CONCENTRADO DE CALIFICACIONES — CICLO ESCOLAR ' + G_CICLO_DOC, cols: ['No.', 'Alumno', '1.er trimestre', '2.º trimestre', '3.er trimestre', 'Promedio final', 'Recuperativos'] };
+  return { filas, solo, titulo: 'CONCENTRADO DE CALIFICACIONES — CICLO ESCOLAR ' + G_CICLO_DOC, cols: ['No.', 'Alumno', '1.er trimestre', '2.º trimestre', '3.er trimestre', 'Promedio final', 'Recuperativos'] };
 }
-function gConcentradoNombre(g, ext) {
+function gConcentradoNombre(g, ext, solo) {
   const lim = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '_').replace(/^_+|_+$/g, '');
-  return ['Concentrado_calificaciones', lim(g.nombre), lim(g.materia)].filter(Boolean).join('_') + '.' + ext;
+  return ['Concentrado_calificaciones', solo ? 'T' + solo : '', lim(g.nombre), lim(g.materia)].filter(Boolean).join('_') + '.' + ext;
 }
 function gConcentradoMsg(t, ok) { const e = document.getElementById('gc-msg'); if (!e) return; e.textContent = t; e.style.color = ok ? 'var(--verde)' : 'var(--rojo)'; e.style.display = t ? 'block' : 'none'; }
-async function gConcentradoExportar(formato) {
+async function gConcentradoExportar(formato, solo) {
   const g = gGrupo(); if (!g || !g.alumnos.length) return;
-  const btns = ['gc-doc', 'gc-xls', 'gc-pdf'].map(id => document.getElementById(id));
-  btns.forEach(b => b && (b.disabled = true)); gConcentradoMsg('Preparando tu archivo…', true);
+  const desdeHoja = solo !== undefined;
+  if (solo === undefined) { const sel = document.getElementById('gc-solo'); solo = sel && sel.value !== 'todos' ? +sel.value : null; }
+  solo = solo || null;
+  const btns = ['gc-doc', 'gc-xls', 'gc-pdf', 'gcap-dir'].map(id => document.getElementById(id));
+  const msg = desdeHoja ? gCapMsg : gConcentradoMsg;
+  btns.forEach(b => b && (b.disabled = true)); msg('Preparando tu archivo…', true);
   try {
-    if (formato === 'doc') gConcentradoWord(g); else if (formato === 'xlsx') await gConcentradoExcel(g); else await gConcentradoPDF(g);
-    gConcentradoMsg('Listo, tu archivo se descargó.', true);
-  } catch (e) { gConcentradoMsg(e.message || 'No se pudo crear el archivo.', false); }
+    if (formato === 'doc') gConcentradoWord(g, solo); else if (formato === 'xlsx') await gConcentradoExcel(g, solo); else await gConcentradoPDF(g, solo);
+    msg('Listo, tu archivo se descargó.', true);
+  } catch (e) { msg(e.message || 'No se pudo crear el archivo.', false); }
   btns.forEach(b => b && (b.disabled = false));
 }
-function gConcentradoWord(g) {
-  const D = gConcentradoDatos(g), p = gPerfil();
+function gConcentradoWord(g, solo) {
+  const D = gConcentradoDatos(g, solo), p = gPerfil();
   const th = (x, w) => `<td style="border:1px solid #000;padding:5px;background:#BDD7EE;font-weight:bold;text-align:center${w ? ';width:' + w : ''}">${x}</td>`;
   const td = (x, c) => `<td style="border:1px solid #000;padding:5px;height:20px${c ? ';text-align:center' : ''}">${x}</td>`;
   const html = gEncabezadoDoc(D.titulo, g, `<b>Grado:</b> ${gEsc(g.grado)}°` + (p.cct ? ` &nbsp; <b>CCT:</b> ${gEsc(p.cct)}` : '')) +
     `<table style="width:100%;border-collapse:collapse"><tr>${th(D.cols[0], '5%')}${th(D.cols[1], '37%')}${th(D.cols[2], '12%')}${th(D.cols[3], '12%')}${th(D.cols[4], '12%')}${th(D.cols[5], '10%')}${th(D.cols[6], '12%')}</tr>` +
     D.filas.map(f => `<tr>${td(f.n, 1)}${td(gEsc(f.nombre))}${f.tr.map(x => td(x == null ? '' : x, 1)).join('')}${td(f.fin == null ? '' : '<b>' + f.fin + '</b>', 1)}${td(gEsc(f.rec), 1)}</tr>`).join('') + '</table>' +
     `<p>&nbsp;</p><table style="width:100%;border-collapse:collapse"><tr><td style="width:45%;text-align:center;border-top:1px solid #000;padding-top:4px">${gEsc(gDocente())}<br>Docente</td><td style="width:10%"></td><td style="width:45%;text-align:center;border-top:1px solid #000;padding-top:4px">${gEsc(p.director || '')}<br>Director(a)</td></tr></table>`;
-  descargarWord(html, gConcentradoNombre(g, 'doc'));
+  descargarWord(html, gConcentradoNombre(g, 'doc', solo));
 }
-async function gConcentradoExcel(g) {
+async function gConcentradoExcel(g, solo) {
   await gCargarLib('exceljs');
-  const D = gConcentradoDatos(g), p = gPerfil();
+  const D = gConcentradoDatos(g, solo), p = gPerfil();
   const wb = new ExcelJS.Workbook(); wb.creator = 'Planeador Docente NEM';
   const ws = wb.addWorksheet('Concentrado', { pageSetup: { paperSize: 1, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true, margins: { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 } } });
   [5, 44, 13, 13, 13, 13, 24].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
@@ -1308,7 +1460,7 @@ async function gConcentradoExcel(g) {
     const r = rH + 1 + i, row = ws.getRow(r); row.height = 21;
     row.getCell(1).value = f.n; row.getCell(2).value = f.nombre;
     f.tr.forEach((v, k) => { row.getCell(3 + k).value = v == null ? null : v; });
-    row.getCell(6).value = { formula: `IF(COUNT(C${r}:E${r})=0,"",MAX(5,ROUND(AVERAGE(C${r}:E${r}),0)))`, result: f.fin == null ? '' : f.fin };
+    row.getCell(6).value = { formula: solo ? `IF(COUNT(C${r}:E${r})<3,"",MAX(5,ROUND(AVERAGE(C${r}:E${r}),0)))` : `IF(COUNT(C${r}:E${r})=0,"",MAX(5,ROUND(AVERAGE(C${r}:E${r}),0)))`, result: f.fin == null ? '' : f.fin };
     row.getCell(7).value = f.rec || null;
     for (let k = 1; k <= 7; k++) { const c = row.getCell(k); c.border = borde; c.font = { size: 10.5, bold: k === 6 }; c.alignment = k === 2 ? { vertical: 'middle', wrapText: true } : centro; }
     for (let k = 3; k <= 6; k++) row.getCell(k).numFmt = '0';
@@ -1322,11 +1474,11 @@ async function gConcentradoExcel(g) {
   ws.pageSetup.printTitlesRow = rH + ':' + rH;
   ws.views = [{ state: 'frozen', xSplit: 2, ySplit: rH }];
   const buf = await wb.xlsx.writeBuffer();
-  gDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), gConcentradoNombre(g, 'xlsx'));
+  gDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), gConcentradoNombre(g, 'xlsx', solo));
 }
-async function gConcentradoPDF(g) {
+async function gConcentradoPDF(g, solo) {
   await gCargarLib('jspdf', 'autotable');
-  const D = gConcentradoDatos(g), p = gPerfil();
+  const D = gConcentradoDatos(g, solo), p = gPerfil();
   const { jsPDF } = window.jspdf, doc = new jsPDF({ unit: 'pt', format: 'letter' });
   const W = doc.internal.pageSize.getWidth(), Hh = doc.internal.pageSize.getHeight(), M = 40, lim = s => String(s == null ? '' : s).replace(/[—–]/g, '-').replace(/…/g, '...');
   let y = 46;
@@ -1351,7 +1503,7 @@ async function gConcentradoPDF(g) {
   doc.text('Docente', M + 110, y, { align: 'center' }); doc.text('Director(a)', W - M - 110, y, { align: 'center' });
   const n = doc.internal.getNumberOfPages();
   for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(100); doc.text('Hoja ' + i + ' de ' + n, W - M, Hh - 20, { align: 'right' }); }
-  gDescargarBlob(doc.output('blob'), gConcentradoNombre(g, 'pdf'));
+  gDescargarBlob(doc.output('blob'), gConcentradoNombre(g, 'pdf', solo));
 }
 
 // ============================================================
