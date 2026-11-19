@@ -512,6 +512,61 @@ async function licAdminAutorizar(valor, quitar) {
   try { await workerFetch('/admin/autorizar', { metodo: 'POST', body: { correo: valor, quitar: !!quitar }, admin: k }); const i = document.getElementById('la-aut'); if (i && !quitar) i.value = ''; await licAdminCorreos(); }
   catch (e) { licAdminErr(e.message); }
 }
+// ── Aviso al administrador: correos que esperan autorización ──
+// Al abrir la app (y cada 10 min, o al volver a ella) pregunta al servidor si hay correos pendientes. Solo funciona en el
+// equipo donde ya escribiste tu clave de administrador una vez (se recuerda ahí).
+const LIC_PEND = { visto: '', iniciado: false, ultima: 0 };
+function licAdminInsignia(n) {
+  document.querySelectorAll('.nav-tab[onclick*="licadmin"]').forEach(b => {
+    let i = b.querySelector('.lic-insignia');
+    if (!n) { if (i) i.remove(); return; }
+    if (!i) { i = document.createElement('span'); i.className = 'lic-insignia'; i.style.cssText = 'margin-left:8px;background:#dc2626;color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:800'; b.appendChild(i); }
+    i.textContent = n;
+  });
+}
+function licAdminAvisoCerrar() { const e = document.getElementById('lic-aviso-pend'); if (e) e.remove(); }
+function licAdminAvisoMostrar(pend, firma) {
+  let e = document.getElementById('lic-aviso-pend');
+  if (!e) { e = document.createElement('div'); e.id = 'lic-aviso-pend'; e.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;padding:16px'; document.body.appendChild(e); }
+  e.dataset.firma = firma;
+  const fila = p => `<div style="display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin-bottom:8px;flex-wrap:wrap"><div style="min-width:0"><b style="word-break:break-all">${gEsc(p.correo)}</b><div style="font-size:12px;color:#64748b">${p.nombre ? gEsc(p.nombre) + ' · ' : ''}lo intentó el ${licFecha(p.fecha)}</div></div><button class="g-btn g-btn-s" data-c="${gEsc(p.correo)}" onclick="licAdminAvisoAut(this)">✅ Autorizar</button></div>`;
+  e.innerHTML = `<div role="dialog" aria-modal="true" style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:88vh;overflow:auto;padding:20px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.4)">
+    <div style="font-size:30px">⏳</div>
+    <h2 style="margin:4px 0 4px;font-size:19px;color:#1e3a5f">Tienes ${pend.length} ${pend.length === 1 ? 'correo pendiente' : 'correos pendientes'} por autorizar</h2>
+    <div style="font-size:13px;color:#64748b;margin-bottom:12px">Estos maestros intentaron entrar con un correo que no está en la lista de permitidos.</div>
+    ${pend.map(fila).join('')}
+    <div id="lic-aviso-err" style="color:#b91c1c;font-size:12.5px;margin:4px 0"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="g-btn" style="flex:1" onclick="licAdminAvisoIr()">Abrir Licencias</button><button class="g-btn g-btn-s" style="flex:1" onclick="licAdminAvisoDespues()">Después</button></div></div>`;
+}
+function licAdminAvisoDespues() { const e = document.getElementById('lic-aviso-pend'); if (e) LIC_PEND.visto = e.dataset.firma || ''; licAdminAvisoCerrar(); }
+function licAdminAvisoIr() { licAdminAvisoDespues(); const b = document.querySelector('.nav-tab[onclick*="licadmin"]'); if (b && typeof showTab === 'function') showTab('licadmin', b); }
+async function licAdminAvisoAut(btn) {
+  const k = (() => { try { return localStorage.getItem('nem_admin_key') || ''; } catch (e) { return ''; } })();
+  const er = document.getElementById('lic-aviso-err'); if (er) er.textContent = ''; btn.disabled = true;
+  try { await workerFetch('/admin/autorizar', { metodo: 'POST', body: { correo: btn.dataset.c, quitar: false }, admin: k }); await licAdminAvisoPend(true); }
+  catch (e) { btn.disabled = false; if (er) er.textContent = e.message; }
+}
+async function licAdminAvisoPend(forzar) {
+  try {
+    if (typeof esAdmin !== 'function' || !esAdmin()) return;
+    let k = ''; try { k = localStorage.getItem('nem_admin_key') || ''; } catch (e) {}
+    if (!k) return;
+    LIC_PEND.ultima = Date.now();
+    const d = await workerFetch('/admin/correos', { admin: k });
+    const pend = d.pendientes || [], n = pend.length;
+    licAdminInsignia(n);
+    if (!n) { licAdminAvisoCerrar(); return; }
+    const firma = pend.map(p => p.correo).sort().join('|');
+    if (!forzar && firma === LIC_PEND.visto) return;   // ya los viste y elegiste «Después»
+    licAdminAvisoMostrar(pend, firma);
+  } catch (e) { /* sin internet o clave distinta: en silencio */ }
+}
+function licAdminAvisoIniciar() {
+  setTimeout(() => licAdminAvisoPend(false), 1200);
+  if (LIC_PEND.iniciado) return; LIC_PEND.iniciado = true;
+  setInterval(() => licAdminAvisoPend(false), 10 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - LIC_PEND.ultima > 120000) licAdminAvisoPend(false); });
+}
 function licCopiar(btn) { navigator.clipboard.writeText((LIC.ultimos || []).join('\n')).then(() => { btn.textContent = '✓ Copiados'; }); }
 
 // Enrutado desde el menú

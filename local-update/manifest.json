@@ -1,6 +1,6 @@
 {
- "version": "7b64d3d8c3129e2f",
- "fecha": "2026-11-19T08:24:49",
+ "version": "cd72dddcc8dd0e64",
+ "fecha": "2026-11-19T10:15:14",
  "servidorMin": 1,
  "archivos": [
   {
@@ -130,8 +130,8 @@
   },
   {
    "p": "index.html",
-   "h": "1d7d341cc0a3391197265dafbeb82dd8ac5cd62e6f75b8ad9b2f93ab38484766",
-   "s": 138059
+   "h": "f16573b8be1c3ed39f4ffdc1f3193eae5a21bf730e35b417f6d907e4d1f7d66f",
+   "s": 138189
   },
   {
    "p": "libreta.js",
@@ -140,8 +140,8 @@
   },
   {
    "p": "licencia.js",
-   "h": "ac454a52ae403f8bc2ca75037d6884b0f3c70ad483e50813650d31137e8e7717",
-   "s": 54328
+   "h": "a8473a95bc1c3c12576e1bd8bbd3d5d044a2ccb9ad0b1296a7ccdee463496bd3",
+   "s": 59024
   },
   {
    "p": "local-shim.js",
@@ -195,7 +195,7 @@
   },
   {
    "p": "sw.js",
-   "h": "dbdfb23e6e1be082f061391f70de861d1082609a0520febbbe4e6b152c1334c5",
+   "h": "fedf2fb98b60eaaadf358c39794cb35e26bdd9335ce9a7aedf3d874cdf4f6c96",
    "s": 4951
   }
  ]
