@@ -297,9 +297,22 @@ function gHorarioAplicar(res) {
   if (!mods.length) return false;
   H.mods = mods; H.c = c; H.gc = gc; gHorarioAsignarColores(); gGuardar(); return true;
 }
+// Aviso flotante arriba de la pantalla (se ve aunque el maestro esté viendo la tabla)
+function gHorarioToast(html, ms, mal) {
+  let t = document.getElementById('hor-toast');
+  if (!html) { if (t) t.remove(); return; }
+  if (!t) { t = document.createElement('div'); t.id = 'hor-toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+  t.style.cssText = 'position:fixed;top:84px;left:50%;transform:translateX(-50%);z-index:99998;max-width:min(560px,92vw);padding:12px 18px;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.28);font-size:14px;line-height:1.45;text-align:center;color:#fff;background:' + (mal ? '#b91c1c' : '#1e3a5f');
+  t.innerHTML = html;
+  clearTimeout(t._t); if (ms) t._t = setTimeout(() => { const x = document.getElementById('hor-toast'); if (x) x.remove(); }, ms);
+}
 async function gHorarioLeerFoto(file, auto) {
   if (typeof workerFetch !== 'function' || typeof escReducir !== 'function') return;
+  // Si ya hay un horario escrito, se pregunta ANTES de leer (para no hacerlo esperar y luego decirle que se reemplaza)
+  if (gHorarioTieneDatos() && !confirm('Ya tienes un horario escrito en la tabla.\n\nSi sigues, se va a REEMPLAZAR con lo que la IA lea de tu foto o PDF (tarda de 10 a 30 segundos).\n\n¿Continuar?')) { gHorarioMsg('<span style="color:var(--gris)">Dejé tu tabla como estaba. Cuando quieras, pulsa «✨ Pasar a la tabla».</span>'); return; }
   gHorarioMsg('<span style="color:var(--azul)">🔎 Leyendo tu horario con IA… (puede tardar unos segundos)</span>');
+  const t0 = Date.now(), pintar = () => gHorarioToast(`⏳ Leyendo tu horario con IA… <b>${Math.round((Date.now() - t0) / 1000)} s</b><br><span style="font-size:12.5px;opacity:.85">Suele tardar de 10 a 30 segundos. No cierres esta pantalla.</span>`);
+  pintar(); const reloj = setInterval(pintar, 1000);
   try {
     const esPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
     let imagen;
@@ -311,15 +324,16 @@ async function gHorarioLeerFoto(file, auto) {
     let data, ultimo;
     for (let i = 0; i < 2; i++) { try { data = await workerFetch('/v1/horario-foto', { metodo: 'POST', body: { imagen } }); break; } catch (e) { ultimo = e; if (e.reintentar && i < 1) { await esperar(3000); continue; } throw e; } }
     const res = data && data.resultado; if (!res || !res.modulos || !res.modulos.length) throw new Error('No se pudo leer el horario de la foto.');
-    if (gHorarioTieneDatos() && !confirm('Ya tienes un horario escrito en la tabla.\n\n¿Reemplazarlo con lo que se leyó de la foto?')) { gHorarioMsg('<span style="color:var(--gris)">Dejé tu tabla como estaba. Puedes volver a pulsar «✨ Pasar a la tabla» cuando quieras.</span>'); return; }
     gHorarioAplicar(res);
     const dudas = (res.dudas || []).length ? ` La IA no estuvo segura de: <b>${res.dudas.map(gEsc).join(', ')}</b>.` : '';
     await gRenderArchivos('horario');
     gHorarioMsg(`<span style="color:var(--verde)">✓ Listo: pasé tu horario a la tabla de arriba.</span> <b>Revísalo contra tu foto</b> y corrige lo que haga falta; todo se guarda solo.${dudas}`);
+    gHorarioToast('✅ Listo: ya pasé tu horario a la tabla.<br><span style="font-size:12.5px;opacity:.9">Revísalo contra tu foto y corrige lo que haga falta.</span>', 7000);
   } catch (e) {
     const t = (typeof licMensajeIA === 'function' && e.codigo ? licMensajeIA(e) : e.message) || 'No se pudo leer la foto.';
     gHorarioMsg(`<span class="g-mal">${gEsc(t)}</span> <span style="color:var(--gris)">Puedes escribir tu horario a mano en la tabla.</span>`);
-  }
+    gHorarioToast('⚠️ ' + gEsc(t) + '<br><span style="font-size:12.5px;opacity:.9">Puedes escribir tu horario a mano en la tabla.</span>', 12000, true);
+  } finally { clearInterval(reloj); }
 }
 async function gHorarioDesdeArchivo(id) {
   const f = (await gCalLista('horario')).find(x => x.id === id); if (!f) return;

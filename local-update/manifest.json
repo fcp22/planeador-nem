@@ -1,6 +1,6 @@
 {
- "version": "39ea0e9c9257d830",
- "fecha": "2026-11-20T09:15:10",
+ "version": "221a4fe0be59e3ab",
+ "fecha": "2026-11-20T09:31:58",
  "servidorMin": 1,
  "archivos": [
   {
@@ -100,8 +100,8 @@
   },
   {
    "p": "gestion.js",
-   "h": "5d6776a7401f5d723db9916d301b86b5e13895aaae14f996f6f3667f87bf7dd1",
-   "s": 232069
+   "h": "d31ba0ccf2ee82d9da392c0b84e490428bb8f361538d8d30e43d5ef56f131ad3",
+   "s": 233722
   },
   {
    "p": "icons/icono-180.png",
@@ -130,7 +130,7 @@
   },
   {
    "p": "index.html",
-   "h": "cee2e067f65d1b7ce61e13d92d4db5e45fe32088a2b345e4f2d3ef119954a08f",
+   "h": "08b28e9612eab8cfe3edb4ae676bffad1f3f22fc2b1a3337cecd04d56d9771d3",
    "s": 138189
   },
   {
@@ -195,7 +195,7 @@
   },
   {
    "p": "sw.js",
-   "h": "541a2c6ae12c8057115667c48effcc128a1aa28c3d6e2c2c384a6d5371aa964e",
+   "h": "7006be3a387740065e43088f09ed44a72d2b722d32fdc7f86ee6b9ee777aee7d",
    "s": 4951
   }
  ]
