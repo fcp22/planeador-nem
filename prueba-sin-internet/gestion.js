@@ -193,15 +193,14 @@ async function gCalSubir(inp, cat) {
     const esPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name), esImg = /^image\/(png|jpe?g|webp|heic)/i.test(f.type) || /\.(png|jpe?g|webp|heic)$/i.test(f.name);
     if (!esPdf && !esImg) { mal.push(`«${f.name}»: solo se aceptan PDF, JPG o PNG`); continue; }
     if (f.size > 15 * 1024 * 1024) { mal.push(`«${f.name}»: pesa más de 15 MB`); continue; }
-    try { await gCalPoner({ id: gId(), cuenta: G.key, cat, nombre: f.name, tipo: esPdf ? 'pdf' : 'img', mime: esPdf ? 'application/pdf' : (f.type || 'image/jpeg'), blob: f, t: Date.now() }); n++; }
+    try { await gCalPoner({ id: gId(), cuenta: G.key, cat, nombre: f.name, tipo: esPdf ? 'pdf' : 'img', mime: esPdf ? 'application/pdf' : (f.type || 'image/jpeg'), blob: f, t: Date.now(), leido: cat === 'horario' }); n++; }
     catch (e) { mal.push(`«${f.name}»: no se pudo guardar (${e.message || 'error'})`); }
   }
   await gRenderArchivos(cat);
   const m2 = document.getElementById('gcal-msg'); if (m2) m2.innerHTML = (n ? `<span style="color:var(--verde)">✓ Se guardó ${n} archivo(s).</span> ` : '') + mal.map(x => `<span class="g-mal">${gEsc(x)}</span>`).join('<br>');
   if (cat === 'horario' && n) {
-    const foto = fs.find(f => !(f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) && f.size <= 15 * 1024 * 1024);
-    if (foto) await gHorarioLeerFoto(foto, true);
-    else if (m2) gHorarioMsg((n ? `<span style="color:var(--verde)">✓ Se guardó ${n} archivo(s).</span> ` : '') + '<span style="color:var(--gris)">Los PDF no se pasan solos a la tabla. Si quieres que se llene sola, súbelo como foto o captura de pantalla (JPG o PNG).</span>');
+    const arch = fs.find(f => (f.type === 'application/pdf' || /\.pdf$/i.test(f.name) || /^image\/(png|jpe?g|webp)/i.test(f.type) || /\.(png|jpe?g|webp)$/i.test(f.name)) && f.size <= 15 * 1024 * 1024);
+    if (arch) await gHorarioLeerFoto(arch, true);
   }
 }
 // ── Horario semanal escrito por el maestro (tabla editable, como el horario impreso) ──
@@ -211,7 +210,32 @@ function gHorario() {
   return G.data.horario;
 }
 function gHorarioNum(i) { return gHorario().mods.slice(0, i + 1).filter(m => m[2] !== 'rec').length; }   // número de módulo (el descanso no cuenta)
-function gHorarioCelda(m, d, v) { gHorario().c[m + '-' + d] = v.trim(); gGuardar(); }
+// Color de cada grupo (como la barrita de color del horario impreso). La IA copia los de tu foto; si no hay, se asigna uno fijo por grupo.
+const G_HCOL = { celeste: '#06b6d4', morado: '#9b59b6', verde: '#4caf50', naranja: '#f97316', rojo: '#ef4444', amarillo: '#eab308', rosa: '#ec4899', azul: '#3b82f6', gris: '#6b7280', cafe: '#92400e' };
+function gHorarioClave(txt) {
+  const p = String(txt || '').split(/\s*[·|\/]\s*/).filter(Boolean); if (!p.length) return '';
+  return gNorm(p.find(x => /^\d+\s*[°º]?\s*[A-Za-z]?$/.test(x.trim())) || p[p.length - 1]);
+}
+// Da un color distinto (y fijo) a cada grupo que todavía no lo tiene, evitando repetir los que ya se usan
+function gHorarioAsignarColores() {
+  const H = gHorario(); if (!H.gc) H.gc = {};
+  const nombres = Object.keys(G_HCOL), usados = new Set(Object.values(H.gc).filter(n => G_HCOL[n]));
+  let cambio = false;
+  [...new Set(Object.values(H.c).map(gHorarioClave).filter(Boolean))].sort().forEach(k => {
+    if (H.gc[k] && G_HCOL[H.gc[k]]) return;
+    const libre = nombres.find(n => !usados.has(n)) || nombres[usados.size % nombres.length];
+    H.gc[k] = libre; usados.add(libre); cambio = true;
+  });
+  return cambio;
+}
+function gHorarioColor(txt) {
+  const k = gHorarioClave(txt); if (!k) return '';
+  const n = (gHorario().gc || {})[k]; return n && G_HCOL[n] ? G_HCOL[n] : '';
+}
+function gHorarioCelda(m, d, v, el) {
+  gHorario().c[m + '-' + d] = v.trim(); gHorarioAsignarColores(); gGuardar();
+  if (el) { const c = gHorarioColor(v); el.style.borderLeft = c ? '6px solid ' + c : '1.5px solid var(--borde)'; }
+}
 function gHorarioHora(m, i, v) { gHorario().mods[m][i] = v.trim(); gGuardar(); }
 function gHorarioFila(accion) {
   const H = gHorario();
@@ -222,23 +246,25 @@ function gHorarioFila(accion) {
 }
 function gHorarioLimpiar() { if (!confirm('¿Borrar todo lo escrito en la tabla del horario?')) return; gHorario().c = {}; gGuardar(); gRenderArchivos('horario'); }
 function gHorarioHTML() {
+  if (gHorarioAsignarColores()) gGuardar();
   const H = gHorario(), ci = 'padding:7px;border:1.5px solid var(--borde);border-radius:6px;width:100%;min-width:0;box-sizing:border-box';
   const opts = []; (G.data.grupos || []).forEach(g => opts.push(g.materia + ' · ' + g.nombre));
   const hora = (i, m) => `<input value="${gEsc(m[0])}" onchange="gHorarioHora(${i},0,this.value)" placeholder="07:00" style="${ci};width:56px;display:inline-block;text-align:center;padding:5px"> <span style="color:var(--gris)">–</span> <input value="${gEsc(m[1])}" onchange="gHorarioHora(${i},1,this.value)" placeholder="07:50" style="${ci};width:56px;display:inline-block;text-align:center;padding:5px">`;
   return `<div class="card"><div class="card-title">⌨️ Escribe tu horario</div>
-    <p style="font-size:13px;color:var(--gris);margin:0 0 10px">Escribe en cada celda la materia y el grupo, separados por un punto medio (por ejemplo «Biología · 1° C»). Si ya creaste tus grupos, te los sugiere al escribir. Puedes cambiar las horas, agregar filas y poner el descanso. Se guarda solo.</p>
+    <p style="font-size:13px;color:var(--gris);margin:0 0 10px">Escribe en cada celda la materia y el grupo, separados por un punto medio (por ejemplo «Biología · 1° C»). Si ya creaste tus grupos, te los sugiere al escribir. Puedes cambiar las horas, agregar filas y poner el descanso. Cada grupo lleva su color. Se guarda solo. <b>¿Tienes tu horario en foto o PDF?</b> Súbelo abajo y la tabla se llena sola.</p>
     <datalist id="gh-dl">${opts.map(o => `<option value="${gEsc(o)}">`).join('')}</datalist>
     <div style="overflow-x:auto"><table style="border-collapse:separate;border-spacing:4px;min-width:760px;width:100%">
       <tr><td style="font-weight:700;font-size:12.5px;text-align:center;color:var(--azul)">No. / hora</td>${G_HDIAS.map(d => `<td style="font-weight:700;font-size:12.5px;text-align:center;color:var(--azul)">${d}</td>`).join('')}</tr>
       ${H.mods.map((m, i) => m[2] === 'rec'
         ? `<tr><td style="white-space:nowrap;width:150px"><b style="font-size:12px">REC</b> ${hora(i, m)}</td><td colspan="5" style="text-align:center;font-weight:700;font-size:12.5px;background:#f1f5f9;border-radius:6px;padding:8px;color:var(--gris-oscuro)">DESCANSO</td></tr>`
         : `<tr><td style="white-space:nowrap;width:150px"><b style="font-size:13px">${gHorarioNum(i)}</b> ${hora(i, m)}</td>
-        ${G_HDIAS.map((d, j) => `<td><input list="gh-dl" value="${gEsc(H.c[i + '-' + j] || '')}" onchange="gHorarioCelda(${i},${j},this.value)" style="${ci}"></td>`).join('')}</tr>`).join('')}
+        ${G_HDIAS.map((d, j) => `<td><input list="gh-dl" value="${gEsc(H.c[i + '-' + j] || '')}" onchange="gHorarioCelda(${i},${j},this.value,this)" style="${ci};${gHorarioColor(H.c[i + '-' + j]) ? 'border-left:6px solid ' + gHorarioColor(H.c[i + '-' + j]) : ''}"></td>`).join('')}</tr>`).join('')}
     </table></div>
     <div style="margin-top:10px"><button class="g-btn g-btn-s" onclick="gHorarioFila('mas')">＋ Agregar clase</button> <button class="g-btn g-btn-s" onclick="gHorarioFila('rec')">＋ Agregar descanso</button> <button class="g-btn g-btn-s" onclick="gHorarioFila('menos')">－ Quitar última fila</button> <button class="g-btn g-btn-s" onclick="gHorarioLimpiar()">Borrar todo</button>
       <button class="g-btn" onclick="gHorarioImprimir()">🖨️ Imprimir / PDF</button> <button class="g-btn g-btn-s" onclick="gHorarioWord()">⬇ Word</button></div></div>`;
 }
 function gHorarioDoc() {
+  if (gHorarioAsignarColores()) gGuardar();
   const H = gHorario(), C = '#233b6e', bd = 'border:1px solid #6b7280';
   const th = `${bd};background:${C};color:#fff;font-weight:bold;font-size:11pt;padding:7px;text-align:center`;
   const celda = v => { v = String(v || ''); if (!v) return '<span style="color:#bbb">–</span>'; const [a, ...r] = v.split(/\s*[·|\/]\s*/); return `<b style="font-size:13pt">${gEsc(a)}</b>${r.length ? '<br><span style="font-size:11pt">' + gEsc(r.join(' · ')) + '</span>' : ''}`; };
@@ -247,7 +273,7 @@ function gHorarioDoc() {
   <table style="width:100%;border-collapse:collapse"><tr><td style="${th};width:80px">No.</td>${G_HDIAS.map(d => `<td style="${th}">${d}</td>`).join('')}</tr>
   ${H.mods.map((m, i) => m[2] === 'rec'
     ? `<tr><td style="${bd};text-align:center;padding:8px;height:36px"><b style="font-size:10pt">REC</b><br><span style="font-size:9pt">${gEsc(m[0])}-${gEsc(m[1])}</span></td><td colspan="5" style="${bd};text-align:center;font-weight:bold;font-size:10pt">DESCANSO</td></tr>`
-    : `<tr><td style="${bd};text-align:center;padding:8px;height:52px"><b style="font-size:13pt">${gHorarioNum(i)}</b><br><span style="font-size:9pt">${gEsc(m[0])}${m[0] || m[1] ? '-' : ''}${gEsc(m[1])}</span></td>${G_HDIAS.map((d, j) => `<td style="${bd};text-align:center;padding:6px">${celda(H.c[i + '-' + j])}</td>`).join('')}</tr>`).join('')}</table>`;
+    : `<tr><td style="${bd};text-align:center;padding:8px;height:52px"><b style="font-size:13pt">${gHorarioNum(i)}</b><br><span style="font-size:9pt">${gEsc(m[0])}${m[0] || m[1] ? '-' : ''}${gEsc(m[1])}</span></td>${G_HDIAS.map((d, j) => { const cc = gHorarioColor(H.c[i + '-' + j]); return `<td style="${bd};text-align:center;padding:6px${cc ? ';border-left:8px solid ' + cc : ''}">${celda(H.c[i + '-' + j])}</td>`; }).join('')}</tr>`).join('')}</table>`;
 }
 function gHorarioImprimir() { if (typeof bitVentana === 'function') bitVentana('Horario semanal', gHorarioDoc()); }
 function gHorarioWord() { descargarWord(gHorarioDoc(), 'Horario_semanal.doc'); }
@@ -257,25 +283,33 @@ function gHorarioMsg(html) { const m = document.getElementById('gcal-msg'); if (
 function gHorarioTieneDatos() { return Object.values(gHorario().c || {}).some(v => v); }
 // Pasa lo leído a la tabla. Si la materia·grupo coincide con un grupo ya creado, usa el nombre exacto de ese grupo.
 function gHorarioAplicar(res) {
-  const H = gHorario(), mods = [], c = {};
+  const H = gHorario(), mods = [], c = {}, gc = {};
   (res.modulos || []).forEach((m, i) => {
     mods.push(m.descanso ? [m.inicio || '', m.fin || '', 'rec'] : [m.inicio || '', m.fin || '']);
     if (m.descanso) return;
     (m.celdas || []).slice(0, 5).forEach((t, d) => {
       t = String(t || '').trim(); if (!t) return;
+      const k = gHorarioClave(t), col = m.colores && m.colores[d];
+      if (k && col && G_HCOL[col] && !gc[k]) gc[k] = col;   // el color del grupo, tal como se ve en la foto
       const g = gHorarioGrupo(t); c[i + '-' + d] = g ? g.materia + ' · ' + g.nombre : t;
     });
   });
   if (!mods.length) return false;
-  H.mods = mods; H.c = c; gGuardar(); return true;
+  H.mods = mods; H.c = c; H.gc = gc; gHorarioAsignarColores(); gGuardar(); return true;
 }
 async function gHorarioLeerFoto(file, auto) {
   if (typeof workerFetch !== 'function' || typeof escReducir !== 'function') return;
   gHorarioMsg('<span style="color:var(--azul)">🔎 Leyendo tu horario con IA… (puede tardar unos segundos)</span>');
   try {
-    const im = await escReducir(file);
+    const esPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
+    let imagen;
+    if (esPdf) {
+      const b64 = await new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => mal(new Error('No se pudo abrir el PDF.')); r.readAsDataURL(file); });
+      if (b64.length > 2400000) throw new Error('Este PDF pesa demasiado para leerlo. Súbelo como foto o captura de pantalla (JPG o PNG).');
+      imagen = { mime: 'application/pdf', data: b64 };
+    } else { const im = await escReducir(file); imagen = { mime: 'image/jpeg', data: im.data }; }
     let data, ultimo;
-    for (let i = 0; i < 2; i++) { try { data = await workerFetch('/v1/horario-foto', { metodo: 'POST', body: { imagen: { mime: 'image/jpeg', data: im.data } } }); break; } catch (e) { ultimo = e; if (e.reintentar && i < 1) { await esperar(3000); continue; } throw e; } }
+    for (let i = 0; i < 2; i++) { try { data = await workerFetch('/v1/horario-foto', { metodo: 'POST', body: { imagen } }); break; } catch (e) { ultimo = e; if (e.reintentar && i < 1) { await esperar(3000); continue; } throw e; } }
     const res = data && data.resultado; if (!res || !res.modulos || !res.modulos.length) throw new Error('No se pudo leer el horario de la foto.');
     if (gHorarioTieneDatos() && !confirm('Ya tienes un horario escrito en la tabla.\n\n¿Reemplazarlo con lo que se leyó de la foto?')) { gHorarioMsg('<span style="color:var(--gris)">Dejé tu tabla como estaba. Puedes volver a pulsar «✨ Pasar a la tabla» cuando quieras.</span>'); return; }
     gHorarioAplicar(res);
@@ -288,7 +322,7 @@ async function gHorarioLeerFoto(file, auto) {
   }
 }
 async function gHorarioDesdeArchivo(id) {
-  const f = (await gCalLista('horario')).find(x => x.id === id); if (!f || f.tipo !== 'img') return;
+  const f = (await gCalLista('horario')).find(x => x.id === id); if (!f) return;
   await gHorarioLeerFoto(f.blob, false);
 }
 
@@ -314,9 +348,14 @@ async function gRenderArchivos(cat) {
   ${lista.length ? lista.map(f => `<div class="card"><div class="card-title" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${f.tipo === 'pdf' ? '📄' : '🖼️'} <span style="flex:1;min-width:0;word-break:break-word">${gEsc(f.nombre)}</span>
       <a class="g-btn g-btn-s" href="${url(f.blob)}" target="_blank" rel="noopener" style="text-decoration:none">Abrir grande</a>
       <a class="g-btn g-btn-s" href="${url(f.blob)}" download="${gEsc(f.nombre)}" style="text-decoration:none">⬇ Descargar</a>
-      ${cat === 'horario' && f.tipo === 'img' ? `<button class="g-btn g-btn-p" onclick="gHorarioDesdeArchivo('${f.id}')">✨ Pasar a la tabla</button>` : ''}
+      ${cat === 'horario' ? `<button class="g-btn g-btn-p" onclick="gHorarioDesdeArchivo('${f.id}')">✨ Pasar a la tabla</button>` : ''}
       <button class="g-btn g-btn-x" onclick="gCalQuitarArchivo('${f.id}','${cat}')">Quitar</button></div>
       ${f.tipo === 'pdf' ? `<iframe src="${url(f.blob)}" style="width:100%;height:70vh;border:1px solid var(--borde);border-radius:10px" title="${gEsc(f.nombre)}"></iframe>` : `<img src="${url(f.blob)}" alt="${gEsc(f.nombre)}" style="max-width:100%;border:1px solid var(--borde);border-radius:10px">`}</div>`).join('') : `<div class="card g-vacio">${C.vacio}</div>`}`;
+  // Horario ya subido pero todavía sin pasar a la tabla: se lee solo (una sola vez por archivo)
+  if (cat === 'horario' && !gHorarioTieneDatos()) {
+    const pend = lista.find(f => !f.leido);
+    if (pend) { try { await gCalPoner(Object.assign({}, pend, { leido: true })); } catch (e) { return; } gHorarioLeerFoto(pend.blob, true); }
+  }
 }
 
 // ── Libros de texto y programas de la SEP (enlaces oficiales) ──
