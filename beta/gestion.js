@@ -198,6 +198,11 @@ async function gCalSubir(inp, cat) {
   }
   await gRenderArchivos(cat);
   const m2 = document.getElementById('gcal-msg'); if (m2) m2.innerHTML = (n ? `<span style="color:var(--verde)">✓ Se guardó ${n} archivo(s).</span> ` : '') + mal.map(x => `<span class="g-mal">${gEsc(x)}</span>`).join('<br>');
+  if (cat === 'horario' && n) {
+    const foto = fs.find(f => !(f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) && f.size <= 15 * 1024 * 1024);
+    if (foto) await gHorarioLeerFoto(foto, true);
+    else if (m2) gHorarioMsg((n ? `<span style="color:var(--verde)">✓ Se guardó ${n} archivo(s).</span> ` : '') + '<span style="color:var(--gris)">Los PDF no se pasan solos a la tabla. Si quieres que se llene sola, súbelo como foto o captura de pantalla (JPG o PNG).</span>');
+  }
 }
 // ── Horario semanal escrito por el maestro (tabla editable, como el horario impreso) ──
 const G_HDIAS = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi'];
@@ -247,10 +252,50 @@ function gHorarioDoc() {
 function gHorarioImprimir() { if (typeof bitVentana === 'function') bitVentana('Horario semanal', gHorarioDoc()); }
 function gHorarioWord() { descargarWord(gHorarioDoc(), 'Horario_semanal.doc'); }
 
+// ── Foto del horario → tabla (la IA solo transcribe; el maestro revisa) ──
+function gHorarioMsg(html) { const m = document.getElementById('gcal-msg'); if (m) m.innerHTML = html; }
+function gHorarioTieneDatos() { return Object.values(gHorario().c || {}).some(v => v); }
+// Pasa lo leído a la tabla. Si la materia·grupo coincide con un grupo ya creado, usa el nombre exacto de ese grupo.
+function gHorarioAplicar(res) {
+  const H = gHorario(), mods = [], c = {};
+  (res.modulos || []).forEach((m, i) => {
+    mods.push(m.descanso ? [m.inicio || '', m.fin || '', 'rec'] : [m.inicio || '', m.fin || '']);
+    if (m.descanso) return;
+    (m.celdas || []).slice(0, 5).forEach((t, d) => {
+      t = String(t || '').trim(); if (!t) return;
+      const g = gHorarioGrupo(t); c[i + '-' + d] = g ? g.materia + ' · ' + g.nombre : t;
+    });
+  });
+  if (!mods.length) return false;
+  H.mods = mods; H.c = c; gGuardar(); return true;
+}
+async function gHorarioLeerFoto(file, auto) {
+  if (typeof workerFetch !== 'function' || typeof escReducir !== 'function') return;
+  gHorarioMsg('<span style="color:var(--azul)">🔎 Leyendo tu horario con IA… (puede tardar unos segundos)</span>');
+  try {
+    const im = await escReducir(file);
+    let data, ultimo;
+    for (let i = 0; i < 2; i++) { try { data = await workerFetch('/v1/horario-foto', { metodo: 'POST', body: { imagen: { mime: 'image/jpeg', data: im.data } } }); break; } catch (e) { ultimo = e; if (e.reintentar && i < 1) { await esperar(3000); continue; } throw e; } }
+    const res = data && data.resultado; if (!res || !res.modulos || !res.modulos.length) throw new Error('No se pudo leer el horario de la foto.');
+    if (gHorarioTieneDatos() && !confirm('Ya tienes un horario escrito en la tabla.\n\n¿Reemplazarlo con lo que se leyó de la foto?')) { gHorarioMsg('<span style="color:var(--gris)">Dejé tu tabla como estaba. Puedes volver a pulsar «✨ Pasar a la tabla» cuando quieras.</span>'); return; }
+    gHorarioAplicar(res);
+    const dudas = (res.dudas || []).length ? ` La IA no estuvo segura de: <b>${res.dudas.map(gEsc).join(', ')}</b>.` : '';
+    await gRenderArchivos('horario');
+    gHorarioMsg(`<span style="color:var(--verde)">✓ Listo: pasé tu horario a la tabla de arriba.</span> <b>Revísalo contra tu foto</b> y corrige lo que haga falta; todo se guarda solo.${dudas}`);
+  } catch (e) {
+    const t = (typeof licMensajeIA === 'function' && e.codigo ? licMensajeIA(e) : e.message) || 'No se pudo leer la foto.';
+    gHorarioMsg(`<span class="g-mal">${gEsc(t)}</span> <span style="color:var(--gris)">Puedes escribir tu horario a mano en la tabla.</span>`);
+  }
+}
+async function gHorarioDesdeArchivo(id) {
+  const f = (await gCalLista('horario')).find(x => x.id === id); if (!f || f.tipo !== 'img') return;
+  await gHorarioLeerFoto(f.blob, false);
+}
+
 // Archivos que el maestro sube y consulta dentro de la app (PDF, JPG o PNG), guardados en este dispositivo
 const G_ARCH = {
   cal: { tit: 'Calendario escolar', sub: 'Sube el calendario que te da tu escuela (PDF o foto) para tenerlo a la mano dentro de la app.', btn: '📎 Subir calendario', multi: 'Puedes subir varios, por ejemplo uno por trimestre o una hoja por mes.', vacio: 'Todavía no has subido tu calendario escolar.' },
-  horario: { tit: 'Horario semanal', sub: 'Escribe tu horario en la tabla o sube tu archivo (PDF o foto): como te sea más fácil.', btn: '📎 O sube tu horario como archivo', antes: gHorarioHTML, multi: 'Si tu horario cambia, sube el nuevo y quita el anterior.', vacio: 'Todavía no has subido tu horario.' }
+  horario: { tit: 'Horario semanal', sub: 'Escribe tu horario en la tabla o sube una foto: la IA lo pasa a la tabla por ti. También puedes subir un PDF para tenerlo a la mano.', btn: '📎 O sube tu horario como archivo', antes: gHorarioHTML, multi: 'Si tu horario cambia, sube el nuevo y quita el anterior.', vacio: 'Todavía no has subido tu horario.' }
 };
 function gRenderCalendario() { return gRenderArchivos('cal'); }
 async function gRenderArchivos(cat) {
@@ -269,6 +314,7 @@ async function gRenderArchivos(cat) {
   ${lista.length ? lista.map(f => `<div class="card"><div class="card-title" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${f.tipo === 'pdf' ? '📄' : '🖼️'} <span style="flex:1;min-width:0;word-break:break-word">${gEsc(f.nombre)}</span>
       <a class="g-btn g-btn-s" href="${url(f.blob)}" target="_blank" rel="noopener" style="text-decoration:none">Abrir grande</a>
       <a class="g-btn g-btn-s" href="${url(f.blob)}" download="${gEsc(f.nombre)}" style="text-decoration:none">⬇ Descargar</a>
+      ${cat === 'horario' && f.tipo === 'img' ? `<button class="g-btn g-btn-p" onclick="gHorarioDesdeArchivo('${f.id}')">✨ Pasar a la tabla</button>` : ''}
       <button class="g-btn g-btn-x" onclick="gCalQuitarArchivo('${f.id}','${cat}')">Quitar</button></div>
       ${f.tipo === 'pdf' ? `<iframe src="${url(f.blob)}" style="width:100%;height:70vh;border:1px solid var(--borde);border-radius:10px" title="${gEsc(f.nombre)}"></iframe>` : `<img src="${url(f.blob)}" alt="${gEsc(f.nombre)}" style="max-width:100%;border:1px solid var(--borde);border-radius:10px">`}</div>`).join('') : `<div class="card g-vacio">${C.vacio}</div>`}`;
 }
