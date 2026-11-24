@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pruebas del Planeador (no se publica)</title>
+<meta name="robots" content="noindex">
+<style>
+body{font:14px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:16px;max-width:900px;margin:auto;color:#1e293b}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 6px;color:#1e3a5f}
+.res{padding:10px 14px;border-radius:10px;font-weight:700;margin:10px 0}.res.ok{background:#dcfce7;color:#166534}.res.mal{background:#fee2e2;color:#991b1b}
+table{border-collapse:collapse;width:100%}td{border-top:1px solid #e2e8f0;padding:5px 6px;vertical-align:top}
+td.s{width:28px;text-align:center;font-weight:700}tr.ok td.s{color:#16a34a}tr.mal td.s{color:#dc2626}tr.mal{background:#fef2f2}
+small{color:#64748b}code{background:#f1f5f9;padding:0 4px;border-radius:4px}
+iframe{position:absolute;left:-9999px;width:900px;height:700px;border:0}
+</style></head><body>
+<h1>Pruebas del Planeador — pasos 2, 3, 4 y 5</h1>
+<small>Esta carpeta empieza con «_»: GitHub Pages (Jekyll) no la publica. Se abre con un servidor local desde la raíz del repositorio:
+<code>python3 -m http.server 8000</code> → <code>http://localhost:8000/_tests/pruebas.html</code>. Carga <code>../beta/index.html</code> en un marco oculto y prueba sus funciones; no toca tus datos reales (usa grupos inventados y no guarda nada).</small>
+<div id="estado" class="res">Cargando la app…</div>
+<div id="tablas"></div>
+<iframe id="app" src="../beta/index.html"></iframe>
+<script>
+// ── Las pruebas se ejecutan DENTRO de la app (en el marco), así ven sus funciones y variables ──
+function SUITE() {
+  const R = []; let sec = '';
+  const S = t => { sec = t; };
+  const ok = (n, c, d) => R.push({ sec, n, ok: !!c, d: d === undefined ? '' : String(d) });
+  const eq = (n, got, want) => R.push({ sec, n, ok: JSON.stringify(got) === JSON.stringify(want), d: 'obtuvo ' + JSON.stringify(got) + (JSON.stringify(got) === JSON.stringify(want) ? '' : ', esperaba ' + JSON.stringify(want)) });
+  const casi = (n, got, want) => R.push({ sec, n, ok: got != null && Math.abs(got - want) < 1e-6, d: 'obtuvo ' + got + ', esperaba ' + want });
+  // Para no tocar nada real
+  const avisos = []; let descargas = 0;
+  window.gGuardar = function () {}; window.gAviso = m => avisos.push(String(m)); window.descargarWord = () => { descargas++; }; window.gDescargarBlob = () => { descargas++; };
+  window.confirm = () => true;
+  const mk = x => Object.assign({ id: 'g1', nombre: '1°A', materia: 'Matemáticas', grado: 1, alumnos: [{ id: 'a1', nombre: 'Ana Uno' }, { id: 'a2', nombre: 'Beto Dos' }], criterios: [{ id: 'cP', nombre: 'Proyecto', pct: 30, rol: 'proyecto' }, { id: 'cO', nombre: 'Otros', pct: 70, rol: 'otro' }], pesos: {}, actividades: [], asist: {}, recup: {}, libreta: {} }, x);
+  const act = (id, trim, crit, notas, ne, max) => ({ id, trim, criterioId: crit, nombre: id, max: max || 10, tipo: 'actividad', fecha: '2026-10-01', notas: notas || {}, ne });
+  const usar = g => { G.data = { v: 1, grupos: [g], perfil: {} }; G.gid = g.id; return g; };
+  // un solo criterio al 100 % con la nota de cada trimestre
+  const g1c = (n1, n2, n3) => mk({ alumnos: [{ id: 'a1', nombre: 'Ana' }], criterios: [{ id: 'c', nombre: 'Todo', pct: 100 }], actividades: [act('t1', 1, 'c', { a1: n1 }), act('t2', 2, 'c', { a1: n2 }), act('t3', 3, 'c', { a1: n3 })] });
+
+  // ════ PASO 2 — regla de calificaciones ════
+  S('Paso 2 · Cálculo de calificaciones');
+  eq('REGLA_CALIF: truncar por defecto', REGLA_CALIF, { trimestral: 'truncar', final: 'truncar' });
+  let a = gCalcAnual(g1c(6, 6, 5), 'a1');
+  casi('6, 6, 5 → promedio final 5.6', a.fin, 5.6); ok('6, 6, 5 → NO aprobado', !gAprobado(a.fin));
+  a = gCalcAnual(g1c(7, 8, 9), 'a1');
+  casi('7, 8, 9 → promedio final 8.0', a.fin, 8); ok('7, 8, 9 → aprobado', gAprobado(a.fin)); eq('8.0 se muestra con un decimal', gFmtCal(a.fin, 1), '8.0');
+  eq('trimestral 5.5 → 5 (se trunca, no se redondea)', gBoleta(5.5), 5);
+  eq('trimestral 5.99 → 5', gBoleta(5.99), 5); eq('trimestral 6.0 → 6', gBoleta(6), 6); eq('trimestral 9.9 → 9', gBoleta(9.9), 9);
+  eq('mínimo de boleta: 3.2 → 5', gBoleta(3.2), 5); eq('máximo de boleta: 10 → 10', gBoleta(10), 10);
+  eq('5.95 final → 5.9 (truncar)', gFinalAnual(5.95), 5.9); ok('5.9 no aprueba', !gAprobado(5.9)); ok('6.0 sí aprueba', gAprobado(6.0));
+  eq('error de decimales: 5.999999999999 (en realidad 6) no baja a 5.9', gAplicarRegla(5.999999999999, 1, 'truncar'), 6);
+  eq('modo «redondeo»: 5.95 → 6', gAplicarRegla(5.95, 1, 'redondeo'), 6);
+  const c2 = gConcentradoDatos(g1c(6, 6, 5), undefined).filas[0];
+  casi('Concentrado (Excel/Word/PDF): promedio final 5.6', c2.fin, 5.6); eq('Concentrado: boletas 6, 6, 5', c2.tr, [6, 6, 5]);
+
+  // ════ PASO 3 — NE, pendientes y anual incompleto ════
+  S('Paso 3 · NE y casillas pendientes');
+  const proy = (neModo, ne) => usar(mk({ neModo, alumnos: [{ id: 'a1', nombre: 'Ana' }], actividades: [act('p', 1, 'cP', {}, ne ? { a1: true } : undefined), act('o', 1, 'cO', { a1: 8 })] }));
+  let g = proy('cero', true), r = gCalcAlumno(g, 'a1', 1);
+  casi('Proyecto 30 % con NE en «0» y 8 en lo demás → 5.6', r.final, 5.6); eq('NE en «0»: sin pendientes', r.pend.length, 0);
+  g = proy('pendiente', true); r = gCalcAlumno(g, 'a1', 1);
+  eq('Mismo caso con NE «pendiente»: queda 1 pendiente', r.pend.map(p => p.tipo), ['ne']);
+  ok('…y la descarga se bloquea (gBloqueo)', !!gBloqueo(g, [1]));
+  G.trimCalif = 1; descargas = 0; avisos.length = 0; gDescargarCalif();
+  eq('…gDescargarCalif NO descarga', descargas, 0); ok('…y avisa con el conteo', /faltan 1 casilla/.test(avisos[0] || ''), avisos[0]);
+  g = usar(mk({ alumnos: [{ id: 'a1', nombre: 'Ana' }], actividades: [act('p', 1, 'cP', {}), act('o', 1, 'cO', { a1: 8 })] })); r = gCalcAlumno(g, 'a1', 1);
+  eq('Casilla vacía = «pendiente» (nunca 0)', r.pend.map(p => p.tipo), ['vacia']);
+  ok('Casilla vacía no cuenta como 0 en el promedio', Math.abs(r.final - 8) < 1e-6, r.final);
+  g = usar(mk({ alumnos: [{ id: 'a1', nombre: 'Ana' }], actividades: [act('p', 1, 'cP', { a1: 10 }), act('o', 1, 'cO', { a1: 8 })] })); descargas = 0; avisos.length = 0; gDescargarCalif();
+  ok('Con todo calificado sí descarga', descargas === 1, 'descargas: ' + descargas + ' ' + (avisos[0] || ''));
+  eq('Grupo anterior (sin neModo) = «pendiente»', gNeModo({}), 'pendiente'); eq('neModo «cero»', gNeModo({ neModo: 'cero' }), 'cero');
+  ok('Si hay nota, la nota manda sobre NE', !gEsNE({ ne: { a1: true }, notas: { a1: 7 } }, 'a1'));
+  g = mk({ alumnos: [{ id: 'a1', nombre: 'Ana' }], criterios: [{ id: 'c', nombre: 'Todo', pct: 100 }], actividades: [act('t1', 1, 'c', { a1: 9 })] });
+  a = gCalcAnual(g, 'a1'); eq('Anual con solo 1 trimestre → incompleto, sin promedio', [a.completo, a.fin, a.faltan], [false, null, [2, 3]]);
+  g = usar(g); const cd = gConcentradoDatos(g).filas[0]; eq('Concentrado: promedio final vacío y marcado «Incompleto»', [cd.fin, cd.incompleto], [null, true]);
+  a = gCalcAnual(g1c(9, 9, 9), 'a1'); eq('Anual con 3 trimestres completos → sí hay promedio', [a.completo, a.fin], [true, 9]);
+
+  // ════ PASO 4 — exámenes y escáner ════
+  S('Paso 4 · Exámenes y escáner');
+  const rc = { tipo: 'respuesta_corta', respuesta: 'fotosíntesis', valor: 1 };
+  eq('«no es fotosíntesis» → por revisar', escEvaluar(rc, 'no es fotosíntesis'), 'revisar');
+  eq('«Fotosíntesis.» (coincidencia exacta normalizada) → correcto', escEvaluar(rc, 'Fotosíntesis.'), 'correcto');
+  eq('«la fotosíntesis» → por revisar', escEvaluar(rc, 'la fotosíntesis'), 'revisar'); eq('en blanco → incorrecto', escEvaluar(rc, ''), 'incorrecto');
+  eq('escCorrecto ya no acepta «no es fotosíntesis»', escCorrecto(rc, 'no es fotosíntesis'), false);
+  const pdas = [{ titulo: 'Fotosíntesis', pda: 'Explica el proceso de la fotosíntesis y su importancia.' }];
+  const ex = gNormalizarExamen({ titulo: 'T', reactivos: [
+    { tipo: 'opcion_multiple', pregunta: 'P1 (3 opciones)', opciones: ['uno', 'dos', 'tres'], respuesta: 'B', valor: 1 },
+    { tipo: 'opcion_multiple', pregunta: 'P2 (respuesta en texto)', opciones: ['A) Mitocondria', 'B) Núcleo', 'C) Ribosoma', 'D) Vacuola'], respuesta: 'Núcleo.', valor: 1 },
+    { tipo: 'opcion_multiple', pregunta: 'P3 («C) azul»)', opciones: ['rojo', 'verde', 'azul', 'amarillo'], respuesta: 'C) azul', valor: 1 },
+    { tipo: 'opcion_multiple', pregunta: 'P4 (texto que no está)', opciones: ['rojo', 'verde', 'azul', 'amarillo'], respuesta: 'morado', valor: 1 },
+    { tipo: 'opcion_multiple', pregunta: 'P5 (5 opciones)', opciones: ['a1', 'b1', 'c1', 'd1', 'e1'], respuesta: 'A', valor: 1 },
+    { tipo: 'opcion_multiple', pregunta: 'P6 («B. azul» no cuadra)', opciones: ['rojo', 'verde', 'azul', 'amarillo'], respuesta: 'B. azul', valor: 1 },
+    { tipo: 'opcion_multiple', pregunta: 'P7 (letra correcta)', opciones: ['a', 'b', 'c', 'd'], respuesta: 'd', valor: 1 },
+    { tipo: 'verdadero_falso', pregunta: 'P8', respuesta: 'verdadero', valor: 1 }, { tipo: 'verdadero_falso', pregunta: 'P9', respuesta: 'Falso, porque…', valor: 1 }, { tipo: 'verdadero_falso', pregunta: 'P10', respuesta: 'depende', valor: 1 },
+    { tipo: 'respuesta_corta', pregunta: 'P11', respuesta: 'x', valor: 1, pda: 'PDA 1' }
+  ] }, 20, pdas), rx = i => ex.reactivos[i];
+  ok('Opción múltiple con 3 opciones → marcada «revisar clave»', rx(0).revisar === true && /4 opciones/.test(gRevReactivo(rx(0))), gRevReactivo(rx(0)));
+  eq('Respuesta en texto «Núcleo.» → convertida a letra B', [rx(1).respuesta, rx(1).revisar], ['B', false]);
+  eq('«C) azul» → C', rx(2).respuesta, 'C');
+  eq('Texto que no está entre las opciones → vacía y «revisar»', [rx(3).respuesta, rx(3).revisar], ['', true]);
+  eq('5 opciones → se dejan 4 y se marca «revisar»', [rx(4).opciones.length, rx(4).revisar], [4, true]);
+  eq('«B. azul» (letra y texto no cuadran) → «revisar»', [rx(5).respuesta, rx(5).revisar], ['', true]);
+  eq('«d» minúscula → D', rx(6).respuesta, 'D');
+  eq('Verdadero/falso: «verdadero» → «Verdadero»', rx(7).respuesta, 'Verdadero'); eq('«Falso, porque…» → «Falso»', rx(8).respuesta, 'Falso');
+  eq('«depende» → vacía y «revisar»', [rx(9).respuesta, rx(9).revisar], ['', true]);
+  eq('«PDA 1» → texto completo del PDA', rx(10).pda, pdas[0].pda);
+  ok('Toda opción múltiple válida trae exactamente 4 opciones', ex.reactivos.filter(r => r.tipo === 'opcion_multiple').every(r => r.opciones.length === 4));
+  // Prompt: sin datos de alumnos
+  const gp = mk({ nombre: '2°B Matutino', alumnos: [{ id: 'a1', nombre: 'Juan Pérez López' }, { id: 'a2', nombre: 'María Hernández Cruz' }], materia: 'Ciencias', grado: 2 });
+  const pr = gPromptExamen(gp, { trim: 1, tema: 'Fotosíntesis — Aprendizaje esperado: ' + pdas[0].pda, pdas, n: 5, tipos: ['opcion_multiple', 'respuesta_corta'], dif: 'Media' });
+  ok('Prompt del examen: sin nombres de alumnos ni del grupo', !/Juan|Pérez|María|Hernández|2°B|Matutino/.test(pr));
+  ok('Prompt manda el PDA y pide el campo «pda»', pr.includes('PDA 1 · Fotosíntesis') && pr.includes('"pda":"..."'));
+  ok('Sin PDA elegidos, no pide el campo', !gPromptExamen(gp, { trim: 1, tema: 'Ecuaciones', pdas: [], n: 5, tipos: ['opcion_multiple'], dif: 'Media' }).includes('"pda"'));
+  // Borrador: no se guarda sin revisar
+  const gx = usar(mk({ criterios: [{ id: 'c1', nombre: 'Examen', pct: 100, rol: 'examen' }] }));
+  G.tab = 'examenes'; G.trimExam = 1; document.body.insertAdjacentHTML('beforeend', '<div id="g-examenes"></div>');
+  G.borrador = Object.assign(gNormalizarExamen({ titulo: 'Ex', reactivos: [{ tipo: 'opcion_multiple', pregunta: 'p', opciones: ['a', 'b', 'c'], respuesta: 'A', valor: 1 }, { tipo: 'verdadero_falso', pregunta: 'q', respuesta: 'Verdadero', valor: 1 }] }, 10), { tema: 'T', trim: 1, criterioId: 'c1', revisado: false });
+  gRenderExamenes(); avisos.length = 0; gGuardarExamen();
+  eq('Con «revisar clave» pendiente: NO se guarda', gx.actividades.length, 0);
+  gEditOpc(0, 3, 'd'); gGuardarExamen(); eq('Corregido pero sin marcar «Revisé las respuestas correctas»: NO se guarda', gx.actividades.length, 0);
+  gMarcarRevisado(true); gEditReac(0, 'respuesta', 'B'); ok('Editar una respuesta anula la revisión', G.borrador.revisado === false);
+  gMarcarRevisado(true); gGuardarExamen(); eq('Revisado: se guarda con revisado = true', [gx.actividades.length, gx.actividades[0] && gx.actividades[0].revisado], [1, true]);
+  // Escáner: solo exámenes con clave revisada
+  gx.actividades.push({ id: 'viejo', trim: 1, criterioId: 'c1', nombre: 'Viejo', max: 1, tipo: 'examen', reactivos: [{ tipo: 'opcion_multiple', respuesta: 'B', valor: 1, opciones: ['a', 'b', 'c', 'd'] }], notas: {} });
+  eq('Escáner: solo ve exámenes con clave revisada', escExamenes(gx).map(e => e.nombre), ['Ex']);
+  const ev = gx.actividades.find(x => x.id === 'viejo'), h = { id: 'h', estado: 'listo', resp: { 1: { r: 'B' } }, ok: {}, rev: {}, pts: {}, aid: 'a1', exId: 'viejo', guardada: false };
+  const rev = { tipo: 'respuesta_corta', respuesta: 'luz', valor: 1 }, exc = { id: 'x', reactivos: [ev.reactivos[0], rev], notas: {}, max: 2 };
+  gx.actividades.push(Object.assign(exc, { tipo: 'examen', trim: 1, criterioId: 'c1', nombre: 'Corto', revisado: true })); h.exId = 'x'; h.resp = { 1: { r: 'B' }, 2: { r: 'no es luz' } };
+  escCalcular(h, exc); eq('Escáner: «no es luz» queda por revisar', escPorRevisar(h), 1);
+  G.esc.hojas = [h]; G.tab = 'examenes';
+  eq('Escáner: no se guarda con respuestas por revisar', escGuardar('h', true), false);
+  escDecidir('h', 2, false); eq('Tras decidir (✗) ya se puede guardar, con 1 punto', [escGuardar('h', true), exc.notas.a1], [true, 1]);
+
+  // ════ PASO 5 — privacidad (extra) ════
+  S('Paso 5 · Privacidad');
+  eq('Número de lista del Worker nuevo', escNumeroLeido({ numeroLista: 7 }), 7);
+  eq('Worker anterior: «No. 12» en «nombre» → 12', escNumeroLeido({ nombre: 'No. 12' }), 12);
+  eq('Un nombre no se toma como número', escNumeroLeido({ nombre: 'Carla Tres' }), null);
+  eq('Número fuera de rango (0) → nada', escNumeroLeido({ numeroLista: 0 }), null);
+  const nombres = ['Juan Pérez López', 'María Hernández Cruz'];
+  const an = privAnonimizar('Juan Pérez falta mucho y MARÍA HERNÁNDEZ CRUZ también. juan perez lopez otra vez.', nombres);
+  eq('Nombres de alumnos → «Alumno N»', an.texto, 'Alumno 1 falta mucho y Alumno 2 también. Alumno 1 otra vez.');
+  eq('Texto sin nombres queda igual', privAnonimizar('Los alumnos de segundo leen poco', nombres).hallazgos.length, 0);
+  const cv = document.createElement('canvas'); cv.width = 400; cv.height = 500; const cx = cv.getContext('2d'); cx.fillStyle = '#f00'; cx.fillRect(0, 0, 400, 500); cx.fillStyle = '#00f'; cx.fillRect(0, 400, 400, 100);
+  return new Promise(res => cv.toBlob(async b => {
+    const f = new File([b], 'h.png', { type: 'image/png' });
+    const px = async (d, fy) => { const im = new Image(); im.src = 'data:image/jpeg;base64,' + d; await im.decode(); const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const k = c.getContext('2d'); k.drawImage(im, 0, 0); const p = k.getImageData(10, Math.floor(fy * im.height), 1, 1).data; return [p[0] > 200, p[2] > 200]; };
+    const tap = await escReducir(f, [{ x: 0, y: 0, w: 1, h: 0.25 }]), sin = await escReducir(f, []);
+    eq('Zona tapada: sale NEGRA en lo que se envía (sin tapar: roja)', [await px(tap.data, 0.05), await px(sin.data, 0.05)].map(p => p[0] || p[1]), [false, true]);
+    eq('Lo que no se tapa se conserva (abajo sigue azul)', (await px(tap.data, 0.9))[1], true);
+    res(R);
+  }, 'image/png'));
+}
+
+// ── Cargar la app, correr las pruebas y mostrar ──
+const fr = document.getElementById('app');
+function mostrar(R) {
+  const mal = R.filter(x => !x.ok), secs = [...new Set(R.map(x => x.sec))];
+  const est = document.getElementById('estado');
+  est.className = 'res ' + (mal.length ? 'mal' : 'ok'); est.textContent = (mal.length ? '✗ ' + mal.length + ' prueba(s) fallaron de ' : '✓ Todas pasaron: ') + R.length + (mal.length ? '' : ' pruebas');
+  document.getElementById('tablas').innerHTML = secs.map(s => '<h2>' + s + '</h2><table>' + R.filter(x => x.sec === s).map(x => '<tr class="' + (x.ok ? 'ok' : 'mal') + '"><td class="s">' + (x.ok ? '✓' : '✗') + '</td><td>' + x.n.replace(/</g, '&lt;') + '<br><small>' + x.d.replace(/</g, '&lt;') + '</small></td></tr>').join('') + '</table>').join('');
+  window.__resultados = { total: R.length, fallaron: mal.length, mal };
+}
+fr.addEventListener('load', () => setTimeout(async () => {
+  try { mostrar(await fr.contentWindow.eval('(' + SUITE.toString() + ')()')); }
+  catch (e) { const est = document.getElementById('estado'); est.className = 'res mal'; est.textContent = '✗ Error al correr las pruebas: ' + (e && e.message); window.__resultados = { error: String(e && e.stack || e) }; }
+}, 1500));
+</script></body></html>
