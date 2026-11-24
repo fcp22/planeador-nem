@@ -1202,7 +1202,13 @@ function gPintarPend() {
     + '.g-nota.g-ne-in{background:#fffbeb;border-color:#f59e0b;color:#92400e;font-weight:700;text-transform:uppercase}'
     + '.g-pend-tag{display:inline-block;font-size:10px;font-weight:700;color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:999px;padding:0 6px;margin:2px 0 0 4px;white-space:nowrap}'
     + '.g-cap2 .g-fin .g-pend-tag{display:block;margin:3px auto 0;font-size:9px}'
-    + '.g-cap2 td.g-pendf{background:#fffbeb!important}';
+    + '.g-cap2 td.g-pendf{background:#fffbeb!important}'
+    + '.g-reac.g-reac-rev{background:#fffbeb;border-color:#f59e0b;box-shadow:0 0 0 2px #fde68a}'
+    + '.g-rev-tag{font-size:11px;font-weight:700;color:#92400e}'
+    + '.g-revbox{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 12px;margin:4px 0 12px}'
+    + '.g-btn:disabled{opacity:.45;cursor:not-allowed}'
+    + '.g-clave-tag{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:4px;white-space:nowrap}'
+    + '.g-clave-ok{color:#166534;background:#dcfce7;border:1px solid #86efac}.g-clave-no{color:#92400e;background:#fef3c7;border:1px solid #fcd34d}';
   document.head.appendChild(s);
 })();
 function gSumaPct(g, t) { t = t || gTrimActual(); return g.criterios.reduce((s, c) => s + gPct(g, c.id, t), 0); }
@@ -1736,15 +1742,29 @@ const G_TIPOS_EXAM = {
 };
 function gTrimExam(v) { G.trimExam = +v; G.pesoMsg = ''; G.borrador = null; G.temaUlt = ''; G.temasSel = []; gRenderExamenes(); }
 
+// ── Contenidos y PDA elegidos para el examen ──
+// El cuadro de temas trae «Título — Aprendizaje esperado: …» de lo que el docente marcó; para el prompt el PDA va aparte y ordenado.
+function gTemaSinPDA(tema) { return String(tema || '').split('\n').map(l => l.replace(/\s+—\s+Aprendizaje esperado:.*$/, '')).join('\n'); }
+// PDA de los temas que el docente marcó y que siguen escritos en el cuadro de temas
+function gPdasElegidos(tema) {
+  const por = new Map((G.temasLista || []).map(c => [c.k, c])), nt = gNorm(tema);
+  return (G.temasSel || []).map(k => por.get(k)).filter(c => c && c.pda && nt.includes(gNorm(c.titulo))).map(c => ({ titulo: c.titulo, pda: String(c.pda).replace(/\s+/g, ' ').trim() }));
+}
+// Al IA NUNCA se le mandan datos de alumnos ni del grupo: el prompt solo usa materia, campo, grado, trimestre, temas, PDA, dificultad, número y tipos.
 function gPromptExamen(g, o) {
+  const conPda = !!(o.pdas && o.pdas.length);
+  const tema = conPda ? gTemaSinPDA(o.tema) : o.tema;
+  const pdaBloque = conPda ? `- PDA (aprendizajes esperados) de esos contenidos; cada reactivo debe evaluar uno de ellos:\n${o.pdas.map((p, i) => `  PDA ${i + 1} · ${p.titulo}: ${String(p.pda).slice(0, 600)}`).join('\n')}\n` : '';
+  const reglaPda = conPda ? '\n- Cada reactivo trae el campo "pda": copia TEXTUAL, de la lista de PDA de arriba, el PDA que evalúa ese reactivo (no inventes otro).' : '';
+  const ejPda = conPda ? ',"pda":"..."' : '';
   return `Eres docente experto de secundaria en México (Nueva Escuela Mexicana, Plan de Estudios 2022, Fase 6). Elabora un examen.
 Responde SOLO con JSON válido, sin markdown ni texto extra.
 
 DATOS:
 - Materia: ${g.materia} | Campo formativo: ${gCampoDe(g.grado, g.materia)} | Grado: ${g.grado}° de secundaria
 - ${G_TRIM_NOM[o.trim]}
-- Temas o contenidos que se evalúan: ${o.tema}
-- Dificultad: ${o.dif}
+- Temas o contenidos que se evalúan: ${tema}
+${pdaBloque}- Dificultad: ${o.dif}
 - Número de reactivos: ${o.n}
 - Tipos de reactivo permitidos: ${o.tipos.map(t => G_TIPOS_EXAM[t]).join(', ')} (reparte los reactivos entre ellos)
 
@@ -1754,19 +1774,73 @@ REGLAS:
 - En opción múltiple da exactamente 4 opciones (sin la letra) y en "respuesta" pon la letra correcta: A, B, C o D. Distribuye las letras correctas.
 - En verdadero_falso, "respuesta" es "Verdadero" o "Falso".
 - En respuesta_corta y desarrollo, "respuesta" es la respuesta esperada o los puntos clave que debe incluir.
-- "valor" es el puntaje del reactivo (1 para opción múltiple, verdadero/falso y respuesta corta; 2 para desarrollo).
+- "valor" es el puntaje del reactivo (1 para opción múltiple, verdadero/falso y respuesta corta; 2 para desarrollo).${reglaPda}
 
 Formato:
-{"titulo":"Examen de ... ","reactivos":[{"tipo":"opcion_multiple","pregunta":"...","opciones":["...","...","...","..."],"respuesta":"B","valor":1}]}`;
+{"titulo":"Examen de ... ","reactivos":[{"tipo":"opcion_multiple","pregunta":"...","opciones":["...","...","...","..."],"respuesta":"B","valor":1${ejPda}}]}`;
 }
-function gNormalizarExamen(j, n) {
+// ── Clave del examen: validación y normalización de lo que devuelve la IA ──
+// Opción múltiple = exactamente 4 opciones y respuesta A, B, C o D; verdadero/falso = «Verdadero» o «Falso».
+// Lo que no se pueda asegurar queda con respuesta vacía y marcado «revisar clave» (revisar:true) para que el docente lo corrija.
+function gResolverLetra(resp, ops) {
+  const t = String(resp == null ? '' : resp).trim(), nt = gNorm(t);
+  if (!nt) return '';
+  const iguales = ops.map((o, k) => (gNorm(o) === nt ? k : -1)).filter(k => k >= 0);   // la IA devolvió el TEXTO de la opción
+  if (iguales.length === 1) return 'ABCD'[iguales[0]];
+  if (iguales.length > 1) return '';
+  const m = /^(?:opci[oó]n\s+)?\(?([A-Da-d])\)?\s*$/.exec(t) || /^\(?([A-Da-d])[).:]\s*(\S.*)$/.exec(t);   // «B», «(b)», «B) texto», «B. texto»
+  if (!m) return '';
+  const k = 'ABCD'.indexOf(m[1].toUpperCase());
+  if (k < 0 || k >= ops.length || !gNorm(ops[k])) return '';
+  if (m[2]) { const a = gNorm(m[2]), b = gNorm(ops[k]); if (!(a.includes(b) || b.includes(a))) return ''; }   // «B. algo» que no es la opción B → dudoso
+  return 'ABCD'[k];
+}
+function gResolverVF(resp) {
+  const t = String(resp == null ? '' : resp).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  if (/^(verdadero|cierto|true)\b/.test(t) || t === 'v') return 'Verdadero';
+  if (/^(falso|false)\b/.test(t) || t === 'f') return 'Falso';
+  return '';
+}
+// Devuelve el motivo si la clave del reactivo necesita revisión; '' si está en orden
+function gRevReactivo(r) {
+  if (r.motivo) return r.motivo;
+  if (r.tipo === 'opcion_multiple') {
+    const ops = Array.isArray(r.opciones) ? r.opciones : [];
+    if (ops.length !== 4 || ops.some(o => !String(o).trim())) return 'debe tener exactamente 4 opciones con texto';
+    if (new Set(ops.map(gNorm)).size < 4) return 'hay opciones repetidas';
+    if ('ABCD'.indexOf(String(r.respuesta)) < 0 || String(r.respuesta).length !== 1) return 'la respuesta debe ser A, B, C o D';
+    return '';
+  }
+  if (r.tipo === 'verdadero_falso') return (r.respuesta === 'Verdadero' || r.respuesta === 'Falso') ? '' : 'la respuesta debe ser Verdadero o Falso';
+  return String(r.respuesta || '').trim() ? '' : 'falta la respuesta esperada';
+}
+function gNormPda(v, pdas) {
+  if (!pdas || !pdas.length) return '';
+  v = String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+  const nv = gNorm(v);
+  if (nv) {
+    const ig = pdas.find(p => gNorm(p.pda) === nv); if (ig) return ig.pda;
+    if (nv.length >= 25) { const cont = pdas.filter(p => { const np = gNorm(p.pda); return np.includes(nv) || nv.includes(np); }); if (cont.length === 1) return cont[0].pda; }
+    const num = /^pda\s*(\d+)/i.exec(v); if (num && pdas[+num[1] - 1]) return pdas[+num[1] - 1].pda;
+  }
+  return pdas.length === 1 ? pdas[0].pda : v;
+}
+function gNormalizarExamen(j, n, pdas) {
   const permit = Object.keys(G_TIPOS_EXAM);
   const rs = (Array.isArray(j.reactivos) ? j.reactivos : []).map(r => {
     const tipo = permit.includes(r.tipo) ? r.tipo : 'respuesta_corta';
     const o = { tipo, pregunta: String(r.pregunta || '').trim(), respuesta: String(r.respuesta == null ? '' : r.respuesta).trim(), valor: gNum(r.valor) || (tipo === 'desarrollo' ? 2 : 1) };
-    if (tipo === 'opcion_multiple') { o.opciones = (Array.isArray(r.opciones) ? r.opciones : []).slice(0, 4).map(x => String(x).replace(/^[A-Da-d][).]\s*/, '')); o.respuesta = o.respuesta.charAt(0).toUpperCase(); }
+    if (pdas && pdas.length) o.pda = gNormPda(r.pda, pdas);
+    if (tipo === 'opcion_multiple') {
+      let ops = (Array.isArray(r.opciones) ? r.opciones : []).map(x => String(x == null ? '' : x).replace(/^\s*[A-Da-d][).]\s*/, '').trim()).filter(Boolean);
+      if (ops.length > 4) { o.motivo = 'la IA dio más de 4 opciones y se dejaron las primeras 4'; ops = ops.slice(0, 4); }
+      while (ops.length < 4) ops.push('');
+      o.opciones = ops;
+      o.respuesta = gResolverLetra(o.respuesta, ops);   // letra A-D, o '' si no se pudo asegurar cuál es
+    } else if (tipo === 'verdadero_falso') o.respuesta = gResolverVF(o.respuesta);
+    o.revisar = !!gRevReactivo(o);
     return o;
-  }).filter(r => r.pregunta && (r.tipo !== 'opcion_multiple' || r.opciones.length >= 2));
+  }).filter(r => r.pregunta);
   return { titulo: String(j.titulo || 'Examen').trim(), reactivos: rs.slice(0, n) };
 }
 async function gGenerarExamen() {
@@ -1779,11 +1853,12 @@ async function gGenerarExamen() {
   if (!tipos.length) { err.textContent = 'Elige al menos un tipo de reactivo.'; err.style.display = 'block'; return; }
   const btn = document.getElementById('ge-btn'); btn.disabled = true; btn.textContent = 'Generando examen…';
   try {
-    const texto = await llamarGeminiJSON(gPromptExamen(g, { trim: G.trimExam, tema, n, tipos, dif: document.getElementById('ge-dif').value }), 'examen');
-    const ex = gNormalizarExamen(parsearJSON(texto), n);
+    const pdas = gPdasElegidos(tema);   // PDA de los temas que marcó el docente (puede ir vacío)
+    const texto = await llamarGeminiJSON(gPromptExamen(g, { trim: G.trimExam, tema, pdas, n, tipos, dif: document.getElementById('ge-dif').value }), 'examen');
+    const ex = gNormalizarExamen(parsearJSON(texto), n, pdas);
     if (!ex.reactivos.length) throw new Error('La IA no devolvió reactivos válidos.');
     G.temaUlt = tema;
-    G.borrador = Object.assign(ex, { tema, trim: G.trimExam, criterioId: gCritExamen(g).id });
+    G.borrador = Object.assign(ex, { tema, trim: G.trimExam, criterioId: gCritExamen(g).id, conPda: pdas.length > 0, revisado: false });
     gRenderExamenes();
     const b = document.getElementById('g-borrador'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (e) {
@@ -1836,10 +1911,43 @@ function gTemasMarcar() {
   const ta = document.getElementById('ge-tema'); if (ta) ta.value = txt;
 }
 // Edición del examen generado (pregunta, opciones y respuesta) antes de guardarlo o bajarlo
-function gEditReac(i, campo, v) { const r = G.borrador && G.borrador.reactivos[i]; if (r) r[campo] = v; }
-function gEditOpc(i, k, v) { const r = G.borrador && G.borrador.reactivos[i]; if (r && r.opciones) r.opciones[k] = v; }
+// Cambiar la respuesta o las opciones invalida la revisión: el docente vuelve a marcar «Revisé las respuestas correctas»
+function gEditReac(i, campo, v) {
+  const r = G.borrador && G.borrador.reactivos[i]; if (!r) return;
+  r[campo] = v;
+  if (campo === 'respuesta') { delete r.motivo; G.borrador.revisado = false; }
+  gBorrActualizar();
+}
+function gEditOpc(i, k, v) { const r = G.borrador && G.borrador.reactivos[i]; if (r && r.opciones) { r.opciones[k] = v; delete r.motivo; G.borrador.revisado = false; gBorrActualizar(); } }
 function gQuitarReactivo(i) { G.borrador.reactivos.splice(i, 1); if (!G.borrador.reactivos.length) G.borrador = null; gRenderExamenes(); }
 function gTituloBorrador(v) { if (G.borrador) G.borrador.titulo = v; }
+function gBorrPendientes(b) { return b.reactivos.filter(r => gRevReactivo(r)).length; }
+function gBorrListo(b) { return !!b && b.revisado === true && gBorrPendientes(b) === 0; }
+// Actualiza resaltados, casilla y botón sin volver a dibujar (así no se pierde el cursor al escribir)
+function gBorrActualizar() {
+  const b = G.borrador; if (!b) return;
+  let n = 0;
+  b.reactivos.forEach((r, i) => {
+    const m = gRevReactivo(r); r.revisar = !!m; if (m) n++;
+    const box = document.getElementById('g-reac-' + i); if (box) box.classList.toggle('g-reac-rev', !!m);
+    const tag = document.getElementById('g-rv-' + i); if (tag) tag.textContent = m ? '⚠ Revisar clave: ' + m : '';
+  });
+  if (n) b.revisado = false;
+  const chk = document.getElementById('g-rev-chk'); if (chk) { chk.disabled = n > 0; chk.checked = b.revisado === true; }
+  const msg = document.getElementById('g-rev-msg');
+  if (msg) msg.innerHTML = n ? `<b>${n}</b> reactivo(s) con <b>«revisar clave»</b> (en amarillo). Corrígelos para poder marcar la revisión.` : (b.revisado ? '✓ Clave revisada: ya puedes guardarlo para calificar y usarlo en el escáner.' : 'Lee cada pregunta con su respuesta y marca la casilla. Sin esto no se puede guardar ni usar en el escáner.');
+  const bt = document.getElementById('g-btn-guardar'); if (bt) bt.disabled = !gBorrListo(b);
+}
+function gMarcarRevisado(v) { const b = G.borrador; if (!b) return; b.revisado = !!v && gBorrPendientes(b) === 0; gBorrActualizar(); }
+// Pone la clave de un examen ya guardado en el editor para revisarla (no cambia los puntos ni las calificaciones capturadas)
+function gRevisarGuardado(id) {
+  const g = gGrupo(), ex = g.actividades.find(x => x.id === id); if (!ex || !ex.reactivos) return;
+  const reactivos = JSON.parse(JSON.stringify(ex.reactivos)); reactivos.forEach(r => { r.revisar = !!gRevReactivo(r); });
+  G.trimExam = ex.trim;
+  G.borrador = { titulo: ex.nombre, reactivos, tema: ex.tema || '', trim: ex.trim, criterioId: ex.criterioId, editId: ex.id, conPda: reactivos.some(r => r.pda), revisado: false };
+  gRenderExamenes();
+  const b = document.getElementById('g-borrador'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 function gMaxExamen(ex) { return ex.reactivos.reduce((s, r) => s + (r.valor || 1), 0); }
 
 function gExamenHTML(g, ex, conClave) {
@@ -1850,7 +1958,11 @@ function gExamenHTML(g, ex, conClave) {
     else if (r.tipo === 'verdadero_falso') h += `<p style="margin:0 0 0 24px">( ) Verdadero &nbsp;&nbsp; ( ) Falso</p>`;
     else if (r.tipo === 'respuesta_corta') h += `<p style="margin:6px 0 0 24px">R: ______________________________________________</p>`;
     else h += '<p style="margin:6px 0 0 24px">______________________________________________________</p>'.repeat(3);
-    if (conClave) h += `<p style="margin:2px 0 0 24px;color:#166534"><b>Respuesta:</b> ${gEsc(r.respuesta)}</p>`;
+    if (conClave) {
+      const k = 'ABCD'.indexOf(r.respuesta), txt = r.tipo === 'opcion_multiple' && k >= 0 && r.opciones[k] ? `${r.respuesta}) ${r.opciones[k]}` : r.respuesta;
+      h += `<p style="margin:2px 0 0 24px;color:#166534"><b>Respuesta:</b> ${gEsc(txt)}</p>`;
+      if (r.pda) h += `<p style="margin:0 0 0 24px;font-size:9pt;color:#334155"><b>PDA:</b> ${gEsc(r.pda)}</p>`;   // el PDA va en la clave del docente, no en la hoja del alumno
+    }
     return h;
   }).join('');
   const cab = conClave ? `<p style="text-align:center"><b>${gEsc(ex.titulo)} — CLAVE DE RESPUESTAS</b></p>` :
@@ -1865,7 +1977,14 @@ function gDescargarExamen(ex, clave) {
 }
 function gGuardarExamen() {
   const g = gGrupo(); const b = G.borrador; if (!b) return;
-  const nuevo = { id: gId(), trim: b.trim, criterioId: b.criterioId, nombre: b.titulo, max: gMaxExamen(b), tipo: 'examen', fecha: gHoy(), tema: b.tema, reactivos: b.reactivos, notas: {} };
+  gBorrActualizar();
+  if (!gBorrListo(b)) { gAviso(gBorrPendientes(b) ? 'Hay reactivos con «revisar clave». Corrígelos y marca «Revisé las respuestas correctas».' : 'Marca «Revisé las respuestas correctas» para poder guardar el examen.'); return; }
+  const reactivos = b.reactivos.map(r => { const c = Object.assign({}, r); delete c.revisar; delete c.motivo; return c; });
+  if (b.editId) {   // clave de un examen ya guardado: se conservan puntos y calificaciones capturadas
+    const ex = g.actividades.find(x => x.id === b.editId);
+    if (ex) { ex.reactivos = reactivos; ex.revisado = true; ex.revisadoEl = gHoy(); G.exAbierto = ex.id; G.borrador = null; gGuardar(); gRenderExamenes(); gIrAExamen(); gAviso('Clave revisada. Este examen ya se puede usar en el escáner.'); return; }
+  }
+  const nuevo = { id: gId(), trim: b.trim, criterioId: b.criterioId, nombre: b.titulo, max: gMaxExamen(b), tipo: 'examen', fecha: gHoy(), tema: b.tema, reactivos, revisado: true, revisadoEl: gHoy(), notas: {} };
   g.actividades.push(nuevo); G.exAbierto = nuevo.id;
   G.borrador = null; gGuardar(); gRenderExamenes(); gIrAExamen();
 }
@@ -2011,9 +2130,10 @@ function gExamenesListaHTML(g, t) {
   let h = `<div class="card" id="g-lista-ex"><div class="card-title">🧮 Capturar calificaciones de exámenes — ${G_TRIM_NOM[t]}</div>`;
   if (!exs.length) h += `<p style="color:var(--gris);margin:0 0 10px">Aquí aparecerá la <b>lista de tus alumnos</b> para escribir lo que sacó cada uno. Primero hay que dar de alta el examen: si ya lo aplicaste en papel, regístralo; si todavía no, genéralo con IA más abajo.</p><button class="g-btn" onclick="gAbrirPapel()">📄 Registrar un examen que ya apliqué</button>`;
   exs.forEach(ex => {
-    h += `<details class="g-ex" id="ex-${ex.id}" ${exs.length === 1 || G.exAbierto === ex.id ? 'open' : ''}><summary><b>${gEsc(ex.nombre)}</b> <span style="color:var(--gris);font-size:12px">· ${ex.max} pts · ${gEsc((g.criterios.find(c => c.id === ex.criterioId) || {}).nombre || '')}</span></summary>
+    h += `<details class="g-ex" id="ex-${ex.id}" ${exs.length === 1 || G.exAbierto === ex.id ? 'open' : ''}><summary><b>${gEsc(ex.nombre)}</b> <span style="color:var(--gris);font-size:12px">· ${ex.max} pts · ${gEsc((g.criterios.find(c => c.id === ex.criterioId) || {}).nombre || '')}</span>${ex.reactivos ? (ex.revisado === true ? '<span class="g-clave-tag g-clave-ok">✓ Clave revisada</span>' : '<span class="g-clave-tag g-clave-no">⚠ Clave sin revisar</span>') : ''}</summary>
       <div id="gs-${ex.id}" class="g-statline">${gStatsExamen(g, ex)}</div>
-      <div style="margin:8px 0">${ex.reactivos ? `<button class="g-btn g-btn-s" onclick="gVerExamen('${ex.id}')">⬇ Examen</button> <button class="g-btn g-btn-s" onclick="gVerClave('${ex.id}')">⬇ Clave</button> ` : ''}
+      <div style="margin:8px 0">${ex.reactivos ? `<button class="g-btn g-btn-s" onclick="gVerExamen('${ex.id}')">⬇ Examen</button> <button class="g-btn g-btn-s" onclick="gVerClave('${ex.id}')">⬇ Clave</button> <button class="g-btn g-btn-s" onclick="gRevisarGuardado('${ex.id}')">✏️ ${ex.revisado === true ? 'Ver / corregir clave' : 'Revisar clave'}</button> ` : ''}
+      ${ex.reactivos && ex.revisado !== true ? '<div class="g-aviso" style="font-size:12.5px;margin-bottom:6px">Este examen tiene la clave <b>sin revisar</b>: el escáner no lo usará hasta que revises las respuestas y marques «Revisé las respuestas correctas».</div>' : ''}
       <button class="g-btn g-btn-s" onclick="gDescargarResultadosExamen('${ex.id}')">⬇ Resultados</button> <button class="g-btn g-btn-x" onclick="gQuitarExamen('${ex.id}')">Borrar</button></div>
       ${g.alumnos.length ? `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th style="width:110px">Aciertos / pts (de ${ex.max})</th><th style="width:80px">Calif.</th></tr></thead><tbody>` +
         g.alumnos.map((a, i) => { const n = ex.notas[a.id]; const v = n == null ? null : n / ex.max * 10, ne = gEsNE(ex, a.id); return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td><td><input class="g-nota${ne ? ' g-ne-in' : ''}" type="text" inputmode="decimal" autocomplete="off" title="Escribe los aciertos o NE si no entregó. Vacía = sin calificar" value="${ne ? 'NE' : (n == null ? '' : n)}" oninput="gAciertos('${ex.id}','${a.id}',this)"></td><td id="gc-${ex.id}-${a.id}" class="${v != null && v < 6 ? 'g-mal' : ''}">${ne ? 'NE' : gFmt(v)}</td></tr>`; }).join('') + '</tbody></table></div>' : '<p style="color:var(--gris)">Agrega alumnos en «Mis grupos».</p>'}
@@ -2044,19 +2164,29 @@ function gRenderExamenes() {
     <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">⚠ Revisa el examen y la clave antes de aplicarlo: la IA puede equivocarse.</div></div>`}`;
 
   if (G.evalModo !== 'proyecto' && G.borrador && G.borrador.trim === t) {
-    const b = G.borrador;
-    h += `<div class="card" id="g-borrador"><div class="card-title">👀 Revisa tu examen (${gMaxExamen(b)} puntos)</div>
+    const b = G.borrador, edit = !!b.editId, np = gBorrPendientes(b);
+    b.reactivos.forEach(r => { r.revisar = !!gRevReactivo(r); });
+    h += `<div class="card" id="g-borrador"><div class="card-title">${edit ? '✏️ Revisa la clave de tu examen' : '👀 Revisa tu examen'} (${gMaxExamen(b)} puntos)</div>
       <div class="ayuda" style="margin:-4px 0 10px">Este examen suma <b>${gMaxExamen(b)} puntos</b> (lo que vale cada pregunta aparece entre paréntesis). Al capturar los aciertos de cada alumno, la app lo convierte sola a una calificación de 0 a 10.</div>
       <div class="campo"><label>Título</label><input value="${gEsc(b.titulo)}" oninput="gTituloBorrador(this.value)"></div>` +
-      `<div class="ayuda" style="margin:-4px 0 10px">Puedes corregir cualquier pregunta, opción o respuesta directamente aquí, o quitar la que no te guste con ✕.</div>` +
-      b.reactivos.map((r, i) => `<div class="g-reac"><button class="g-x" title="Quitar reactivo" onclick="gQuitarReactivo(${i})">✕</button><b>${i + 1}.</b> <small>(${G_TIPOS_EXAM[r.tipo]}, ${r.valor} pt)</small>
+      `<div class="ayuda" style="margin:-4px 0 10px">Puedes corregir cualquier pregunta, opción o respuesta directamente aquí${edit ? '' : ', o quitar la que no te guste con ✕'}. Los reactivos en <b style="background:#fef3c7;padding:0 4px;border-radius:4px">amarillo</b> traen la clave dudosa: elige tú la respuesta correcta.</div>` +
+      b.reactivos.map((r, i) => {
+        const m = gRevReactivo(r);
+        const resp = r.tipo === 'opcion_multiple' ? `<select style="flex:1" onchange="gEditReac(${i},'respuesta',this.value)"><option value="">— elige la respuesta —</option>${'ABCD'.split('').map(l => `<option value="${l}" ${r.respuesta === l ? 'selected' : ''}>${l}</option>`).join('')}</select>`
+          : r.tipo === 'verdadero_falso' ? `<select style="flex:1" onchange="gEditReac(${i},'respuesta',this.value)"><option value="">— elige la respuesta —</option>${['Verdadero', 'Falso'].map(l => `<option ${r.respuesta === l ? 'selected' : ''}>${l}</option>`).join('')}</select>`
+          : `<input style="flex:1" value="${gEsc(r.respuesta)}" oninput="gEditReac(${i},'respuesta',this.value)">`;
+        return `<div class="g-reac${m ? ' g-reac-rev' : ''}" id="g-reac-${i}">${edit ? '' : `<button class="g-x" title="Quitar reactivo" onclick="gQuitarReactivo(${i})">✕</button>`}<b>${i + 1}.</b> <small>(${G_TIPOS_EXAM[r.tipo]}, ${r.valor} pt)</small> <span class="g-rev-tag" id="g-rv-${i}">${m ? '⚠ Revisar clave: ' + gEsc(m) : ''}</span>
         <textarea rows="2" style="width:100%;margin:4px 0" oninput="gEditReac(${i},'pregunta',this.value)">${gEsc(r.pregunta)}</textarea>` +
         (r.tipo === 'opcion_multiple' ? r.opciones.map((o, k) => `<div style="display:flex;gap:6px;align-items:center;margin:3px 0"><b style="width:18px">${'ABCD'[k]}</b><input style="flex:1" value="${gEsc(o)}" oninput="gEditOpc(${i},${k},this.value)"></div>`).join('') : '') +
-        `<div class="g-resp" style="display:flex;gap:6px;align-items:center">Respuesta: <input style="flex:1" value="${gEsc(r.respuesta)}" oninput="gEditReac(${i},'respuesta',this.value)"></div></div>`).join('') +
-      `<button class="g-btn" onclick="gGuardarExamen()">💾 Guardar para calificar</button>
+        `<div class="g-resp" style="display:flex;gap:6px;align-items:center">Respuesta: ${resp}</div>` +
+        (b.conPda || r.pda ? `<div class="g-pda" style="margin-top:6px;font-size:12px;color:var(--gris)">📌 <b>PDA que evalúa:</b> <textarea rows="2" style="width:100%;margin-top:2px;font-size:12px" placeholder="PDA (aprendizaje esperado)" oninput="gEditReac(${i},'pda',this.value)">${gEsc(r.pda || '')}</textarea></div>` : '') + `</div>`;
+      }).join('') +
+      `<div class="g-revbox"><label style="display:flex;gap:8px;align-items:flex-start;text-transform:none;letter-spacing:0;font-weight:700;font-size:13.5px;margin:0;cursor:pointer"><input type="checkbox" id="g-rev-chk" style="margin-top:3px;width:auto;flex:none;padding:0" ${b.revisado && !np ? 'checked' : ''} ${np ? 'disabled' : ''} onchange="gMarcarRevisado(this.checked)"> <span>Revisé las respuestas correctas</span></label>
+        <div id="g-rev-msg" class="ayuda" style="margin:4px 0 0 26px"></div></div>
+       <button class="g-btn" id="g-btn-guardar" onclick="gGuardarExamen()" ${gBorrListo(b) ? '' : 'disabled'}>${edit ? '💾 Guardar clave revisada' : '💾 Guardar para calificar'}</button>
        <button class="g-btn g-btn-s" onclick="gDescargarExamen(G.borrador,false)">⬇ Examen (Word)</button>
        <button class="g-btn g-btn-s" onclick="gDescargarExamen(G.borrador,true)">⬇ Clave (Word)</button>
-       <button class="g-btn g-btn-s" onclick="gGenerarExamen()">↻ Generar otro</button></div>`;
+       ${edit ? '<button class="g-btn g-btn-s" onclick="G.borrador=null;gRenderExamenes()">Cancelar</button>' : '<button class="g-btn g-btn-s" onclick="gGenerarExamen()">↻ Generar otro</button>'}</div>`;
   }
 
   if (G.evalModo !== 'proyecto') {
@@ -2068,6 +2198,7 @@ function gRenderExamenes() {
 
   }
   gPanel().innerHTML = h;
+  if (G.borrador) gBorrActualizar();
 }
 
 // ============================================================

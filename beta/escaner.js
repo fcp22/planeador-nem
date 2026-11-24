@@ -7,7 +7,9 @@
 
 G.esc = { exId: null, hojas: [], cola: [], restantes: null, activo: 0, modo: '', man: { tipo: 'opcion_multiple', clave: '', n: '', nombre: '', guardadoId: '' }, manEx: null, noGuardar: false };
 
-function escExamenes(g) { return g.actividades.filter(a => a.tipo === 'examen' && Array.isArray(a.reactivos) && a.reactivos.length); }
+// Solo se escanea con exámenes cuya clave el docente ya revisó («Revisé las respuestas correctas»)
+function escConReactivos(g) { return g.actividades.filter(a => a.tipo === 'examen' && Array.isArray(a.reactivos) && a.reactivos.length); }
+function escExamenes(g) { return escConReactivos(g).filter(a => a.revisado === true); }
 function escExamen() { const g = gGrupo(); return g ? escExamenes(g).find(a => a.id === G.esc.exId) || null : null; }
 // examen al que pertenece una hoja (del grupo, o la clave escrita a mano)
 function escExDe(h) { if (h.exObj) return h.exObj; const g = gGrupo(); return g ? escExamenes(g).find(e => e.id === h.exId) || null : null; }
@@ -26,7 +28,7 @@ function gRenderEscaner() {
   let h = (g ? gBarra() : '') + `<div class="sec-title">Escanear examen</div><div class="sec-sub">Fotografía el examen resuelto de cada alumno y la app lee las respuestas, las compara con tu clave y calcula la calificación. Tú revisas antes de guardar.</div>`;
   if (g) h += `<div class="g-chips" style="margin-bottom:12px"><button class="g-chip${man ? '' : ' on'}" onclick="escModo('examen')">📚 Examen de la app</button><button class="g-chip${man ? ' on' : ''}" onclick="escModo('manual')">✍️ Clave manual</button></div>`;
   if (!man && !ex) {
-    h += `<div class="card g-vacio"><div style="font-size:44px;margin-bottom:8px">🧮</div><div>No tienes exámenes creados con IA en este grupo. Puedes crear uno en «Exámenes», o escanear un examen que ya tengas escribiendo tú la clave.</div><button class="g-btn" style="margin-top:14px" onclick="escModo('manual')">✍️ Escribir la clave a mano</button> <button class="g-btn g-btn-s" style="margin-top:14px" onclick="gIrA('examenes')">Ir a «Exámenes»</button></div>`;
+    h += `<div class="card g-vacio"><div style="font-size:44px;margin-bottom:8px">🧮</div><div>${g && escConReactivos(g).length ? `Tienes ${escConReactivos(g).length} examen(es) creado(s) con IA, pero su <b>clave aún no está revisada</b>. Entra a «Exámenes», revisa las respuestas y marca <b>«Revisé las respuestas correctas»</b>; después podrás escanearlos.` : 'No tienes exámenes creados con IA en este grupo. Puedes crear uno en «Exámenes», o escanear un examen que ya tengas escribiendo tú la clave.'}</div><button class="g-btn" style="margin-top:14px" onclick="escModo('manual')">✍️ Escribir la clave a mano</button> <button class="g-btn g-btn-s" style="margin-top:14px" onclick="gIrA('examenes')">Ir a «Exámenes»</button></div>`;
     return void (gPanel().innerHTML = h);
   }
   // 1. Foto de la hoja (cámara o galería): se acumulan y se leen al pulsar «Escanear y calificar»
@@ -77,7 +79,7 @@ function escManualHTML(g) {
 }
 // Exámenes del grupo cuya clave se puede cargar como letras (solo opción múltiple / V-F, o los registrados antes con clave manual)
 function escGuardables(g) {
-  return g ? g.actividades.filter(a => a.tipo === 'examen' && (a.claveManual || (Array.isArray(a.reactivos) && a.reactivos.length && a.reactivos.every(r => r.tipo === 'opcion_multiple' || r.tipo === 'verdadero_falso')))) : [];
+  return g ? g.actividades.filter(a => a.tipo === 'examen' && (a.claveManual || (a.revisado === true && Array.isArray(a.reactivos) && a.reactivos.length && a.reactivos.every(r => r.tipo === 'opcion_multiple' || r.tipo === 'verdadero_falso')))) : [];
 }
 function escClaveDe(a) {
   let L = '';
@@ -167,7 +169,7 @@ async function escEscanear() {
   } else ex = escExamen();
   if (!ex) return;
   const fs = G.esc.cola.map(c => c.file); G.esc.cola.forEach(c => URL.revokeObjectURL(c.url)); G.esc.cola = [];
-  const nuevas = fs.map(f => ({ id: gId(), file: f, estado: 'leyendo', msg: '', thumb: '', nombreLeido: '', aid: '', resp: {}, ok: {}, pts: {}, guardada: false, exId: ex.id, exObj: man ? ex : null }));
+  const nuevas = fs.map(f => ({ id: gId(), file: f, estado: 'leyendo', msg: '', thumb: '', nombreLeido: '', aid: '', resp: {}, ok: {}, rev: {}, pts: {}, guardada: false, exId: ex.id, exObj: man ? ex : null }));
   G.esc.hojas.push(...nuevas); gRenderEscaner();
   const cola = nuevas.slice();   // dos a la vez para ir rápido sin saturar el servidor
   const worker = async () => { while (cola.length) { const h = cola.shift(); await escLeer(h, ex); } };
@@ -190,7 +192,7 @@ async function escLeer(h, ex) {
   const el = document.getElementById('esc-h-' + h.id); if (el) el.outerHTML = escHojaHTML(h); else gRenderEscaner();
   escActualizarGuardar();
 }
-function escActualizarGuardar() { if (G.tab !== 'escaner') return; const btn = document.querySelector('button[onclick="escGuardarTodas()"]'); if (!btn) return; const pend = G.esc.hojas.filter(x => x.estado === 'listo' && !x.guardada && x.aid).length; btn.disabled = !pend; btn.textContent = `💾 Guardar todas las revisadas (${pend})`; }
+function escActualizarGuardar() { if (G.tab !== 'escaner') return; const btn = document.querySelector('button[onclick="escGuardarTodas()"]'); if (!btn) return; const pend = G.esc.hojas.filter(x => x.estado === 'listo' && !x.guardada && x.aid && !escPorRevisar(x)).length; btn.disabled = !pend; btn.textContent = `💾 Guardar todas las revisadas (${pend})`; }
 
 // ── Nombre leído → alumno de la lista ──
 function escBuscarAlumno(nombre, alumnos) {
@@ -203,14 +205,28 @@ function escBuscarAlumno(nombre, alumnos) {
 }
 
 // ── Calificación (la clave está en el examen guardado en este dispositivo) ──
-function escCorrecto(r, lec) {
-  const L = String(lec || '').trim(); if (!L) return false;
-  if (r.tipo === 'opcion_multiple') return L.toUpperCase().charAt(0) === String(r.respuesta).toUpperCase().charAt(0);
-  if (r.tipo === 'verdadero_falso') { const k = gNorm(r.respuesta).charAt(0), l = gNorm(L).charAt(0); return !!k && k === l; }
-  if (r.tipo === 'respuesta_corta') { const k = gNorm(r.respuesta), l = gNorm(L); return !!k && (k === l || (k.length >= 3 && l.includes(k))); }
-  return false;
+// Resultado de un reactivo: 'correcto', 'incorrecto' o 'revisar' (el docente decide con un toque)
+// Respuesta corta: solo cuenta como correcta la coincidencia EXACTA (sin acentos, mayúsculas ni signos); cualquier otra cosa escrita queda «por revisar».
+// Así «no es fotosíntesis» ya no cuenta como acierto solo por contener la palabra clave.
+function escEvaluar(r, lec) {
+  const L = String(lec || '').trim(); if (!L) return 'incorrecto';
+  if (r.tipo === 'opcion_multiple') return L.toUpperCase().charAt(0) === String(r.respuesta).toUpperCase().charAt(0) ? 'correcto' : 'incorrecto';
+  if (r.tipo === 'verdadero_falso') { const k = gNorm(r.respuesta).charAt(0), l = gNorm(L).charAt(0); return !!k && k === l ? 'correcto' : 'incorrecto'; }
+  if (r.tipo === 'respuesta_corta') { const k = gNorm(r.respuesta), l = gNorm(L); if (!k || !l) return 'revisar'; return k === l ? 'correcto' : 'revisar'; }
+  return 'incorrecto';
 }
-function escCalcular(h, ex) { ex.reactivos.forEach((r, i) => { if (r.tipo !== 'desarrollo') h.ok[i + 1] = escCorrecto(r, (h.resp[i + 1] || {}).r); else if (h.pts[i + 1] == null) h.pts[i + 1] = 0; }); }
+function escCorrecto(r, lec) { return escEvaluar(r, lec) === 'correcto'; }
+function escPorRevisar(h) { return Object.keys(h.rev || {}).filter(k => h.rev[k]).length; }
+function escCalcular(h, ex) {
+  h.rev = {};
+  ex.reactivos.forEach((r, i) => {
+    if (r.tipo === 'desarrollo') { if (h.pts[i + 1] == null) h.pts[i + 1] = 0; return; }
+    const v = escEvaluar(r, (h.resp[i + 1] || {}).r);
+    h.ok[i + 1] = v === 'correcto'; if (v === 'revisar') h.rev[i + 1] = true;
+  });
+}
+// El docente decide una respuesta «por revisar» con un toque
+function escDecidir(id, n, bueno) { const h = escHoja(id); h.ok[n] = !!bueno; delete h.rev[n]; escRef(id); }
 function escTotal(h, ex) { return ex.reactivos.reduce((s, r, i) => s + (r.tipo === 'desarrollo' ? Math.min(r.valor || 1, Math.max(0, +h.pts[i + 1] || 0)) : (h.ok[i + 1] ? (r.valor || 1) : 0)), 0); }
 
 function escHojaHTML(h) {
@@ -228,16 +244,16 @@ function escHojaHTML(h) {
   }
   c += `<table style="width:100%;border-collapse:collapse;font-size:12.5px"><tr style="color:var(--gris);text-align:left"><th>#</th><th>Leído</th><th>Clave</th><th style="text-align:center">Punt.</th></tr>`;
   ex.reactivos.forEach((r, i) => {
-    const n = i + 1, x = h.resp[n] || { r: '', duda: false }, duda = x.duda && r.tipo !== 'desarrollo';
-    c += `<tr style="${duda ? 'background:#fffbeb' : ''};border-top:1px solid var(--borde)"><td style="padding:4px 4px"><b>${n}</b></td>`;
+    const n = i + 1, x = h.resp[n] || { r: '', duda: false }, duda = x.duda && r.tipo !== 'desarrollo', porRev = !!(h.rev && h.rev[n]);
+    c += `<tr style="${duda || porRev ? 'background:#fffbeb' : ''};border-top:1px solid var(--borde)"><td style="padding:4px 4px"><b>${n}</b></td>`;
     if (r.tipo === 'desarrollo') c += `<td colspan="2" style="color:var(--gris)">Desarrollo — pon los puntos →</td><td style="text-align:center"><input type="number" min="0" max="${r.valor || 1}" step="0.5" value="${h.pts[n] == null ? 0 : h.pts[n]}" style="width:54px;padding:3px" onchange="escPts('${h.id}',${n},this.value)"> /${r.valor || 1}</td></tr>`;
     else c += `<td><input value="${gEsc(x.r)}" style="width:${r.tipo === 'respuesta_corta' ? '100%' : '46px'};padding:3px;border:1px solid var(--borde);border-radius:6px;text-align:${r.tipo === 'respuesta_corta' ? 'left' : 'center'}" onchange="escLeido('${h.id}',${n},this.value)">${duda ? ' <span title="Revisa esta respuesta">⚠️</span>' : ''}</td>
-      <td style="color:var(--gris)">${gEsc(String(r.respuesta).slice(0, 24))}</td><td style="text-align:center"><button class="g-btn ${h.ok[n] ? '' : 'g-btn-s'}" style="margin:0;padding:3px 10px;${h.ok[n] ? 'background:#16a34a' : 'color:#dc2626'}" onclick="escToggle('${h.id}',${n})">${h.ok[n] ? '✓ ' + (r.valor || 1) : '✗ 0'}</button></td></tr>`;
+      <td style="color:var(--gris)">${gEsc(String(r.respuesta).slice(0, 24))}</td><td style="text-align:center">${h.rev && h.rev[n] ? `<div style="font-size:10.5px;font-weight:700;color:#92400e;margin-bottom:2px">POR REVISAR</div><button class="g-btn" style="margin:0 2px 0 0;padding:3px 9px;background:#16a34a" title="Cuenta como correcta" onclick="escDecidir('${h.id}',${n},true)">✓ ${r.valor || 1}</button><button class="g-btn g-btn-s" style="margin:0;padding:3px 9px;color:#dc2626" title="Cuenta como incorrecta" onclick="escDecidir('${h.id}',${n},false)">✗ 0</button>` : `<button class="g-btn ${h.ok[n] ? '' : 'g-btn-s'}" style="margin:0;padding:3px 10px;${h.ok[n] ? 'background:#16a34a' : 'color:#dc2626'}" onclick="escToggle('${h.id}',${n})">${h.ok[n] ? '✓ ' + (r.valor || 1) : '✗ 0'}</button>`}</td></tr>`;
   });
   c += `</table>`;
   const tot = escTotal(h, ex), cal = tot / ex.max * 10, dest = sin ? null : escDestino(h, false), ant = h.aid && dest ? dest.notas[h.aid] : null;
-  c += `<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>Total: ${tot} / ${ex.max}</b> <span style="color:${cal < 6 ? '#dc2626' : '#16a34a'};font-weight:700">Calif. ${gFmt(cal)}</span>
-    ${sin ? '' : h.guardada ? '<span style="color:#16a34a;font-weight:600">✓ Guardada</span>' : `<button class="g-btn" onclick="escGuardar('${h.id}')"${h.aid ? '' : ' disabled'}>💾 Guardar</button>`}<button class="g-btn g-btn-s" onclick="escQuitar('${h.id}')">Quitar</button></div>
+  c += `<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>Total: ${tot} / ${ex.max}</b> <span style="color:${cal < 6 ? '#dc2626' : '#16a34a'};font-weight:700">Calif. ${gFmt(cal)}${escPorRevisar(h) ? ' (provisional)' : ''}</span>
+    ${sin ? '' : h.guardada ? '<span style="color:#16a34a;font-weight:600">✓ Guardada</span>' : `<button class="g-btn" onclick="escGuardar('${h.id}')"${h.aid && !escPorRevisar(h) ? '' : ' disabled'}>💾 Guardar</button>`}${escPorRevisar(h) ? `<span style="color:#92400e;font-weight:600;font-size:12.5px">Decide las ${escPorRevisar(h)} respuesta(s) por revisar para guardar</span>` : ''}<button class="g-btn g-btn-s" onclick="escQuitar('${h.id}')">Quitar</button></div>
     ${ant != null && !h.guardada ? `<div style="font-size:11.5px;color:#b45309;margin-top:4px">Este alumno ya tiene ${ant} pts capturados en este examen; al guardar se reemplazan.</div>` : ''}`;
   return c + '</div></div>';
 }
@@ -245,8 +261,8 @@ function escHoja(id) { return G.esc.hojas.find(h => h.id === id); }
 function escRef(id) { const h = escHoja(id), el = document.getElementById('esc-h-' + id); if (h && el) el.outerHTML = escHojaHTML(h); escActualizarGuardar(); }
 function escAlumno(id, aid) { const h = escHoja(id); h.aid = aid; escRef(id); }
 function escNombre(id, v) { const h = escHoja(id); if (h) h.nombreLeido = v.trim(); }
-function escLeido(id, n, v) { const h = escHoja(id), ex = escExDe(h); h.resp[n] = { r: v.trim(), duda: false }; h.ok[n] = escCorrecto(ex.reactivos[n - 1], v); escRef(id); }
-function escToggle(id, n) { const h = escHoja(id); h.ok[n] = !h.ok[n]; escRef(id); }
+function escLeido(id, n, v) { const h = escHoja(id), ex = escExDe(h); h.resp[n] = { r: v.trim(), duda: false }; h.rev = h.rev || {}; const e = escEvaluar(ex.reactivos[n - 1], v); h.ok[n] = e === 'correcto'; if (e === 'revisar') h.rev[n] = true; else delete h.rev[n]; escRef(id); }
+function escToggle(id, n) { const h = escHoja(id); h.ok[n] = !h.ok[n]; if (h.rev) delete h.rev[n]; escRef(id); }
 function escPts(id, n, v) { const h = escHoja(id); h.pts[n] = gNum(v) || 0; escRef(id); }
 function escQuitar(id) { G.esc.hojas = G.esc.hojas.filter(h => h.id !== id); gRenderEscaner(); }
 function escVerFoto(id) { const h = escHoja(id); if (!h || !h.thumb) return; const w = window.open('', '_blank'); if (w) { w.document.write(`<title>Foto del examen</title><body style="margin:0;background:#111"><img src="${h.thumb}" style="max-width:100%;display:block;margin:auto">`); w.document.close(); } }
@@ -260,16 +276,16 @@ function escDestino(h, crear) {
   return a || null;
 }
 function escGuardar(id, sinRender) {
-  const h = escHoja(id), ex = h && escExDe(h); if (!h || !ex || !h.aid || h.guardada || escSin()) return false;
+  const h = escHoja(id), ex = h && escExDe(h); if (!h || !ex || !h.aid || h.guardada || escSin() || escPorRevisar(h)) return false;
   const d = escDestino(h, true); if (!d) return false;
   d.notas[h.aid] = escTotal(h, ex); h.guardada = true; gGuardar(); if (!sinRender) escRef(id); return true;
 }
 function escGuardarTodas() {
-  let n = 0; escHojasVis().filter(h => h.estado === 'listo' && !h.guardada && h.aid).forEach(h => { if (escGuardar(h.id, true)) n++; });
+  let n = 0; escHojasVis().filter(h => h.estado === 'listo' && !h.guardada && h.aid && !escPorRevisar(h)).forEach(h => { if (escGuardar(h.id, true)) n++; });
   gRenderEscaner(); if (n) gAviso(`Listo: se guardaron las calificaciones de ${n} alumno(s). Las ves en «Exámenes» y «Calificaciones».`);
 }
 function escCopiar() {
-  const filas = escHojasVis().filter(h => h.estado === 'listo').map(h => { const ex = escExDe(h), tot = escTotal(h, ex); return `${h.nombreLeido || '(sin nombre)'}\t${tot}\t${gFmt(tot / ex.max * 10)}`; });
+  const filas = escHojasVis().filter(h => h.estado === 'listo').map(h => { const ex = escExDe(h), tot = escTotal(h, ex); return `${h.nombreLeido || '(sin nombre)'}\t${tot}\t${escPorRevisar(h) ? 'por revisar' : gFmt(tot / ex.max * 10)}`; });
   if (!filas.length) { gAviso('Todavía no hay hojas leídas.'); return; }
   const txt = 'Alumno\tAciertos\tCalificación\n' + filas.join('\n');
   const ok = () => gAviso('Copiado: pégalo en Excel, Word o WhatsApp.');
