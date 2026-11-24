@@ -1205,3 +1205,35 @@ function datosSEPDesdeRuta(d, ruta, comp) {
     cotejo,
   };
 }
+
+// ── Ejemplo de cada formato (miniaturas del selector «Formato de tu plano») ──
+// Se arma con los mismos constructores que el plano real, pero con datos de ejemplo.
+function fmtEjemploHTML(fmt, modalidad) {
+  const cont = [{ titulo: 'La diversidad de lenguas y su uso en la comunicación familiar, escolar y comunitaria.', pdas: { '1': 'Reconoce y valora las lenguas que se hablan en su comunidad.', '2': 'Reconoce y valora las lenguas que se hablan en su comunidad.', '3': 'Analiza y reconoce algunas variantes lingüísticas de la lengua española.' } }];
+  const d = { docente: 'Nombre del docente', grado: '3', campo: 'Lenguajes', disciplina: 'Español', escuela: 'Escuela Secundaria «Ejemplo»', cct: '00DES0000X', cicloEscolar: '2026-2027', zona: '00', grupo: 'A, B, C',
+    trimestre: '2', numSesiones: '13', duracionSesion: '50', nombreProyecto: 'Mi proyecto de ejemplo', modalidad: 'Aprendizaje basado en proyectos comunitarios',
+    ejes: 'Inclusión, Pensamiento crítico', perfil: '1. Reconocen que son ciudadanas y ciudadanos con derechos y responsabilidades.', problematizacion: 'Aquí va la problemática de tu escuela o comunidad.',
+    proposito: 'Aquí va el propósito de tu proyecto.', productoIntegrador: 'Cuento', contenidos: cont, codiseno: '', tipoEscuela: '' };
+  const fs = (typeof FP !== 'undefined') ? FP.fechas : null, so = window.__secOff;
+  if (fs) FP.fechas = []; window.__secOff = {};
+  try {
+    if (modalidad === 'secuencia') {
+      const c = { i: 1, nombre: 'Secuencia de ejemplo', sesiones: 5, contenidos: cont, proposito: 'Aquí va el propósito.', producto: 'Cuento' };
+      const h = secHorario(5, 50);
+      const bl = n => Array.from({ length: n }, () => ({ docente: '1) (10 min) Presenta el tema y recupera saberes previos. 2) (40 min) Guía la actividad.', alumnado: '1) (10 min) Participan. 2) (40 min) Trabajan en equipo.', forma: 'Grupal', recursos: 'Libreta, pizarrón' }));
+      const ia = { situacion: 'Situación de aprendizaje de ejemplo.', finalidades: 'Finalidades del campo.', especificidad: 'Especificidad del campo.', organizacion: 'Grupal y en equipos', espacios: 'Aula', materiales: 'Libreta',
+        fases: { inicio: { proposito: 'Despertar el interés', bloques: bl(h.inicio.length) }, desarrollo: { proposito: 'Trabajo central', bloques: bl(h.desarrollo.length) }, cierre: { proposito: 'Socializar', bloques: bl(h.cierre.length) } },
+        evaluacion: [{ criterio: 'Demuestra lo aprendido en su producto', evidencia: 'Cuento', instrumento: 'Lista de cotejo', ponderacion: '60%' }, { criterio: 'Participa y colabora', evidencia: 'Observación', instrumento: 'Escala', ponderacion: '40%' }], adecuaciones: 'Ajustes razonables según el grupo.' };
+      return fmt === '2' ? secBloqueSEP(d, c, h, ia, 1) : secBloqueHTML(d, c, h, ia, 1);
+    }
+    if (fmt === '2') {
+      const ia = { momentos: Array.from({ length: 11 }, (_, i) => ({ actividades: ['Se presentará el tema y se recuperarán saberes previos.', 'Los alumnos participarán en equipos.'], recursos: ['Libreta', 'Lista de asistencia'] })),
+        producto: 'Cuento', criterios: [{ c: 'Actividades en la libreta', p: 40 }, { c: 'Producto final', p: 30 }, { c: 'Participación', p: 15 }, { c: 'Actitudes y valores', p: 15 }], observaciones: 'Después de cada momento se revisarán las actividades.', enfoque: 'Enfoque didáctico de la disciplina.', cotejo: ['El producto cumple con lo solicitado', 'Presenta ideas con claridad'] };
+      return construirHTMLPlanoSEP(d, datosSEPDesdeIA(d, ia));
+    }
+    const ia = { perfil: 'Rasgos del perfil de egreso.', finalidades: 'Finalidades del campo formativo.', especificidad: 'Especificidades del campo.', productos: {}, productoIntegrador: 'Cuento',
+      f1actividades: 'Clase 1 — Inicio: …', f2actividades: 'Clase 4 — Desarrollo: …', f3actividades: 'Clase 8 — Cierre: …' };
+    return construirHTMLPlanDidactico(d, ia);
+  } catch (e) { return '<p>Vista previa no disponible.</p>'; }
+  finally { if (fs) FP.fechas = fs; window.__secOff = so; }
+}

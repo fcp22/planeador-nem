@@ -259,6 +259,40 @@ ${tabla(tr(th('Criterio', '32%'), th('Evidencia', '30%'), th('Instrumento', '26%
 ${tabla(tr(th('Adecuaciones / ajustes razonables', '22%'), td(secTxt(ia.adecuaciones))))}`;
 }
 
+// FORMATO 2 de una secuencia: «Plan de clase o secuencia didáctica» (ACTIVIDADES | FECHA | RECURSOS por sesión)
+// Usa lo mismo que escribió la IA para el formato de tabla, así no cuesta otra llamada.
+function secBloqueSEP(d, c, h, ia, nSec) {
+  const dur = secDuracion(), off = (window.__secOff && window.__secOff[c.i]) || 0;
+  const pasos = t => String(t || '').split(/(?:^|\s)\d{1,2}\)\s+/).map(x => x.trim()).filter(Boolean);
+  const lista = t => String(t || '').split(/\s*[,;\n]\s*/).map(x => x.trim()).filter(Boolean);
+  const ev = Array.isArray(ia.evaluacion) ? ia.evaluacion : [];
+  const hecho = (fn, arr, f) => {
+    const bl = (f && Array.isArray(f.bloques)) ? f.bloques : [];
+    return { n: fn, mom: arr.map((b, k) => {
+      const x = bl[k] || {};
+      const ft = (typeof fpTexto === 'function') ? fpTexto(off + b.sesion) : '';
+      return { n: `Sesión ${b.sesion} · ${b.min} min`, acts: pasos(x.docente).concat(pasos(x.alumnado)), rec: lista(x.recursos), fecha: ft || 'Sesión ' + b.sesion };
+    }) };
+  };
+  const f = (ia.fases || {});
+  const producto = String(c.producto || '').trim();
+  const dt = {
+    fases: [hecho('INICIO', h.inicio, f.inicio), hecho('DESARROLLO', h.desarrollo, f.desarrollo), hecho('CIERRE', h.cierre, f.cierre)],
+    producto, evaluacion: 'Formativa',
+    criterios: ev.map(e => [String(e.criterio || '').trim(), parseInt(String(e.ponderacion || '').replace(/[^\d]/g, ''), 10)]),
+    observaciones: String(ia.adecuaciones || '').trim(),
+    enfoque: String(ia.especificidad || '').trim(),
+    tipoProyecto: 'Secuencia didáctica',
+    sesionesTxt: c.sesiones + (c.sesiones > 1 ? ' sesiones' : ' sesión') + ' de ' + dur + ' min',
+    fechaTxt: (typeof fpTexto === 'function') ? fpTexto(off + 1, off + c.sesiones) : '',
+    cotejoTitulo: 'LISTA DE COTEJO PARA EVALUAR ' + (producto ? producto.toUpperCase() : 'LA SECUENCIA'),
+    cotejo: ev.map(e => String(e.criterio || '').trim()).filter(Boolean).concat(['Entrega su trabajo en el tiempo acordado.', 'Participa y colabora respetando las ideas de los demás.']),
+  };
+  const d2 = Object.assign({}, d, { contenidos: c.contenidos, nombreProyecto: c.nombre || 'Secuencia didáctica', proposito: c.proposito || '', problematizacion: ia.situacion || d.situacion || '',
+    productoIntegrador: producto, ejes: d.ejes || ia.ejes || '', perfil: d.perfil || ia.perfil || '', modalidad: 'Secuencia didáctica', codiseno: '' });
+  return (nSec > 1 ? `<h3 style="text-align:center;margin:8px 0;">Secuencia ${c.i} de ${nSec}</h3>` : '') + construirHTMLPlanoSEP(d2, dt);
+}
+
 // Sustituye a la generación anterior (sesiones sueltas): una llamada por secuencia, con respaldo si una falla
 async function generarSecuenciaDidactica(d) {
   const todas = secLeer(); if (!todas.length) throw new Error('Elige cuántas secuencias vas a planear.');
@@ -287,7 +321,7 @@ async function generarSecuenciaDidactica(d) {
     for (let intento = 0; ; intento++) {
       try {
         const ia = parsearJSON(await llamarGeminiJSON(secPrompt(d, c, h, n), 'secuencia'));
-        return { c, html: secBloqueHTML(d, c, h, ia, todas.length) };
+        return { c, html: (typeof formatoPlano !== 'undefined' && formatoPlano === '2') ? secBloqueSEP(d, c, h, ia, todas.length) : secBloqueHTML(d, c, h, ia, todas.length) };
       } catch (e) {
         // un reintento si el servicio estaba ocupado (no si es un problema de licencia o cuota)
         const deLicencia = typeof LIC_CODIGOS !== 'undefined' && LIC_CODIGOS.includes(e.codigo);

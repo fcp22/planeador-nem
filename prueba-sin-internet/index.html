@@ -529,6 +529,10 @@ details.card[open]>summary.card-title{margin-bottom:18px;padding-bottom:12px;bor
    Con 16 px en los campos no se amplía y la pantalla siempre cabe. */
 @media(max-width:1024px){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px !important;}}
 html{-webkit-text-size-adjust:100%;}
+.fmt-mini{margin-top:10px;height:170px;overflow:hidden;border:1px solid #cbd5e1;border-radius:6px;background:#fff;position:relative;cursor:zoom-in;text-align:left;}
+.fmt-mini::after{content:"";position:absolute;left:0;right:0;bottom:0;height:40px;background:linear-gradient(transparent,#fff);pointer-events:none;}
+.fmt-mini>.fmt-in{width:820px;transform-origin:top left;color:#000;font-family:Arial,sans-serif;font-size:12px;line-height:1.25;pointer-events:none;padding:8px;box-sizing:border-box;}
+.fmt-mini .fmt-in table{border-collapse:collapse;}
 </style>
 </head>
 <body>
@@ -1197,16 +1201,20 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
           <div class="card-title">🗂️ Formato de tu plano</div>
           <p style="margin:0 0 10px;font-size:13px;color:var(--gris);">Elige cómo quieres que salga tu plano. Puedes cambiarlo cuando quieras y volver a generar.</p>
           <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <div class="tipo-btn on" id="fbtn-2" onclick="setFormatoPlano('2')" style="flex:1;min-width:220px;padding:14px;">
+            <div class="tipo-btn on" id="fbtn-2" onclick="setFormatoPlano('2')" style="flex:1;min-width:240px;padding:14px;">
               <span class="ico" style="font-size:22px;">📝</span>
               <div class="tit">Formato 2 · Plan de clase o secuencia didáctica</div>
-              <div class="desc">Actividades por momento con fecha y recursos, producto, criterios con porcentaje y lista de cotejo</div>
+              <div class="desc" id="fdesc-2">Actividades por momento con fecha y recursos, producto, criterios con porcentaje y lista de cotejo</div>
               <div style="margin-top:6px;font-size:11.5px;font-weight:700;color:var(--verde,#15803d);">⭐ El que más se ajusta a la mayoría de los maestros</div>
+              <div class="fmt-mini" id="fmini-2" onclick="fmtVerEjemplo('2',event)" title="Toca para ver el ejemplo más grande"></div>
+              <div style="margin-top:4px;font-size:11.5px;color:var(--azul,#2563a8);font-weight:600;">🔍 Toca la vista previa para verla más grande</div>
             </div>
-            <div class="tipo-btn" id="fbtn-1" onclick="setFormatoPlano('1')" style="flex:1;min-width:220px;padding:14px;">
+            <div class="tipo-btn" id="fbtn-1" onclick="setFormatoPlano('1')" style="flex:1;min-width:240px;padding:14px;">
               <span class="ico" style="font-size:22px;">📋</span>
-              <div class="tit">Formato 1 · Plano didáctico</div>
-              <div class="desc">Tabla por fases con sesiones, materiales y evaluación sumativa (formato ATP)</div>
+              <div class="tit">Formato 1 · <span id="ftit-1">Plano didáctico</span></div>
+              <div class="desc" id="fdesc-1">Tabla por fases con sesiones, materiales y evaluación sumativa (formato ATP)</div>
+              <div class="fmt-mini" id="fmini-1" onclick="fmtVerEjemplo('1',event)" title="Toca para ver el ejemplo más grande"></div>
+              <div style="margin-top:4px;font-size:11.5px;color:var(--azul,#2563a8);font-weight:600;">🔍 Toca la vista previa para verla más grande</div>
             </div>
           </div>
           <p id="fmt-nota" style="margin:10px 0 0;font-size:12.5px;color:var(--gris);"></p>
@@ -1256,11 +1264,11 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
 <script src="licencia.js?v=202611191930"></script>
 <script src="curriculum.js?v=202611180600"></script>
 <script src="projects.js?v=202611180600"></script>
-<script src="generators.js?v=202611231500"></script>
-<script src="metodologias.js?v=202611231500"></script>
+<script src="generators.js?v=202611232100"></script>
+<script src="metodologias.js?v=202611232100"></script>
 <script src="ruta-ui.js?v=202611180600"></script>
 <script src="fechas-plan.js?v=202611231800"></script>
-<script src="secuencias.js?v=202611231500"></script>
+<script src="secuencias.js?v=202611232100"></script>
 <script src="sugerencias-plano.js?v=202611180600"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
@@ -1427,6 +1435,7 @@ function setTipo(t){
   document.getElementById('sec-a').classList.toggle('hidden',t!=='a');
   document.getElementById('sec-d').classList.toggle('hidden',t!=='d');
   if(t==='d'&&typeof fpRefrescarHorario==='function') fpRefrescarHorario();
+  if(t==='d') setTimeout(mostrarFormatoPlano, 50);
 }
 
 // ── FORMATO DEL PLANO: 1 = Plano didáctico (ATP) · 2 = Plan de clase o secuencia didáctica ──
@@ -1447,7 +1456,37 @@ function setFormatoPlano(f, noGuardar){
 function mostrarFormatoPlano(){
   const c = document.getElementById('card-fmt-plano'); if (!c) return;
   const tg = document.getElementById('d-tgen');
-  c.classList.toggle('hidden', modalidadD !== 'proyecto' || (tg && tg.value === 'semanal'));
+  // En «Proyecto» solo aplica al plano del trimestre completo; en «Secuencia didáctica» siempre
+  c.classList.toggle('hidden', modalidadD === 'proyecto' && !!(tg && tg.value === 'semanal'));
+  const sec = modalidadD === 'secuencia';
+  const t1 = document.getElementById('ftit-1'); if (t1) t1.textContent = sec ? 'Secuencia con tabla por sesión' : 'Plano didáctico';
+  const d1 = document.getElementById('fdesc-1'); if (d1) d1.textContent = sec ? 'Una tabla por fase (inicio, desarrollo y cierre) con actividades del docente y del alumnado' : 'Tabla por fases con sesiones, materiales y evaluación sumativa (formato ATP)';
+  setFormatoPlano(formatoPlano, true);
+  if (!c.classList.contains('hidden')) fmtPintarMiniaturas();
+}
+// Miniaturas: el mismo ejemplo del formato, reducido para que quepa en la tarjeta
+function fmtPintarMiniaturas(){
+  ['1','2'].forEach(f => {
+    const box = document.getElementById('fmini-'+f); if (!box) return;
+    const clave = f + '|' + modalidadD;
+    if (box.dataset.k !== clave) {
+      box.dataset.k = clave;
+      try { box.innerHTML = '<div class="fmt-in">' + fmtEjemploHTML(f, modalidadD) + '</div>'; } catch (e) { box.innerHTML = ''; }
+    }
+    const w = box.clientWidth || 260, inn = box.firstChild;
+    if (inn) inn.style.transform = 'scale(' + (w / 820).toFixed(3) + ')';
+  });
+}
+window.addEventListener('resize', () => { try { fmtPintarMiniaturas(); } catch (e) {} });
+// Ejemplo en grande (ventana que se cierra al tocar fuera o con el botón)
+function fmtVerEjemplo(f, ev){
+  if (ev) { ev.stopPropagation(); }
+  setFormatoPlano(f);
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:950;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:20px 10px;';
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  ov.innerHTML = '<div style="background:#fff;border-radius:12px;max-width:900px;width:100%;padding:16px;color:#000"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><b style="font-size:15px;">Ejemplo del formato (con datos de muestra)</b><button class="btn-sec" style="padding:6px 12px" onclick="this.closest(\'div[style*=fixed]\').remove()">✕ Cerrar</button></div>' + fmtEjemploHTML(f, modalidadD) + '</div>';
+  document.body.appendChild(ov);
 }
 setFormatoPlano(formatoPlano, true);
 
