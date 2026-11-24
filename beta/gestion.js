@@ -753,7 +753,7 @@ function gGuardarEdicionGrupo() {
   gGuardar(); gRender();
   if (cambioMat) setTimeout(() => gAviso('Listo. El grupo ahora es «' + nombre + ' · ' + materia + '» (' + grado + '°). Las listas, calificaciones y exámenes que ya tenías se conservan.'), 50);
 }
-function gLimpiarNombre(l) { return l.replace(/^\s*\d+\s*[.)\-:]*\s*/, '').replace(/\s+/g, ' ').trim(); }
+function gLimpiarNombre(l) { return l.replace(/^\s*\d+\s*[.)\-:]*\s*/, '').replace(/\s*\/\s*/g, ' ').replace(/\s+/g, ' ').trim(); } // «BAEZA / PECH / JONATHAN» → «BAEZA PECH JONATHAN»
 function gAgregarAlumnos(idTa) {
   const g = gGrupo(); if (!g) return;
   const ta = document.getElementById(idTa || 'gg-lista');

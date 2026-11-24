@@ -139,6 +139,10 @@ function SUITE() {
   const an = privAnonimizar('Juan Pérez falta mucho y MARÍA HERNÁNDEZ CRUZ también. juan perez lopez otra vez.', nombres);
   eq('Nombres de alumnos → «Alumno N»', an.texto, 'Alumno 1 falta mucho y Alumno 2 también. Alumno 1 otra vez.');
   eq('Texto sin nombres queda igual', privAnonimizar('Los alumnos de segundo leen poco', nombres).hallazgos.length, 0);
+  S('Lista de alumnos · nombres con diagonales');
+  eq('«APELLIDO / APELLIDO / NOMBRE» → sin diagonales', gLimpiarNombre('BAEZA / PECH / JONATHAN ALEJANDRO'), 'BAEZA PECH JONATHAN ALEJANDRO');
+  eq('Se sigue quitando el número del inicio', gLimpiarNombre('1. AGUILAR PECH JUAN'), 'AGUILAR PECH JUAN');
+  eq('Excel con columna «APELLIDO 1 / APELLIDO 2 / NOMBRE(S)» → detecta los nombres', gExtraerNombres([['No.', 'APELLIDO 1 / APELLIDO 2 / NOMBRE(S)'], ['1', 'BAEZA / PECH / JONATHAN ALEJANDRO'], ['2', 'BE / CANCHE / FRANGEL ALONSO'], ['3', 'BE / LOPEZ / AARON ISRAEL']]), ['BAEZA PECH JONATHAN ALEJANDRO', 'BE CANCHE FRANGEL ALONSO', 'BE LOPEZ AARON ISRAEL']);
   const cv = document.createElement('canvas'); cv.width = 400; cv.height = 500; const cx = cv.getContext('2d'); cx.fillStyle = '#f00'; cx.fillRect(0, 0, 400, 500); cx.fillStyle = '#00f'; cx.fillRect(0, 400, 400, 100);
   return new Promise(res => cv.toBlob(async b => {
     const f = new File([b], 'h.png', { type: 'image/png' });
