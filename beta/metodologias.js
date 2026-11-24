@@ -1082,3 +1082,126 @@ ${tr(th('Observaciones'), td(''))}
 ${tr(th('Ajustes (de tiempo, espacios, organización, materiales y/o recursos, para atender a la diversidad)'), td(listaHTML(ajustes) + (ruta.bap ? `<p style="margin:4px 0 0;"><strong>BAP y diversidad identificadas:</strong> ${escM(ruta.bap)}</p>` : '')))}
 </table>`;
 }
+
+// ══════════════════════════════════════════════════════════
+// FORMATO 2 DEL PLANO — «PLAN DE CLASE O SECUENCIA DIDÁCTICA»
+// Columnas ACTIVIDADES | FECHA | RECURSOS por fase y momento, producto, evaluación con
+// porcentajes, observaciones y lista de cotejo (el formato que usan muchos docentes).
+// dt = { fases:[{n, mom:[{n, acts[], rec[], fecha}]}], producto, evaluacion, criterios:[[texto,%]],
+//        observaciones, enfoque, cotejoTitulo, cotejo[], fechaTxt }
+// ══════════════════════════════════════════════════════════
+const SEP_MOMENTOS_ABPC = [
+  ['FASE 1. PLANEACIÓN', ['Momento 1. Identificación', 'Momento 2. Recuperación', 'Momento 3. Planificación']],
+  ['FASE 2. ACCIÓN', ['Momento 4. Acercamiento', 'Momento 5. Comprensión y producción', 'Momento 6. Reconocimiento', 'Momento 7. Concreción']],
+  ['FASE 3. INTERVENCIÓN', ['Momento 8. Integración', 'Momento 9. Difusión', 'Momento 10. Consideraciones', 'Momento 11. Avances']],
+];
+
+// Los porcentajes de los criterios deben sumar 100: se ajustan sin cambiar el orden ni borrar criterios.
+function normalizarCriteriosSEP(crit) {
+  let c = (crit || []).map(x => Array.isArray(x) ? [String(x[0] || '').trim(), Number(x[1])] : [String(x && (x.c || x.criterio || x.nombre) || '').trim(), Number(x && (x.p || x.pct || x.porcentaje))])
+    .filter(x => x[0] && isFinite(x[1]) && x[1] > 0).map(x => [x[0], Math.round(x[1])]);
+  if (!c.length) return [['Actividades en la libreta de apuntes', 40], ['Producto final', 30], ['Participación', 10], ['Actitudes y valores', 10], ['Actividad de evaluación', 10]];
+  let suma = c.reduce((a, x) => a + x[1], 0);
+  if (suma !== 100) {
+    c = c.map(x => [x[0], Math.max(1, Math.round(x[1] * 100 / suma))]);
+    suma = c.reduce((a, x) => a + x[1], 0);
+    let iMax = 0; c.forEach((x, i) => { if (x[1] > c[iMax][1]) iMax = i; });
+    c[iMax][1] += 100 - suma;
+  }
+  return c;
+}
+
+function construirHTMLPlanoSEP(d, dt) {
+  const AZ = '#DCE6F1', B = '1px solid #000';
+  const cel = (t, ex) => `<td style="border:${B};padding:4px 7px;vertical-align:top;${ex || ''}">${t || '&nbsp;'}</td>`;
+  const sh = (t, ex) => cel(`<strong>${t}</strong>`, `background:${AZ};${ex || ''}`);
+  const tabla = (filas, ex) => `<table style="width:100%;border-collapse:collapse;margin-bottom:10px;${ex || ''}">${filas}</table>`;
+  const centro = t => `<p style="text-align:center;margin:0;font-weight:bold;">${t}</p>`;
+  const trNom = { '1': 'PRIMERO', '2': 'SEGUNDO', '3': 'TERCERO' }[String(d.trimestre)] || '';
+  const ciclo = (d.cicloEscolar || '').trim() || '2026-2027';
+  const zona = (d.zona || '').trim();
+  const ejes = (d.ejes || '').split(/\s*[,|]\s*/).filter(Boolean);
+  const rasgos = (d.perfil || '').split(/\n\n+/).map(x => x.trim()).filter(Boolean);
+  const bullet = t => `<p style="margin:2px 0 2px 4px;text-align:justify;">&#10070; ${escM(t)}</p>`;
+  const cont = d.contenidos || [];
+
+  const encabezado = `
+${centro('SECRETARÍA DE EDUCACIÓN PÚBLICA')}${centro('DIRECCIÓN DE EDUCACIÓN SECUNDARIA')}${centro('CICLO ESCOLAR ' + escM(ciclo))}${zona ? centro('ZONA ESCOLAR ' + escM(zona)) : ''}
+<p style="margin:0 0 6px;">&nbsp;</p>
+${tabla(`<tr>${sh('ESCUELA: ' + escM(d.escuela || ''))}${sh('C.C.T.: ' + escM(d.cct || ''))}${sh('DISCIPLINA: ' + escM(d.disciplina || '') + '<br>GRADO: ' + escM(d.grado || '') + '°')}${sh('GRUPOS: ' + escM(d.grupo || ''))}</tr>
+<tr>${cel('<strong>PROFESOR(A):</strong> ' + escM(d.docente || ''), 'background:' + AZ + ';')}${cel('<strong>TRIMESTRE:</strong> ' + trNom, 'background:' + AZ + ';')}${cel('<strong>CAMPO FORMATIVO:</strong> ' + escM(d.campo || ''), 'background:' + AZ + ';')}${cel('<strong>MODALIDAD:</strong> ' + escM(d.modalidad || ''), 'background:' + AZ + ';')}</tr>`)}
+${tabla(`<tr>${cel('<strong>PROBLEMATIZACIÓN:</strong><br>' + escM(d.problematizacion || ''), 'width:50%;background:' + AZ + ';text-align:justify;')}${cel('<strong>PROPÓSITO:</strong><br>' + escM(d.proposito || ''), 'width:50%;background:' + AZ + ';text-align:justify;')}</tr>`)}
+<p style="text-align:center;font-weight:bold;margin:6px 0;">CONTENIDO</p>
+${tabla(
+    cont.map(c => `<tr>${sh('CONTENIDO', 'width:16%;')}${cel(escM(c.titulo), 'width:34%;')}${sh('PROCESO DE DESARROLLO DE APRENDIZAJE', 'width:16%;')}${cel(escM(typeof obtenerPDA === 'function' ? obtenerPDA(c, d.grado) : ''), 'width:34%;text-align:justify;')}</tr>`).join('') +
+    `<tr><td colspan="4" style="border:${B};padding:4px 7px;vertical-align:top;background:${AZ};"><strong>Contextualización de los contenidos nacionales a contenidos locales</strong>${d.codiseno ? '<br>' + escM(d.codiseno) : ''}</td></tr>` +
+    `<tr>${sh('SESIONES:')}${cel(escM(dt.sesionesTxt || ''))}${sh('FECHA DE INICIO Y TÉRMINO:')}${cel(escM(dt.fechaTxt || ''))}</tr>` +
+    `<tr>${sh('EJES ARTICULADORES:')}<td colspan="3" style="border:${B};padding:4px 7px;vertical-align:top;">${ejes.map(e => escM(e)).join('<br>') || '&nbsp;'}</td></tr>` +
+    `<tr>${sh('TIPO DE PROYECTO:')}${cel(escM(dt.tipoProyecto || ''))}${sh('NOMBRE DEL PROYECTO:')}${cel(escM(d.nombreProyecto || ''))}</tr>` +
+    (dt.enfoque ? `<tr>${sh('Enfoque didáctico:')}<td colspan="3" style="border:${B};padding:4px 7px;vertical-align:top;text-align:justify;">${escM(dt.enfoque)}</td></tr>` : '') +
+    (rasgos.length ? `<tr>${sh('Perfil de egreso:')}<td colspan="3" style="border:${B};padding:4px 7px;vertical-align:top;text-align:justify;">${rasgos.map(r => '<p style="margin:0 0 3px;">' + escM(r) + '</p>').join('')}</td></tr>` : '')
+  )}`;
+
+  // ── PLAN DE CLASE O SECUENCIA DIDÁCTICA ──
+  let filas = `<tr><td colspan="3" style="border:${B};padding:4px 7px;text-align:center;font-weight:bold;background:${AZ};">PLAN DE CLASE O SECUENCIA DIDÁCTICA</td></tr>
+<tr>${sh('ACTIVIDADES', 'width:66%;text-align:center;')}${sh('FECHA', 'width:14%;text-align:center;')}${sh('RECURSOS', 'width:20%;text-align:center;')}</tr>`;
+  (dt.fases || []).forEach(f => {
+    filas += `<tr><td colspan="3" style="border:${B};padding:4px 7px;"><strong><u>${escM(f.n)}</u></strong></td></tr>`;
+    f.mom.forEach(m => {
+      filas += `<tr>${cel('<p style="margin:0 0 3px;"><strong>' + escM(m.n) + '</strong></p>' + (m.acts || []).map(bullet).join(''))}${cel('<strong>' + (m.fecha || '&nbsp;') + '</strong>')}${cel((m.rec || []).map(r => escM(r)).join('<br>'))}</tr>`;
+    });
+  });
+
+  const crit = normalizarCriteriosSEP(dt.criterios);
+  const pie = tabla(`<tr>${sh('PRODUCTO:', 'width:34%;')}${cel(escM(dt.producto || ''))}</tr>
+<tr>${sh('EVALUACIÓN:')}${cel(escM(dt.evaluacion || 'Formativa'))}</tr>
+<tr>${sh('CRITERIOS DE EVALUACIÓN:')}${cel(crit.map(([t, p]) => `- ${escM(t)} (${p} %)`).join('<br>'))}</tr>
+<tr>${sh('OBSERVACIONES Y/O AJUSTES RAZONABLES:')}${cel(escM(dt.observaciones || 'Después de cada momento se revisarán y registrarán las actividades correspondientes.'))}</tr>`);
+
+  const cot = (dt.cotejo || []).filter(Boolean);
+  const cotejo = tabla(`<tr><td colspan="3" style="border:${B};padding:4px 7px;text-align:center;font-weight:bold;background:${AZ};">${escM(dt.cotejoTitulo || 'LISTA DE COTEJO PARA EVALUAR EL PRODUCTO')}</td></tr>
+<tr>${sh('INDICADORES:')}${sh('SÍ', 'width:8%;text-align:center;')}${sh('NO', 'width:8%;text-align:center;')}</tr>
+${cot.map((x, i) => `<tr>${cel((i + 1) + '. ' + escM(x))}${cel('&nbsp;')}${cel('&nbsp;')}</tr>`).join('')}`);
+
+  return encabezado + tabla(filas) + pie + cotejo;
+}
+
+// Formato 2 a partir de la ruta metodológica que ya revisó el docente (sin llamar a la IA: sale al instante)
+function datosSEPDesdeRuta(d, ruta, comp) {
+  comp = comp || {};
+  const met = METODOLOGIAS[ruta.met];
+  const pr = ruta.proyecto || {};
+  const producto = pr.producto || d.productoIntegrador || '';
+  const proc = (ruta.evalProceso || []).map(([n, p]) => [n, Number(p) || 0]);
+  const sum = proc.reduce((a, x) => a + x[1], 0);
+  const criterios = proc.slice();
+  if (sum < 100) criterios.push([producto ? 'Producto: ' + producto : 'Producto integrador', 100 - sum]);
+  const quitaPunto = t => String(t || '').replace(/\s*·\s*/, '. ');
+  const ajustes = ajustesSugeridos(ruta.bap);
+  const cotejo = [];
+  if (producto) cotejo.push(`El producto («${producto}») atiende la problemática que se está viviendo en la comunidad.`);
+  (d.contenidos || []).slice(0, 3).forEach(c => {
+    const pda = primeraOracion(typeof obtenerPDA === 'function' ? obtenerPDA(c, d.grado) : '', 160);
+    if (pda) cotejo.push(`Demuestra que ${minuscula1(pda)}.`);
+  });
+  cotejo.push('Presenta las ideas con claridad, orden y coherencia.', 'Cuida la ortografía, la limpieza y la presentación.', 'Participa y colabora respetando las ideas de los demás.', 'Entrega su trabajo en el tiempo acordado.');
+  return {
+    fases: ruta.fases.map(f => ({
+      n: quitaPunto(f.n).toUpperCase(),
+      mom: f.mom.map(m => ({
+        n: quitaPunto(m.n),
+        acts: [].concat(m.doc || [], m.alu || []),
+        rec: m.rec || [],
+        fecha: (m.t.semIni === m.t.semFin ? 'Semana ' + m.t.semIni : 'Semanas ' + m.t.semIni + '–' + m.t.semFin) + '<br><small>' + (m.t.sesIni === m.t.sesFin ? 'Sesión ' + m.t.sesIni : 'Sesiones ' + m.t.sesIni + '–' + m.t.sesFin) + '</small>',
+      })),
+    })),
+    producto, evaluacion: 'Formativa', criterios,
+    observaciones: 'Después de cada momento se revisarán y registrarán las actividades correspondientes. Ajustes razonables: ' + ajustes.map(a => a.replace(/\.$/, '')).join('; ') + '.' + (ruta.bap ? ' BAP y diversidad identificadas: ' + ruta.bap + '.' : ''),
+    enfoque: comp.especificidad || '',
+    tipoProyecto: met ? met.nombre + (ruta.esc ? ' — ' + ({ aula: 'Áulico', escuela: 'Escolar', comunidad: 'Comunitario' }[ruta.esc] || '') : '') : (d.modalidad || ''),
+    sesionesTxt: ruta.totalSes + ' sesiones de ' + ruta.minSes + ' minutos (' + ruta.semanas + ' semanas)',
+    fechaTxt: '',
+    cotejoTitulo: 'LISTA DE COTEJO PARA EVALUAR ' + (producto ? producto.toUpperCase() : 'EL PRODUCTO'),
+    cotejo,
+  };
+}

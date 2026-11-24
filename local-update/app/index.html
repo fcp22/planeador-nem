@@ -1162,6 +1162,25 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
           </div>
         </div>
 
+        <div class="card" id="card-fmt-plano">
+          <div class="card-title">🗂️ Formato de tu plano</div>
+          <p style="margin:0 0 10px;font-size:13px;color:var(--gris);">Elige cómo quieres que salga tu plano. Puedes cambiarlo cuando quieras y volver a generar.</p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <div class="tipo-btn on" id="fbtn-2" onclick="setFormatoPlano('2')" style="flex:1;min-width:220px;padding:14px;">
+              <span class="ico" style="font-size:22px;">📝</span>
+              <div class="tit">Formato 2 · Plan de clase o secuencia didáctica</div>
+              <div class="desc">Actividades por momento con fecha y recursos, producto, criterios con porcentaje y lista de cotejo</div>
+              <div style="margin-top:6px;font-size:11.5px;font-weight:700;color:var(--verde,#15803d);">⭐ El que más se ajusta a la mayoría de los maestros</div>
+            </div>
+            <div class="tipo-btn" id="fbtn-1" onclick="setFormatoPlano('1')" style="flex:1;min-width:220px;padding:14px;">
+              <span class="ico" style="font-size:22px;">📋</span>
+              <div class="tit">Formato 1 · Plano didáctico</div>
+              <div class="desc">Tabla por fases con sesiones, materiales y evaluación sumativa (formato ATP)</div>
+            </div>
+          </div>
+          <p id="fmt-nota" style="margin:10px 0 0;font-size:12.5px;color:var(--gris);"></p>
+        </div>
+
         <div class="alerta alerta-err" id="err-d"></div>
         <div class="btns">
           <button class="btn-gen" id="bgd" onclick="genDidactico()"><span>✨</span> Generar Plano Didáctico</button>
@@ -1206,8 +1225,8 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
 <script src="licencia.js?v=202611191930"></script>
 <script src="curriculum.js?v=202611180600"></script>
 <script src="projects.js?v=202611180600"></script>
-<script src="generators.js?v=202611191640"></script>
-<script src="metodologias.js?v=202611180600"></script>
+<script src="generators.js?v=202611231200"></script>
+<script src="metodologias.js?v=202611231200"></script>
 <script src="ruta-ui.js?v=202611180600"></script>
 <script src="secuencias.js?v=202611181600"></script>
 <script src="sugerencias-plano.js?v=202611180600"></script>
@@ -1377,6 +1396,28 @@ function setTipo(t){
   document.getElementById('sec-d').classList.toggle('hidden',t!=='d');
 }
 
+// ── FORMATO DEL PLANO: 1 = Plano didáctico (ATP) · 2 = Plan de clase o secuencia didáctica ──
+let formatoPlano = '2';
+try { const f = localStorage.getItem('nem_formato_plano'); if (f === '1' || f === '2') formatoPlano = f; } catch (e) {}
+function setFormatoPlano(f, noGuardar){
+  formatoPlano = (f === '1') ? '1' : '2';
+  if (!noGuardar) { try { localStorage.setItem('nem_formato_plano', formatoPlano); } catch (e) {} }
+  const b1 = document.getElementById('fbtn-1'), b2 = document.getElementById('fbtn-2');
+  if (b1) b1.classList.toggle('on', formatoPlano === '1');
+  if (b2) b2.classList.toggle('on', formatoPlano === '2');
+  const n = document.getElementById('fmt-nota');
+  if (n) n.textContent = formatoPlano === '2'
+    ? 'Saldrá con encabezado de la escuela, contenido y PDA, el plan de clase por fases y momentos, y la lista de cotejo. Las fechas las anotas tú en Word.'
+    : 'Saldrá en el formato de plano con tabla por fases, evaluación sumativa y guía de evaluación.';
+}
+// El selector solo aplica al plano del trimestre completo con proyecto (la secuencia y el plano semanal tienen su propio formato)
+function mostrarFormatoPlano(){
+  const c = document.getElementById('card-fmt-plano'); if (!c) return;
+  const tg = document.getElementById('d-tgen');
+  c.classList.toggle('hidden', modalidadD !== 'proyecto' || (tg && tg.value === 'semanal'));
+}
+setFormatoPlano(formatoPlano, true);
+
 // ── MODALIDAD DIDÁCTICO: Proyecto vs Secuencia ────────────
 let modalidadD = 'proyecto';
 function setModalidadD(m){
@@ -1387,6 +1428,7 @@ function setModalidadD(m){
   document.getElementById('campos-secuencia').classList.toggle('hidden', m!=='secuencia');
   // La ruta metodológica solo aplica a Proyecto
   const cr=document.getElementById('card-ruta'); if(cr) cr.classList.toggle('hidden', m!=='proyecto');
+  mostrarFormatoPlano();
   // Sincronizar el select de modalidad
   const sel = document.getElementById('d-mod');
   if(m==='secuencia') sel.value = 'Secuencia didáctica';
@@ -1695,6 +1737,7 @@ function elejirProyD(el,nom){
 function toggleSems(){
   const t=document.getElementById('d-tgen').value;
   document.getElementById('card-sems').classList.toggle('hidden',t!=='semanal');
+  mostrarFormatoPlano();
   if(t==='semanal') buildSemGrid();
 }
 function buildSemGrid(){
@@ -1856,9 +1899,11 @@ async function genDidactico(){
         })()
       : modalidadD==='secuencia'
         ? generarSecuenciaDidactica(d)
-        : (typeof rutaActual!=='undefined' && rutaActual && rutaActual.usar)
-          ? rutaGenerarPlano(d)   // Plano en formato oficial con la ruta metodológica
-          : generarPlanDidacticoTrimestre(d));
+        : (formatoPlano==='2')
+          ? generarPlanoSEP(d)   // Formato 2: Plan de clase o secuencia didáctica
+          : (typeof rutaActual!=='undefined' && rutaActual && rutaActual.usar)
+            ? rutaGenerarPlano(d)   // Plano en formato oficial con la ruta metodológica
+            : generarPlanDidacticoTrimestre(d));
     if(_pgD)_pgD.parar();
     document.getElementById('rd-txt').innerHTML=txt;
     document.getElementById('res-d').style.display='block';

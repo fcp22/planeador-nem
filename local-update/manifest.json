@@ -1,6 +1,6 @@
 {
- "version": "221a4fe0be59e3ab",
- "fecha": "2026-11-20T09:31:58",
+ "version": "bbf97911cf1572bb",
+ "fecha": "2026-11-23T18:07:08",
  "servidorMin": 1,
  "archivos": [
   {
@@ -95,8 +95,8 @@
   },
   {
    "p": "generators.js",
-   "h": "29794f35aa7d3738a94449c696a71249ddd535a71a24b1993b922be9e33555b6",
-   "s": 36755
+   "h": "d2cabd1c4a4052fe3ffba68a340de58e37581a98c87f1171138c3395ef4fd067",
+   "s": 41334
   },
   {
    "p": "gestion.js",
@@ -130,8 +130,8 @@
   },
   {
    "p": "index.html",
-   "h": "08b28e9612eab8cfe3edb4ae676bffad1f3f22fc2b1a3337cecd04d56d9771d3",
-   "s": 138189
+   "h": "ddceae6d7939b4d4bbd1c9338976c2a5498ea61971768ecf23e28bbe141f4602",
+   "s": 141240
   },
   {
    "p": "libreta.js",
@@ -155,8 +155,8 @@
   },
   {
    "p": "metodologias.js",
-   "h": "0ba2cdd08cbaa209a1a39e7750939c4fbc7cfa985669e4517883e0c28574e971",
-   "s": 81122
+   "h": "0a4828a3ee28af25c6f0d68e49959bdee323a437e5b0af6cb471c33e74d85a11",
+   "s": 91298
   },
   {
    "p": "privacidad.js",
@@ -195,7 +195,7 @@
   },
   {
    "p": "sw.js",
-   "h": "7006be3a387740065e43088f09ed44a72d2b722d32fdc7f86ee6b9ee777aee7d",
+   "h": "957f92816a584b63b8422360a17f33556d50852166e716266b341efaf0c2a62f",
    "s": 4951
   }
  ]

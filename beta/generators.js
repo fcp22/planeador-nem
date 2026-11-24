@@ -491,6 +491,81 @@ async function generarPlanDidacticoTrimestre(d) {
 }
 
 // ============================================================
+// FORMATO 2 del plano: «Plan de clase o secuencia didáctica» (sin ruta metodológica: la IA redacta los 11 momentos)
+// ============================================================
+function buildPromptPlanSEP(d) {
+  const contenidosTexto = d.contenidos.map(c => `- Contenido: ${c.titulo} | PDA: ${obtenerPDA(c, d.grado)}`).join('\n');
+  const nombres = SEP_MOMENTOS_ABPC.reduce((a, f) => a.concat(f[1]), []);
+  const trimestreNombre = d.trimestre === '1' ? 'Primer' : d.trimestre === '2' ? 'Segundo' : 'Tercer';
+  return `Eres experto en la Nueva Escuela Mexicana. Redacta la secuencia didáctica de un plano didáctico de secundaria.
+Responde SOLO con JSON válido, sin texto adicional ni markdown.
+
+DATOS:
+- Disciplina: ${d.disciplina}, Grado: ${d.grado}°, ${trimestreNombre} trimestre, campo formativo ${d.campo}
+- Proyecto: "${d.nombreProyecto}" (${d.modalidad || 'Aprendizaje basado en proyectos comunitarios'})
+- Problematización: ${d.problematizacion || 'la del contexto de la escuela'}
+- Producto integrador: ${d.productoIntegrador || 'el que corresponda a los contenidos'}
+- Sesiones totales: ${d.numSesiones || '11'} de ${d.duracionSesion || '50'} minutos
+- Contenidos y PDA:
+${contenidosTexto}
+
+Redacta los 11 momentos EN ESTE ORDEN: ${nombres.join(' | ')}.
+Cada momento: 2 a 3 actividades en tercera persona y tiempo futuro ("Se presentará…", "Los alumnos leerán…", "En equipos elaborarán…"), concretas y propias de ${d.disciplina}, que lleven al producto, y 1 a 3 recursos breves (por ejemplo "Libreta de apuntes", "Lista de asistencia", "Fotocopias", "Libro de texto", "Internet").
+
+JSON requerido:
+{
+  "momentos": [ { "actividades": ["…","…"], "recursos": ["…"] } ],
+  "producto": "nombre breve del producto final",
+  "criterios": [ { "c": "criterio de evaluación", "p": 36 } ],
+  "observaciones": "una oración sobre cómo se revisan las actividades y los ajustes razonables",
+  "enfoque": "enfoque didáctico de ${d.disciplina}, 2 oraciones",
+  "cotejo": ["indicador observable 1","indicador 2"]
+}
+Reglas: "momentos" debe tener exactamente 11 elementos. "criterios": 4 a 6, los porcentajes ("p") son números enteros que SUMAN 100 e incluyen el producto, la participación y las actitudes y valores. "cotejo": 5 a 8 indicadores para evaluar el producto, redactados como afirmaciones que se responden Sí o No.`;
+}
+
+function datosSEPDesdeIA(d, ia) {
+  ia = ia || {};
+  const N = Math.max(1, parseInt(d.numSesiones, 10) || 11);
+  const lista = x => (Array.isArray(x) ? x : (x ? [x] : [])).map(t => String(t || '').trim()).filter(Boolean);
+  const moms = Array.isArray(ia.momentos) ? ia.momentos : [];
+  let i = 0;
+  const fases = SEP_MOMENTOS_ABPC.map(([fn, nombres]) => ({
+    n: fn,
+    mom: nombres.map(n => {
+      const m = moms[i] || {};
+      const a = Math.floor(i * N / 11) + 1, b = Math.max(a, Math.floor((i + 1) * N / 11));
+      i++;
+      return { n, acts: lista(m.actividades || m.acts), rec: lista(m.recursos || m.rec), fecha: a === b ? 'Sesión ' + a : 'Sesiones ' + a + '–' + b };
+    }),
+  }));
+  const producto = String(ia.producto || d.productoIntegrador || '').trim();
+  return {
+    fases, producto, evaluacion: 'Formativa',
+    criterios: ia.criterios, observaciones: String(ia.observaciones || '').trim(),
+    enfoque: String(ia.enfoque || '').trim(),
+    tipoProyecto: d.modalidad || 'Aprendizaje basado en proyectos comunitarios',
+    sesionesTxt: N + ' sesiones de ' + (d.duracionSesion || '50') + ' minutos', fechaTxt: '',
+    cotejoTitulo: 'LISTA DE COTEJO PARA EVALUAR ' + (producto ? producto.toUpperCase() : 'EL PRODUCTO'),
+    cotejo: lista(ia.cotejo),
+  };
+}
+
+// Punto de entrada: con ruta metodológica revisada sale al instante; sin ruta, una sola llamada a la IA
+async function generarPlanoSEP(d) {
+  if (typeof rutaActual !== 'undefined' && rutaActual && rutaActual.usar) {
+    if (typeof rutaSincronizarCampos === 'function') rutaSincronizarCampos();
+    rutaActual.proyecto = Object.assign({}, rutaActual.proyecto, { nombre: d.nombreProyecto, producto: d.productoIntegrador });
+    return construirHTMLPlanoSEP(d, datosSEPDesdeRuta(d, rutaActual, rutaActual.comp || {}));
+  }
+  const ia = parsearJSON(await llamarGeminiJSON(buildPromptPlanSEP(d), 'plano'));
+  const dt = datosSEPDesdeIA(d, ia);
+  if (!dt.fases.some(f => f.mom.some(m => m.acts.length))) throw new Error('La IA no devolvió las actividades. Intenta de nuevo.');
+  d.iaEvid = { f1: '', f2: '', f3: '', integrador: dt.producto };
+  return construirHTMLPlanoSEP(d, dt);
+}
+
+// ============================================================
 // GENERADOR 3: PLANO SEMANAL (simplificado, texto plano)
 // ============================================================
 function buildPromptPlanDidacticoSemanal(d, semana, sesionesEnSemana) {

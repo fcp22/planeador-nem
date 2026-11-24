@@ -1,7 +1,7 @@
 // Service worker de la VERSIÓN DE PRUEBA SIN INTERNET del Planeador Docente NEM.
 // Guarda la app en el equipo para que abra sin conexión. Los datos de los maestros NO pasan por aquí:
 // siguen en localStorage. Las llamadas a la IA / licencia (workers.dev) y a las cuentas (Google/Firebase) nunca se interceptan.
-const VERSION = 'nem-sin-internet-ef61713aab';
+const VERSION = 'nem-sin-internet-4679ccab58';
 const ARCHIVOS = [
   './',
   'auth.js?v=202611191500',
@@ -10,11 +10,11 @@ const ARCHIVOS = [
   'curriculum.js?v=202611180600',
   'escaner.js?v=202611180600',
   'firebase-config.js?v=202611180600',
-  'generators.js?v=202611191640',
+  'generators.js?v=202611231200',
   'gestion.js?v=202611201000',
   'libreta.js?v=202611182230',
   'licencia.js?v=202611191930',
-  'metodologias.js?v=202611180600',
+  'metodologias.js?v=202611231200',
   'privacidad.js?v=202611200800',
   'projects.js?v=202611180600',
   'rezago.js?v=202611181700',
