@@ -1011,6 +1011,15 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
         <div class="card" id="card-fechas">
           <div class="card-title">📅 Fechas del trabajo</div>
           <p style="margin:0 0 10px;font-size:13px;color:var(--gris);">La app calcula sola las fechas con tus días de clase y el número de sesiones. Cámbialas solo si tu calendario es distinto; el plano pone la fecha de cada sesión.</p>
+          <div class="campo" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;">
+            <label>Mi trimestre (opcional)</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <span style="font-size:13px;">Empieza</span><input type="date" id="fp-tini" style="width:auto;flex:1;min-width:140px" onchange="fpTrimGuardar()">
+              <span style="font-size:13px;">Termina</span><input type="date" id="fp-tfin" style="width:auto;flex:1;min-width:140px" onchange="fpTrimGuardar()">
+              <button type="button" class="btn-sec" onclick="fpUsarTrimestre()" style="padding:8px 12px;">📆 Usar todo el trimestre</button>
+            </div>
+            <div class="ayuda">Anota cuándo empieza y termina el trimestre: la app cuenta cuántas clases tienes (con los días de tu horario) y cuántas sesiones te tocan por tema. Tu horario se sube en <b>Mis grupos → Horario</b> (foto o PDF).</div>
+          </div>
           <div class="f2">
             <div class="campo"><label>Primer día de clase</label><input type="date" id="fp-ini" onchange="fpCalcular()"></div>
             <div class="campo"><label>Último día (estimado)</label><input type="date" id="fp-fin" onchange="fpFinCambio()">
@@ -1250,7 +1259,7 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
 <script src="generators.js?v=202611231500"></script>
 <script src="metodologias.js?v=202611231500"></script>
 <script src="ruta-ui.js?v=202611180600"></script>
-<script src="fechas-plan.js?v=202611231500"></script>
+<script src="fechas-plan.js?v=202611231800"></script>
 <script src="secuencias.js?v=202611231500"></script>
 <script src="sugerencias-plano.js?v=202611180600"></script>
 <script>

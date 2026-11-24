@@ -130,8 +130,10 @@ function fpCalcular() {
   const n = FP.fechas.length, u = [...new Set(FP.fechas)];
   if (fin) fpPonerSesiones(Math.min(200, n));
   else if (finEl) finEl.value = FP.fechas[n - 1];   // estimado: se ve y se puede cambiar
+  const nTemas = (typeof cD !== 'undefined' && cD.length) ? cD.length : 0;
+  const porTema = nTemas ? `<br>📚 <b>${nTemas} contenido${nTemas > 1 ? 's' : ''}</b>: te tocan unas <b>${Math.max(1, Math.floor(n / nTemas))} sesion${Math.floor(n / nTemas) > 1 ? 'es' : ''} por tema</b>${n % nTemas ? ' (sobran ' + (n % nTemas) + ')' : ''}.` : '';
   const corta = u.slice(0, 14).map(fpCorta).join(' · ') + (u.length > 14 ? ' …' : '');
-  pinta(`📅 ${fin ? '' : '<b>Estimado:</b> '}<b>${n} sesion${n > 1 ? 'es' : ''}</b>, ${fpRango(FP.fechas[0], FP.fechas[n - 1])}.<br><small>${corta}</small>` +
+  pinta(`📅 ${fin ? '' : '<b>Estimado:</b> '}<b>${n} sesion${n > 1 ? 'es' : ''}</b>, ${fpRango(FP.fechas[0], FP.fechas[n - 1])}.${porTema}<br><small>${corta}</small>` +
     (fin ? '' : '<br><small>Cambia cualquier fecha o día si tu calendario es distinto; el plano usa lo que dejes aquí.</small>'), false);
   return FP;
 }
@@ -177,3 +179,21 @@ document.addEventListener('change', e => {
   else if (id === 'd-ses') fpCalcular();
 });
 document.addEventListener('DOMContentLoaded', () => { try { fpRefrescarHorario(); } catch (e) {} });
+
+// ── Mi trimestre: inicio y fin guardados por trimestre ───────
+function fpTrimClave() { return 'nem_trim_fechas_' + ((fpEl('d-tri') || {}).value || '1'); }
+function fpTrimCargar() {
+  let v = {}; try { v = JSON.parse(localStorage.getItem(fpTrimClave()) || '{}'); } catch (e) {}
+  const a = fpEl('fp-tini'), b = fpEl('fp-tfin'); if (a) a.value = v.i || ''; if (b) b.value = v.f || '';
+}
+function fpTrimGuardar() {
+  try { localStorage.setItem(fpTrimClave(), JSON.stringify({ i: (fpEl('fp-tini') || {}).value || '', f: (fpEl('fp-tfin') || {}).value || '' })); } catch (e) {}
+}
+function fpUsarTrimestre() {
+  const a = (fpEl('fp-tini') || {}).value, b = (fpEl('fp-tfin') || {}).value, prev = fpEl('fp-prev');
+  if (!a || !b || b < a) { if (prev) { prev.style.display = 'block'; prev.style.background = '#fffbeb'; prev.style.borderColor = '#fde68a'; prev.style.color = '#92400e'; prev.innerHTML = '⚠ Anota cuándo empieza y cuándo termina tu trimestre (el final después del inicio).'; } return; }
+  fpTrimGuardar();
+  fpEl('fp-ini').value = a; fpEl('fp-fin').value = b; FP.finManual = true; fpCalcular();
+}
+document.addEventListener('change', e => { if (e.target && e.target.id === 'd-tri') fpTrimCargar(); });
+document.addEventListener('DOMContentLoaded', () => { try { fpTrimCargar(); } catch (e) {} });

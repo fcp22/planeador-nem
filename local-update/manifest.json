@@ -1,6 +1,6 @@
 {
- "version": "d171fd30fd264f29",
- "fecha": "2026-11-23T20:05:02",
+ "version": "0ae532c73ada7ee9",
+ "fecha": "2026-11-23T20:07:02",
  "servidorMin": 1,
  "archivos": [
   {
@@ -90,8 +90,8 @@
   },
   {
    "p": "fechas-plan.js",
-   "h": "483f37d2e847133ac9bb0dd41a1cadd2fd19eb3b7322958bb86e3f1c4b9043a0",
-   "s": 10854
+   "h": "dc26550d6ac11b91e39ccb46c2e6fd8bca4704e680f6fbb06038eb9bfbf4f5e5",
+   "s": 12533
   },
   {
    "p": "firebase-config.js",
@@ -135,8 +135,8 @@
   },
   {
    "p": "index.html",
-   "h": "0e656c0f35ecbc240a182d57d1b6eb80e31c0750936090e448af0a580a2a3ae0",
-   "s": 144128
+   "h": "38a18e4f91dc320e3e87933bbf8f3d518f7b99b8dabbcc30aae72d92ba382016",
+   "s": 145134
   },
   {
    "p": "libreta.js",
@@ -200,7 +200,7 @@
   },
   {
    "p": "sw.js",
-   "h": "ebd86cb1fb1b554c26fde9f92ec7a49c8f5ab0ab3c2f0448bd76f986238d9f47",
+   "h": "c36692b369a8b4adda41626bfcce0f58a9bca3461bfa7db7b89aad4642367734",
    "s": 4986
   }
  ]
