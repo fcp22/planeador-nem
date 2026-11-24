@@ -39,6 +39,7 @@ function licMensajeIA(e) {
 // Pide texto a la IA. json=true pide formato JSON.
 async function llamarIA(prompt, { json = false, tipo } = {}) {
   let ultimo;
+  if (typeof privProtegerPrompt === 'function') prompt = privProtegerPrompt(prompt);   // nombres de alumnos → «Alumno N» (ver privacidad.js)
   // El servidor ya reintenta y cambia de modelo por su cuenta; aquí solo se da una segunda oportunidad a fallos de red o de saturación.
   for (let intento = 0; intento < 2; intento++) {
     try {

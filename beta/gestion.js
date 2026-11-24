@@ -322,6 +322,12 @@ function gHorarioToast(html, ms, mal) {
 }
 async function gHorarioLeerFoto(file, auto) {
   if (typeof workerFetch !== 'function' || typeof escReducir !== 'function') return;
+  // Aviso de privacidad: la foto o el PDF se envía a la IA (se pide confirmar una vez en este dispositivo)
+  let avisado = false; try { avisado = localStorage.getItem('nem_priv_horario') === '1'; } catch (e) { /* sin almacenamiento */ }
+  if (!avisado) {
+    if (!confirm('🔒 Para leer tu horario, la foto o el PDF se envía a la IA.\n\nNo envíes documentos que tengan nombres de alumnos (listas, boletas, registros). Solo debe verse tu horario.\n\n¿Es solo tu horario?\nAceptar = enviar.\nCancelar = no enviar.')) { gHorarioMsg('<span style="color:var(--gris)">No envié nada. Si quieres, escribe tu horario a mano en la tabla.</span>'); return; }
+    try { localStorage.setItem('nem_priv_horario', '1'); } catch (e) { /* sin almacenamiento */ }
+  }
   // Si ya hay un horario escrito, se pregunta ANTES de leer (para no hacerlo esperar y luego decirle que se reemplaza)
   if (gHorarioTieneDatos() && !confirm('Ya tienes un horario escrito en la tabla.\n\nSi sigues, se va a REEMPLAZAR con lo que la IA lea de tu foto o PDF (tarda de 10 a 30 segundos).\n\n¿Continuar?')) { gHorarioMsg('<span style="color:var(--gris)">Dejé tu tabla como estaba. Cuando quieras, pulsa «✨ Pasar a la tabla».</span>'); return; }
   gHorarioMsg('<span style="color:var(--azul)">🔎 Leyendo tu horario con IA… (puede tardar unos segundos)</span>');
@@ -369,6 +375,7 @@ async function gRenderArchivos(cat) {
   p.innerHTML = `<div class="sec-title">${C.tit}</div><div class="sec-sub">${C.sub}</div>
   ${C.antes ? C.antes() : ''}
   <div class="card"><div class="card-title">${C.btn}</div>
+    ${cat === 'horario' ? '<div class="g-aviso" style="margin-bottom:10px;font-size:13px">🔒 <b>Privacidad:</b> para pasar tu horario a la tabla, la foto o el PDF se envía a la IA. <b>No fotografíes ni subas documentos que tengan nombres de alumnos</b> (listas, boletas, registros): sube solo tu horario.</div>' : ''}
     <p style="font-size:13px;color:var(--gris);margin:0 0 10px">Acepta <b>PDF</b>, <b>JPG</b> o <b>PNG</b> (hasta 15 MB cada uno). ${C.multi} Desde el celular también puedes tomarle una foto.</p>
     <label class="g-btn" style="display:inline-block;cursor:pointer">⬆ Subir archivo (PDF, JPG o PNG)<input type="file" accept="application/pdf,image/*,.pdf,.png,.jpg,.jpeg" multiple style="display:none" onchange="gCalSubir(this,'${cat}')"></label>
     <div id="gcal-msg" style="font-size:13px;margin-top:10px">${err ? `<span class="g-mal">${gEsc(err)}</span>` : ''}</div>
@@ -2153,7 +2160,7 @@ function gRenderExamenes() {
   ${G.evalModo === 'proyecto' ? '' : gExamenesListaHTML(g, t)}
   ${G.evalModo === 'proyecto' ? gProyectoEvalHTML(g, t) : `<div class="card"><div class="card-title">✨ Generar examen con IA — ${gEsc(g.materia)} ${g.grado}°</div>
     ${gTemasPanel(g, t)}
-    <div class="campo"><label>Temas o contenidos a evaluar</label><textarea id="ge-tema" rows="4" placeholder="Ej. Ecuaciones de primer grado con una incógnita; problemas de proporcionalidad directa">${gEsc(G.temaUlt || '')}</textarea><div class="ayuda">Mientras más específico, mejor el examen. Puedes escribir tus propios temas o corregir los que marcaste.</div></div>
+    <div class="campo"><label>Temas o contenidos a evaluar</label><textarea id="ge-tema" rows="4" placeholder="Ej. Ecuaciones de primer grado con una incógnita; problemas de proporcionalidad directa">${gEsc(G.temaUlt || '')}</textarea><div class="ayuda">Mientras más específico, mejor el examen. Puedes escribir tus propios temas o corregir los que marcaste.</div><div class="ayuda" style="color:#92400e">🔒 Esto se envía a la IA: <b>no escribas nombres de alumnos</b> ni datos de conducta, salud o familia.</div></div>
     <div class="f3">
       <div class="campo"><label>Número de reactivos</label>${licEsPrueba() ? '<input id="ge-n" type="number" min="3" max="5" value="5"><div class="ayuda">En la prueba gratis: hasta 5 reactivos.</div>' : '<input id="ge-n" type="number" min="3" max="30" value="10">'}</div>
       <div class="campo"><label>Dificultad</label><select id="ge-dif"><option>Básica</option><option selected>Media</option><option>Alta</option></select></div>
@@ -2433,7 +2440,7 @@ function gRenderTrim() {
   <div class="card"><div class="card-title">💡 Agregar proyecto a partir de mi problemática</div>
     <div class="f2"><div class="campo"><label>Metodología</label><select id="gt-met">${Object.values(METODOLOGIAS).map(m => `<option value="${m.id}"${m.id === metRec ? ' selected' : ''}>${gEsc(m.siglas)} · ${gEsc(m.nombre)}</option>`).join('')}</select></div>
     <div class="campo"><label>Alcance del proyecto</label><select id="gt-esc"><option value="aula">Aula · proyecto áulico</option><option value="escuela">Escuela · proyecto escolar</option><option value="comunidad">Comunidad · proyecto comunitario</option></select></div></div>
-    <div class="campo"><label>Problemática de mi contexto</label><textarea id="gt-prob" rows="3" placeholder="Ej. En mi grupo, 12 de 35 estudiantes no comprenden lo que leen y evitan participar. En la comunidad casi no hay espacios de lectura."></textarea></div>
+    <div class="campo"><label>Problemática de mi contexto</label><textarea id="gt-prob" rows="3" placeholder="Ej. En mi grupo, 12 de 35 estudiantes no comprenden lo que leen y evitan participar. En la comunidad casi no hay espacios de lectura."></textarea><div class="ayuda" style="color:#92400e">🔒 Esto se envía a la IA: <b>no escribas nombres de alumnos</b> ni datos de conducta, salud o familia.</div></div>
     <div class="l-err" id="gt-err" style="margin:0 0 12px"></div>
     <button class="g-btn" onclick="gSugerirProyectos()">💡 Sugerir proyectos</button>`;
   if (G.sugerencias.length) {
