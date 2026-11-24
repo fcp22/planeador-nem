@@ -43,7 +43,21 @@ function gFechaBonita(iso) {
 function gSumarDias(iso, n) { const [y, m, d] = iso.split('-').map(Number); const f = new Date(y, m - 1, d + n); return f.getFullYear() + '-' + String(f.getMonth() + 1).padStart(2, '0') + '-' + String(f.getDate()).padStart(2, '0'); }
 function gNum(v) { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; }
 function gFmt(n, d) { return n == null ? '—' : n.toFixed(d == null ? 1 : d); }
-function gBoleta(f) { return f == null ? null : Math.max(5, Math.round(f + 1e-9)); }
+// ── Regla de calificaciones: UN solo lugar para cambiarla ──
+// Verificar con las Normas de Control Escolar vigentes
+//   trimestral: cómo se pasa la calificación del trimestre a la boleta (entero de 5 a 10): 'truncar' | 'redondeo'
+//   final:      cómo se obtiene el promedio final anual (un decimal):                       'truncar' | 'redondeo'
+const REGLA_CALIF = { trimestral: 'truncar', final: 'truncar' };
+// Aplica la regla a un número con `dec` decimales. El 1e-9 evita que un 5.9999999 (error normal de decimales) se trunque a 5.
+function gAplicarRegla(v, dec, modo) {
+  const k = Math.pow(10, dec), x = v * k + 1e-9;
+  return (modo === 'redondeo' ? Math.round(x) : Math.floor(x)) / k;
+}
+function gBoleta(f) { return f == null ? null : Math.min(10, Math.max(5, gAplicarRegla(f, 0, REGLA_CALIF.trimestral))); }
+function gFinalAnual(prom) { return prom == null ? null : gAplicarRegla(prom, 1, REGLA_CALIF.final); }   // promedio de las 3 boletas, con un decimal
+function gAprobado(fin) { return fin != null && fin >= 6; }                                               // aprobado solo con 6.0 o más
+// Calificación del trimestre con decimales, mostrada con la MISMA regla que la boleta (así nunca se ve «6.0» junto a una boleta de 5)
+function gFmtCal(n, dec) { return n == null ? '—' : gAplicarRegla(n, dec == null ? 1 : dec, REGLA_CALIF.trimestral).toFixed(dec == null ? 1 : dec); }
 function gAviso(msg) { alert(msg); }
 
 // ── Almacenamiento ────────────────────────────────────────
@@ -1113,7 +1127,9 @@ function gCalcAlumno(g, aid, t, sinRec) {
 }
 function gCalcAnual(g, aid) {
   const bs = [1, 2, 3].map(t => gBoleta(gCalcAlumno(g, aid, t).final)).filter(b => b != null);
-  return bs.length ? { prom: bs.reduce((x, y) => x + y, 0) / bs.length, n: bs.length } : null;
+  if (!bs.length) return null;
+  const prom = bs.reduce((x, y) => x + y, 0) / bs.length;
+  return { prom, fin: gFinalAnual(prom), n: bs.length };   // prom = promedio exacto; fin = promedio final con un decimal (el que se muestra y se exporta)
 }
 function gSumaPct(g, t) { t = t || gTrimActual(); return g.criterios.reduce((s, c) => s + gPct(g, c.id, t), 0); }
 function gTrimCalif(v) { G.trimCalif = v === 'anual' ? 'anual' : +v; gRenderCalif(); }
@@ -1280,7 +1296,7 @@ function gCapColumnas(g, t) {
     return { c, cols, prom, span: cols.length + (prom ? 1 : 0) };
   });
 }
-function gCapFinalHTML(r) { const b = gBoleta(r.final); return `<b>${b == null ? '—' : b}</b>${r.final == null ? '' : `<small>${gFmt(r.final, 1)}</small>`}`; }
+function gCapFinalHTML(r) { const b = gBoleta(r.final); return `<b>${b == null ? '—' : b}</b>${r.final == null ? '' : `<small>${gFmtCal(r.final, 1)}</small>`}`; }
 function gCapHTML(g, t) {
   const grupos = gCapColumnas(g, t);
   let h1 = `<tr><th rowspan="2" class="g-c-n">#</th><th rowspan="2" class="g-sticky">Alumno</th>`, h2 = '<tr>';
@@ -1425,8 +1441,8 @@ function gResumenHTML() {
     let h = `<table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th>Trim. 1</th><th>Trim. 2</th><th>Trim. 3</th><th>Promedio final</th><th>Recuperativos</th></tr></thead><tbody>`;
     h += g.alumnos.map((a, i) => {
       const b = [1, 2, 3].map(x => gBoleta(gCalcAlumno(g, a.id, x).final)); const an = gCalcAnual(g, a.id);
-      const fin = an ? Math.max(5, Math.round(an.prom + 1e-9)) : null;
-      return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${b.map(x => `<td class="${x != null && x < 6 ? 'g-mal' : ''}">${x == null ? '—' : x}</td>`).join('')}<td class="${fin != null && fin < 6 ? 'g-mal' : ''}"><b>${fin == null ? '—' : fin}</b>${an ? ` <span style="color:var(--gris);font-size:11px">(${gFmt(an.prom, 2)})</span>` : ''}</td><td style="font-size:12.5px">${[1, 2, 3].map(x => { const n = gRecNotaTxt(g, x, a.id); return n ? `T${x}: <b>${n}</b>` : ''; }).filter(Boolean).join(' &nbsp; ') || '<span style="color:var(--gris)">—</span>'}</td></tr>`;
+      const fin = an ? an.fin : null;
+      return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${b.map(x => `<td class="${x != null && x < 6 ? 'g-mal' : ''}">${x == null ? '—' : x}</td>`).join('')}<td class="${fin != null && !gAprobado(fin) ? 'g-mal' : ''}"><b>${gFmt(fin, 1)}</b>${fin == null ? '' : gAprobado(fin) ? ' <span style="color:var(--verde);font-size:11px">Aprobado</span>' : ' <span style="font-size:11px">No aprobado</span>'}</td><td style="font-size:12.5px">${[1, 2, 3].map(x => { const n = gRecNotaTxt(g, x, a.id); return n ? `T${x}: <b>${n}</b>` : ''; }).filter(Boolean).join(' &nbsp; ') || '<span style="color:var(--gris)">—</span>'}</td></tr>`;
     }).join('');
     return h + `</tbody></table><div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:8px;line-height:1.5">Cada trimestre ya incluye su recuperativo, según lo que definiste. Los recuperativos se capturan en la pestaña <a href="#" onclick="gIrA('recup');return false" style="color:var(--azul-med);font-weight:600">Recuperativos</a>; aquí solo se muestran.</div>`;
   }
@@ -1439,7 +1455,7 @@ function gResumenHTML() {
   h += `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th>${g.criterios.map(c => `<th>${gEsc(c.nombre)}<br><small>${gPct(g, c.id, t)}%</small></th>`).join('')}<th>Calif.</th><th>Boleta</th>${hayRec ? '<th>Recup.</th>' : ''}</tr></thead><tbody>`;
   h += calc.map(({ a, r }, i) => {
     const b = gBoleta(r.final);
-    return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${g.criterios.map(c => `<td>${gFmt(r.porCrit[c.id])}</td>`).join('')}<td>${gFmt(r.final, 2)}</td><td class="${b != null && b < 6 ? 'g-mal' : ''}"><b>${b == null ? '—' : b}</b>${r.rec ? ' <small title="Con recuperativo" style="color:var(--azul-med)">(R)</small>' : ''}</td>${hayRec ? `<td>${gRecNotaTxt(g, t, a.id) || '—'}</td>` : ''}</tr>`;
+    return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${g.criterios.map(c => `<td>${gFmt(r.porCrit[c.id])}</td>`).join('')}<td>${gFmtCal(r.final, 2)}</td><td class="${b != null && b < 6 ? 'g-mal' : ''}"><b>${b == null ? '—' : b}</b>${r.rec ? ' <small title="Con recuperativo" style="color:var(--azul-med)">(R)</small>' : ''}</td>${hayRec ? `<td>${gRecNotaTxt(g, t, a.id) || '—'}</td>` : ''}</tr>`;
   }).join('') + '</tbody></table></div>';
   if (fin.length && calc.some(x => x.r.pcts < 100 && x.r.final != null)) h += `<div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">Los criterios sin calificaciones todavía no cuentan: la calificación se calcula con lo registrado hasta ahora.</div>`;
   return h;
@@ -1485,12 +1501,12 @@ function gDescargarCalif() {
   let html, nom;
   if (t === 'anual') {
     html = gEncabezadoDoc('RESUMEN ANUAL DE CALIFICACIONES', g) + `<table style="width:100%;border-collapse:collapse"><tr>${['#', 'Alumno', 'Trim. 1', 'Trim. 2', 'Trim. 3', 'Promedio final', 'Recuperativos'].map(th).join('')}</tr>` +
-      g.alumnos.map((a, i) => { const b = [1, 2, 3].map(x => gBoleta(gCalcAlumno(g, a.id, x).final)); const an = gCalcAnual(g, a.id); return `<tr>${[i + 1, gEsc(a.nombre), ...b.map(x => x == null ? '—' : x), an ? Math.max(5, Math.round(an.prom + 1e-9)) : '—', [1, 2, 3].map(x => { const n = gRecNotaTxt(g, x, a.id); return n ? `T${x}: ${n}` : ''; }).filter(Boolean).join('  ')].map(td).join('')}</tr>`; }).join('') + '</table>';
+      g.alumnos.map((a, i) => { const b = [1, 2, 3].map(x => gBoleta(gCalcAlumno(g, a.id, x).final)); const an = gCalcAnual(g, a.id); return `<tr>${[i + 1, gEsc(a.nombre), ...b.map(x => x == null ? '—' : x), an ? gFmt(an.fin, 1) : '—', [1, 2, 3].map(x => { const n = gRecNotaTxt(g, x, a.id); return n ? `T${x}: ${n}` : ''; }).filter(Boolean).join('  ')].map(td).join('')}</tr>`; }).join('') + '</table>';
     nom = 'Calificaciones_anual';
   } else {
     html = gEncabezadoDoc('REGISTRO DE CALIFICACIONES — ' + G_TRIM_NOM[t].toUpperCase(), g) +
       `<table style="width:100%;border-collapse:collapse"><tr>${['#', 'Alumno', ...g.criterios.map(c => `${gEsc(c.nombre)} (${gPct(g, c.id, t)}%)`), 'Calif.', 'Boleta'].map(th).join('')}</tr>` +
-      g.alumnos.map((a, i) => { const r = gCalcAlumno(g, a.id, t); return `<tr>${[i + 1, gEsc(a.nombre), ...g.criterios.map(c => gFmt(r.porCrit[c.id])), gFmt(r.final, 2), r.final == null ? '—' : gBoleta(r.final)].map(td).join('')}</tr>`; }).join('') + '</table>';
+      g.alumnos.map((a, i) => { const r = gCalcAlumno(g, a.id, t); return `<tr>${[i + 1, gEsc(a.nombre), ...g.criterios.map(c => gFmt(r.porCrit[c.id])), gFmtCal(r.final, 2), r.final == null ? '—' : gBoleta(r.final)].map(td).join('')}</tr>`; }).join('') + '</table>';
     nom = 'Calificaciones_T' + t;
   }
   descargarWord(html, `${nom}_${g.nombre.replace(/\W+/g, '_')}.doc`);
@@ -1515,7 +1531,7 @@ function gConcentradoDatos(g, solo) {   // solo = 1, 2 o 3: únicamente ese trim
   const num = v => (Math.round(v * 10) / 10).toString();
   const filas = g.alumnos.map((a, i) => {
     const tr = [1, 2, 3].map(t => solo && t !== solo ? null : gBoleta(gCalcAlumno(g, a.id, t).final));
-    const an = solo ? null : gCalcAnual(g, a.id), fin = an ? Math.max(5, Math.round(an.prom + 1e-9)) : null;
+    const an = solo ? null : gCalcAnual(g, a.id), fin = an ? an.fin : null;   // promedio final con un decimal, según REGLA_CALIF
     const rec = [1, 2, 3].map(t => { if (solo && t !== solo) return ''; const R = g.recup && g.recup[t]; return R && R.notas && R.notas[a.id] != null && R.max > 0 ? `T${t}: ${num(Math.min(10, R.notas[a.id] / R.max * 10))}` : ''; }).filter(Boolean).join('   ');
     return { n: i + 1, nombre: a.nombre, tr, fin, rec };
   });
@@ -1546,7 +1562,7 @@ function gConcentradoWord(g, solo) {
   const td = (x, c) => `<td style="border:1px solid #000;padding:5px;height:20px${c ? ';text-align:center' : ''}">${x}</td>`;
   const html = gEncabezadoDoc(D.titulo, g, `<b>Grado:</b> ${gEsc(g.grado)}°` + (p.cct ? ` &nbsp; <b>CCT:</b> ${gEsc(p.cct)}` : '')) +
     `<table style="width:100%;border-collapse:collapse"><tr>${th(D.cols[0], '5%')}${th(D.cols[1], '37%')}${th(D.cols[2], '12%')}${th(D.cols[3], '12%')}${th(D.cols[4], '12%')}${th(D.cols[5], '10%')}${th(D.cols[6], '12%')}</tr>` +
-    D.filas.map(f => `<tr>${td(f.n, 1)}${td(gEsc(f.nombre))}${f.tr.map(x => td(x == null ? '' : x, 1)).join('')}${td(f.fin == null ? '' : '<b>' + f.fin + '</b>', 1)}${td(gEsc(f.rec), 1)}</tr>`).join('') + '</table>' +
+    D.filas.map(f => `<tr>${td(f.n, 1)}${td(gEsc(f.nombre))}${f.tr.map(x => td(x == null ? '' : x, 1)).join('')}${td(f.fin == null ? '' : '<b>' + gFmt(f.fin, 1) + '</b>', 1)}${td(gEsc(f.rec), 1)}</tr>`).join('') + '</table>' +
     `<p>&nbsp;</p><table style="width:100%;border-collapse:collapse"><tr><td style="width:45%;text-align:center;border-top:1px solid #000;padding-top:4px">${gEsc(gDocente())}<br>Docente</td><td style="width:10%"></td><td style="width:45%;text-align:center;border-top:1px solid #000;padding-top:4px">${gEsc(p.director || '')}<br>Director(a)</td></tr></table>`;
   descargarWord(html, gConcentradoNombre(g, 'doc', solo));
 }
@@ -1567,10 +1583,13 @@ async function gConcentradoExcel(g, solo) {
     const r = rH + 1 + i, row = ws.getRow(r); row.height = 21;
     row.getCell(1).value = f.n; row.getCell(2).value = f.nombre;
     f.tr.forEach((v, k) => { row.getCell(3 + k).value = v == null ? null : v; });
-    row.getCell(6).value = { formula: solo ? `IF(COUNT(C${r}:E${r})<3,"",MAX(5,ROUND(AVERAGE(C${r}:E${r}),0)))` : `IF(COUNT(C${r}:E${r})=0,"",MAX(5,ROUND(AVERAGE(C${r}:E${r}),0)))`, result: f.fin == null ? '' : f.fin };
+    // Promedio final con un decimal; misma regla que REGLA_CALIF.final (truncar = INT(prom×10)/10, redondeo = ROUND(prom,1))
+    const prom = `AVERAGE(C${r}:E${r})`, calc = REGLA_CALIF.final === 'redondeo' ? `ROUND(${prom},1)` : `INT(${prom}*10+0.000000001)/10`;
+    row.getCell(6).value = { formula: solo ? `IF(COUNT(C${r}:E${r})<3,"",MAX(5,${calc}))` : `IF(COUNT(C${r}:E${r})=0,"",MAX(5,${calc}))`, result: f.fin == null ? '' : f.fin };
     row.getCell(7).value = f.rec || null;
     for (let k = 1; k <= 7; k++) { const c = row.getCell(k); c.border = borde; c.font = { size: 10.5, bold: k === 6 }; c.alignment = k === 2 ? { vertical: 'middle', wrapText: true } : centro; }
-    for (let k = 3; k <= 6; k++) row.getCell(k).numFmt = '0';
+    for (let k = 3; k <= 5; k++) row.getCell(k).numFmt = '0';
+    row.getCell(6).numFmt = '0.0';
   });
   // reprobados (menos de 6) en rojo, también si el maestro edita la calificación
   const ref = `C${rH + 1}:F${rH + D.filas.length}`;
@@ -1596,7 +1615,7 @@ async function gConcentradoPDF(g, solo) {
   doc.autoTable({
     startY: y + 6, margin: { left: M, right: M, bottom: 50 },
     head: [D.cols],
-    body: D.filas.map(f => [f.n, lim(f.nombre), ...f.tr.map(x => x == null ? '' : x), f.fin == null ? '' : f.fin, lim(f.rec)]),
+    body: D.filas.map(f => [f.n, lim(f.nombre), ...f.tr.map(x => x == null ? '' : x), f.fin == null ? '' : gFmt(f.fin, 1), lim(f.rec)]),
     styles: { font: 'helvetica', fontSize: 9, cellPadding: 4, lineColor: [0, 0, 0], lineWidth: 0.5, textColor: 0, minCellHeight: 18, valign: 'middle' },
     headStyles: { fillColor: [189, 215, 238], textColor: 0, fontStyle: 'bold', halign: 'center' },
     columnStyles: { 0: { cellWidth: 26, halign: 'center' }, 1: { cellWidth: 'auto', halign: 'left' }, 2: { cellWidth: 52, halign: 'center' }, 3: { cellWidth: 52, halign: 'center' }, 4: { cellWidth: 52, halign: 'center' }, 5: { cellWidth: 52, halign: 'center', fontStyle: 'bold' }, 6: { cellWidth: 82, halign: 'center', fontSize: 8 } },
