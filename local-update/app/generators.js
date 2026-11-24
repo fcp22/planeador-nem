@@ -328,6 +328,7 @@ function construirHTMLPlanDidactico(d, ia) {
 <p><strong>CAMPO FORMATIVO:</strong> ${d.campo} &nbsp;&nbsp; <strong>DISCIPLINA:</strong> ${d.disciplina}</p>
 <p><strong>GRADO Y GRUPO:</strong> ${d.grado}° ${d.grupo||'A, B, C'} &nbsp;&nbsp; <strong>DOCENTE(S):</strong> ${d.docente}</p>
 <p><strong>PERIODO:</strong> ${trimestreNombre} TRIMESTRE &nbsp;&nbsp; <strong>MODALIDAD:</strong> ${d.modalidad||'Proyectos comunitarios'}</p>
+${(typeof fpTexto==='function' && fpTexto(1, parseInt(d.numSesiones,10)||1)) ? '<p><strong>FECHA DE INICIO Y TÉRMINO:</strong> '+fpTexto(1, parseInt(d.numSesiones,10)||1)+'</p>' : ''}
 <p><strong>NOMBRE DEL PROYECTO:</strong> ${d.nombreProyecto}</p>
 
 ${tabla(
@@ -536,7 +537,8 @@ function datosSEPDesdeIA(d, ia) {
       const m = moms[i] || {};
       const a = Math.floor(i * N / 11) + 1, b = Math.max(a, Math.floor((i + 1) * N / 11));
       i++;
-      return { n, acts: lista(m.actividades || m.acts), rec: lista(m.recursos || m.rec), fecha: a === b ? 'Sesión ' + a : 'Sesiones ' + a + '–' + b };
+      const ses = a === b ? 'Sesión ' + a : 'Sesiones ' + a + '–' + b, ft = (typeof fpTexto === 'function') ? fpTexto(a, b) : '';
+      return { n, acts: lista(m.actividades || m.acts), rec: lista(m.recursos || m.rec), fecha: ft ? ft + '<br><small>' + ses + '</small>' : ses };
     }),
   }));
   const producto = String(ia.producto || d.productoIntegrador || '').trim();
@@ -545,7 +547,7 @@ function datosSEPDesdeIA(d, ia) {
     criterios: ia.criterios, observaciones: String(ia.observaciones || '').trim(),
     enfoque: String(ia.enfoque || '').trim(),
     tipoProyecto: d.modalidad || 'Aprendizaje basado en proyectos comunitarios',
-    sesionesTxt: N + ' sesiones de ' + (d.duracionSesion || '50') + ' minutos', fechaTxt: '',
+    sesionesTxt: N + ' sesiones de ' + (d.duracionSesion || '50') + ' minutos', fechaTxt: (typeof fpTexto === 'function') ? fpTexto(1, N) : '',
     cotejoTitulo: 'LISTA DE COTEJO PARA EVALUAR ' + (producto ? producto.toUpperCase() : 'EL PRODUCTO'),
     cotejo: lista(ia.cotejo),
   };

@@ -2118,6 +2118,7 @@ function gAbrirPlano(pid) {
     const o = document.createElement('option'); o.value = p.clases; o.textContent = `~${p.clases} sesiones`; selSes.insertBefore(o, selSes.querySelector('option[value="otro"]'));
   }
   gSel('d-ses', String(p.clases));
+  if (typeof fpDesdeProyecto === 'function') fpDesdeProyecto(p);
   const selDur = document.getElementById('d-dur');
   if (![...selDur.options].some(o => +o.value === p.min)) { const o = document.createElement('option'); o.value = p.min; o.textContent = `${p.min} minutos`; selDur.appendChild(o); }
   gSel('d-dur', String(p.min));

@@ -210,14 +210,17 @@ function secBloqueHTML(d, c, h, ia, nSec) {
   const tr = (...x) => `<tr>${x.join('')}</tr>`;
   const tabla = f => `<table style="width:100%;border-collapse:collapse;margin-bottom:10px;">${f}</table>`;
   const dur = secDuracion(), totMin = c.sesiones * dur;
+  const off = (window.__secOff && window.__secOff[c.i]) || 0, off0 = (typeof fpTexto === 'function') ? off : null;
+  const fSes = n => (off0 !== null && typeof fpFechaSesion === 'function') ? fpFechaSesion(off0 + n) : '';
+  const fRango = arr => { if (off0 === null || !arr.length) return ''; const ss = arr.map(b => b.sesion); return fpTexto(off0 + Math.min(...ss), off0 + Math.max(...ss)); };
   const periodo = d.trimestre === '1' ? 'Septiembre - Noviembre' : d.trimestre === '2' ? 'Diciembre - Marzo' : 'Abril - Junio';
   const trim = d.trimestre === '1' ? 'Primer' : d.trimestre === '2' ? 'Segundo' : 'Tercer';
   const bloquesFase = (clave, arr, color, titulo) => {
     const f = (ia.fases && ia.fases[clave]) || {}, bl = Array.isArray(f.bloques) ? f.bloques : [];
-    const filas = arr.map((b, k) => { const x = bl[k] || {}; return tr(td(String(b.sesion), '7%', 'text-align:center;'), td(b.min + ' min', '8%', 'text-align:center;'), td(secPasos(x.docente), '31%'), td(secPasos(x.alumnado), '31%'), td(secTxt(x.forma), '10%'), td(secTxt(x.recursos), '13%')); }).join('');
-    return `<p style="font-weight:bold;font-size:11.5pt;margin:12px 0 3px;">${titulo} · ${secSesionesFase(arr)} sesión${secSesionesFase(arr) > 1 ? 'es' : ''} · ${secTiempoTxt(secMinFase(arr))}</p>
+    const filas = arr.map((b, k) => { const x = bl[k] || {}; return tr(td(String(b.sesion) + (fSes(b.sesion) ? '<br><small>' + secEsc(fSes(b.sesion)) + '</small>' : ''), '10%', 'text-align:center;'), td(b.min + ' min', '8%', 'text-align:center;'), td(secPasos(x.docente), '30%'), td(secPasos(x.alumnado), '30%'), td(secTxt(x.forma), '10%'), td(secTxt(x.recursos), '12%')); }).join('');
+    return `<p style="font-weight:bold;font-size:11.5pt;margin:12px 0 3px;">${titulo} · ${secSesionesFase(arr)} ${secSesionesFase(arr) > 1 ? 'sesiones' : 'sesión'} · ${secTiempoTxt(secMinFase(arr))}${fRango(arr) ? ' · ' + secEsc(fRango(arr)) : ''}</p>
 ${f.proposito ? `<p style="margin:0 0 4px;"><em>${secTxt(f.proposito)}</em></p>` : ''}
-${tabla(tr(th('Sesión', '7%', color), th('Tiempo', '8%', color), th('Actividades del docente', '31%', color), th('Actividades del alumnado', '31%', color), th('Forma de trabajo', '10%', color), th('Recursos', '13%', color)) + filas)}`;
+${tabla(tr(th('Sesión', '10%', color), th('Tiempo', '8%', color), th('Actividades del docente', '30%', color), th('Actividades del alumnado', '30%', color), th('Forma de trabajo', '10%', color), th('Recursos', '12%', color)) + filas)}`;
   };
   const ev = Array.isArray(ia.evaluacion) ? ia.evaluacion : [];
   const contenidosPda = c.contenidos.map(x => `<strong>${secEsc(x.titulo)}</strong><br>PDA: ${secEsc(obtenerPDA(x, d.grado))}`).join('<br><br>');
@@ -232,7 +235,8 @@ ${tabla(
     tr(th('Docente:'), td(secEsc(d.docente)), th('Grado y grupo:'), td(secEsc(d.grado + '° ' + (d.grupo || '')))) +
     tr(th('Campo formativo:'), td(secEsc(d.campo)), th('Disciplina:'), td(secEsc(d.disciplina))) +
     tr(th('Periodo:'), td(`${trim} trimestre (${periodo})`), th('Modalidad:'), td('Secuencia didáctica')) +
-    tr(th('Duración total:'), td(`${c.sesiones} sesión${c.sesiones > 1 ? 'es' : ''} de ${dur} min = ${secTiempoTxt(totMin)}`), th('Distribución:'), td(secResumenHorario(h))) +
+    tr(th('Duración total:'), td(`${c.sesiones} ${c.sesiones > 1 ? 'sesiones' : 'sesión'} de ${dur} min = ${secTiempoTxt(totMin)}`), th('Distribución:'), td(secResumenHorario(h))) +
+    (off0 !== null && fpTexto(off0 + 1, off0 + c.sesiones) ? tr(th('Fechas:'), td(secEsc(fpTexto(off0 + 1, off0 + c.sesiones))), th('Días de clase:'), td(secEsc(fpDiasTexto()))) : '') +
     tr(th('Forma de trabajo:'), td(secTxt(ia.organizacion)), th('Espacios:'), td(secTxt(ia.espacios)))
   )}
 ${tabla(
@@ -272,6 +276,8 @@ async function generarSecuenciaDidactica(d) {
   if (sinCont) throw new Error(`La secuencia ${sinCont.i} no tiene contenidos: marca al menos uno.`);
   d.situacion = (secEl('d-situacion') || {}).value || ''; d.recursos = ((secEl('s-rec') || {}).value || '').trim();
   if (typeof licEsPrueba === 'function' && licEsPrueba() && cards.length > 1) throw new Error('En la prueba gratis puedes generar 1 secuencia. Deja una sola secuencia (o activa tu licencia para generar hasta 4 por trimestre).');
+  // La sesión 1 de cada secuencia continúa donde terminó la anterior (para poner la fecha de cada sesión)
+  window.__secOff = {}; { let acc = 0; todas.forEach(x => { window.__secOff[x.i] = acc; acc += x.sesiones; }); }
   const dur = secDuracion(), partes = [], fallos = [], hechas = [];
   // Todas las secuencias se piden al mismo tiempo (cada una es independiente): tarda lo de una sola, no la suma.
   let listas = 0; const n = cards.length;

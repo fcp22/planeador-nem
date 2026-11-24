@@ -937,7 +937,7 @@ function tablaFasesHTML(ruta) {
     f.mom.forEach(m => {
       const ev = `<p style="margin:4px 0 0;font-size:90%;"><strong>Evidencia:</strong> ${escM(m.evi)}. <strong>Organización:</strong> ${escM(m.org)}. <strong>Evaluación:</strong> ${escM(m.eva.tec)} · ${escM(m.eva.inst)} · ${escM(m.eva.mod)}.${m.retro ? ' <strong>Retroalimentación:</strong> sí.' : ''}</p>`;
       h += `<tr>
-${cel(`<strong>${escM(m.n)}</strong><br>${escM(m.t.ses)} ses. (${m.t.min} min)<br>${m.t.sesIni === m.t.sesFin ? 'Sesión ' + m.t.sesIni : 'Sesiones ' + m.t.sesIni + '–' + m.t.sesFin}<br>${m.t.semIni === m.t.semFin ? 'Semana ' + m.t.semIni : 'Semanas ' + m.t.semIni + '–' + m.t.semFin}`)}
+${cel(`<strong>${escM(m.n)}</strong><br>${escM(m.t.ses)} ses. (${m.t.min} min)<br>${m.t.sesIni === m.t.sesFin ? 'Sesión ' + m.t.sesIni : 'Sesiones ' + m.t.sesIni + '–' + m.t.sesFin}<br>${m.t.semIni === m.t.semFin ? 'Semana ' + m.t.semIni : 'Semanas ' + m.t.semIni + '–' + m.t.semFin}${(typeof fpTexto === 'function' && fpTexto(m.t.sesIni, m.t.sesFin)) ? '<br><strong>' + escM(fpTexto(m.t.sesIni, m.t.sesFin)) + '</strong>' : ''}`)}
 ${cel(listaHTML(m.acc))}
 ${cel(`<strong>Docente:</strong>${listaHTML(m.doc)}<strong>Alumnado:</strong>${listaHTML(m.alu)}${ev}`)}
 ${cel(listaHTML(m.rec))}
@@ -1069,7 +1069,7 @@ ${contenidosHTML}
 <tr>${th('Productos (tangibles o intangibles, entregables)', '28%')}${td('<strong>' + escM(d.disciplina) + ':</strong> ' + escM(pr.producto || d.productoIntegrador || '') + (d.productoSecundario ? '<br><strong>Otro producto:</strong> ' + escM(d.productoSecundario) : ''))}</tr>
 </table>
 <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
-${tr(th('Temporalidad (meses, semanas / número de sesiones)', '28%'), td(`${ruta.totalSes} sesiones de ${ruta.minSes} minutos · ${ruta.semanas} semanas (${ruta.sesPorSem} sesiones por semana)`))}
+${tr(th('Temporalidad (meses, semanas / número de sesiones)', '28%'), td(`${ruta.totalSes} sesiones de ${ruta.minSes} minutos · ${ruta.semanas} semanas (${ruta.sesPorSem} sesiones por semana)` + ((typeof fpTexto === 'function' && fpTexto(1, ruta.totalSes)) ? ' · <strong>Del ' + escM(fpTexto(1, ruta.totalSes)) + '</strong>' : '')))}
 </table>
 <p style="margin:8px 0 2px;"><strong>Rutina de cada sesión</strong> (orientaciones y estrategias didácticas generales)</p>
 ${rutinaHTML()}
@@ -1192,7 +1192,7 @@ function datosSEPDesdeRuta(d, ruta, comp) {
         n: quitaPunto(m.n),
         acts: [].concat(m.doc || [], m.alu || []),
         rec: m.rec || [],
-        fecha: (m.t.semIni === m.t.semFin ? 'Semana ' + m.t.semIni : 'Semanas ' + m.t.semIni + '–' + m.t.semFin) + '<br><small>' + (m.t.sesIni === m.t.sesFin ? 'Sesión ' + m.t.sesIni : 'Sesiones ' + m.t.sesIni + '–' + m.t.sesFin) + '</small>',
+        fecha: ((typeof fpTexto === 'function' && fpTexto(m.t.sesIni, m.t.sesFin)) || (m.t.semIni === m.t.semFin ? 'Semana ' + m.t.semIni : 'Semanas ' + m.t.semIni + '–' + m.t.semFin)) + '<br><small>' + (m.t.sesIni === m.t.sesFin ? 'Sesión ' + m.t.sesIni : 'Sesiones ' + m.t.sesIni + '–' + m.t.sesFin) + '</small>',
       })),
     })),
     producto, evaluacion: 'Formativa', criterios,
@@ -1200,7 +1200,7 @@ function datosSEPDesdeRuta(d, ruta, comp) {
     enfoque: comp.especificidad || '',
     tipoProyecto: met ? met.nombre + (ruta.esc ? ' — ' + ({ aula: 'Áulico', escuela: 'Escolar', comunidad: 'Comunitario' }[ruta.esc] || '') : '') : (d.modalidad || ''),
     sesionesTxt: ruta.totalSes + ' sesiones de ' + ruta.minSes + ' minutos (' + ruta.semanas + ' semanas)',
-    fechaTxt: '',
+    fechaTxt: (typeof fpTexto === 'function') ? fpTexto(1, ruta.totalSes) : '',
     cotejoTitulo: 'LISTA DE COTEJO PARA EVALUAR ' + (producto ? producto.toUpperCase() : 'EL PRODUCTO'),
     cotejo,
   };

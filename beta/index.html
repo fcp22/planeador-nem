@@ -1008,6 +1008,29 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
           </div>
         </div>
 
+        <div class="card" id="card-fechas">
+          <div class="card-title">📅 Fechas del trabajo</div>
+          <p style="margin:0 0 10px;font-size:13px;color:var(--gris);">La app calcula sola las fechas con tus días de clase y el número de sesiones. Cámbialas solo si tu calendario es distinto; el plano pone la fecha de cada sesión.</p>
+          <div class="f2">
+            <div class="campo"><label>Primer día de clase</label><input type="date" id="fp-ini" onchange="fpCalcular()"></div>
+            <div class="campo"><label>Último día (estimado)</label><input type="date" id="fp-fin" onchange="fpFinCambio()">
+              <div class="ayuda">Si lo cambias tú, el número de sesiones sale de las fechas. Si lo borras, la app lo vuelve a estimar.</div></div>
+          </div>
+          <div id="fp-hor-box" class="campo hidden"><label>Días de clase según mi horario</label><select id="fp-hor" onchange="fpUsarHorario()"></select>
+            <div class="ayuda">Si das esta materia a varios grupos, elige el grupo con el que quieres calcular las fechas.</div></div>
+          <div class="campo"><label>Días en que das esta clase</label>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;">
+              <label style="display:flex;gap:5px;align-items:center;font-weight:600;"><input type="checkbox" id="fp-d1" checked onchange="fpDiaManual()" style="width:auto;flex:none;padding:0;margin:0"> Lunes</label>
+              <label style="display:flex;gap:5px;align-items:center;font-weight:600;"><input type="checkbox" id="fp-d2" onchange="fpDiaManual()" style="width:auto;flex:none;padding:0;margin:0"> Martes</label>
+              <label style="display:flex;gap:5px;align-items:center;font-weight:600;"><input type="checkbox" id="fp-d3" checked onchange="fpDiaManual()" style="width:auto;flex:none;padding:0;margin:0"> Miércoles</label>
+              <label style="display:flex;gap:5px;align-items:center;font-weight:600;"><input type="checkbox" id="fp-d4" onchange="fpDiaManual()" style="width:auto;flex:none;padding:0;margin:0"> Jueves</label>
+              <label style="display:flex;gap:5px;align-items:center;font-weight:600;"><input type="checkbox" id="fp-d5" checked onchange="fpDiaManual()" style="width:auto;flex:none;padding:0;margin:0"> Viernes</label>
+            </div></div>
+          <div class="campo"><label>Días sin clase (opcional)</label><input id="fp-sin" placeholder="Ej. 16/11/2026, 21/12/2026 al 01/01/2027" oninput="fpCalcular()">
+            <div class="ayuda">Festivos, suspensiones o Consejo Técnico: se saltan al contar las sesiones.</div></div>
+          <div id="fp-prev" style="display:none;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;font-size:13px;"></div>
+        </div>
+
         <div class="card">
           <div class="card-title">📚 Contenidos y PDAs</div>
           <p style="font-size:13px;color:var(--gris);margin-bottom:12px;">Selecciona los contenidos del trimestre. El PDA aparece al seleccionar.</p>
@@ -1224,10 +1247,11 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
 <script src="licencia.js?v=202611191930"></script>
 <script src="curriculum.js?v=202611180600"></script>
 <script src="projects.js?v=202611180600"></script>
-<script src="generators.js?v=202611231200"></script>
-<script src="metodologias.js?v=202611231200"></script>
+<script src="generators.js?v=202611231500"></script>
+<script src="metodologias.js?v=202611231500"></script>
 <script src="ruta-ui.js?v=202611180600"></script>
-<script src="secuencias.js?v=202611181600"></script>
+<script src="fechas-plan.js?v=202611231500"></script>
+<script src="secuencias.js?v=202611231500"></script>
 <script src="sugerencias-plano.js?v=202611180600"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
@@ -1250,7 +1274,7 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611201000"></script>
+<script src="gestion.js?v=202611231500"></script>
 <script src="bitacora.js?v=202611180600"></script>
 <script src="escaner.js?v=202611180600"></script>
 <script src="libreta.js?v=202611182230"></script>
@@ -1393,6 +1417,7 @@ function setTipo(t){
   document.getElementById('tbtn-d').classList.toggle('on',t==='d');
   document.getElementById('sec-a').classList.toggle('hidden',t!=='a');
   document.getElementById('sec-d').classList.toggle('hidden',t!=='d');
+  if(t==='d'&&typeof fpRefrescarHorario==='function') fpRefrescarHorario();
 }
 
 // ── FORMATO DEL PLANO: 1 = Plano didáctico (ATP) · 2 = Plan de clase o secuencia didáctica ──
