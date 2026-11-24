@@ -1,6 +1,6 @@
 {
- "version": "5e8b89094a2f5dfc",
- "fecha": "2026-11-23T21:25:34",
+ "version": "636dd5c7e70f5209",
+ "fecha": "2026-11-24T16:57:00",
  "servidorMin": 1,
  "archivos": [
   {
@@ -85,8 +85,8 @@
   },
   {
    "p": "escaner.js",
-   "h": "5b9c71eeeddfffc633e0420ff80279f9f8541600a599f6f82434d3211171f9bf",
-   "s": 28805
+   "h": "760404ee7bff06ad30571571d5c7d885c6aa190a23d3da863b979ccad410e7cf",
+   "s": 39316
   },
   {
    "p": "fechas-plan.js",
@@ -105,8 +105,8 @@
   },
   {
    "p": "gestion.js",
-   "h": "29d62117f4a9b5324beb2b0c8a28ea088c01d8d5d2a02bf7d43d1d34f7abc83a",
-   "s": 233787
+   "h": "fbe17b95d618e1c18eb7746740c95ad890f8fb585ece6e69d87d5657c3688ea0",
+   "s": 260765
   },
   {
    "p": "icons/icono-180.png",
@@ -135,8 +135,8 @@
   },
   {
    "p": "index.html",
-   "h": "d780fce87cbd57e720dcce7844d2af62f909980763fc390bd4d3154e24c3da58",
-   "s": 148694
+   "h": "f88a72b5daf95ad9633364a609b98604514758eec9da4fe0c8f9a16459df5c59",
+   "s": 148846
   },
   {
    "p": "libreta.js",
@@ -145,8 +145,8 @@
   },
   {
    "p": "licencia.js",
-   "h": "d82dfa3d2c3a95ab81e6089ac6abe54668eff02fcb67402e827f44c1bf1d3e6e",
-   "s": 59491
+   "h": "415493bf8deb388cc7fdec578d38408fb7ab47fbcba6addd6e4af2d02463f9da",
+   "s": 59637
   },
   {
    "p": "local-shim.js",
@@ -165,8 +165,8 @@
   },
   {
    "p": "privacidad.js",
-   "h": "50ef1f50d50ec77b9e94d515002d26c9e98edcf4f3dad44a742617a9c903fa1c",
-   "s": 12517
+   "h": "29f710c1c0f1612b85d79ec4b6cfe567f673f263c50e1c918240b26dc37930d1",
+   "s": 18119
   },
   {
    "p": "projects.js",
@@ -185,8 +185,8 @@
   },
   {
    "p": "secuencias.js",
-   "h": "d68fb4445787fb6d1c0320d476271db03290f905ed058b930f76ebbac80a2d1d",
-   "s": 34559
+   "h": "d0212d7b72c69e22b920233a16d72ab7cf05e52e49b51b0ebfb8e2c1fdb0f250",
+   "s": 34711
   },
   {
    "p": "sugerencias-plano.js",
@@ -200,7 +200,7 @@
   },
   {
    "p": "sw.js",
-   "h": "83b3294aa9612f08ce0d2422d8e457a194632efbbea9b10b28700054cbede306",
+   "h": "62dbf5006ca02697b9267b8e1e6beea65890c256f90798b4e9fb153712160e95",
    "s": 4986
   }
  ]

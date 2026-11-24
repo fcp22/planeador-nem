@@ -43,7 +43,21 @@ function gFechaBonita(iso) {
 function gSumarDias(iso, n) { const [y, m, d] = iso.split('-').map(Number); const f = new Date(y, m - 1, d + n); return f.getFullYear() + '-' + String(f.getMonth() + 1).padStart(2, '0') + '-' + String(f.getDate()).padStart(2, '0'); }
 function gNum(v) { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; }
 function gFmt(n, d) { return n == null ? '—' : n.toFixed(d == null ? 1 : d); }
-function gBoleta(f) { return f == null ? null : Math.max(5, Math.round(f + 1e-9)); }
+// ── Regla de calificaciones: UN solo lugar para cambiarla ──
+// Verificar con las Normas de Control Escolar vigentes
+//   trimestral: cómo se pasa la calificación del trimestre a la boleta (entero de 5 a 10): 'truncar' | 'redondeo'
+//   final:      cómo se obtiene el promedio final anual (un decimal):                       'truncar' | 'redondeo'
+const REGLA_CALIF = { trimestral: 'truncar', final: 'truncar' };
+// Aplica la regla a un número con `dec` decimales. El 1e-9 evita que un 5.9999999 (error normal de decimales) se trunque a 5.
+function gAplicarRegla(v, dec, modo) {
+  const k = Math.pow(10, dec), x = v * k + 1e-9;
+  return (modo === 'redondeo' ? Math.round(x) : Math.floor(x)) / k;
+}
+function gBoleta(f) { return f == null ? null : Math.min(10, Math.max(5, gAplicarRegla(f, 0, REGLA_CALIF.trimestral))); }
+function gFinalAnual(prom) { return prom == null ? null : gAplicarRegla(prom, 1, REGLA_CALIF.final); }   // promedio de las 3 boletas, con un decimal
+function gAprobado(fin) { return fin != null && fin >= 6; }                                               // aprobado solo con 6.0 o más
+// Calificación del trimestre con decimales, mostrada con la MISMA regla que la boleta (así nunca se ve «6.0» junto a una boleta de 5)
+function gFmtCal(n, dec) { return n == null ? '—' : gAplicarRegla(n, dec == null ? 1 : dec, REGLA_CALIF.trimestral).toFixed(dec == null ? 1 : dec); }
 function gAviso(msg) { alert(msg); }
 
 // ── Almacenamiento ────────────────────────────────────────
@@ -308,6 +322,12 @@ function gHorarioToast(html, ms, mal) {
 }
 async function gHorarioLeerFoto(file, auto) {
   if (typeof workerFetch !== 'function' || typeof escReducir !== 'function') return;
+  // Aviso de privacidad: la foto o el PDF se envía a la IA (se pide confirmar una vez en este dispositivo)
+  let avisado = false; try { avisado = localStorage.getItem('nem_priv_horario') === '1'; } catch (e) { /* sin almacenamiento */ }
+  if (!avisado) {
+    if (!confirm('🔒 Para leer tu horario, la foto o el PDF se envía a la IA.\n\nNo envíes documentos que tengan nombres de alumnos (listas, boletas, registros). Solo debe verse tu horario.\n\n¿Es solo tu horario?\nAceptar = enviar.\nCancelar = no enviar.')) { gHorarioMsg('<span style="color:var(--gris)">No envié nada. Si quieres, escribe tu horario a mano en la tabla.</span>'); return; }
+    try { localStorage.setItem('nem_priv_horario', '1'); } catch (e) { /* sin almacenamiento */ }
+  }
   // Si ya hay un horario escrito, se pregunta ANTES de leer (para no hacerlo esperar y luego decirle que se reemplaza)
   if (gHorarioTieneDatos() && !confirm('Ya tienes un horario escrito en la tabla.\n\nSi sigues, se va a REEMPLAZAR con lo que la IA lea de tu foto o PDF (tarda de 10 a 30 segundos).\n\n¿Continuar?')) { gHorarioMsg('<span style="color:var(--gris)">Dejé tu tabla como estaba. Cuando quieras, pulsa «✨ Pasar a la tabla».</span>'); return; }
   gHorarioMsg('<span style="color:var(--azul)">🔎 Leyendo tu horario con IA… (puede tardar unos segundos)</span>');
@@ -355,6 +375,7 @@ async function gRenderArchivos(cat) {
   p.innerHTML = `<div class="sec-title">${C.tit}</div><div class="sec-sub">${C.sub}</div>
   ${C.antes ? C.antes() : ''}
   <div class="card"><div class="card-title">${C.btn}</div>
+    ${cat === 'horario' ? '<div class="g-aviso" style="margin-bottom:10px;font-size:13px">🔒 <b>Privacidad:</b> para pasar tu horario a la tabla, la foto o el PDF se envía a la IA. <b>No fotografíes ni subas documentos que tengan nombres de alumnos</b> (listas, boletas, registros): sube solo tu horario.</div>' : ''}
     <p style="font-size:13px;color:var(--gris);margin:0 0 10px">Acepta <b>PDF</b>, <b>JPG</b> o <b>PNG</b> (hasta 15 MB cada uno). ${C.multi} Desde el celular también puedes tomarle una foto.</p>
     <label class="g-btn" style="display:inline-block;cursor:pointer">⬆ Subir archivo (PDF, JPG o PNG)<input type="file" accept="application/pdf,image/*,.pdf,.png,.jpg,.jpeg" multiple style="display:none" onchange="gCalSubir(this,'${cat}')"></label>
     <div id="gcal-msg" style="font-size:13px;margin-top:10px">${err ? `<span class="g-mal">${gEsc(err)}</span>` : ''}</div>
@@ -1089,18 +1110,32 @@ function gAsistNota(g, aid, t) {
 }
 function gAutoAsistencia(cid) { const g = gGrupo(), c = g.criterios.find(x => x.id === cid); if (c) { c.auto = 'asistencia'; gGuardar(); gRenderCalif(); } }
 function gPrimerManual(g) { return g.criterios.find(c => !c.auto) || g.criterios[0]; }
+// ── NE («no entregó») y casillas pendientes ──
+// · Casilla vacía = «sin calificar»: NUNCA se convierte en 0 sola (ni en datos viejos).
+// · a.ne[idAlumno] = true marca NE en una actividad (la nota a.notas no se toca). Si hay nota, la nota manda.
+// · g.neModo: 'pendiente' (por defecto: no promedia hasta que el docente decida) | 'cero' (NE cuenta como 0). Los grupos anteriores no lo tienen = 'pendiente'.
+// · Mientras haya casillas sin calificar o NE pendientes, la calificación es provisional («pendiente») y no se descarga el concentrado ni la boleta.
+function gNeModo(g) { return g && g.neModo === 'cero' ? 'cero' : 'pendiente'; }
+function gEsNE(a, aid) { return !!(a.ne && a.ne[aid]) && a.notas[aid] == null; }
 function gCalcAlumno(g, aid, t, sinRec) {
-  const porCrit = {}; let suma = 0, pcts = 0;
+  const porCrit = {}, pend = []; let suma = 0, pcts = 0;
+  const neCero = gNeModo(g) === 'cero';
   g.criterios.forEach(c => {
     const pc = gPct(g, c.id, t);
-    if (c.auto === 'asistencia') { const v = gAsistNota(g, aid, t); if (v != null) { porCrit[c.id] = v; suma += v * pc; pcts += pc; } else porCrit[c.id] = null; return; }
-    const vals = [];
-    gActsTrim(g, t).filter(a => a.criterioId === c.id).forEach(a => {
-      const n = a.notas[aid]; if (n != null && a.max > 0) vals.push(n / a.max * 10);
+    if (c.auto === 'asistencia') { const v = gAsistNota(g, aid, t); if (v != null) { porCrit[c.id] = v; suma += v * pc; pcts += pc; } else { porCrit[c.id] = null; if (pc > 0) pend.push({ tipo: 'asist', crit: c.id }); } return; }
+    const vals = [], acts = gActsTrim(g, t).filter(a => a.criterioId === c.id);
+    acts.forEach(a => {
+      const n = a.notas[aid];
+      if (n != null && a.max > 0) vals.push(n / a.max * 10);
+      else if (a.max > 0) {   // casilla sin nota: NE o vacía
+        if (gEsNE(a, aid)) { if (neCero) vals.push(0); else if (pc > 0) pend.push({ tipo: 'ne', crit: c.id, act: a.id }); }
+        else if (pc > 0) pend.push({ tipo: 'vacia', crit: c.id, act: a.id });
+      }
     });
-    if (typeof gLibretaScore === 'function') { const ls = gLibretaScore(g, aid, t, c.id); if (ls != null) vals.push(ls); }   // Libreta de trabajos
+    let hayLib = false;
+    if (typeof gLibretaScore === 'function') { const ls = gLibretaScore(g, aid, t, c.id); if (ls != null) { vals.push(ls); hayLib = true; } }   // Libreta de trabajos
     if (vals.length) { const s = vals.reduce((x, y) => x + y, 0) / vals.length; porCrit[c.id] = s; suma += s * pc; pcts += pc; }
-    else porCrit[c.id] = null;
+    else { porCrit[c.id] = null; if (pc > 0 && !acts.length && !hayLib) pend.push({ tipo: 'criterio', crit: c.id }); }   // criterio con peso y sin ninguna calificación
   });
   let final = pcts > 0 ? suma / pcts : null, rec = null;
   const R = !sinRec && g.recup && g.recup[t];
@@ -1109,12 +1144,80 @@ function gCalcAlumno(g, aid, t, sinRec) {
     final = R.modo === 'prom' ? (orig + n) / 2 : R.modo === 'seis' ? (n >= 6 ? Math.max(orig, 6) : orig) : Math.max(orig, n);
     rec = { orig, n };
   }
-  return { porCrit, final, pcts, rec };
+  return { porCrit, final, pcts, rec, pend };   // pend = casillas que faltan (vacías, NE pendientes, criterios sin notas)
 }
+// Promedio anual: SOLO con los tres trimestres completos (con calificación y sin casillas pendientes). Si falta alguno: completo = false («Incompleto»).
 function gCalcAnual(g, aid) {
-  const bs = [1, 2, 3].map(t => gBoleta(gCalcAlumno(g, aid, t).final)).filter(b => b != null);
-  return bs.length ? { prom: bs.reduce((x, y) => x + y, 0) / bs.length, n: bs.length } : null;
+  const rs = [1, 2, 3].map(t => gCalcAlumno(g, aid, t)), bs = rs.map(r => gBoleta(r.final));
+  const faltan = [1, 2, 3].filter((t, i) => bs[i] == null || rs[i].pend.length);
+  if (faltan.length) return { completo: false, faltan, prom: null, fin: null, n: bs.filter(b => b != null).length };
+  const prom = bs.reduce((x, y) => x + y, 0) / 3;
+  return { completo: true, faltan: [], prom, fin: gFinalAnual(prom), n: 3 };   // prom = promedio exacto; fin = promedio final con un decimal (el que se muestra y se exporta)
 }
+// ── Casillas pendientes del grupo (para avisos y para bloquear descargas) ──
+// Un trimestre «iniciado» es el que ya tiene alguna nota, NE o pase de lista; los que aún no empiezan no cuentan como pendientes.
+function gTrimIniciado(g, t) {
+  if (gActsTrim(g, t).some(a => Object.keys(a.notas || {}).length || Object.keys(a.ne || {}).length)) return true;
+  if (Object.keys(g.asist || {}).some(f => gTrimDeFecha(f) === t && Object.keys(g.asist[f] || {}).length)) return true;
+  const L = g.libreta && g.libreta[t];
+  return !!(L && typeof gLibretaScore === 'function' && L.crit && g.alumnos.some(al => gLibretaScore(g, al.id, t, L.crit) != null));
+}
+function gPendItemTxt(g, t, it, multi) {
+  const c = g.criterios.find(x => x.id === it.crit), cn = c ? c.nombre : 'Criterio', a = it.act && g.actividades.find(x => x.id === it.act);
+  const base = it.tipo === 'asist' ? 'Asistencia (sin pase de lista)' : it.tipo === 'criterio' ? cn + ' (sin calificaciones)' : (a ? a.nombre : 'Actividad') + (it.tipo === 'ne' ? ' (NE pendiente)' : ' (sin calificar)');
+  return (multi ? 'T' + t + ': ' : '') + base;
+}
+function gPendientes(g, trims) {
+  const ts = trims.filter(t => gTrimIniciado(g, t)), multi = trims.length > 1, lista = []; let total = 0;
+  g.alumnos.forEach(al => {
+    const det = []; ts.forEach(t => gCalcAlumno(g, al.id, t).pend.forEach(it => det.push(gPendItemTxt(g, t, it, multi))));
+    if (det.length) { lista.push({ nombre: al.nombre, n: det.length, det }); total += det.length; }
+  });
+  return { total, nAl: lista.length, lista, trims: ts };
+}
+function gPlural(n, s, p) { return n + ' ' + (n === 1 ? s : p); }
+function gPendResumen(p) { return 'faltan ' + gPlural(p.total, 'casilla', 'casillas') + ' de ' + gPlural(p.nAl, 'alumno', 'alumnos'); }
+function gPendBanner(g, trims) {
+  const p = gPendientes(g, trims); if (!p.total) return '';
+  const filas = p.lista.slice(0, 15).map(x => `<li><b>${gEsc(x.nombre)}</b> (${x.n}): ${x.det.slice(0, 4).map(gEsc).join(', ')}${x.det.length > 4 ? ' y ' + (x.det.length - 4) + ' más' : ''}</li>`).join('');
+  return `<div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;padding:10px 14px;margin:0 0 12px;font-size:12.5px;color:#78350f;line-height:1.5">⏳ <b>Calificación pendiente:</b> ${gPendResumen(p)}. Mientras falten, la calificación es provisional y <b>no se puede descargar</b> el concentrado ni la boleta. Escribe la nota o toca <b>NE</b> si no entregó.<details style="margin-top:6px"><summary style="cursor:pointer;font-weight:600">Ver quién y qué falta</summary><ul style="margin:6px 0 0 18px;padding:0">${filas}</ul>${p.lista.length > 15 ? `<div style="margin-top:4px">…y ${p.lista.length - 15} alumnos más</div>` : ''}</details></div>`;
+}
+// Si hay pendientes devuelve { p, corto, largo } para avisar y NO descargar; si no, null
+function gBloqueo(g, trims) {
+  const p = gPendientes(g, trims); if (!p.total) return null;
+  const quien = p.lista.slice(0, 5).map(x => x.nombre + ' (' + x.n + ')').join(', ') + (p.lista.length > 5 ? ' y ' + (p.lista.length - 5) + ' más' : '');
+  const corto = 'No se puede descargar todavía: ' + gPendResumen(p) + '. ' + quien + '. Escribe la nota o NE.';
+  return { p, corto, largo: corto + '\n\n' + p.lista.slice(0, 12).map(x => '• ' + x.nombre + ': ' + x.det.slice(0, 4).join(', ') + (x.det.length > 4 ? ' y ' + (x.det.length - 4) + ' más' : '')).join('\n') + (p.lista.length > 12 ? '\n…y ' + (p.lista.length - 12) + ' alumnos más' : '') };
+}
+function gConcTrims() { const s = document.getElementById('gc-solo'); return s && s.value !== 'todos' ? [+s.value] : [1, 2, 3]; }
+// Repinta los avisos de pendientes que están en pantalla (captura del trimestre y concentrado), conservando si el detalle estaba abierto
+function gPintarPend() {
+  const g = gGrupo(); if (!g) return;
+  [['g-pend', () => G.trimCalif === 'anual' ? [] : [G.trimCalif]], ['gc-pend', gConcTrims]].forEach(([id, f]) => {
+    const e = document.getElementById(id); if (!e) return;
+    const ab = e.querySelector('details'), abierto = !!(ab && ab.open), ts = f();
+    e.innerHTML = ts.length ? gPendBanner(g, ts) : '';
+    if (abierto) { const d = e.querySelector('details'); if (d) d.open = true; }
+  });
+}
+// Estilos de NE y «pendiente» (van aquí para no tocar index.html)
+(function () {
+  if (document.getElementById('g-ne-css')) return;
+  const s = document.createElement('style'); s.id = 'g-ne-css';
+  s.textContent = '.g-nebtn{display:block;margin:2px auto 0;font-size:9px;line-height:1;padding:2px 6px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:#64748b;cursor:pointer}'
+    + '.g-nebtn.on{background:#fef3c7;border-color:#f59e0b;color:#92400e;font-weight:700}'
+    + '.g-nota.g-ne-in{background:#fffbeb;border-color:#f59e0b;color:#92400e;font-weight:700;text-transform:uppercase}'
+    + '.g-pend-tag{display:inline-block;font-size:10px;font-weight:700;color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:999px;padding:0 6px;margin:2px 0 0 4px;white-space:nowrap}'
+    + '.g-cap2 .g-fin .g-pend-tag{display:block;margin:3px auto 0;font-size:9px}'
+    + '.g-cap2 td.g-pendf{background:#fffbeb!important}'
+    + '.g-reac.g-reac-rev{background:#fffbeb;border-color:#f59e0b;box-shadow:0 0 0 2px #fde68a}'
+    + '.g-rev-tag{font-size:11px;font-weight:700;color:#92400e}'
+    + '.g-revbox{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 12px;margin:4px 0 12px}'
+    + '.g-btn:disabled{opacity:.45;cursor:not-allowed}'
+    + '.g-clave-tag{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:4px;white-space:nowrap}'
+    + '.g-clave-ok{color:#166534;background:#dcfce7;border:1px solid #86efac}.g-clave-no{color:#92400e;background:#fef3c7;border:1px solid #fcd34d}';
+  document.head.appendChild(s);
+})();
 function gSumaPct(g, t) { t = t || gTrimActual(); return g.criterios.reduce((s, c) => s + gPct(g, c.id, t), 0); }
 function gTrimCalif(v) { G.trimCalif = v === 'anual' ? 'anual' : +v; gRenderCalif(); }
 
@@ -1249,19 +1352,32 @@ function gCriterioDeAct(id, cid) { const a = gGrupo().actividades.find(x => x.id
 function gNota(actId, aid, el) {
   const g = gGrupo(); const a = g.actividades.find(x => x.id === actId); if (!a) return;
   const raw = el.value.trim();
-  if (raw === '') { delete a.notas[aid]; el.classList.remove('g-inval'); }
+  if (raw === '') { delete a.notas[aid]; if (a.ne) delete a.ne[aid]; el.classList.remove('g-inval'); }   // vacía = «sin calificar» (no se vuelve 0)
+  else if (/^ne$/i.test(raw)) { delete a.notas[aid]; (a.ne = a.ne || {})[aid] = true; el.classList.remove('g-inval'); }   // NE = no entregó
   else {
     const n = gNum(raw);
     if (n == null || n < 0 || n > a.max) { el.classList.add('g-inval'); return; }
-    el.classList.remove('g-inval'); a.notas[aid] = n;
+    el.classList.remove('g-inval'); a.notas[aid] = n; if (a.ne) delete a.ne[aid];
   }
+  { const ne = gEsNE(a, aid); el.classList.toggle('g-ne-in', ne); const b = el.nextElementSibling; if (b && b.classList.contains('g-nebtn')) b.classList.toggle('on', ne); }
   gGuardar(); gActualizarResumen();
   const ce = document.getElementById('gx-' + actId + '-' + aid); if (ce) ce.textContent = a.notas[aid] == null ? '—' : gFmt(a.notas[aid] / a.max * 10);
 }
 function gActualizarResumen() {
   const e = document.getElementById('g-resumen'); if (e) e.innerHTML = gResumenHTML();
-  gActualizarCap();
+  gActualizarCap(); gPintarPend();
 }
+// Botón «NE» de una casilla: alterna entre NE (no entregó) y vacía
+function gNotaNE(actId, aid, btn) {
+  const g = gGrupo(), a = g.actividades.find(x => x.id === actId), inp = btn.previousElementSibling; if (!a || !inp) return;
+  inp.value = gEsNE(a, aid) ? '' : 'NE'; gNota(actId, aid, inp);
+}
+function gNotaNEDirecta(cid, aid, btn) {
+  const inp = btn.previousElementSibling; if (!inp) return;
+  inp.value = inp.value.trim().toUpperCase() === 'NE' ? '' : 'NE'; gNotaDirecta(cid, aid, inp);
+}
+// Qué hace un NE en este grupo: queda pendiente de recuperación (por defecto) o cuenta como 0
+function gNeModoCambio(v) { const g = gGrupo(); if (!g) return; g.neModo = v === 'cero' ? 'cero' : 'pendiente'; gGuardar(); gRenderCalifSinSalto(); }
 
 // ── Hoja de captura por criterio: cada criterio es un grupo de columnas con su % arriba; al final, la calificación final ──
 function gCapColumnas(g, t) {
@@ -1280,7 +1396,7 @@ function gCapColumnas(g, t) {
     return { c, cols, prom, span: cols.length + (prom ? 1 : 0) };
   });
 }
-function gCapFinalHTML(r) { const b = gBoleta(r.final); return `<b>${b == null ? '—' : b}</b>${r.final == null ? '' : `<small>${gFmt(r.final, 1)}</small>`}`; }
+function gCapFinalHTML(r) { const b = gBoleta(r.final); return `<b>${b == null ? '—' : b}</b>${r.final == null ? '' : `<small>${gFmtCal(r.final, 1)}</small>`}${r.pend.length ? '<span class="g-pend-tag" title="Faltan notas: la calificación es provisional">pendiente</span>' : ''}`; }
 function gCapHTML(g, t) {
   const grupos = gCapColumnas(g, t);
   let h1 = `<tr><th rowspan="2" class="g-c-n">#</th><th rowspan="2" class="g-sticky">Alumno</th>`, h2 = '<tr>';
@@ -1302,17 +1418,20 @@ function gCapHTML(g, t) {
       gr.cols.forEach(col => {
         if (col.tipo === 'lib') { const sc = gLibretaScore(g, al.id, t, gr.c.id); tds += `<td class="g-ro" title="Viene de tu Libreta de trabajos">${sc == null ? '—' : gFmt(sc)}</td>`; }
         else if (col.tipo === 'auto') { const sc = gAsistNota(g, al.id, t); tds += `<td class="g-ro" title="Viene de tu Pase de lista">${sc == null ? '—' : gFmt(sc)}</td>`; }
-        else if (col.tipo === 'act') { const a = col.a; tds += `<td><input class="g-nota" type="number" step="0.1" min="0" max="${a.max}" value="${a.notas[al.id] == null ? '' : a.notas[al.id]}" oninput="gNota('${a.id}','${al.id}',this)"></td>`; }
-        else tds += `<td><input class="g-nota" type="number" step="0.1" min="0" max="10" value="" oninput="gNotaDirecta('${gr.c.id}','${al.id}',this)"></td>`;
+        else if (col.tipo === 'act') { const a = col.a, ne = gEsNE(a, al.id); tds += `<td><input class="g-nota${ne ? ' g-ne-in' : ''}" type="text" inputmode="decimal" autocomplete="off" title="Escribe la nota (de 0 a ${a.max}) o NE si no entregó. Vacía = sin calificar" value="${ne ? 'NE' : (a.notas[al.id] == null ? '' : a.notas[al.id])}" oninput="gNota('${a.id}','${al.id}',this)"><button type="button" class="g-nebtn${ne ? ' on' : ''}" title="No entregó (NE)" onclick="gNotaNE('${a.id}','${al.id}',this)">NE</button></td>`; }
+        else tds += `<td><input class="g-nota" type="text" inputmode="decimal" autocomplete="off" title="Escribe la nota (de 0 a 10) o NE si no entregó. Vacía = sin calificar" value="" oninput="gNotaDirecta('${gr.c.id}','${al.id}',this)"><button type="button" class="g-nebtn" title="No entregó (NE)" onclick="gNotaNEDirecta('${gr.c.id}','${al.id}',this)">NE</button></td>`;
       });
       if (gr.prom) tds += `<td class="g-ro g-prom" id="gp-${gr.c.id}-${al.id}">${gFmt(r.porCrit[gr.c.id])}</td>`;
     });
     const b = gBoleta(r.final);
-    return `<tr><td class="g-c-n">${i + 1}</td><td class="g-sticky">${gEsc(al.nombre)}</td>${tds}<td class="g-fin${b != null && b < 6 ? ' g-mal' : ''}" id="gf-${al.id}">${gCapFinalHTML(r)}</td></tr>`;
+    return `<tr><td class="g-c-n">${i + 1}</td><td class="g-sticky">${gEsc(al.nombre)}</td>${tds}<td class="g-fin${b != null && b < 6 && !r.pend.length ? ' g-mal' : ''}${r.pend.length ? ' g-pendf' : ''}" id="gf-${al.id}">${gCapFinalHTML(r)}</td></tr>`;
   }).join('');
   const msg = G.capMsg ? `<div class="g-aviso" style="margin-bottom:10px;font-size:12.5px;background:#ecfdf5;border-color:#6ee7b7">✓ ${G.capMsg}</div>` : ''; G.capMsg = '';
   return `<div class="card" id="g-cap2-card"><div class="card-title">✏️ Captura de calificaciones — ${G_TRIM_NOM[t]} <span id="g-suma3" style="margin-left:auto;font-size:12px;font-weight:700"></span></div>
     <p style="font-size:12.5px;color:var(--gris);margin:0 0 10px;line-height:1.5">Cada bloque es un criterio, con su <b>porcentaje arriba</b>. Escribe las notas y la <b>calificación final</b> se calcula sola. Puedes cambiar el nombre de un criterio escribiendo encima de su título.</p>${msg}
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px;font-size:12.5px"><label for="g-nemodo" style="font-weight:600">Si un alumno no entrega (NE), la actividad:</label><select id="g-nemodo" onchange="gNeModoCambio(this.value)" style="padding:5px 8px;border-radius:8px;border:1.5px solid var(--borde);font-size:12.5px"><option value="pendiente"${gNeModo(g) === 'pendiente' ? ' selected' : ''}>queda pendiente de recuperación (no promedia hasta que decidas)</option><option value="cero"${gNeModo(g) === 'cero' ? ' selected' : ''}>cuenta como 0</option></select></div>
+    <p class="ayuda" style="font-size:11.5px;color:var(--gris);margin:0 0 10px;line-height:1.5">En cada casilla escribe la nota o toca <b>NE</b> (no entregó). Una casilla <b>vacía</b> significa «sin calificar»: nunca se convierte en 0 sola.</p>
+    <div id="g-pend">${gPendBanner(g, [t])}</div>
     <div class="g-tabla-w"><table class="g-tabla g-cap2" id="g-cap2"><thead>${h1}${h2}</thead><tbody>${filas}</tbody></table></div>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <button class="g-btn g-btn-s" onclick="gAgregarColumna()">＋ Otro criterio (columna que tú nombras)</button>
@@ -1328,7 +1447,7 @@ function gActualizarCap() {
     const r = gCalcAlumno(g, al.id, t);
     g.criterios.forEach(c => { const e = document.getElementById('gp-' + c.id + '-' + al.id); if (e) e.textContent = gFmt(r.porCrit[c.id]); });
     const f = document.getElementById('gf-' + al.id);
-    if (f) { f.innerHTML = gCapFinalHTML(r); const b = gBoleta(r.final); f.classList.toggle('g-mal', b != null && b < 6); }
+    if (f) { f.innerHTML = gCapFinalHTML(r); const b = gBoleta(r.final); f.classList.toggle('g-mal', b != null && b < 6 && !r.pend.length); f.classList.toggle('g-pendf', r.pend.length > 0); }
   });
 }
 // Captura directa para un criterio que todavía no tiene actividades (crea la actividad al escribir la primera nota)
@@ -1358,6 +1477,7 @@ function gAgregarColumna() {
 function gCapMsg(t, ok) { const e = document.getElementById('gcap-msg'); if (!e) return; e.textContent = t; e.style.color = ok ? 'var(--verde)' : 'var(--rojo)'; e.style.display = t ? 'block' : 'none'; }
 async function gCapPDF() {
   const g = gGrupo(), t = G.trimCalif; if (!g || t === 'anual' || !g.alumnos.length) return;
+  const blq = gBloqueo(g, [t]); if (blq) { gCapMsg(blq.corto, false); gPintarPend(); return; }   // con casillas pendientes no se descarga
   const btn = document.getElementById('gcap-pdf'); if (btn) btn.disabled = true; gCapMsg('Preparando tu PDF…', true);
   try {
     await gCargarLib('jspdf', 'autotable');
@@ -1422,26 +1542,26 @@ function gRecNotaTxt(g, t, aid) {
 function gResumenHTML() {
   const g = gGrupo(); const t = G.trimCalif;
   if (t === 'anual') {
-    let h = `<table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th>Trim. 1</th><th>Trim. 2</th><th>Trim. 3</th><th>Promedio final</th><th>Recuperativos</th></tr></thead><tbody>`;
+    let h = gPendBanner(g, [1, 2, 3]) + `<table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th>Trim. 1</th><th>Trim. 2</th><th>Trim. 3</th><th>Promedio final</th><th>Recuperativos</th></tr></thead><tbody>`;
     h += g.alumnos.map((a, i) => {
       const b = [1, 2, 3].map(x => gBoleta(gCalcAlumno(g, a.id, x).final)); const an = gCalcAnual(g, a.id);
-      const fin = an ? Math.max(5, Math.round(an.prom + 1e-9)) : null;
-      return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${b.map(x => `<td class="${x != null && x < 6 ? 'g-mal' : ''}">${x == null ? '—' : x}</td>`).join('')}<td class="${fin != null && fin < 6 ? 'g-mal' : ''}"><b>${fin == null ? '—' : fin}</b>${an ? ` <span style="color:var(--gris);font-size:11px">(${gFmt(an.prom, 2)})</span>` : ''}</td><td style="font-size:12.5px">${[1, 2, 3].map(x => { const n = gRecNotaTxt(g, x, a.id); return n ? `T${x}: <b>${n}</b>` : ''; }).filter(Boolean).join(' &nbsp; ') || '<span style="color:var(--gris)">—</span>'}</td></tr>`;
+      const fin = an.completo ? an.fin : null;   // solo con los tres trimestres completos
+      return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${b.map(x => `<td class="${x != null && x < 6 ? 'g-mal' : ''}">${x == null ? '—' : x}</td>`).join('')}<td class="${fin != null && !gAprobado(fin) ? 'g-mal' : ''}">${fin == null ? `<span class="g-pend-tag" title="El promedio anual necesita los tres trimestres completos">Incompleto</span> <small style="color:var(--gris)">falta ${an.faltan.map(x => 'T' + x).join(', ')}</small>` : `<b>${gFmt(fin, 1)}</b>`}${fin == null ? '' : gAprobado(fin) ? ' <span style="color:var(--verde);font-size:11px">Aprobado</span>' : ' <span style="font-size:11px">No aprobado</span>'}</td><td style="font-size:12.5px">${[1, 2, 3].map(x => { const n = gRecNotaTxt(g, x, a.id); return n ? `T${x}: <b>${n}</b>` : ''; }).filter(Boolean).join(' &nbsp; ') || '<span style="color:var(--gris)">—</span>'}</td></tr>`;
     }).join('');
     return h + `</tbody></table><div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:8px;line-height:1.5">Cada trimestre ya incluye su recuperativo, según lo que definiste. Los recuperativos se capturan en la pestaña <a href="#" onclick="gIrA('recup');return false" style="color:var(--azul-med);font-weight:600">Recuperativos</a>; aquí solo se muestran.</div>`;
   }
   const calc = g.alumnos.map(a => ({ a, r: gCalcAlumno(g, a.id, t) }));
   const fin = calc.map(x => x.r.final).filter(x => x != null);
   const prom = fin.length ? fin.reduce((x, y) => x + y, 0) / fin.length : null;
-  const rep = calc.filter(x => x.r.final != null && gBoleta(x.r.final) < 6).length;
+  const rep = calc.filter(x => x.r.final != null && !x.r.pend.length && gBoleta(x.r.final) < 6).length, nPend = calc.filter(x => x.r.pend.length).length;   // con pendientes aún no se les da por reprobados
   const hayRec = g.alumnos.some(a => gRecNotaTxt(g, t, a.id));
-  let h = `<div class="g-stats"><div><b>${gFmt(prom, 2)}</b><span>Promedio del grupo</span></div><div><b>${fin.length}/${g.alumnos.length}</b><span>Alumnos con calificación</span></div><div><b class="${rep ? 'g-mal' : ''}">${rep}</b><span>Reprobados (&lt; 6)</span></div></div>`;
+  let h = `<div class="g-stats"><div><b>${gFmt(prom, 2)}</b><span>Promedio del grupo</span></div><div><b>${fin.length}/${g.alumnos.length}</b><span>Alumnos con calificación</span></div><div><b class="${rep ? 'g-mal' : ''}">${rep}</b><span>Reprobados (&lt; 6)</span></div>${nPend ? `<div><b style="color:#92400e">${nPend}</b><span>Con notas pendientes</span></div>` : ''}</div>`;
   h += `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th>${g.criterios.map(c => `<th>${gEsc(c.nombre)}<br><small>${gPct(g, c.id, t)}%</small></th>`).join('')}<th>Calif.</th><th>Boleta</th>${hayRec ? '<th>Recup.</th>' : ''}</tr></thead><tbody>`;
   h += calc.map(({ a, r }, i) => {
     const b = gBoleta(r.final);
-    return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${g.criterios.map(c => `<td>${gFmt(r.porCrit[c.id])}</td>`).join('')}<td>${gFmt(r.final, 2)}</td><td class="${b != null && b < 6 ? 'g-mal' : ''}"><b>${b == null ? '—' : b}</b>${r.rec ? ' <small title="Con recuperativo" style="color:var(--azul-med)">(R)</small>' : ''}</td>${hayRec ? `<td>${gRecNotaTxt(g, t, a.id) || '—'}</td>` : ''}</tr>`;
+    return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td>${g.criterios.map(c => `<td>${gFmt(r.porCrit[c.id])}</td>`).join('')}<td>${gFmtCal(r.final, 2)}</td><td class="${b != null && b < 6 && !r.pend.length ? 'g-mal' : ''}"><b>${b == null ? '—' : b}</b>${r.pend.length ? ' <span class="g-pend-tag">pendiente</span>' : ''}${r.rec ? ' <small title="Con recuperativo" style="color:var(--azul-med)">(R)</small>' : ''}</td>${hayRec ? `<td>${gRecNotaTxt(g, t, a.id) || '—'}</td>` : ''}</tr>`;
   }).join('') + '</tbody></table></div>';
-  if (fin.length && calc.some(x => x.r.pcts < 100 && x.r.final != null)) h += `<div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">Los criterios sin calificaciones todavía no cuentan: la calificación se calcula con lo registrado hasta ahora.</div>`;
+  if (fin.length && calc.some(x => x.r.pcts < 100 && x.r.final != null)) h += `<div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">Mientras haya casillas pendientes, la calificación es provisional: se calcula solo con lo registrado hasta ahora.</div>`;
   return h;
 }
 
@@ -1480,17 +1600,18 @@ function gRenderCalif() {
 }
 function gDescargarCalif() {
   const g = gGrupo(); const t = G.trimCalif;
+  const blq = gBloqueo(g, t === 'anual' ? [1, 2, 3] : [t]); if (blq) { gAviso(blq.largo); gPintarPend(); return; }   // con casillas pendientes no se descarga
   const th = x => `<td style="border:1px solid #000;padding:4px;background:#BDD7EE;font-weight:bold;text-align:center">${x}</td>`;
   const td = x => `<td style="border:1px solid #000;padding:4px">${x}</td>`;
   let html, nom;
   if (t === 'anual') {
     html = gEncabezadoDoc('RESUMEN ANUAL DE CALIFICACIONES', g) + `<table style="width:100%;border-collapse:collapse"><tr>${['#', 'Alumno', 'Trim. 1', 'Trim. 2', 'Trim. 3', 'Promedio final', 'Recuperativos'].map(th).join('')}</tr>` +
-      g.alumnos.map((a, i) => { const b = [1, 2, 3].map(x => gBoleta(gCalcAlumno(g, a.id, x).final)); const an = gCalcAnual(g, a.id); return `<tr>${[i + 1, gEsc(a.nombre), ...b.map(x => x == null ? '—' : x), an ? Math.max(5, Math.round(an.prom + 1e-9)) : '—', [1, 2, 3].map(x => { const n = gRecNotaTxt(g, x, a.id); return n ? `T${x}: ${n}` : ''; }).filter(Boolean).join('  ')].map(td).join('')}</tr>`; }).join('') + '</table>';
+      g.alumnos.map((a, i) => { const b = [1, 2, 3].map(x => gBoleta(gCalcAlumno(g, a.id, x).final)); const an = gCalcAnual(g, a.id); return `<tr>${[i + 1, gEsc(a.nombre), ...b.map(x => x == null ? '—' : x), an.completo ? gFmt(an.fin, 1) : 'Incompleto', [1, 2, 3].map(x => { const n = gRecNotaTxt(g, x, a.id); return n ? `T${x}: ${n}` : ''; }).filter(Boolean).join('  ')].map(td).join('')}</tr>`; }).join('') + '</table>';
     nom = 'Calificaciones_anual';
   } else {
     html = gEncabezadoDoc('REGISTRO DE CALIFICACIONES — ' + G_TRIM_NOM[t].toUpperCase(), g) +
       `<table style="width:100%;border-collapse:collapse"><tr>${['#', 'Alumno', ...g.criterios.map(c => `${gEsc(c.nombre)} (${gPct(g, c.id, t)}%)`), 'Calif.', 'Boleta'].map(th).join('')}</tr>` +
-      g.alumnos.map((a, i) => { const r = gCalcAlumno(g, a.id, t); return `<tr>${[i + 1, gEsc(a.nombre), ...g.criterios.map(c => gFmt(r.porCrit[c.id])), gFmt(r.final, 2), r.final == null ? '—' : gBoleta(r.final)].map(td).join('')}</tr>`; }).join('') + '</table>';
+      g.alumnos.map((a, i) => { const r = gCalcAlumno(g, a.id, t); return `<tr>${[i + 1, gEsc(a.nombre), ...g.criterios.map(c => gFmt(r.porCrit[c.id])), gFmtCal(r.final, 2), r.final == null ? '—' : gBoleta(r.final)].map(td).join('')}</tr>`; }).join('') + '</table>';
     nom = 'Calificaciones_T' + t;
   }
   descargarWord(html, `${nom}_${g.nombre.replace(/\W+/g, '_')}.doc`);
@@ -1504,20 +1625,21 @@ function gConcentradoCard(g) {
   if (!g.alumnos.length) return '';
   return `<div class="card"><div class="card-title">📋 Concentrado para Dirección</div>
     <p style="font-size:13px;color:var(--gris);margin:0 0 10px;line-height:1.5">Un solo cuadro con el <b>nombre de cada alumno</b>, su calificación del <b>1.º, 2.º y 3.er trimestre</b>, el <b>promedio final</b> y sus <b>recuperativos</b>. Los trimestres que todavía no capturas quedan <b>en blanco</b>, listos para llenarse. Descárgalo en el formato que necesites; en Word y Excel puedes <b>editarlo</b>.</p>
-    <div class="campo" style="max-width:340px;margin-bottom:10px"><label>¿Qué trimestres lleva?</label><select id="gc-solo"><option value="todos">Todos los que ya tengan calificación</option><option value="1">Solo el 1.er trimestre (los demás y el promedio final en blanco)</option><option value="2">Solo el 2.º trimestre (los demás y el promedio final en blanco)</option><option value="3">Solo el 3.er trimestre (los demás y el promedio final en blanco)</option></select></div>
+    <div class="campo" style="max-width:340px;margin-bottom:10px"><label>¿Qué trimestres lleva?</label><select id="gc-solo" onchange="gPintarPend()"><option value="todos">Todos los que ya tengan calificación</option><option value="1">Solo el 1.er trimestre (los demás y el promedio final en blanco)</option><option value="2">Solo el 2.º trimestre (los demás y el promedio final en blanco)</option><option value="3">Solo el 3.er trimestre (los demás y el promedio final en blanco)</option></select></div>
+    <div id="gc-pend">${gPendBanner(g, [1, 2, 3])}</div>
     <button class="g-btn" id="gc-doc" onclick="gConcentradoExportar('doc')">⬇ Word</button>
     <button class="g-btn" id="gc-xls" onclick="gConcentradoExportar('xlsx')">⬇ Excel</button>
     <button class="g-btn" id="gc-pdf" onclick="gConcentradoExportar('pdf')">⬇ PDF</button>
     <div id="gc-msg" style="display:none;font-size:12.5px;margin-top:8px"></div>
-    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">La calificación de cada trimestre es la de boleta (ya incluye el recuperativo si lo aplicaste). En el Excel, el promedio final se recalcula solo si cambias una calificación.</div></div>`;
+    <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">La calificación de cada trimestre es la de boleta (ya incluye el recuperativo si lo aplicaste). En el Excel, el promedio final se recalcula solo si cambias una calificación. El promedio final solo aparece con los tres trimestres completos (si falta alguno dice «Incompleto»). No se descarga mientras haya casillas pendientes.</div></div>`;
 }
 function gConcentradoDatos(g, solo) {   // solo = 1, 2 o 3: únicamente ese trimestre; los demás y el promedio final quedan en blanco
   const num = v => (Math.round(v * 10) / 10).toString();
   const filas = g.alumnos.map((a, i) => {
     const tr = [1, 2, 3].map(t => solo && t !== solo ? null : gBoleta(gCalcAlumno(g, a.id, t).final));
-    const an = solo ? null : gCalcAnual(g, a.id), fin = an ? Math.max(5, Math.round(an.prom + 1e-9)) : null;
+    const an = solo ? null : gCalcAnual(g, a.id), fin = an && an.completo ? an.fin : null, incompleto = !!(an && !an.completo);   // promedio final con un decimal (REGLA_CALIF) solo con los tres trimestres completos
     const rec = [1, 2, 3].map(t => { if (solo && t !== solo) return ''; const R = g.recup && g.recup[t]; return R && R.notas && R.notas[a.id] != null && R.max > 0 ? `T${t}: ${num(Math.min(10, R.notas[a.id] / R.max * 10))}` : ''; }).filter(Boolean).join('   ');
-    return { n: i + 1, nombre: a.nombre, tr, fin, rec };
+    return { n: i + 1, nombre: a.nombre, tr, fin, incompleto, rec };
   });
   return { filas, solo, titulo: 'CONCENTRADO DE CALIFICACIONES — CICLO ESCOLAR ' + G_CICLO_DOC, cols: ['No.', 'Alumno', '1.er trimestre', '2.º trimestre', '3.er trimestre', 'Promedio final', 'Recuperativos'] };
 }
@@ -1531,7 +1653,9 @@ async function gConcentradoExportar(formato, solo) {
   const desdeHoja = solo !== undefined;
   if (solo === undefined) { const sel = document.getElementById('gc-solo'); solo = sel && sel.value !== 'todos' ? +sel.value : null; }
   solo = solo || null;
-  const btns = ['gc-doc', 'gc-xls', 'gc-pdf', 'gcap-dir'].map(id => document.getElementById(id));
+  const blq = gBloqueo(g, solo ? [solo] : [1, 2, 3]);   // con casillas pendientes no se descarga
+  if (blq) { (desdeHoja ? gCapMsg : gConcentradoMsg)(blq.corto, false); gPintarPend(); return; }
+  const btns =['gc-doc', 'gc-xls', 'gc-pdf', 'gcap-dir'].map(id => document.getElementById(id));
   const msg = desdeHoja ? gCapMsg : gConcentradoMsg;
   btns.forEach(b => b && (b.disabled = true)); msg('Preparando tu archivo…', true);
   try {
@@ -1546,7 +1670,7 @@ function gConcentradoWord(g, solo) {
   const td = (x, c) => `<td style="border:1px solid #000;padding:5px;height:20px${c ? ';text-align:center' : ''}">${x}</td>`;
   const html = gEncabezadoDoc(D.titulo, g, `<b>Grado:</b> ${gEsc(g.grado)}°` + (p.cct ? ` &nbsp; <b>CCT:</b> ${gEsc(p.cct)}` : '')) +
     `<table style="width:100%;border-collapse:collapse"><tr>${th(D.cols[0], '5%')}${th(D.cols[1], '37%')}${th(D.cols[2], '12%')}${th(D.cols[3], '12%')}${th(D.cols[4], '12%')}${th(D.cols[5], '10%')}${th(D.cols[6], '12%')}</tr>` +
-    D.filas.map(f => `<tr>${td(f.n, 1)}${td(gEsc(f.nombre))}${f.tr.map(x => td(x == null ? '' : x, 1)).join('')}${td(f.fin == null ? '' : '<b>' + f.fin + '</b>', 1)}${td(gEsc(f.rec), 1)}</tr>`).join('') + '</table>' +
+    D.filas.map(f => `<tr>${td(f.n, 1)}${td(gEsc(f.nombre))}${f.tr.map(x => td(x == null ? '' : x, 1)).join('')}${td(f.fin == null ? (f.incompleto ? 'Incompleto' : '') : '<b>' + gFmt(f.fin, 1) + '</b>', 1)}${td(gEsc(f.rec), 1)}</tr>`).join('') + '</table>' +
     `<p>&nbsp;</p><table style="width:100%;border-collapse:collapse"><tr><td style="width:45%;text-align:center;border-top:1px solid #000;padding-top:4px">${gEsc(gDocente())}<br>Docente</td><td style="width:10%"></td><td style="width:45%;text-align:center;border-top:1px solid #000;padding-top:4px">${gEsc(p.director || '')}<br>Director(a)</td></tr></table>`;
   descargarWord(html, gConcentradoNombre(g, 'doc', solo));
 }
@@ -1567,10 +1691,13 @@ async function gConcentradoExcel(g, solo) {
     const r = rH + 1 + i, row = ws.getRow(r); row.height = 21;
     row.getCell(1).value = f.n; row.getCell(2).value = f.nombre;
     f.tr.forEach((v, k) => { row.getCell(3 + k).value = v == null ? null : v; });
-    row.getCell(6).value = { formula: solo ? `IF(COUNT(C${r}:E${r})<3,"",MAX(5,ROUND(AVERAGE(C${r}:E${r}),0)))` : `IF(COUNT(C${r}:E${r})=0,"",MAX(5,ROUND(AVERAGE(C${r}:E${r}),0)))`, result: f.fin == null ? '' : f.fin };
+    // Promedio final con un decimal; misma regla que REGLA_CALIF.final (truncar = INT(prom×10)/10, redondeo = ROUND(prom,1))
+    const prom = `AVERAGE(C${r}:E${r})`, calc = REGLA_CALIF.final === 'redondeo' ? `ROUND(${prom},1)` : `INT(${prom}*10+0.000000001)/10`;
+    row.getCell(6).value = { formula: solo ? `IF(COUNT(C${r}:E${r})<3,"",MAX(5,${calc}))` : `IF(COUNT(C${r}:E${r})<3,"Incompleto",MAX(5,${calc}))`, result: f.fin == null ? (f.incompleto ? 'Incompleto' : '') : f.fin };
     row.getCell(7).value = f.rec || null;
     for (let k = 1; k <= 7; k++) { const c = row.getCell(k); c.border = borde; c.font = { size: 10.5, bold: k === 6 }; c.alignment = k === 2 ? { vertical: 'middle', wrapText: true } : centro; }
-    for (let k = 3; k <= 6; k++) row.getCell(k).numFmt = '0';
+    for (let k = 3; k <= 5; k++) row.getCell(k).numFmt = '0';
+    row.getCell(6).numFmt = '0.0';
   });
   // reprobados (menos de 6) en rojo, también si el maestro edita la calificación
   const ref = `C${rH + 1}:F${rH + D.filas.length}`;
@@ -1596,7 +1723,7 @@ async function gConcentradoPDF(g, solo) {
   doc.autoTable({
     startY: y + 6, margin: { left: M, right: M, bottom: 50 },
     head: [D.cols],
-    body: D.filas.map(f => [f.n, lim(f.nombre), ...f.tr.map(x => x == null ? '' : x), f.fin == null ? '' : f.fin, lim(f.rec)]),
+    body: D.filas.map(f => [f.n, lim(f.nombre), ...f.tr.map(x => x == null ? '' : x), f.fin == null ? (f.incompleto ? 'Incompleto' : '') : gFmt(f.fin, 1), lim(f.rec)]),
     styles: { font: 'helvetica', fontSize: 9, cellPadding: 4, lineColor: [0, 0, 0], lineWidth: 0.5, textColor: 0, minCellHeight: 18, valign: 'middle' },
     headStyles: { fillColor: [189, 215, 238], textColor: 0, fontStyle: 'bold', halign: 'center' },
     columnStyles: { 0: { cellWidth: 26, halign: 'center' }, 1: { cellWidth: 'auto', halign: 'left' }, 2: { cellWidth: 52, halign: 'center' }, 3: { cellWidth: 52, halign: 'center' }, 4: { cellWidth: 52, halign: 'center' }, 5: { cellWidth: 52, halign: 'center', fontStyle: 'bold' }, 6: { cellWidth: 82, halign: 'center', fontSize: 8 } },
@@ -1622,15 +1749,29 @@ const G_TIPOS_EXAM = {
 };
 function gTrimExam(v) { G.trimExam = +v; G.pesoMsg = ''; G.borrador = null; G.temaUlt = ''; G.temasSel = []; gRenderExamenes(); }
 
+// ── Contenidos y PDA elegidos para el examen ──
+// El cuadro de temas trae «Título — Aprendizaje esperado: …» de lo que el docente marcó; para el prompt el PDA va aparte y ordenado.
+function gTemaSinPDA(tema) { return String(tema || '').split('\n').map(l => l.replace(/\s+—\s+Aprendizaje esperado:.*$/, '')).join('\n'); }
+// PDA de los temas que el docente marcó y que siguen escritos en el cuadro de temas
+function gPdasElegidos(tema) {
+  const por = new Map((G.temasLista || []).map(c => [c.k, c])), nt = gNorm(tema);
+  return (G.temasSel || []).map(k => por.get(k)).filter(c => c && c.pda && nt.includes(gNorm(c.titulo))).map(c => ({ titulo: c.titulo, pda: String(c.pda).replace(/\s+/g, ' ').trim() }));
+}
+// Al IA NUNCA se le mandan datos de alumnos ni del grupo: el prompt solo usa materia, campo, grado, trimestre, temas, PDA, dificultad, número y tipos.
 function gPromptExamen(g, o) {
+  const conPda = !!(o.pdas && o.pdas.length);
+  const tema = conPda ? gTemaSinPDA(o.tema) : o.tema;
+  const pdaBloque = conPda ? `- PDA (aprendizajes esperados) de esos contenidos; cada reactivo debe evaluar uno de ellos:\n${o.pdas.map((p, i) => `  PDA ${i + 1} · ${p.titulo}: ${String(p.pda).slice(0, 600)}`).join('\n')}\n` : '';
+  const reglaPda = conPda ? '\n- Cada reactivo trae el campo "pda": copia TEXTUAL, de la lista de PDA de arriba, el PDA que evalúa ese reactivo (no inventes otro).' : '';
+  const ejPda = conPda ? ',"pda":"..."' : '';
   return `Eres docente experto de secundaria en México (Nueva Escuela Mexicana, Plan de Estudios 2022, Fase 6). Elabora un examen.
 Responde SOLO con JSON válido, sin markdown ni texto extra.
 
 DATOS:
 - Materia: ${g.materia} | Campo formativo: ${gCampoDe(g.grado, g.materia)} | Grado: ${g.grado}° de secundaria
 - ${G_TRIM_NOM[o.trim]}
-- Temas o contenidos que se evalúan: ${o.tema}
-- Dificultad: ${o.dif}
+- Temas o contenidos que se evalúan: ${tema}
+${pdaBloque}- Dificultad: ${o.dif}
 - Número de reactivos: ${o.n}
 - Tipos de reactivo permitidos: ${o.tipos.map(t => G_TIPOS_EXAM[t]).join(', ')} (reparte los reactivos entre ellos)
 
@@ -1640,19 +1781,73 @@ REGLAS:
 - En opción múltiple da exactamente 4 opciones (sin la letra) y en "respuesta" pon la letra correcta: A, B, C o D. Distribuye las letras correctas.
 - En verdadero_falso, "respuesta" es "Verdadero" o "Falso".
 - En respuesta_corta y desarrollo, "respuesta" es la respuesta esperada o los puntos clave que debe incluir.
-- "valor" es el puntaje del reactivo (1 para opción múltiple, verdadero/falso y respuesta corta; 2 para desarrollo).
+- "valor" es el puntaje del reactivo (1 para opción múltiple, verdadero/falso y respuesta corta; 2 para desarrollo).${reglaPda}
 
 Formato:
-{"titulo":"Examen de ... ","reactivos":[{"tipo":"opcion_multiple","pregunta":"...","opciones":["...","...","...","..."],"respuesta":"B","valor":1}]}`;
+{"titulo":"Examen de ... ","reactivos":[{"tipo":"opcion_multiple","pregunta":"...","opciones":["...","...","...","..."],"respuesta":"B","valor":1${ejPda}}]}`;
 }
-function gNormalizarExamen(j, n) {
+// ── Clave del examen: validación y normalización de lo que devuelve la IA ──
+// Opción múltiple = exactamente 4 opciones y respuesta A, B, C o D; verdadero/falso = «Verdadero» o «Falso».
+// Lo que no se pueda asegurar queda con respuesta vacía y marcado «revisar clave» (revisar:true) para que el docente lo corrija.
+function gResolverLetra(resp, ops) {
+  const t = String(resp == null ? '' : resp).trim(), nt = gNorm(t);
+  if (!nt) return '';
+  const iguales = ops.map((o, k) => (gNorm(o) === nt ? k : -1)).filter(k => k >= 0);   // la IA devolvió el TEXTO de la opción
+  if (iguales.length === 1) return 'ABCD'[iguales[0]];
+  if (iguales.length > 1) return '';
+  const m = /^(?:opci[oó]n\s+)?\(?([A-Da-d])\)?\s*$/.exec(t) || /^\(?([A-Da-d])[).:]\s*(\S.*)$/.exec(t);   // «B», «(b)», «B) texto», «B. texto»
+  if (!m) return '';
+  const k = 'ABCD'.indexOf(m[1].toUpperCase());
+  if (k < 0 || k >= ops.length || !gNorm(ops[k])) return '';
+  if (m[2]) { const a = gNorm(m[2]), b = gNorm(ops[k]); if (!(a.includes(b) || b.includes(a))) return ''; }   // «B. algo» que no es la opción B → dudoso
+  return 'ABCD'[k];
+}
+function gResolverVF(resp) {
+  const t = String(resp == null ? '' : resp).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  if (/^(verdadero|cierto|true)\b/.test(t) || t === 'v') return 'Verdadero';
+  if (/^(falso|false)\b/.test(t) || t === 'f') return 'Falso';
+  return '';
+}
+// Devuelve el motivo si la clave del reactivo necesita revisión; '' si está en orden
+function gRevReactivo(r) {
+  if (r.motivo) return r.motivo;
+  if (r.tipo === 'opcion_multiple') {
+    const ops = Array.isArray(r.opciones) ? r.opciones : [];
+    if (ops.length !== 4 || ops.some(o => !String(o).trim())) return 'debe tener exactamente 4 opciones con texto';
+    if (new Set(ops.map(gNorm)).size < 4) return 'hay opciones repetidas';
+    if ('ABCD'.indexOf(String(r.respuesta)) < 0 || String(r.respuesta).length !== 1) return 'la respuesta debe ser A, B, C o D';
+    return '';
+  }
+  if (r.tipo === 'verdadero_falso') return (r.respuesta === 'Verdadero' || r.respuesta === 'Falso') ? '' : 'la respuesta debe ser Verdadero o Falso';
+  return String(r.respuesta || '').trim() ? '' : 'falta la respuesta esperada';
+}
+function gNormPda(v, pdas) {
+  if (!pdas || !pdas.length) return '';
+  v = String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+  const nv = gNorm(v);
+  if (nv) {
+    const ig = pdas.find(p => gNorm(p.pda) === nv); if (ig) return ig.pda;
+    if (nv.length >= 25) { const cont = pdas.filter(p => { const np = gNorm(p.pda); return np.includes(nv) || nv.includes(np); }); if (cont.length === 1) return cont[0].pda; }
+    const num = /^pda\s*(\d+)/i.exec(v); if (num && pdas[+num[1] - 1]) return pdas[+num[1] - 1].pda;
+  }
+  return pdas.length === 1 ? pdas[0].pda : v;
+}
+function gNormalizarExamen(j, n, pdas) {
   const permit = Object.keys(G_TIPOS_EXAM);
   const rs = (Array.isArray(j.reactivos) ? j.reactivos : []).map(r => {
     const tipo = permit.includes(r.tipo) ? r.tipo : 'respuesta_corta';
     const o = { tipo, pregunta: String(r.pregunta || '').trim(), respuesta: String(r.respuesta == null ? '' : r.respuesta).trim(), valor: gNum(r.valor) || (tipo === 'desarrollo' ? 2 : 1) };
-    if (tipo === 'opcion_multiple') { o.opciones = (Array.isArray(r.opciones) ? r.opciones : []).slice(0, 4).map(x => String(x).replace(/^[A-Da-d][).]\s*/, '')); o.respuesta = o.respuesta.charAt(0).toUpperCase(); }
+    if (pdas && pdas.length) o.pda = gNormPda(r.pda, pdas);
+    if (tipo === 'opcion_multiple') {
+      let ops = (Array.isArray(r.opciones) ? r.opciones : []).map(x => String(x == null ? '' : x).replace(/^\s*[A-Da-d][).]\s*/, '').trim()).filter(Boolean);
+      if (ops.length > 4) { o.motivo = 'la IA dio más de 4 opciones y se dejaron las primeras 4'; ops = ops.slice(0, 4); }
+      while (ops.length < 4) ops.push('');
+      o.opciones = ops;
+      o.respuesta = gResolverLetra(o.respuesta, ops);   // letra A-D, o '' si no se pudo asegurar cuál es
+    } else if (tipo === 'verdadero_falso') o.respuesta = gResolverVF(o.respuesta);
+    o.revisar = !!gRevReactivo(o);
     return o;
-  }).filter(r => r.pregunta && (r.tipo !== 'opcion_multiple' || r.opciones.length >= 2));
+  }).filter(r => r.pregunta);
   return { titulo: String(j.titulo || 'Examen').trim(), reactivos: rs.slice(0, n) };
 }
 async function gGenerarExamen() {
@@ -1665,11 +1860,12 @@ async function gGenerarExamen() {
   if (!tipos.length) { err.textContent = 'Elige al menos un tipo de reactivo.'; err.style.display = 'block'; return; }
   const btn = document.getElementById('ge-btn'); btn.disabled = true; btn.textContent = 'Generando examen…';
   try {
-    const texto = await llamarGeminiJSON(gPromptExamen(g, { trim: G.trimExam, tema, n, tipos, dif: document.getElementById('ge-dif').value }), 'examen');
-    const ex = gNormalizarExamen(parsearJSON(texto), n);
+    const pdas = gPdasElegidos(tema);   // PDA de los temas que marcó el docente (puede ir vacío)
+    const texto = await llamarGeminiJSON(gPromptExamen(g, { trim: G.trimExam, tema, pdas, n, tipos, dif: document.getElementById('ge-dif').value }), 'examen');
+    const ex = gNormalizarExamen(parsearJSON(texto), n, pdas);
     if (!ex.reactivos.length) throw new Error('La IA no devolvió reactivos válidos.');
     G.temaUlt = tema;
-    G.borrador = Object.assign(ex, { tema, trim: G.trimExam, criterioId: gCritExamen(g).id });
+    G.borrador = Object.assign(ex, { tema, trim: G.trimExam, criterioId: gCritExamen(g).id, conPda: pdas.length > 0, revisado: false });
     gRenderExamenes();
     const b = document.getElementById('g-borrador'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (e) {
@@ -1722,10 +1918,43 @@ function gTemasMarcar() {
   const ta = document.getElementById('ge-tema'); if (ta) ta.value = txt;
 }
 // Edición del examen generado (pregunta, opciones y respuesta) antes de guardarlo o bajarlo
-function gEditReac(i, campo, v) { const r = G.borrador && G.borrador.reactivos[i]; if (r) r[campo] = v; }
-function gEditOpc(i, k, v) { const r = G.borrador && G.borrador.reactivos[i]; if (r && r.opciones) r.opciones[k] = v; }
+// Cambiar la respuesta o las opciones invalida la revisión: el docente vuelve a marcar «Revisé las respuestas correctas»
+function gEditReac(i, campo, v) {
+  const r = G.borrador && G.borrador.reactivos[i]; if (!r) return;
+  r[campo] = v;
+  if (campo === 'respuesta') { delete r.motivo; G.borrador.revisado = false; }
+  gBorrActualizar();
+}
+function gEditOpc(i, k, v) { const r = G.borrador && G.borrador.reactivos[i]; if (r && r.opciones) { r.opciones[k] = v; delete r.motivo; G.borrador.revisado = false; gBorrActualizar(); } }
 function gQuitarReactivo(i) { G.borrador.reactivos.splice(i, 1); if (!G.borrador.reactivos.length) G.borrador = null; gRenderExamenes(); }
 function gTituloBorrador(v) { if (G.borrador) G.borrador.titulo = v; }
+function gBorrPendientes(b) { return b.reactivos.filter(r => gRevReactivo(r)).length; }
+function gBorrListo(b) { return !!b && b.revisado === true && gBorrPendientes(b) === 0; }
+// Actualiza resaltados, casilla y botón sin volver a dibujar (así no se pierde el cursor al escribir)
+function gBorrActualizar() {
+  const b = G.borrador; if (!b) return;
+  let n = 0;
+  b.reactivos.forEach((r, i) => {
+    const m = gRevReactivo(r); r.revisar = !!m; if (m) n++;
+    const box = document.getElementById('g-reac-' + i); if (box) box.classList.toggle('g-reac-rev', !!m);
+    const tag = document.getElementById('g-rv-' + i); if (tag) tag.textContent = m ? '⚠ Revisar clave: ' + m : '';
+  });
+  if (n) b.revisado = false;
+  const chk = document.getElementById('g-rev-chk'); if (chk) { chk.disabled = n > 0; chk.checked = b.revisado === true; }
+  const msg = document.getElementById('g-rev-msg');
+  if (msg) msg.innerHTML = n ? `<b>${n}</b> reactivo(s) con <b>«revisar clave»</b> (en amarillo). Corrígelos para poder marcar la revisión.` : (b.revisado ? '✓ Clave revisada: ya puedes guardarlo para calificar y usarlo en el escáner.' : 'Lee cada pregunta con su respuesta y marca la casilla. Sin esto no se puede guardar ni usar en el escáner.');
+  const bt = document.getElementById('g-btn-guardar'); if (bt) bt.disabled = !gBorrListo(b);
+}
+function gMarcarRevisado(v) { const b = G.borrador; if (!b) return; b.revisado = !!v && gBorrPendientes(b) === 0; gBorrActualizar(); }
+// Pone la clave de un examen ya guardado en el editor para revisarla (no cambia los puntos ni las calificaciones capturadas)
+function gRevisarGuardado(id) {
+  const g = gGrupo(), ex = g.actividades.find(x => x.id === id); if (!ex || !ex.reactivos) return;
+  const reactivos = JSON.parse(JSON.stringify(ex.reactivos)); reactivos.forEach(r => { r.revisar = !!gRevReactivo(r); });
+  G.trimExam = ex.trim;
+  G.borrador = { titulo: ex.nombre, reactivos, tema: ex.tema || '', trim: ex.trim, criterioId: ex.criterioId, editId: ex.id, conPda: reactivos.some(r => r.pda), revisado: false };
+  gRenderExamenes();
+  const b = document.getElementById('g-borrador'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 function gMaxExamen(ex) { return ex.reactivos.reduce((s, r) => s + (r.valor || 1), 0); }
 
 function gExamenHTML(g, ex, conClave) {
@@ -1736,7 +1965,11 @@ function gExamenHTML(g, ex, conClave) {
     else if (r.tipo === 'verdadero_falso') h += `<p style="margin:0 0 0 24px">( ) Verdadero &nbsp;&nbsp; ( ) Falso</p>`;
     else if (r.tipo === 'respuesta_corta') h += `<p style="margin:6px 0 0 24px">R: ______________________________________________</p>`;
     else h += '<p style="margin:6px 0 0 24px">______________________________________________________</p>'.repeat(3);
-    if (conClave) h += `<p style="margin:2px 0 0 24px;color:#166534"><b>Respuesta:</b> ${gEsc(r.respuesta)}</p>`;
+    if (conClave) {
+      const k = 'ABCD'.indexOf(r.respuesta), txt = r.tipo === 'opcion_multiple' && k >= 0 && r.opciones[k] ? `${r.respuesta}) ${r.opciones[k]}` : r.respuesta;
+      h += `<p style="margin:2px 0 0 24px;color:#166534"><b>Respuesta:</b> ${gEsc(txt)}</p>`;
+      if (r.pda) h += `<p style="margin:0 0 0 24px;font-size:9pt;color:#334155"><b>PDA:</b> ${gEsc(r.pda)}</p>`;   // el PDA va en la clave del docente, no en la hoja del alumno
+    }
     return h;
   }).join('');
   const cab = conClave ? `<p style="text-align:center"><b>${gEsc(ex.titulo)} — CLAVE DE RESPUESTAS</b></p>` :
@@ -1751,7 +1984,14 @@ function gDescargarExamen(ex, clave) {
 }
 function gGuardarExamen() {
   const g = gGrupo(); const b = G.borrador; if (!b) return;
-  const nuevo = { id: gId(), trim: b.trim, criterioId: b.criterioId, nombre: b.titulo, max: gMaxExamen(b), tipo: 'examen', fecha: gHoy(), tema: b.tema, reactivos: b.reactivos, notas: {} };
+  gBorrActualizar();
+  if (!gBorrListo(b)) { gAviso(gBorrPendientes(b) ? 'Hay reactivos con «revisar clave». Corrígelos y marca «Revisé las respuestas correctas».' : 'Marca «Revisé las respuestas correctas» para poder guardar el examen.'); return; }
+  const reactivos = b.reactivos.map(r => { const c = Object.assign({}, r); delete c.revisar; delete c.motivo; return c; });
+  if (b.editId) {   // clave de un examen ya guardado: se conservan puntos y calificaciones capturadas
+    const ex = g.actividades.find(x => x.id === b.editId);
+    if (ex) { ex.reactivos = reactivos; ex.revisado = true; ex.revisadoEl = gHoy(); G.exAbierto = ex.id; G.borrador = null; gGuardar(); gRenderExamenes(); gIrAExamen(); gAviso('Clave revisada. Este examen ya se puede usar en el escáner.'); return; }
+  }
+  const nuevo = { id: gId(), trim: b.trim, criterioId: b.criterioId, nombre: b.titulo, max: gMaxExamen(b), tipo: 'examen', fecha: gHoy(), tema: b.tema, reactivos, revisado: true, revisadoEl: gHoy(), notas: {} };
   g.actividades.push(nuevo); G.exAbierto = nuevo.id;
   G.borrador = null; gGuardar(); gRenderExamenes(); gIrAExamen();
 }
@@ -1767,10 +2007,12 @@ function gRegistrarExamenPapel() {
 function gAciertos(exId, aid, el) {
   const g = gGrupo(); const ex = g.actividades.find(x => x.id === exId); if (!ex) return;
   const raw = el.value.trim();
-  if (raw === '') { delete ex.notas[aid]; el.classList.remove('g-inval'); }
-  else { const n = gNum(raw); if (n == null || n < 0 || n > ex.max) { el.classList.add('g-inval'); return; } el.classList.remove('g-inval'); ex.notas[aid] = n; }
+  if (raw === '') { delete ex.notas[aid]; if (ex.ne) delete ex.ne[aid]; el.classList.remove('g-inval'); }   // vacía = «sin calificar»
+  else if (/^ne$/i.test(raw)) { delete ex.notas[aid]; (ex.ne = ex.ne || {})[aid] = true; el.classList.remove('g-inval'); }   // NE = no entregó
+  else { const n = gNum(raw); if (n == null || n < 0 || n > ex.max) { el.classList.add('g-inval'); return; } el.classList.remove('g-inval'); ex.notas[aid] = n; if (ex.ne) delete ex.ne[aid]; }
+  el.classList.toggle('g-ne-in', gEsNE(ex, aid));
   gGuardar();
-  const ce = document.getElementById('gc-' + exId + '-' + aid); if (ce) { const v = ex.notas[aid] == null ? null : ex.notas[aid] / ex.max * 10; ce.textContent = gFmt(v); ce.className = v != null && v < 6 ? 'g-mal' : ''; }
+  const ce = document.getElementById('gc-' + exId + '-' + aid); if (ce) { const v = ex.notas[aid] == null ? null : ex.notas[aid] / ex.max * 10; ce.textContent = gEsNE(ex, aid) ? 'NE' : gFmt(v); ce.className = v != null && v < 6 ? 'g-mal' : ''; }
   const st = document.getElementById('gs-' + exId); if (st) st.innerHTML = gStatsExamen(g, ex);
 }
 function gStatsExamen(g, ex) {
@@ -1895,12 +2137,13 @@ function gExamenesListaHTML(g, t) {
   let h = `<div class="card" id="g-lista-ex"><div class="card-title">🧮 Capturar calificaciones de exámenes — ${G_TRIM_NOM[t]}</div>`;
   if (!exs.length) h += `<p style="color:var(--gris);margin:0 0 10px">Aquí aparecerá la <b>lista de tus alumnos</b> para escribir lo que sacó cada uno. Primero hay que dar de alta el examen: si ya lo aplicaste en papel, regístralo; si todavía no, genéralo con IA más abajo.</p><button class="g-btn" onclick="gAbrirPapel()">📄 Registrar un examen que ya apliqué</button>`;
   exs.forEach(ex => {
-    h += `<details class="g-ex" id="ex-${ex.id}" ${exs.length === 1 || G.exAbierto === ex.id ? 'open' : ''}><summary><b>${gEsc(ex.nombre)}</b> <span style="color:var(--gris);font-size:12px">· ${ex.max} pts · ${gEsc((g.criterios.find(c => c.id === ex.criterioId) || {}).nombre || '')}</span></summary>
+    h += `<details class="g-ex" id="ex-${ex.id}" ${exs.length === 1 || G.exAbierto === ex.id ? 'open' : ''}><summary><b>${gEsc(ex.nombre)}</b> <span style="color:var(--gris);font-size:12px">· ${ex.max} pts · ${gEsc((g.criterios.find(c => c.id === ex.criterioId) || {}).nombre || '')}</span>${ex.reactivos ? (ex.revisado === true ? '<span class="g-clave-tag g-clave-ok">✓ Clave revisada</span>' : '<span class="g-clave-tag g-clave-no">⚠ Clave sin revisar</span>') : ''}</summary>
       <div id="gs-${ex.id}" class="g-statline">${gStatsExamen(g, ex)}</div>
-      <div style="margin:8px 0">${ex.reactivos ? `<button class="g-btn g-btn-s" onclick="gVerExamen('${ex.id}')">⬇ Examen</button> <button class="g-btn g-btn-s" onclick="gVerClave('${ex.id}')">⬇ Clave</button> ` : ''}
+      <div style="margin:8px 0">${ex.reactivos ? `<button class="g-btn g-btn-s" onclick="gVerExamen('${ex.id}')">⬇ Examen</button> <button class="g-btn g-btn-s" onclick="gVerClave('${ex.id}')">⬇ Clave</button> <button class="g-btn g-btn-s" onclick="gRevisarGuardado('${ex.id}')">✏️ ${ex.revisado === true ? 'Ver / corregir clave' : 'Revisar clave'}</button> ` : ''}
+      ${ex.reactivos && ex.revisado !== true ? '<div class="g-aviso" style="font-size:12.5px;margin-bottom:6px">Este examen tiene la clave <b>sin revisar</b>: el escáner no lo usará hasta que revises las respuestas y marques «Revisé las respuestas correctas».</div>' : ''}
       <button class="g-btn g-btn-s" onclick="gDescargarResultadosExamen('${ex.id}')">⬇ Resultados</button> <button class="g-btn g-btn-x" onclick="gQuitarExamen('${ex.id}')">Borrar</button></div>
       ${g.alumnos.length ? `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th style="width:110px">Aciertos / pts (de ${ex.max})</th><th style="width:80px">Calif.</th></tr></thead><tbody>` +
-        g.alumnos.map((a, i) => { const n = ex.notas[a.id]; const v = n == null ? null : n / ex.max * 10; return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td><td><input class="g-nota" type="number" step="0.5" min="0" max="${ex.max}" value="${n == null ? '' : n}" oninput="gAciertos('${ex.id}','${a.id}',this)"></td><td id="gc-${ex.id}-${a.id}" class="${v != null && v < 6 ? 'g-mal' : ''}">${gFmt(v)}</td></tr>`; }).join('') + '</tbody></table></div>' : '<p style="color:var(--gris)">Agrega alumnos en «Mis grupos».</p>'}
+        g.alumnos.map((a, i) => { const n = ex.notas[a.id]; const v = n == null ? null : n / ex.max * 10, ne = gEsNE(ex, a.id); return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td><td><input class="g-nota${ne ? ' g-ne-in' : ''}" type="text" inputmode="decimal" autocomplete="off" title="Escribe los aciertos o NE si no entregó. Vacía = sin calificar" value="${ne ? 'NE' : (n == null ? '' : n)}" oninput="gAciertos('${ex.id}','${a.id}',this)"></td><td id="gc-${ex.id}-${a.id}" class="${v != null && v < 6 ? 'g-mal' : ''}">${ne ? 'NE' : gFmt(v)}</td></tr>`; }).join('') + '</tbody></table></div>' : '<p style="color:var(--gris)">Agrega alumnos en «Mis grupos».</p>'}
     </details>`;
   });
   return h + '</div>';
@@ -1917,7 +2160,7 @@ function gRenderExamenes() {
   ${G.evalModo === 'proyecto' ? '' : gExamenesListaHTML(g, t)}
   ${G.evalModo === 'proyecto' ? gProyectoEvalHTML(g, t) : `<div class="card"><div class="card-title">✨ Generar examen con IA — ${gEsc(g.materia)} ${g.grado}°</div>
     ${gTemasPanel(g, t)}
-    <div class="campo"><label>Temas o contenidos a evaluar</label><textarea id="ge-tema" rows="4" placeholder="Ej. Ecuaciones de primer grado con una incógnita; problemas de proporcionalidad directa">${gEsc(G.temaUlt || '')}</textarea><div class="ayuda">Mientras más específico, mejor el examen. Puedes escribir tus propios temas o corregir los que marcaste.</div></div>
+    <div class="campo"><label>Temas o contenidos a evaluar</label><textarea id="ge-tema" rows="4" placeholder="Ej. Ecuaciones de primer grado con una incógnita; problemas de proporcionalidad directa">${gEsc(G.temaUlt || '')}</textarea><div class="ayuda">Mientras más específico, mejor el examen. Puedes escribir tus propios temas o corregir los que marcaste.</div><div class="ayuda" style="color:#92400e">🔒 Esto se envía a la IA: <b>no escribas nombres de alumnos</b> ni datos de conducta, salud o familia.</div></div>
     <div class="f3">
       <div class="campo"><label>Número de reactivos</label>${licEsPrueba() ? '<input id="ge-n" type="number" min="3" max="5" value="5"><div class="ayuda">En la prueba gratis: hasta 5 reactivos.</div>' : '<input id="ge-n" type="number" min="3" max="30" value="10">'}</div>
       <div class="campo"><label>Dificultad</label><select id="ge-dif"><option>Básica</option><option selected>Media</option><option>Alta</option></select></div>
@@ -1928,19 +2171,29 @@ function gRenderExamenes() {
     <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">⚠ Revisa el examen y la clave antes de aplicarlo: la IA puede equivocarse.</div></div>`}`;
 
   if (G.evalModo !== 'proyecto' && G.borrador && G.borrador.trim === t) {
-    const b = G.borrador;
-    h += `<div class="card" id="g-borrador"><div class="card-title">👀 Revisa tu examen (${gMaxExamen(b)} puntos)</div>
+    const b = G.borrador, edit = !!b.editId, np = gBorrPendientes(b);
+    b.reactivos.forEach(r => { r.revisar = !!gRevReactivo(r); });
+    h += `<div class="card" id="g-borrador"><div class="card-title">${edit ? '✏️ Revisa la clave de tu examen' : '👀 Revisa tu examen'} (${gMaxExamen(b)} puntos)</div>
       <div class="ayuda" style="margin:-4px 0 10px">Este examen suma <b>${gMaxExamen(b)} puntos</b> (lo que vale cada pregunta aparece entre paréntesis). Al capturar los aciertos de cada alumno, la app lo convierte sola a una calificación de 0 a 10.</div>
       <div class="campo"><label>Título</label><input value="${gEsc(b.titulo)}" oninput="gTituloBorrador(this.value)"></div>` +
-      `<div class="ayuda" style="margin:-4px 0 10px">Puedes corregir cualquier pregunta, opción o respuesta directamente aquí, o quitar la que no te guste con ✕.</div>` +
-      b.reactivos.map((r, i) => `<div class="g-reac"><button class="g-x" title="Quitar reactivo" onclick="gQuitarReactivo(${i})">✕</button><b>${i + 1}.</b> <small>(${G_TIPOS_EXAM[r.tipo]}, ${r.valor} pt)</small>
+      `<div class="ayuda" style="margin:-4px 0 10px">Puedes corregir cualquier pregunta, opción o respuesta directamente aquí${edit ? '' : ', o quitar la que no te guste con ✕'}. Los reactivos en <b style="background:#fef3c7;padding:0 4px;border-radius:4px">amarillo</b> traen la clave dudosa: elige tú la respuesta correcta.</div>` +
+      b.reactivos.map((r, i) => {
+        const m = gRevReactivo(r);
+        const resp = r.tipo === 'opcion_multiple' ? `<select style="flex:1" onchange="gEditReac(${i},'respuesta',this.value)"><option value="">— elige la respuesta —</option>${'ABCD'.split('').map(l => `<option value="${l}" ${r.respuesta === l ? 'selected' : ''}>${l}</option>`).join('')}</select>`
+          : r.tipo === 'verdadero_falso' ? `<select style="flex:1" onchange="gEditReac(${i},'respuesta',this.value)"><option value="">— elige la respuesta —</option>${['Verdadero', 'Falso'].map(l => `<option ${r.respuesta === l ? 'selected' : ''}>${l}</option>`).join('')}</select>`
+          : `<input style="flex:1" value="${gEsc(r.respuesta)}" oninput="gEditReac(${i},'respuesta',this.value)">`;
+        return `<div class="g-reac${m ? ' g-reac-rev' : ''}" id="g-reac-${i}">${edit ? '' : `<button class="g-x" title="Quitar reactivo" onclick="gQuitarReactivo(${i})">✕</button>`}<b>${i + 1}.</b> <small>(${G_TIPOS_EXAM[r.tipo]}, ${r.valor} pt)</small> <span class="g-rev-tag" id="g-rv-${i}">${m ? '⚠ Revisar clave: ' + gEsc(m) : ''}</span>
         <textarea rows="2" style="width:100%;margin:4px 0" oninput="gEditReac(${i},'pregunta',this.value)">${gEsc(r.pregunta)}</textarea>` +
         (r.tipo === 'opcion_multiple' ? r.opciones.map((o, k) => `<div style="display:flex;gap:6px;align-items:center;margin:3px 0"><b style="width:18px">${'ABCD'[k]}</b><input style="flex:1" value="${gEsc(o)}" oninput="gEditOpc(${i},${k},this.value)"></div>`).join('') : '') +
-        `<div class="g-resp" style="display:flex;gap:6px;align-items:center">Respuesta: <input style="flex:1" value="${gEsc(r.respuesta)}" oninput="gEditReac(${i},'respuesta',this.value)"></div></div>`).join('') +
-      `<button class="g-btn" onclick="gGuardarExamen()">💾 Guardar para calificar</button>
+        `<div class="g-resp" style="display:flex;gap:6px;align-items:center">Respuesta: ${resp}</div>` +
+        (b.conPda || r.pda ? `<div class="g-pda" style="margin-top:6px;font-size:12px;color:var(--gris)">📌 <b>PDA que evalúa:</b> <textarea rows="2" style="width:100%;margin-top:2px;font-size:12px" placeholder="PDA (aprendizaje esperado)" oninput="gEditReac(${i},'pda',this.value)">${gEsc(r.pda || '')}</textarea></div>` : '') + `</div>`;
+      }).join('') +
+      `<div class="g-revbox"><label style="display:flex;gap:8px;align-items:flex-start;text-transform:none;letter-spacing:0;font-weight:700;font-size:13.5px;margin:0;cursor:pointer"><input type="checkbox" id="g-rev-chk" style="margin-top:3px;width:auto;flex:none;padding:0" ${b.revisado && !np ? 'checked' : ''} ${np ? 'disabled' : ''} onchange="gMarcarRevisado(this.checked)"> <span>Revisé las respuestas correctas</span></label>
+        <div id="g-rev-msg" class="ayuda" style="margin:4px 0 0 26px"></div></div>
+       <button class="g-btn" id="g-btn-guardar" onclick="gGuardarExamen()" ${gBorrListo(b) ? '' : 'disabled'}>${edit ? '💾 Guardar clave revisada' : '💾 Guardar para calificar'}</button>
        <button class="g-btn g-btn-s" onclick="gDescargarExamen(G.borrador,false)">⬇ Examen (Word)</button>
        <button class="g-btn g-btn-s" onclick="gDescargarExamen(G.borrador,true)">⬇ Clave (Word)</button>
-       <button class="g-btn g-btn-s" onclick="gGenerarExamen()">↻ Generar otro</button></div>`;
+       ${edit ? '<button class="g-btn g-btn-s" onclick="G.borrador=null;gRenderExamenes()">Cancelar</button>' : '<button class="g-btn g-btn-s" onclick="gGenerarExamen()">↻ Generar otro</button>'}</div>`;
   }
 
   if (G.evalModo !== 'proyecto') {
@@ -1952,6 +2205,7 @@ function gRenderExamenes() {
 
   }
   gPanel().innerHTML = h;
+  if (G.borrador) gBorrActualizar();
 }
 
 // ============================================================
@@ -2186,7 +2440,7 @@ function gRenderTrim() {
   <div class="card"><div class="card-title">💡 Agregar proyecto a partir de mi problemática</div>
     <div class="f2"><div class="campo"><label>Metodología</label><select id="gt-met">${Object.values(METODOLOGIAS).map(m => `<option value="${m.id}"${m.id === metRec ? ' selected' : ''}>${gEsc(m.siglas)} · ${gEsc(m.nombre)}</option>`).join('')}</select></div>
     <div class="campo"><label>Alcance del proyecto</label><select id="gt-esc"><option value="aula">Aula · proyecto áulico</option><option value="escuela">Escuela · proyecto escolar</option><option value="comunidad">Comunidad · proyecto comunitario</option></select></div></div>
-    <div class="campo"><label>Problemática de mi contexto</label><textarea id="gt-prob" rows="3" placeholder="Ej. En mi grupo, 12 de 35 estudiantes no comprenden lo que leen y evitan participar. En la comunidad casi no hay espacios de lectura."></textarea></div>
+    <div class="campo"><label>Problemática de mi contexto</label><textarea id="gt-prob" rows="3" placeholder="Ej. En mi grupo, 12 de 35 estudiantes no comprenden lo que leen y evitan participar. En la comunidad casi no hay espacios de lectura."></textarea><div class="ayuda" style="color:#92400e">🔒 Esto se envía a la IA: <b>no escribas nombres de alumnos</b> ni datos de conducta, salud o familia.</div></div>
     <div class="l-err" id="gt-err" style="margin:0 0 12px"></div>
     <button class="g-btn" onclick="gSugerirProyectos()">💡 Sugerir proyectos</button>`;
   if (G.sugerencias.length) {

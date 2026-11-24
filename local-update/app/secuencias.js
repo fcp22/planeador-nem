@@ -63,7 +63,7 @@ function secFormHTML() {
     </div>
     <div id="s-cards"></div>
     <div class="campo"><label>Contexto de tu grupo y comunidad (opcional)</label>
-      <textarea id="d-situacion" rows="3" placeholder="Ej: Los alumnos tienen dificultades con la comprensión lectora; muchos hablan maya en casa…"></textarea>
+      <textarea id="d-situacion" rows="3" placeholder="Ej: Los alumnos tienen dificultades con la comprensión lectora; muchos hablan maya en casa…"></textarea><div class="ayuda" style="color:#92400e">🔒 Esto se envía a la IA: <b>no escribas nombres de alumnos</b> ni datos de conducta, salud o familia.</div>
       <div class="ayuda">Si ya escribiste la problemática en el contexto (Programa Analítico), la IA también la toma en cuenta.</div></div>
     <input type="hidden" id="d-prod-sec">`;
 }
