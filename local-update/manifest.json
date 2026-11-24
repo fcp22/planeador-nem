@@ -1,6 +1,6 @@
 {
- "version": "e614bc649fa3a388",
- "fecha": "2026-11-23T21:10:46",
+ "version": "5e8b89094a2f5dfc",
+ "fecha": "2026-11-23T21:25:34",
  "servidorMin": 1,
  "archivos": [
   {
@@ -100,8 +100,8 @@
   },
   {
    "p": "generators.js",
-   "h": "3beb3122774854ac9cfd79d13718780b77c9ef886f4569db55d736f93985ae14",
-   "s": 41696
+   "h": "bb149890884b26c6bcd7da6adcafc87f3e5059e7ec9c31b1d635ed15c3a03cdf",
+   "s": 42238
   },
   {
    "p": "gestion.js",
@@ -135,8 +135,8 @@
   },
   {
    "p": "index.html",
-   "h": "8899b65114e6ae36ab0be964d0a0da88655d97c10f69e265f3863831ec6bf17a",
-   "s": 148637
+   "h": "d780fce87cbd57e720dcce7844d2af62f909980763fc390bd4d3154e24c3da58",
+   "s": 148694
   },
   {
    "p": "libreta.js",
@@ -185,8 +185,8 @@
   },
   {
    "p": "secuencias.js",
-   "h": "9696febb8f0be4cbba165d98f659a56ad21c1d62c1aa6459ef1f9ae48fde2917",
-   "s": 34638
+   "h": "d68fb4445787fb6d1c0320d476271db03290f905ed058b930f76ebbac80a2d1d",
+   "s": 34559
   },
   {
    "p": "sugerencias-plano.js",
@@ -200,7 +200,7 @@
   },
   {
    "p": "sw.js",
-   "h": "c97cc0a1e1bfaf7751f6bdd4096cece1ade4152833548be7461dfa0134d36df4",
+   "h": "83b3294aa9612f08ce0d2422d8e457a194632efbbea9b10b28700054cbede306",
    "s": 4986
   }
  ]

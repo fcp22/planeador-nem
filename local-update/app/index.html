@@ -926,7 +926,7 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
         <div class="btns">
           <button class="btn-gen" id="bga" onclick="genAnalitico()"><span>✨</span> Generar Programa Analítico</button>
         </div>
-        <div class="generando" id="gen-a"><div class="spinner"></div><p id="gen-a-msg">Generando Programa Analítico...<br><small>Esto puede tardar 30-60 segundos</small></p></div>
+        <div class="generando" id="gen-a"><div class="spinner"></div><p id="gen-a-msg">Generando Programa Analítico...<br><small>Puede tardar de 2 a 3 minutos. No cierres la página.</small></p></div>
         <div class="resultado" id="res-a">
           <div class="res-hdr">
             <h3>✅ Programa Analítico generado</h3>
@@ -1226,7 +1226,7 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
           <button class="btn-gen" id="bgd" onclick="genDidactico()"><span>✨</span> Generar Plano Didáctico</button>
           <button class="btn-sec" onclick="limpiarD()">🔄 Limpiar y empezar de nuevo</button>
         </div>
-        <div class="generando" id="gen-d"><div class="spinner"></div><p id="gen-d-msg">Generando Plano Didáctico...<br><small>Esto puede tardar 30-90 segundos</small></p></div>
+        <div class="generando" id="gen-d"><div class="spinner"></div><p id="gen-d-msg">Generando Plano Didáctico...<br><small>Puede tardar de 2 a 3 minutos. No cierres la página.</small></p></div>
         <div class="resultado" id="res-d">
           <div class="res-hdr">
             <h3>✅ Plano Didáctico generado</h3>
@@ -1265,11 +1265,11 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
 <script src="licencia.js?v=202611191930"></script>
 <script src="curriculum.js?v=202611180600"></script>
 <script src="projects.js?v=202611180600"></script>
-<script src="generators.js?v=202611232100"></script>
+<script src="generators.js?v=202611232300"></script>
 <script src="metodologias.js?v=202611232100"></script>
 <script src="ruta-ui.js?v=202611180600"></script>
 <script src="fechas-plan.js?v=202611231800"></script>
-<script src="secuencias.js?v=202611232100"></script>
+<script src="secuencias.js?v=202611232300"></script>
 <script src="sugerencias-plano.js?v=202611180600"></script>
 <script>
 // Evita que el navegador sugiera datos de tus Contactos u otros autocompletados en los formularios de la app
@@ -1858,7 +1858,7 @@ async function genAnalitico(){
     t2:Object.assign({contenidos:cA.t2,modalidad:document.getElementById('a-pm2').value,nombreProyecto:document.getElementById('a-pn2').value,proposito:document.getElementById('a-pp2').value,productos:document.getElementById('a-pr2').value},{actividades:aActividades(2)}),
     t3:Object.assign({contenidos:cA.t3,modalidad:document.getElementById('a-pm3').value,nombreProyecto:document.getElementById('a-pn3').value,proposito:document.getElementById('a-pp3').value,productos:document.getElementById('a-pr3').value},{actividades:aActividades(3)}),
   };
-  const _pgA=iaProgreso('gen-a-msg','Generando Programa Analítico…','suele tardar 1–2 minutos');
+  const _pgA=iaProgreso('gen-a-msg','Generando Programa Analítico…','trabajando en tu documento');
   try{
     const txt=await generarAnalitico(d);
     _pgA.parar();
@@ -1933,11 +1933,11 @@ async function genDidactico(){
       if(modalidadD==='secuencia'){
         document.getElementById('gen-d-msg').innerHTML=`Generando secuencias didácticas...<br><small>Inicio, desarrollo y cierre con sus tiempos</small>`;
       } else {
-        document.getElementById('gen-d-msg').innerHTML=`Generando Plano Didáctico...<br><small>40-90 segundos</small>`;
+        document.getElementById('gen-d-msg').innerHTML=`Generando Plano Didáctico...<br><small>Puede tardar de 2 a 3 minutos</small>`;
       }
       nomDoc=`Plano_T${d.trimestre}_${dis}_${g}`;
     }
-    if(modalidadD!=='secuencia') _pgD=iaProgreso('gen-d-msg', tgen==='semanal'?`Generando — Semana ${semAct}…`:'Generando Plano Didáctico…', tgen==='semanal'?'suele tardar 20–40 segundos':'suele tardar 1–2 minutos');
+    if(modalidadD!=='secuencia') _pgD=iaProgreso('gen-d-msg', tgen==='semanal'?`Generando — Semana ${semAct}…`:'Generando Plano Didáctico…', tgen==='semanal'?'suele tardar 20–40 segundos':'trabajando en tu documento');
     const txt=await (tgen==='semanal'
       ? (async()=>{
           const respSem = await llamarGeminiJSON(prompt, 'plano');

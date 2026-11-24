@@ -315,7 +315,7 @@ async function generarSecuenciaDidactica(d) {
   const dur = secDuracion(), partes = [], fallos = [], hechas = [];
   // Todas las secuencias se piden al mismo tiempo (cada una es independiente): tarda lo de una sola, no la suma.
   let listas = 0; const n = cards.length;
-  const pg = iaProgreso('gen-d-msg', n === 1 ? 'Generando tu secuencia…' : `Generando ${n} secuencias al mismo tiempo…`, n === 1 ? 'inicio, desarrollo y cierre con sus tiempos · suele tardar 1 min' : 'listas 0 de ' + n + ' · suele tardar 1–2 min');
+  const pg = iaProgreso('gen-d-msg', n === 1 ? 'Generando tu secuencia…' : `Generando ${n} secuencias al mismo tiempo…`, n === 1 ? 'inicio, desarrollo y cierre con sus tiempos' : 'listas 0 de ' + n);
   const una = async c => {
     const h = secHorario(c.sesiones, dur);
     for (let intento = 0; ; intento++) {
@@ -332,7 +332,7 @@ async function generarSecuenciaDidactica(d) {
   };
   let res;
   try {
-    res = await Promise.all(cards.map(c => una(c).then(r => { listas++; if (n > 1) pg.poner(`Generando ${n} secuencias al mismo tiempo…`, `listas ${listas} de ${n} · suele tardar 1–2 min`); return r; })));
+    res = await Promise.all(cards.map(c => una(c).then(r => { listas++; if (n > 1) pg.poner(`Generando ${n} secuencias al mismo tiempo…`, `listas ${listas} de ${n}`); return r; })));
   } finally { pg.parar(); }
   res.forEach(r => { if (r.error) fallos.push(`Secuencia ${r.c.i}: ${r.error}`); else { partes.push(r.html); hechas.push(r.c.i); } });
   if (!partes.length) throw new Error(fallos[0] || 'No se pudo generar la secuencia.');

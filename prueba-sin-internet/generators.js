@@ -286,7 +286,11 @@ function iaProgreso(idMsg, titulo, detalle) {
   const pintar = () => {
     if (!el) return;
     const seg = Math.round((Date.now() - t0) / 1000), m = Math.floor(seg / 60), tx = m ? `${m} min ${String(seg % 60).padStart(2, '0')} s` : `${seg} s`;
-    el.innerHTML = `${tit}<br><small>${det ? det + ' · ' : ''}<b>${tx}</b>${seg > 150 ? '<br>Está tardando más de lo normal; la IA sigue trabajando. No cierres ni recargues la página.' : ''}</small>`;
+    // Aviso fijo para que nadie piense que se trabó y cancele: los documentos largos tardan de 2 a 3 minutos
+    const largo = !/segundos/i.test(det);
+    const aviso = largo ? `<div style="margin:12px auto 0;max-width:430px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:8px;padding:9px 12px;font-size:13px;line-height:1.4;">⏳ <b>Puede tardar de 2 a 3 minutos.</b><br>Es normal. <b>No cierres ni recargues la página</b>: la app sigue trabajando y tu documento aparecerá aquí.</div>` : '';
+    const extra = seg > 200 ? '<br>Ya casi: la IA sigue trabajando. Si pasa de 5 minutos, vuelve a intentar.' : '';
+    el.innerHTML = `${tit}<br><small>${det ? det + ' · ' : ''}Llevas <b>${tx}</b>${extra}</small>${aviso}`;
   };
   pintar(); timer = setInterval(pintar, 1000);
   return { poner(a, b) { tit = a; det = b || ''; pintar(); }, parar() { if (timer) { clearInterval(timer); timer = null; } } };
