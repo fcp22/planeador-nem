@@ -143,6 +143,20 @@ function SUITE() {
   eq('«APELLIDO / APELLIDO / NOMBRE» → sin diagonales', gLimpiarNombre('BAEZA / PECH / JONATHAN ALEJANDRO'), 'BAEZA PECH JONATHAN ALEJANDRO');
   eq('Se sigue quitando el número del inicio', gLimpiarNombre('1. AGUILAR PECH JUAN'), 'AGUILAR PECH JUAN');
   eq('Excel con columna «APELLIDO 1 / APELLIDO 2 / NOMBRE(S)» → detecta los nombres', gExtraerNombres([['No.', 'APELLIDO 1 / APELLIDO 2 / NOMBRE(S)'], ['1', 'BAEZA / PECH / JONATHAN ALEJANDRO'], ['2', 'BE / CANCHE / FRANGEL ALONSO'], ['3', 'BE / LOPEZ / AARON ISRAEL']]), ['BAEZA PECH JONATHAN ALEJANDRO', 'BE CANCHE FRANGEL ALONSO', 'BE LOPEZ AARON ISRAEL']);
+  S('Excel con varias hojas (de 1 a 6)');
+  eq('Hoja «3 A» → grupo «3° A»', gNombreGrupoDeHoja('3 A'), '3° A');
+  eq('Hoja «3° b» → grupo «3° B»', gNombreGrupoDeHoja('3° b'), '3° B');
+  eq('Hoja sin forma de grupo se deja igual', gNombreGrupoDeHoja('Lista'), 'Lista');
+  const cont = document.createElement('div'); cont.innerHTML = gNuevoGrupoForm(null) + '<textarea id="gg-lista"></textarea>'; document.body.prepend(cont);
+  const hojas6 = ['3 A', '3° B', '3° C', '3° D', '3° E', '3° F'].map((h, i) => ({ hoja: h, nombres: ['UNO ' + i + ' A', 'DOS ' + i + ' B'] }));
+  G_HOJAS_ARCH['gn-lista'] = hojas6; gCargarHojaAlumnos('gn-lista', 0);
+  eq('Hoja 1: se rellena nombre y grado del grupo', [document.getElementById('gg-nombre').value, document.getElementById('gg-grado').value], ['3° A', '3']);
+  eq('Salen 6 botones, uno por hoja', cont.querySelectorAll('#gn-lista-hojas button').length, 6);
+  gCargarHojaAlumnos('gn-lista', 4);
+  eq('Hoja 5: reemplaza la lista y pone «3° E»', [document.getElementById('gn-lista').value, document.getElementById('gg-nombre').value], ['UNO 4 A\nDOS 4 B', '3° E']);
+  eq('El botón activo lleva ✓', [...cont.querySelectorAll('#gn-lista-hojas button')].map(b => b.textContent.startsWith('✓')), [false, false, false, false, true, false]);
+  document.getElementById('gg-nombre').value = 'X'; G_HOJAS_ARCH['gg-lista'] = hojas6; gCargarHojaAlumnos('gg-lista', 2);
+  eq('Al agregar alumnos a un grupo ya hecho NO se cambia el nombre del grupo', [document.getElementById('gg-lista').value, document.getElementById('gg-nombre').value], ['UNO 2 A\nDOS 2 B', 'X']);
   const cv = document.createElement('canvas'); cv.width = 400; cv.height = 500; const cx = cv.getContext('2d'); cx.fillStyle = '#f00'; cx.fillRect(0, 0, 400, 500); cx.fillStyle = '#00f'; cx.fillRect(0, 400, 400, 100);
   return new Promise(res => cv.toBlob(async b => {
     const f = new File([b], 'h.png', { type: 'image/png' });
@@ -150,6 +164,20 @@ function SUITE() {
     const tap = await escReducir(f, [{ x: 0, y: 0, w: 1, h: 0.25 }]), sin = await escReducir(f, []);
     eq('Zona tapada: sale NEGRA en lo que se envía (sin tapar: roja)', [await px(tap.data, 0.05), await px(sin.data, 0.05)].map(p => p[0] || p[1]), [false, true]);
     eq('Lo que no se tapa se conserva (abajo sigue azul)', (await px(tap.data, 0.9))[1], true);
+    // de punta a punta: un Excel de verdad con 1 hoja y con 6 hojas
+    await gCargarLib('xlsx');
+    const xl = hs => { const wb = XLSX.utils.book_new(); hs.forEach(([n, f]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(f), n)); return new File([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], 'lista.xlsx'); };
+    const filas = i => [['No.', 'APELLIDO 1 / APELLIDO 2 / NOMBRE(S)'], [1, 'BAEZA / PECH / JONATHAN ' + i], [2, 'BE / CANCHE / FRANGEL ' + i]];
+    const prueba0 = licEsPrueba; licEsPrueba = () => false;
+    try {
+      document.getElementById('gn-lista').value = '';
+      await gLeerArchivoAlumnos({ files: [xl([['3 A', filas('A')]])], value: '' }, 'gn-lista');
+      eq('Excel de 1 hoja: carga los 2 alumnos y no muestra botones', [document.getElementById('gn-lista').value.split('\n').length, document.getElementById('gn-lista-hojas').style.display], [2, 'none']);
+      await gLeerArchivoAlumnos({ files: [xl(['3 A', '3° B', '3° C', '3° D', '3° E', '3° F'].map((n, i) => [n, filas('ABCDEF'[i])]))], value: '' }, 'gn-lista');
+      eq('Excel de 6 hojas: muestra 6 botones y carga la primera', [cont.querySelectorAll('#gn-lista-hojas button').length, document.getElementById('gn-lista').value.split('\n')[0], document.getElementById('gg-nombre').value], [6, 'BAEZA PECH JONATHAN A', '3° A']);
+      await gLeerArchivoAlumnos({ files: [xl([['Portada', [['Escuela', 'Lista de grupos']]], ['3 A', filas('A')], ['3° B', filas('B')]])], value: '' }, 'gn-lista');
+      eq('Excel con hoja de portada sin alumnos: ignora la portada (2 botones)', cont.querySelectorAll('#gn-lista-hojas button').length, 2);
+    } finally { licEsPrueba = prueba0; cont.remove(); }
     res(R);
   }, 'image/png'));
 }

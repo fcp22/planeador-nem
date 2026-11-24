@@ -2565,12 +2565,12 @@ async function gFilasDeArchivo(f) {
   if (ext === 'csv') {
     await gCargarLib('xlsx');
     const wb = XLSX.read(await f.text(), { type: 'string' });
-    return wb.SheetNames.map(n => XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: false, defval: '' }));
+    const hs = wb.SheetNames.map(n => XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: false, defval: '' })); hs.nombres = wb.SheetNames; return hs;
   }
   if (['xlsx', 'xls', 'xlsm', 'ods'].includes(ext)) {
     await gCargarLib('xlsx');
     const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
-    return wb.SheetNames.map(n => XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: false, defval: '' }));
+    const hs = wb.SheetNames.map(n => XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: false, defval: '' })); hs.nombres = wb.SheetNames; return hs;
   }
   if (ext === 'pdf') return gFilasDePDF(f);
   if (ext === 'docx') {
@@ -2586,6 +2586,31 @@ async function gFilasDeArchivo(f) {
   }
   throw new Error('Ese tipo de archivo no se puede leer. Usa Excel (.xlsx, .xls), Word (.docx), PDF, CSV o texto (.txt).');
 }
+// Excel con varias hojas (una por grupo: «3 A», «3° B»…): botones para elegir qué hoja cargar
+const G_HOJAS_ARCH = {};
+function gNombreGrupoDeHoja(n) {
+  const t = gTextoCelda(n), m = t.match(/^(\d)\s*[°º.]?\s*([A-Za-zÑñ])$/);
+  return m ? m[1] + '° ' + m[2].toUpperCase() : t;
+}
+function gCargarHojaAlumnos(idTa, i) {
+  const hojas = G_HOJAS_ARCH[idTa] || [], h = hojas[i], ta = document.getElementById(idTa); if (!h || !ta) return;
+  ta.value = h.nombres.join('\n');
+  // si es el formulario de crear grupo, se rellenan nombre y grado (en «Agregar alumnos» a un grupo ya hecho no se toca nada)
+  const pref = idTa === 'gn-lista' ? 'gg' : (idTa === 'gl-lista' && document.getElementById('gq-nombre') ? 'gq' : '');
+  if (pref) {
+    const gn = gNombreGrupoDeHoja(h.hoja), inp = document.getElementById(pref + '-nombre'), gr = document.getElementById(pref + '-grado'), mat = document.getElementById(pref + '-materia');
+    if (inp) inp.value = gn;
+    if (gr && /^[123]/.test(gn) && gr.value !== gn[0]) { const m0 = mat && mat.value; gr.value = gn[0]; gr.dispatchEvent(new Event('change')); if (mat && m0 && [...mat.options].some(o => o.value === m0)) mat.value = m0; }
+  }
+  const caja = document.getElementById(idTa + '-hojas'); if (!caja) return;
+  caja.textContent = ''; caja.style.display = 'block';
+  const tit = document.createElement('div'); tit.style.cssText = 'font-size:12px;color:var(--gris);margin-bottom:4px'; tit.textContent = 'Hojas con alumnos en este archivo:'; caja.appendChild(tit);
+  hojas.forEach((x, k) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'g-btn g-btn-s'; b.style.margin = '0 6px 6px 0';
+    b.textContent = (k === i ? '✓ ' : '') + x.hoja + ' · ' + x.nombres.length;
+    b.onclick = () => gCargarHojaAlumnos(idTa, k); caja.appendChild(b);
+  });
+}
 async function gLeerArchivoAlumnos(input, idTa) {
   if (licEsPrueba()) { input.value = ''; licAvisoPrueba('Subir tu lista de alumnos desde un archivo'); return; }
   const f = input.files && input.files[0]; if (!f) return;
@@ -2594,8 +2619,14 @@ async function gLeerArchivoAlumnos(input, idTa) {
   decir('Leyendo «' + f.name + '»…', true);
   try {
     const hojas = await gFilasDeArchivo(f);
-    let nombres = [];
-    for (const filas of hojas) { nombres = gExtraerNombres(filas); if (nombres.length) break; }
+    const conAlumnos = hojas.map((filas, i) => ({ hoja: (hojas.nombres && hojas.nombres[i]) || ('Hoja ' + (i + 1)), nombres: gExtraerNombres(filas) })).filter(h => h.nombres.length);
+    const nombres = conAlumnos.length ? conAlumnos[0].nombres : [];
+    const caja = document.getElementById(idTa + '-hojas'); if (caja) { caja.style.display = 'none'; caja.textContent = ''; }
+    if (conAlumnos.length > 1) {
+      G_HOJAS_ARCH[idTa] = conAlumnos; gCargarHojaAlumnos(idTa, 0);
+      decir('Listo: «' + f.name + '» tiene ' + conAlumnos.length + ' hojas con alumnos. Cargué la primera. Para cargar otra, tócala abajo (reemplaza lo que haya en el recuadro). Revisa los nombres y toca el botón de crear.', true);
+      input.value = ''; return;
+    }
     if (!nombres.length) { decir('No encontré nombres de alumnos en «' + f.name + '». Revisa que los nombres estén en una columna (o uno por renglón), o cópialos y pégalos en el recuadro.', false); }
     else {
       const previo = ta.value.trim();
@@ -2610,7 +2641,8 @@ function gUiArchivo(idTa) {
   return `<div style="margin:6px 0 10px"><label class="g-btn g-btn-s" style="cursor:pointer;margin:0">📂 Subir Excel, Word, PDF o CSV
       <input type="file" accept=".xlsx,.xls,.xlsm,.ods,.csv,.docx,.pdf,.txt" style="display:none" onchange="gLeerArchivoAlumnos(this,'${idTa}')"></label>
     <span style="font-size:11.5px;color:var(--gris);margin-left:6px">Los nombres aparecen en el recuadro para que los revises antes de crear la lista.</span>
-    <div id="${idTa}-msg" style="display:none;font-size:12.5px;margin-top:8px;line-height:1.4"></div></div>`;
+    <div id="${idTa}-msg" style="display:none;font-size:12.5px;margin-top:8px;line-height:1.4"></div>
+    <div id="${idTa}-hojas" style="display:none;margin-top:8px"></div></div>`;
 }
 function gNombresDeTexto(texto) {
   const ya = new Set(); const out = [];
