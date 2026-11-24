@@ -2606,10 +2606,35 @@ function gCargarHojaAlumnos(idTa, i) {
   caja.textContent = ''; caja.style.display = 'block';
   const tit = document.createElement('div'); tit.style.cssText = 'font-size:12px;color:var(--gris);margin-bottom:4px'; tit.textContent = 'Hojas con alumnos en este archivo:'; caja.appendChild(tit);
   hojas.forEach((x, k) => {
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'g-btn g-btn-s'; b.style.margin = '0 6px 6px 0';
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'g-btn g-btn-s'; b.style.margin = '0 6px 6px 0'; b.dataset.hoja = k;
     b.textContent = (k === i ? '✓ ' : '') + x.hoja + ' · ' + x.nombres.length;
     b.onclick = () => gCargarHojaAlumnos(idTa, k); caja.appendChild(b);
   });
+  if (pref && hojas.length > 1) {
+    const t = document.createElement('div'); t.style.cssText = 'margin-top:8px';
+    const bt = document.createElement('button'); bt.type = 'button'; bt.className = 'g-btn'; bt.textContent = '✅ Crear los ' + hojas.length + ' grupos de una vez';
+    bt.onclick = () => gCrearGruposDeHojas(idTa); t.appendChild(bt);
+    const ay = document.createElement('div'); ay.style.cssText = 'font-size:11.5px;color:var(--gris);margin-top:4px'; ay.textContent = 'Crea un grupo por cada hoja, con la materia y el grado que ves arriba (el grado se toma del nombre de la hoja). Los que ya existen no se repiten.'; t.appendChild(ay);
+    caja.appendChild(t);
+  }
+}
+// Crea de una vez un grupo por cada hoja del Excel
+function gCrearGruposDeHojas(idTa) {
+  const hojas = G_HOJAS_ARCH[idTa] || [];
+  const pref = idTa === 'gn-lista' ? 'gg' : (idTa === 'gl-lista' && document.getElementById('gq-nombre') ? 'gq' : '');
+  const gr = document.getElementById(pref + '-grado'), mat = document.getElementById(pref + '-materia');
+  if (!pref || !hojas.length || !gr || !mat) return;
+  const materia = mat.value, ya = new Set(G.data.grupos.map(g => (g.nombre + '|' + g.materia).toLowerCase()));
+  const nuevos = [], omitidos = [];
+  hojas.forEach(h => {
+    const nombre = gNombreGrupoDeHoja(h.hoja), grado = /^[123]/.test(nombre) ? nombre[0] : gr.value, k = (nombre + '|' + materia).toLowerCase();
+    if (ya.has(k)) { omitidos.push(nombre); return; }
+    ya.add(k); nuevos.push({ id: gId(), nombre, grado, materia, alumnos: h.nombres.map(n => ({ id: gId(), nombre: n })), asist: {}, criterios: G_CRITERIOS_DEF.map(gCritDef), actividades: [], plan: {} });
+  });
+  if (!nuevos.length) { gAviso('Esos grupos ya existen (' + omitidos.join(', ') + '). No se creó ninguno.'); return; }
+  if (!confirm('Se van a crear ' + nuevos.length + ' grupos de ' + materia + ': ' + nuevos.map(g => g.nombre + ' (' + g.alumnos.length + ' alumnos)').join(', ') + '.' + (omitidos.length ? '\n\nYa existen y no se tocan: ' + omitidos.join(', ') + '.' : '') + '\n\n¿Continuar?')) return;
+  nuevos.forEach(g => G.data.grupos.push(g));
+  G.gid = nuevos[0].id; G.nuevoGrupo = false; G.editGrupo = null; gGuardar(); gRender(); window.scrollTo(0, 0);
 }
 async function gLeerArchivoAlumnos(input, idTa) {
   if (licEsPrueba()) { input.value = ''; licAvisoPrueba('Subir tu lista de alumnos desde un archivo'); return; }

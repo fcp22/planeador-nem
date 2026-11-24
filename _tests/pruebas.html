@@ -151,10 +151,10 @@ function SUITE() {
   const hojas6 = ['3 A', '3° B', '3° C', '3° D', '3° E', '3° F'].map((h, i) => ({ hoja: h, nombres: ['UNO ' + i + ' A', 'DOS ' + i + ' B'] }));
   G_HOJAS_ARCH['gn-lista'] = hojas6; gCargarHojaAlumnos('gn-lista', 0);
   eq('Hoja 1: se rellena nombre y grado del grupo', [document.getElementById('gg-nombre').value, document.getElementById('gg-grado').value], ['3° A', '3']);
-  eq('Salen 6 botones, uno por hoja', cont.querySelectorAll('#gn-lista-hojas button').length, 6);
+  eq('Salen 6 botones, uno por hoja', cont.querySelectorAll('#gn-lista-hojas button[data-hoja]').length, 6);
   gCargarHojaAlumnos('gn-lista', 4);
   eq('Hoja 5: reemplaza la lista y pone «3° E»', [document.getElementById('gn-lista').value, document.getElementById('gg-nombre').value], ['UNO 4 A\nDOS 4 B', '3° E']);
-  eq('El botón activo lleva ✓', [...cont.querySelectorAll('#gn-lista-hojas button')].map(b => b.textContent.startsWith('✓')), [false, false, false, false, true, false]);
+  eq('El botón activo lleva ✓', [...cont.querySelectorAll('#gn-lista-hojas button[data-hoja]')].map(b => b.textContent.startsWith('✓')), [false, false, false, false, true, false]);
   document.getElementById('gg-nombre').value = 'X'; G_HOJAS_ARCH['gg-lista'] = hojas6; gCargarHojaAlumnos('gg-lista', 2);
   eq('Al agregar alumnos a un grupo ya hecho NO se cambia el nombre del grupo', [document.getElementById('gg-lista').value, document.getElementById('gg-nombre').value], ['UNO 2 A\nDOS 2 B', 'X']);
   const cv = document.createElement('canvas'); cv.width = 400; cv.height = 500; const cx = cv.getContext('2d'); cx.fillStyle = '#f00'; cx.fillRect(0, 0, 400, 500); cx.fillStyle = '#00f'; cx.fillRect(0, 400, 400, 100);
@@ -174,9 +174,23 @@ function SUITE() {
       await gLeerArchivoAlumnos({ files: [xl([['3 A', filas('A')]])], value: '' }, 'gn-lista');
       eq('Excel de 1 hoja: carga los 2 alumnos y no muestra botones', [document.getElementById('gn-lista').value.split('\n').length, document.getElementById('gn-lista-hojas').style.display], [2, 'none']);
       await gLeerArchivoAlumnos({ files: [xl(['3 A', '3° B', '3° C', '3° D', '3° E', '3° F'].map((n, i) => [n, filas('ABCDEF'[i])]))], value: '' }, 'gn-lista');
-      eq('Excel de 6 hojas: muestra 6 botones y carga la primera', [cont.querySelectorAll('#gn-lista-hojas button').length, document.getElementById('gn-lista').value.split('\n')[0], document.getElementById('gg-nombre').value], [6, 'BAEZA PECH JONATHAN A', '3° A']);
+      eq('Excel de 6 hojas: muestra 6 botones y carga la primera', [cont.querySelectorAll('#gn-lista-hojas button[data-hoja]').length, document.getElementById('gn-lista').value.split('\n')[0], document.getElementById('gg-nombre').value], [6, 'BAEZA PECH JONATHAN A', '3° A']);
       await gLeerArchivoAlumnos({ files: [xl([['Portada', [['Escuela', 'Lista de grupos']]], ['3 A', filas('A')], ['3° B', filas('B')]])], value: '' }, 'gn-lista');
-      eq('Excel con hoja de portada sin alumnos: ignora la portada (2 botones)', cont.querySelectorAll('#gn-lista-hojas button').length, 2);
+      eq('Excel con hoja de portada sin alumnos: ignora la portada (2 botones)', cont.querySelectorAll('#gn-lista-hojas button[data-hoja]').length, 2);
+      // «Crear los 6 grupos de una vez»
+      G_HOJAS_ARCH['gn-lista'] = hojas6; gCargarHojaAlumnos('gn-lista', 0);
+      eq('Con 6 hojas aparece el botón «Crear los 6 grupos de una vez»', [...cont.querySelectorAll('#gn-lista-hojas button')].some(b => /Crear los 6 grupos/.test(b.textContent)), true);
+      const sv = { grupos: G.data.grupos, confirm, gGuardar, gRender, gAviso, scrollTo: window.scrollTo }; let avisos = 0;
+      confirm = () => true; gGuardar = () => {}; gRender = () => {}; gAviso = () => { avisos++; }; window.scrollTo = () => {};
+      try {
+        const mat = document.getElementById('gg-materia').value;
+        G.data.grupos = [{ id: 'ya', nombre: '3° A', materia: mat, alumnos: [] }];
+        gCrearGruposDeHojas('gn-lista');
+        eq('Crea los 5 que faltan (3° A ya existía y no se repite)', G.data.grupos.map(g => g.nombre), ['3° A', '3° B', '3° C', '3° D', '3° E', '3° F']);
+        eq('Cada grupo nuevo trae sus alumnos, su grado y la materia elegida', G.data.grupos.slice(1).map(g => [g.alumnos.length, g.grado, g.materia === mat]).every(x => x[0] === 2 && x[1] === '3' && x[2]), true);
+        gCrearGruposDeHojas('gn-lista');
+        eq('Si se pulsa otra vez no duplica nada y avisa', [G.data.grupos.length, avisos], [6, 1]);
+      } finally { G.data.grupos = sv.grupos; confirm = sv.confirm; gGuardar = sv.gGuardar; gRender = sv.gRender; gAviso = sv.gAviso; window.scrollTo = sv.scrollTo; }
     } finally { licEsPrueba = prueba0; cont.remove(); }
     res(R);
   }, 'image/png'));
