@@ -2297,6 +2297,9 @@ function gCapExRegistrar() {
   const nuevo = { id: gId(), trim: G.trimExam, criterioId: gCritExamen(g).id, nombre, max, tipo: 'examen', fecha: gHoy(), reactivos: null, notas: {} };
   g.actividades.push(nuevo); G.capExId = nuevo.id; gGuardar(); gRenderCapExamen();
 }
+// Desglose: criterios que cuentan en el trimestre (con peso > 0) y su celda «calificación + lo que aporta»
+function gCapExCrits(g, t) { return g.criterios.filter(c => gPct(g, c.id, t) > 0); }
+function gCapExCelda(r, c, pc) { const v = r.porCrit[c.id]; return v == null ? '<span style="color:var(--gris)" title="Todavía no hay calificación en este criterio">—</span>' : `<b>${gFmt(v)}</b><small style="display:block;font-size:10.5px;font-weight:400;color:var(--gris)" title="Calificación del criterio × su porcentaje">aporta ${gFmt(v * pc / 100, 2)}</small>`; }
 function gCapExAciertos(exId, aid, el) {
   gAciertos(exId, aid, el);
   const g = gGrupo(), t = G.trimExam; const ex = g && g.actividades.find(x => x.id === exId); if (!ex) return;
@@ -2308,6 +2311,7 @@ function gCapExAciertos(exId, aid, el) {
     const f = document.getElementById('cx-f-' + al.id); if (!f) return;
     const r = gCalcAlumno(g, al.id, t), bo = gBoleta(r.final);
     f.innerHTML = gCapFinalHTML(r); f.classList.toggle('g-mal', bo != null && bo < 6 && !r.pend.length); f.classList.toggle('g-pendf', r.pend.length > 0);
+    gCapExCrits(g, t).forEach(c => { const k = document.getElementById('cx-k-' + c.id + '-' + al.id); if (k) k.innerHTML = gCapExCelda(r, c, gPct(g, c.id, t)); });
   });
 }
 function gCapExNE(exId, aid, btn) {
@@ -2345,14 +2349,15 @@ function gRenderCapExamen() {
       </div>
       <p style="font-size:12.5px;color:var(--gris);margin:0 0 8px;line-height:1.5">Este examen cuenta en el criterio <b>${gEsc(c ? c.nombre : 'Exámenes')}</b>${pc == null ? '' : `, que vale <b>${gFmt(pc, 0)}%</b> de la calificación del trimestre`}. Escribe los <b>aciertos</b> de cada alumno (o <b>NE</b> si no presentó); una casilla vacía significa «sin calificar». Con <b>Enter</b> pasas al siguiente.</p>
       <div id="cx-s" class="g-statline">${gStatsExamen(g, ex)}</div>
-      <div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th style="width:110px">Aciertos (de ${ex.max})</th><th style="width:80px">Calif. examen</th><th style="width:130px">Calificación del trimestre</th></tr></thead><tbody>` +
+      <div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th style="width:110px">Aciertos (de ${ex.max})</th><th style="width:80px">Calif. examen</th>${gCapExCrits(g, t).map(c => `<th class="g-cx-k" style="min-width:92px${c.id === ex.criterioId ? ';background:#e0f2fe' : ''}" title="${gEsc(c.nombre)}: vale ${gFmt(gPct(g, c.id, t), 0)} % de la calificación del trimestre">${c.id === ex.criterioId ? '✏️ ' : ''}${gEsc(c.nombre)}<br><small>${gFmt(gPct(g, c.id, t), 0)} %</small></th>`).join('')}<th style="width:130px">= Calificación del trimestre</th></tr></thead><tbody>` +
       g.alumnos.map((a, i) => {
         const n = ex.notas[a.id], ne = gEsNE(ex, a.id), v = n == null ? null : n / ex.max * 10, r = gCalcAlumno(g, a.id, t), bo = gBoleta(r.final);
         return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td><td><input class="g-nota${ne ? ' g-ne-in' : ''}" type="text" inputmode="decimal" autocomplete="off" title="Escribe los aciertos o NE si no presentó. Vacía = sin calificar" value="${ne ? 'NE' : (n == null ? '' : n)}" oninput="gCapExAciertos('${ex.id}','${a.id}',this)" onkeydown="gCapExEnter(event,this)"><button type="button" class="g-nebtn${ne ? ' on' : ''}" title="No presentó (NE)" onclick="gCapExNE('${ex.id}','${a.id}',this)">NE</button></td>
           <td id="cx-c-${a.id}" class="${v != null && v < 6 ? 'g-mal' : ''}">${ne ? 'NE' : gFmt(v)}</td>
+          ${gCapExCrits(g, t).map(c => `<td class="g-ro" id="cx-k-${c.id}-${a.id}"${c.id === ex.criterioId ? ' style="background:#f0f9ff"' : ''}>${gCapExCelda(r, c, gPct(g, c.id, t))}</td>`).join('')}
           <td class="g-fin${bo != null && bo < 6 && !r.pend.length ? ' g-mal' : ''}${r.pend.length ? ' g-pendf' : ''}" id="cx-f-${a.id}">${gCapFinalHTML(r)}</td></tr>`;
       }).join('') + `</tbody></table></div>
-      <div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:10px;line-height:1.5">La calificación del trimestre suma el examen con lo que captures en los demás criterios. Si algo falta, aparece <b>«pendiente»</b> y la calificación es provisional.</div>
+      <div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:10px;line-height:1.5">Cada columna es un criterio con su porcentaje. Su calificación se multiplica por ese porcentaje («aporta») y <b>la suma de todo es la calificación del trimestre</b>. Si a un criterio le falta calificación aparece «—» y el alumno queda <b>«pendiente»</b> (calificación provisional).</div>
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="g-btn" onclick="gIrA('calif')">📊 Capturar los demás criterios (tareas, comportamiento…)</button>
         <button class="g-btn g-btn-s" onclick="gIrA('trabajos')">📓 Libreta de trabajos</button>

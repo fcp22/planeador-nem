@@ -201,6 +201,10 @@ function SUITE() {
     eq('Los aciertos quedan guardados', exC.notas.a1, 8);
     eq('Se muestra la calif. del examen', document.getElementById('cx-c-a1').textContent, '8.0');
     eq('Suma el examen (8, 50 %) con las tareas (10, 50 %) = 9', document.getElementById('cx-f-a1').querySelector('b').textContent, '9');
+    eq('Se desglosa cada criterio con su porcentaje en el encabezado', [...P().querySelectorAll('th.g-cx-k')].map(h => h.textContent.replace(/\s+/g, ' ').trim()), ['Tareas50 %', '✏️ Exámenes50 %']);
+    eq('Tareas: 10 y aporta 5.00', document.getElementById('cx-k-cT-a1').textContent.replace(/\s+/g, ' ').trim(), '10.0aporta 5.00');
+    eq('Exámenes: 8 y aporta 4.00 (la suma de los aportes es el trimestre)', document.getElementById('cx-k-cE-a1').textContent.replace(/\s+/g, ' ').trim(), '8.0aporta 4.00');
+    eq('Alumno sin examen: el criterio Exámenes muestra «—»', document.getElementById('cx-k-cE-a2').textContent.trim(), '—');
     eq('Un alumno sin examen queda «pendiente»', /pendiente/.test(document.getElementById('cx-f-a2').textContent), true);
     inp(1).value = 'NE'; gCapExAciertos(exC.id, 'a2', inp(1));
     eq('NE queda como no presentó y se muestra «NE»', [gEsNE(exC, 'a2'), document.getElementById('cx-c-a2').textContent], [true, 'NE']);
