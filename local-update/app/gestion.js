@@ -79,6 +79,7 @@ function gCargar() {
   G.fecha = gHoy();
   G.borrador = null; G.sugerencias = [];
   G.trimCalif = G.trimExam = G.trimPlan = gTrimDeFecha(gHoy());
+  try { gHistLeer(); } catch (e) {}   // borra del historial de exámenes lo que ya cumplió 3 días
 }
 function gGuardar() {
   try { localStorage.setItem(G.key, JSON.stringify(G.data)); try { localStorage.setItem(G.key + '_mod', String(Date.now())); } catch (e2) {} }
@@ -1850,6 +1851,71 @@ function gNormalizarExamen(j, n, pdas) {
   }).filter(r => r.pregunta);
   return { titulo: String(j.titulo || 'Examen').trim(), reactivos: rs.slice(0, n) };
 }
+// ── Historial de exámenes generados: quedan 3 días en este dispositivo para abrirlos o bajarlos otra vez ──
+// (si recargas la página o se te cierra, un examen sin guardar no se pierde). Pasados 3 días se borran solos; también puedes borrarlos antes.
+const G_HIST_DIAS = 3;
+function gHistClave() { const u = (typeof getUsuario === 'function') ? getUsuario() : null; return 'nem_hist_exam_' + ((u && u.uid) || 'anon'); }
+function gHistEscribir(a) { try { localStorage.setItem(gHistClave(), JSON.stringify(a)); } catch (e) {} }
+function gHistLeer() {
+  let a = []; try { a = JSON.parse(localStorage.getItem(gHistClave()) || '[]'); } catch (e) {}
+  if (!Array.isArray(a)) a = [];
+  const lim = Date.now() - G_HIST_DIAS * 864e5, v = a.filter(x => x && x.ts > lim && Array.isArray(x.reactivos));
+  if (v.length !== a.length) gHistEscribir(v);
+  return v;
+}
+function gHistGuardarBorrador(b) {
+  if (!b || b.editId || b.noHist) return;   // la clave de un examen ya guardado no entra: ese examen ya vive en su grupo
+  const g = gGrupo(); if (!g) return;
+  try {
+    if (!b.histId) b.histId = gId();
+    const a = gHistLeer(), i = a.findIndex(x => x.id === b.histId);
+    const it = { id: b.histId, ts: i >= 0 ? a[i].ts : Date.now(), gid: g.id, grupo: g.nombre, materia: g.materia, trim: b.trim, titulo: b.titulo || 'Examen', tema: b.tema || '', criterioId: b.criterioId, conPda: !!b.conPda, revisado: b.revisado === true, reactivos: JSON.parse(JSON.stringify(b.reactivos)) };
+    if (i >= 0) a[i] = it; else a.unshift(it);
+    gHistEscribir(a.slice(0, 30));
+  } catch (e) {}
+}
+function gHistVence(ts) {
+  const r = ts + G_HIST_DIAS * 864e5 - Date.now(), d = Math.floor(r / 864e5), h = Math.floor((r % 864e5) / 36e5);
+  return d >= 1 ? 'en ' + gPlural(d, 'día', 'días') : (h >= 1 ? 'en ' + gPlural(h, 'hora', 'horas') : 'en menos de una hora');
+}
+function gHistHTML() {
+  const a = gHistLeer(); if (!a.length) return '';
+  const fila = x => `<div style="border:1.5px solid var(--borde);border-radius:12px;padding:10px 12px;margin-bottom:8px">
+      <div style="font-weight:700">${gEsc(x.titulo)}</div>
+      <div style="font-size:12px;color:var(--gris);margin:2px 0 8px">${gEsc(x.grupo)} · ${G_TRIM_NOM[x.trim] || ''} · ${x.reactivos.length} reactivos · ${x.revisado ? '✓ clave revisada' : 'clave sin revisar'} · creado ${gEsc(new Date(x.ts).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }))} · <b>se borra ${gHistVence(x.ts)}</b></div>
+      <button class="g-btn g-btn-s" style="margin:0 6px 6px 0" onclick="gHistAbrir('${x.id}')">✏️ Abrir y revisar</button>
+      <button class="g-btn g-btn-s" style="margin:0 6px 6px 0" onclick="gHistDescargar('${x.id}',false)">⬇ Examen (Word)</button>
+      <button class="g-btn g-btn-s" style="margin:0 6px 6px 0" onclick="gHistDescargar('${x.id}',true)">⬇ Clave (Word)</button>
+      <button class="g-btn g-btn-s" style="margin:0 0 6px 0;color:#b91c1c" onclick="gHistBorrar('${x.id}')">🗑 Borrar</button></div>`;
+  return `<details class="card g-det" id="g-hist" open><summary class="card-title" style="cursor:pointer">🕘 Mis exámenes generados (${a.length})</summary>
+    <div class="g-aviso" style="margin:8px 0 12px;font-size:12.5px">Aquí quedan tus exámenes generados con IA durante <b>${G_HIST_DIAS} días</b>, para que los abras o los descargues las veces que necesites. <b>Pasado ese tiempo se borran solos</b> de este dispositivo; también puedes borrarlos antes. Los exámenes que guardes «para calificar» no se borran.</div>
+    ${a.map(fila).join('')}
+    <button class="g-btn g-btn-s" style="color:#b91c1c" onclick="gHistBorrarTodo()">🗑 Borrar todo el historial</button></details>`;
+}
+function gHistAbrir(id) {
+  const x = gHistLeer().find(y => y.id === id); if (!x) { gRenderExamenes(); return; }
+  if (G.data.grupos.some(g => g.id === x.gid)) { G.gid = x.gid; G.gidManual = true; }
+  const g = gGrupo(); if (!g) return;
+  G.trimExam = x.trim; G.temaUlt = x.tema || '';
+  G.borrador = { titulo: x.titulo, reactivos: JSON.parse(JSON.stringify(x.reactivos)), tema: x.tema, trim: x.trim, criterioId: gCritExamen(g).id, conPda: x.conPda, revisado: x.revisado === true, histId: x.id };
+  gRenderExamenes();
+  const b = document.getElementById('g-borrador'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function gHistDescargar(id, clave) {
+  const x = gHistLeer().find(y => y.id === id); if (!x) { gRenderExamenes(); return; }
+  const g = G.data.grupos.find(y => y.id === x.gid) || { nombre: x.grupo, materia: x.materia, alumnos: [] };
+  descargarWord(gExamenHTML(g, { titulo: x.titulo, reactivos: x.reactivos }, clave), `${clave ? 'Clave' : 'Examen'}_${String(x.materia || '').replace(/\W+/g, '_')}_${String(x.grupo || '').replace(/\W+/g, '_')}.doc`);
+}
+function gHistBorrar(id) {
+  if (!confirm('¿Borrar este examen del historial? No se puede deshacer.')) return;
+  if (G.borrador && G.borrador.histId === id) G.borrador.noHist = true;   // si lo tienes abierto, no vuelve a aparecer solo
+  gHistEscribir(gHistLeer().filter(y => y.id !== id)); gRenderExamenes();
+}
+function gHistBorrarTodo() {
+  if (!confirm('¿Borrar TODOS los exámenes del historial? No se puede deshacer. (Los que guardaste para calificar no se tocan.)')) return;
+  if (G.borrador) G.borrador.noHist = true;
+  gHistEscribir([]); gRenderExamenes();
+}
 async function gGenerarExamen() {
   const g = gGrupo(); const err = document.getElementById('ge-err');
   err.style.display = 'none';
@@ -1866,6 +1932,7 @@ async function gGenerarExamen() {
     if (!ex.reactivos.length) throw new Error('La IA no devolvió reactivos válidos.');
     G.temaUlt = tema;
     G.borrador = Object.assign(ex, { tema, trim: G.trimExam, criterioId: gCritExamen(g).id, conPda: pdas.length > 0, revisado: false });
+    gHistGuardarBorrador(G.borrador);
     gRenderExamenes();
     const b = document.getElementById('g-borrador'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (e) {
@@ -1927,7 +1994,7 @@ function gEditReac(i, campo, v) {
 }
 function gEditOpc(i, k, v) { const r = G.borrador && G.borrador.reactivos[i]; if (r && r.opciones) { r.opciones[k] = v; delete r.motivo; G.borrador.revisado = false; gBorrActualizar(); } }
 function gQuitarReactivo(i) { G.borrador.reactivos.splice(i, 1); if (!G.borrador.reactivos.length) G.borrador = null; gRenderExamenes(); }
-function gTituloBorrador(v) { if (G.borrador) G.borrador.titulo = v; }
+function gTituloBorrador(v) { if (G.borrador) { G.borrador.titulo = v; gHistGuardarBorrador(G.borrador); } }
 function gBorrPendientes(b) { return b.reactivos.filter(r => gRevReactivo(r)).length; }
 function gBorrListo(b) { return !!b && b.revisado === true && gBorrPendientes(b) === 0; }
 // Actualiza resaltados, casilla y botón sin volver a dibujar (así no se pierde el cursor al escribir)
@@ -1944,6 +2011,7 @@ function gBorrActualizar() {
   const msg = document.getElementById('g-rev-msg');
   if (msg) msg.innerHTML = n ? `<b>${n}</b> reactivo(s) con <b>«revisar clave»</b> (en amarillo). Corrígelos para poder marcar la revisión.` : (b.revisado ? '✓ Clave revisada: ya puedes guardarlo para calificar y usarlo en el escáner.' : 'Lee cada pregunta con su respuesta y marca la casilla. Sin esto no se puede guardar ni usar en el escáner.');
   const bt = document.getElementById('g-btn-guardar'); if (bt) bt.disabled = !gBorrListo(b);
+  gHistGuardarBorrador(b);
 }
 function gMarcarRevisado(v) { const b = G.borrador; if (!b) return; b.revisado = !!v && gBorrPendientes(b) === 0; gBorrActualizar(); }
 // Pone la clave de un examen ya guardado en el editor para revisarla (no cambia los puntos ni las calificaciones capturadas)
@@ -2197,6 +2265,7 @@ function gRenderExamenes() {
   }
 
   if (G.evalModo !== 'proyecto') {
+  h += gHistHTML();
   h += `<details class="card g-det" id="g-papel"><summary>📄 Ya apliqué un examen en papel (registrarlo sin IA)</summary>
     <div class="f2" style="margin-top:12px"><div class="campo"><label>Nombre</label><input id="gp-nom" placeholder="Ej. Examen del trimestre"></div>
     <div class="campo"><label>Total de puntos / reactivos</label><input id="gp-max" type="number" min="1" value="10"></div>

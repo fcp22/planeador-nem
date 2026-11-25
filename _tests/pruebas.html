@@ -149,6 +149,38 @@ function SUITE() {
   eq('La clave de un examen guardado lleva el título', /Examen de prueba — CLAVE DE RESPUESTAS/.test(gExamenHTML(grpW, exG, true)), true);
   eq('La hoja del examen para el alumno lleva el título', gExamenHTML(grpW, exG, false).includes('Examen de prueba'), true);
   eq('El borrador (con «titulo») sigue funcionando', /Otro título — CLAVE/.test(gExamenHTML(grpW, { titulo: 'Otro título', reactivos: exG.reactivos }, true)), true);
+  S('Historial de exámenes (se borra a los 3 días)');
+  const hSv = { gGrupo, descargarWord, confirm, gRenderExamenes, data: G.data, gid: G.gid, borr: G.borrador };
+  const hG = { id: 'gh', nombre: '3° H', materia: 'Español', grado: '3', alumnos: [], criterios: G_CRITERIOS_DEF.map(gCritDef), actividades: [], asist: {}, plan: {} };
+  try {
+    G.data = { v: 1, grupos: [hG] }; G.gid = 'gh'; gGrupo = () => hG; confirm = () => true; gRenderExamenes = () => {};
+    localStorage.removeItem(gHistClave());
+    const bH = { titulo: 'Examen H', reactivos: [{ tipo: 'verdadero_falso', pregunta: 'Prueba', respuesta: 'Verdadero', valor: 1, pda: 'PDA H' }], tema: 'tema', trim: 1, criterioId: 'c', conPda: true, revisado: false };
+    gHistGuardarBorrador(bH);
+    eq('Un examen generado entra al historial', gHistLeer().map(x => [x.titulo, x.grupo]), [['Examen H', '3° H']]);
+    G.borrador = bH; gTituloBorrador('Examen H2');
+    eq('Al editarlo se actualiza y no se duplica', gHistLeer().map(x => x.titulo), ['Examen H2']);
+    const a0 = gHistLeer(); gHistEscribir(a0.concat([Object.assign({}, a0[0], { id: 'viejo', ts: Date.now() - 3 * 864e5 - 1000 }), Object.assign({}, a0[0], { id: 'casi', ts: Date.now() - 2.9 * 864e5 })]));
+    eq('A los 3 días se borra solo; el de 2.9 días sigue', gHistLeer().map(x => x.id).sort(), ['casi', bH.histId].sort());
+    gHistEscribir(gHistLeer().filter(x => x.id !== 'casi'));
+    eq('La tarjeta explica que se borra a los 3 días', [/3 días/.test(gHistHTML()), /se borra en/.test(gHistHTML())], [true, true]);
+    G.borrador = null; gHistAbrir(bH.histId);
+    eq('«Abrir y revisar» recupera el examen completo', [G.borrador && G.borrador.titulo, G.borrador && G.borrador.reactivos.length, G.borrador && G.borrador.histId], ['Examen H2', 1, bH.histId]);
+    let cap = null; descargarWord = (html, nombre) => { cap = { html, nombre }; };
+    gHistDescargar(bH.histId, true);
+    eq('Descargar la clave: trae título, PDA y nombre de archivo', [/Examen H2 — CLAVE DE RESPUESTAS/.test(cap.html), cap.html.includes('PDA H'), /^Clave_Espa/.test(cap.nombre)], [true, true, true]);
+    gHistDescargar(bH.histId, false);
+    eq('Descargar el examen: trae título y NO trae el PDA', [cap.html.includes('Examen H2'), cap.html.includes('PDA H')], [true, false]);
+    gHistBorrar(bH.histId);
+    eq('Borrar lo quita del historial', gHistLeer().length, 0);
+    gHistGuardarBorrador(G.borrador);
+    eq('Si lo borraste estando abierto, no reaparece solo', gHistLeer().length, 0);
+    const bI = { titulo: 'Otro', reactivos: bH.reactivos, tema: '', trim: 2, criterioId: 'c', conPda: false, revisado: false };
+    gHistGuardarBorrador(bI); gHistGuardarBorrador({ titulo: 'Otro 2', reactivos: bH.reactivos, tema: '', trim: 2, criterioId: 'c', conPda: false, revisado: false });
+    gHistBorrarTodo();
+    eq('«Borrar todo el historial» lo deja vacío', gHistLeer().length, 0);
+    eq('Con el historial vacío no se muestra la tarjeta', gHistHTML(), '');
+  } finally { gGrupo = hSv.gGrupo; descargarWord = hSv.descargarWord; confirm = hSv.confirm; gRenderExamenes = hSv.gRenderExamenes; G.data = hSv.data; G.gid = hSv.gid; G.borrador = hSv.borr; localStorage.removeItem(gHistClave()); }
   S('Excel con varias hojas (de 1 a 6)');
   eq('Hoja «3 A» → grupo «3° A»', gNombreGrupoDeHoja('3 A'), '3° A');
   eq('Hoja «3° b» → grupo «3° B»', gNombreGrupoDeHoja('3° b'), '3° B');
