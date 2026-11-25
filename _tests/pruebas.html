@@ -209,6 +209,17 @@ function SUITE() {
     { const t1 = document.getElementById('cx-k-cT-a1'); eq('Si el criterio tiene 2 partes (10 y 6) muestra de qué se forma y promedia 8', [t1.querySelector('.cx-partes') && t1.querySelector('.cx-partes').textContent.replace(/\s+/g, ' '), t1.querySelector('b').textContent], ['promedio de • 10.0 · • 6.0', '8.0']); }
     gC.actividades = gC.actividades.filter(x => x.id !== 'tar2'); gRenderCapExamen();
     { const i0 = P().querySelectorAll('input.g-nota')[0]; i0.value = '8'; gCapExAciertos(exC.id, 'a1', i0); }
+    gC.criterios.push({ id: 'cX', nombre: 'Extra sin peso', pct: 0 }); gRenderCapExamen();
+    eq('Aparecen TODOS los criterios del grupo, aunque valgan 0 %', [...P().querySelectorAll('th.g-cx-k')].length, 3);
+    gC.criterios = gC.criterios.filter(x => x.id !== 'cX');
+    {   // los 6 criterios de siempre y nombres largos deben caber sin desplazar la tabla (pantalla de Mac)
+      const gL = usar(mk({ id: 'gcl', nombre: '3° C', alumnos: [{ id: 'l1', nombre: 'CAAMAL SANTAMARIA ELISA ARIADNE' }, { id: 'l2', nombre: 'CHERRIZ GONGORA JULIETA VALENTINA' }], criterios: G_CRITERIOS_DEF.map(gCritDef), actividades: [], asist: {}, plan: {} }));
+      const ifr = window.frameElement, w0 = ifr && ifr.style.width; if (ifr) ifr.style.width = '1500px';
+      G.tab = 'capexamen'; G.capExId = null; gRenderCapExamen(); document.getElementById('cx-nom').value = 'Examen largo'; document.getElementById('cx-max').value = '10'; gCapExRegistrar();
+      const tw = P().querySelector('.g-tabla-w');
+      eq('Con 6 criterios y nombres largos la tabla cabe sin barra lateral', tw.scrollWidth <= tw.clientWidth + 1, true);
+      if (ifr) ifr.style.width = w0 || ''; usar(gC); G.capExId = exC.id; gRenderCapExamen();
+    }
     eq('Alumno sin examen: el criterio Exámenes muestra «—»', document.getElementById('cx-k-cE-a2').textContent.trim(), '—');
     eq('Un alumno sin examen queda «pendiente»', /pendiente/.test(document.getElementById('cx-f-a2').textContent), true);
     inp(1).value = 'NE'; gCapExAciertos(exC.id, 'a2', inp(1));

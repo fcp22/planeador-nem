@@ -2298,7 +2298,15 @@ function gCapExRegistrar() {
   g.actividades.push(nuevo); G.capExId = nuevo.id; gGuardar(); gRenderCapExamen();
 }
 // Desglose: criterios que cuentan en el trimestre (con peso > 0) y su celda «calificación + lo que aporta»
-function gCapExCrits(g, t) { return g.criterios.filter(c => gPct(g, c.id, t) > 0); }
+function gCapExCrits(g, t) { return g.criterios.slice(); }   // todos los criterios de evaluación del grupo (los mismos de «Calificaciones»)
+(function () {   // estilos compactos para que quepan todos los criterios sin desplazar la tabla
+  if (document.getElementById('g-cx-css')) return;
+  const st = document.createElement('style'); st.id = 'g-cx-css';
+  st.textContent = '.g-cx{width:100%;font-size:12px}.g-cx th,.g-cx td{padding:5px 3px}.g-cx th{font-size:10.5px;line-height:1.2}'
+    + '.g-cx td.cx-n{font-size:11px;line-height:1.2;min-width:104px;max-width:160px}.g-cx input.g-nota{width:50px;padding:4px 2px;font-size:13px;text-align:center}'
+    + '.g-cx td.g-ro{text-align:center;line-height:1.2}.g-cx td.g-ro b{font-size:13px}.g-cx th.g-cx-k{text-align:center;min-width:0}';
+  document.head.appendChild(st);
+})();
 // De qué se forma la calificación de un criterio (libreta, actividades, examen…): solo se muestra cuando hay más de una fuente
 function gCapExPartes(g, t, aid, c) {
   const p = [];
@@ -2367,10 +2375,10 @@ function gRenderCapExamen() {
       </div>
       <p style="font-size:12.5px;color:var(--gris);margin:0 0 8px;line-height:1.5">Este examen cuenta en el criterio <b>${gEsc(c ? c.nombre : 'Exámenes')}</b>${pc == null ? '' : `, que vale <b>${gFmt(pc, 0)}%</b> de la calificación del trimestre`}. Escribe los <b>aciertos</b> de cada alumno (o <b>NE</b> si no presentó); una casilla vacía significa «sin calificar». Con <b>Enter</b> pasas al siguiente.</p>
       <div id="cx-s" class="g-statline">${gStatsExamen(g, ex)}</div>
-      <div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th style="width:110px">Aciertos (de ${ex.max})</th><th style="width:80px">Calif. examen</th>${gCapExCrits(g, t).map(c => `<th class="g-cx-k" style="min-width:92px${c.id === ex.criterioId ? ';background:#e0f2fe' : ''}" title="${gEsc(c.nombre)}: vale ${gFmt(gPct(g, c.id, t), 0)} % de la calificación del trimestre">${c.id === ex.criterioId ? '✏️ ' : ''}${gEsc(c.nombre)}<br><small>${gFmt(gPct(g, c.id, t), 0)} %</small></th>`).join('')}<th style="width:130px">= Calificación del trimestre</th></tr></thead><tbody>` +
+      <div class="g-tabla-w"><table class="g-tabla g-cx"><thead><tr><th style="width:22px">#</th><th>Alumno</th><th style="width:58px">Aciertos (de ${ex.max})</th><th style="width:52px">Calif. examen</th>${gCapExCrits(g, t).map(c => `<th class="g-cx-k" style="${c.id === ex.criterioId ? 'background:#e0f2fe' : ''}" title="${gEsc(c.nombre)}: vale ${gFmt(gPct(g, c.id, t), 0)} % de la calificación del trimestre">${c.id === ex.criterioId ? '✏️ ' : ''}${gEsc(c.nombre)}<br><small>${gFmt(gPct(g, c.id, t), 0)} %</small></th>`).join('')}<th style="width:84px">= Calif. del trimestre</th></tr></thead><tbody>` +
       g.alumnos.map((a, i) => {
         const n = ex.notas[a.id], ne = gEsNE(ex, a.id), v = n == null ? null : n / ex.max * 10, r = gCalcAlumno(g, a.id, t), bo = gBoleta(r.final);
-        return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td><td><input class="g-nota${ne ? ' g-ne-in' : ''}" type="text" inputmode="decimal" autocomplete="off" title="Escribe los aciertos o NE si no presentó. Vacía = sin calificar" value="${ne ? 'NE' : (n == null ? '' : n)}" oninput="gCapExAciertos('${ex.id}','${a.id}',this)" onkeydown="gCapExEnter(event,this)"><button type="button" class="g-nebtn${ne ? ' on' : ''}" title="No presentó (NE)" onclick="gCapExNE('${ex.id}','${a.id}',this)">NE</button></td>
+        return `<tr><td>${i + 1}</td><td class="cx-n">${gEsc(a.nombre)}</td><td><input class="g-nota${ne ? ' g-ne-in' : ''}" type="text" inputmode="decimal" autocomplete="off" title="Escribe los aciertos o NE si no presentó. Vacía = sin calificar" value="${ne ? 'NE' : (n == null ? '' : n)}" oninput="gCapExAciertos('${ex.id}','${a.id}',this)" onkeydown="gCapExEnter(event,this)"><button type="button" class="g-nebtn${ne ? ' on' : ''}" title="No presentó (NE)" onclick="gCapExNE('${ex.id}','${a.id}',this)">NE</button></td>
           <td id="cx-c-${a.id}" class="${v != null && v < 6 ? 'g-mal' : ''}">${ne ? 'NE' : gFmt(v)}</td>
           ${gCapExCrits(g, t).map(c => `<td class="g-ro" id="cx-k-${c.id}-${a.id}"${c.id === ex.criterioId ? ' style="background:#f0f9ff"' : ''}>${gCapExCelda(g, t, a.id, r, c, gPct(g, c.id, t))}</td>`).join('')}
           <td class="g-fin${bo != null && bo < 6 && !r.pend.length ? ' g-mal' : ''}${r.pend.length ? ' g-pendf' : ''}" id="cx-f-${a.id}">${gCapFinalHTML(r)}</td></tr>`;
