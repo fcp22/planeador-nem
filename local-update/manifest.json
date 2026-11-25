@@ -1,6 +1,6 @@
 {
- "version": "5783fa0a1244f902",
- "fecha": "2026-11-24T18:52:04",
+ "version": "53dff5e9ddc1e78d",
+ "fecha": "2026-11-25T12:43:04",
  "servidorMin": 1,
  "archivos": [
   {
@@ -105,7 +105,7 @@
   },
   {
    "p": "gestion.js",
-   "h": "1a12416dd668705ee260f0fc62ca1b8b3c88743d734e49fc9b0df64d04e88797",
+   "h": "a2eff744830ae9ffc24456c825aa527d609d6d7df650af94a5db9dc2a68d689d",
    "s": 283827
   },
   {
@@ -135,7 +135,7 @@
   },
   {
    "p": "index.html",
-   "h": "d40258cf3b22e3b34fd0b6446281f7e5a59ebbc3390461040d02618795471ce3",
+   "h": "d19655a72d41bb2fba60081df328cac9a77e5bc34bea0c5928c8c07b1f5ae8fa",
    "s": 149144
   },
   {
@@ -195,12 +195,12 @@
   },
   {
    "p": "suscripcion.html",
-   "h": "c9498abf912c78dc102f5ad3bb5ae87a6a7a6e7b837f96eba935b1d804ff2d14",
+   "h": "9e9b65e4b101e6783116df60926d11388849db5b7c36e425c924422d6406f84d",
    "s": 12217
   },
   {
    "p": "sw.js",
-   "h": "f19be9244e50424bd883f77db08b127a8c5c65ea9937cc9e426472fcc7310689",
+   "h": "0f7d35b1429c3132b3de6fa1b587f4dd95e7437894686804a4aa5280205c2424",
    "s": 4986
   }
  ]
