@@ -121,7 +121,7 @@ function gGuardarPerfil() {
 function gInit() { gCargar(); if (G.tab) gRender(); }
 function gOnTab(id) {
   if (typeof licOnTab === 'function' && licOnTab(id)) { G.tab = id; return; }
-  const conocidas = ['inicio', 'bienvenida', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'recup', 'calendario', 'libros', 'planes', 'bitacora', 'horario', 'escaner', 'trabajos', ...Object.keys(G_PRONTO)];
+  const conocidas = ['inicio', 'bienvenida', 'grupos', 'lista', 'calif', 'examenes', 'trim', 'rezago', 'recup', 'calendario', 'libros', 'planes', 'bitacora', 'horario', 'escaner', 'capexamen', 'trabajos', ...Object.keys(G_PRONTO)];
   if (!conocidas.includes(id)) return;
   if (!G.data) gCargar();
   G.tab = id;
@@ -131,7 +131,7 @@ function gOnTab(id) {
 function gRender() {
   if (licTabBloqueada(G.tab)) { gPanel().innerHTML = licHTMLBloqueo(G.tab); return; }
   if (G_PRONTO[G.tab]) return gRenderProntoTab(G.tab);
-  const f = { inicio: gRenderInicio, bienvenida: gRenderBienvenida, planes: gRenderPlanes, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, recup: gRenderRecup, calendario: gRenderCalendario, libros: gRenderLibros, bitacora: gRenderBitacora, horario: () => gRenderArchivos('horario'), escaner: gRenderEscaner, trabajos: gRenderTrabajos }[G.tab];
+  const f = { inicio: gRenderInicio, bienvenida: gRenderBienvenida, planes: gRenderPlanes, grupos: gRenderGrupos, lista: gRenderLista, calif: gRenderCalif, examenes: gRenderExamenes, trim: gRenderTrim, rezago: gRenderRezago, recup: gRenderRecup, calendario: gRenderCalendario, libros: gRenderLibros, bitacora: gRenderBitacora, horario: () => gRenderArchivos('horario'), escaner: gRenderEscaner, capexamen: gRenderCapExamen, trabajos: gRenderTrabajos }[G.tab];
   if (f) f();
 }
 
@@ -564,7 +564,9 @@ const G_MENU = [
   ['rezago', '🚦', 'Rezago', 'Semáforo de alumnos en riesgo', true],
   ['recup', '🔁', 'Recuperativos', 'Segunda oportunidad para reprobados', true],
   ['bitacora', '📔', 'Bitácora', 'Reportes de incidencias', true],
-  ['escaner', '📷', 'Escanear examen', 'Calificar con la cámara', true],
+  // El escáner de exámenes (📷) está oculto por ahora: su código sigue en escaner.js. Para volver a mostrarlo, descomenta esta línea y su botón en index.html.
+  // ['escaner', '📷', 'Escanear examen', 'Calificar con la cámara', true],
+  ['capexamen', '✏️', 'Capturar examen', 'Aciertos por alumno y calificación del trimestre', true],
   ['calendario', '📅', 'Calendario escolar', 'Sube el de tu escuela', true],
   ['horario', '🕐', 'Horario', 'Escríbelo o súbelo (PDF/foto)', true],
   ['historial', '📋', 'Historial', 'Planeaciones generadas', true],
@@ -585,6 +587,7 @@ const G_ICONOS = {
   bitacora: ['<rect x="5" y="4" width="14" height="17" rx="2.800"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/>', '#db2777', '#fce7f3'],
   trabajos: ['<rect x="5" y="3" width="14" height="18" rx="2.500"/><path d="M9 8h6M9 12h6M9 16h3.500"/>', '#c2410c', '#ffedd5'],
   escaner: ['<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.500"/>', '#0284c7', '#e0f2fe'],
+  capexamen: ['<rect x="5" y="4" width="14" height="17" rx="2.800"/><path d="M9 3h6v3H9z"/><path d="M9 13l2 2 4-4"/>', '#0284c7', '#e0f2fe'],
   calendario: ['<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>', '#0d9488', '#ccfbf1'],
   horario: ['<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.500 2"/>', '#d97706', '#fef3c7'],
   historial: ['<path d="M6 3h8l4 4v14H6z"/><path d="M9 12h6M9 16h6"/>', '#475569', '#e2e8f0'],
@@ -2208,7 +2211,7 @@ function gExamenesListaHTML(g, t) {
     h += `<details class="g-ex" id="ex-${ex.id}" ${exs.length === 1 || G.exAbierto === ex.id ? 'open' : ''}><summary><b>${gEsc(ex.nombre)}</b> <span style="color:var(--gris);font-size:12px">· ${ex.max} pts · ${gEsc((g.criterios.find(c => c.id === ex.criterioId) || {}).nombre || '')}</span>${ex.reactivos ? (ex.revisado === true ? '<span class="g-clave-tag g-clave-ok">✓ Clave revisada</span>' : '<span class="g-clave-tag g-clave-no">⚠ Clave sin revisar</span>') : ''}</summary>
       <div id="gs-${ex.id}" class="g-statline">${gStatsExamen(g, ex)}</div>
       <div style="margin:8px 0">${ex.reactivos ? `<button class="g-btn g-btn-s" onclick="gVerExamen('${ex.id}')">⬇ Examen</button> <button class="g-btn g-btn-s" onclick="gVerClave('${ex.id}')">⬇ Clave</button> <button class="g-btn g-btn-s" onclick="gRevisarGuardado('${ex.id}')">✏️ ${ex.revisado === true ? 'Ver / corregir clave' : 'Revisar clave'}</button> ` : ''}
-      ${ex.reactivos && ex.revisado !== true ? '<div class="g-aviso" style="font-size:12.5px;margin-bottom:6px">Este examen tiene la clave <b>sin revisar</b>: el escáner no lo usará hasta que revises las respuestas y marques «Revisé las respuestas correctas».</div>' : ''}
+      ${ex.reactivos && ex.revisado !== true ? '<div class="g-aviso" style="font-size:12.5px;margin-bottom:6px">Este examen tiene la clave <b>sin revisar</b>: revisa las respuestas con «Revisar clave» antes de aplicarlo, porque la IA puede equivocarse.</div>' : ''}
       <button class="g-btn g-btn-s" onclick="gDescargarResultadosExamen('${ex.id}')">⬇ Resultados</button> <button class="g-btn g-btn-x" onclick="gQuitarExamen('${ex.id}')">Borrar</button></div>
       ${g.alumnos.length ? `<div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th style="width:110px">Aciertos / pts (de ${ex.max})</th><th style="width:80px">Calif.</th></tr></thead><tbody>` +
         g.alumnos.map((a, i) => { const n = ex.notas[a.id]; const v = n == null ? null : n / ex.max * 10, ne = gEsNE(ex, a.id); return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td><td><input class="g-nota${ne ? ' g-ne-in' : ''}" type="text" inputmode="decimal" autocomplete="off" title="Escribe los aciertos o NE si no entregó. Vacía = sin calificar" value="${ne ? 'NE' : (n == null ? '' : n)}" oninput="gAciertos('${ex.id}','${a.id}',this)"></td><td id="gc-${ex.id}-${a.id}" class="${v != null && v < 6 ? 'g-mal' : ''}">${ne ? 'NE' : gFmt(v)}</td></tr>`; }).join('') + '</tbody></table></div>' : '<p style="color:var(--gris)">Agrega alumnos en «Mis grupos».</p>'}
@@ -2275,6 +2278,100 @@ function gRenderExamenes() {
   }
   gPanel().innerHTML = h;
   if (G.borrador) gBorrActualizar();
+}
+
+// ============================================================
+// CAPTURAR EXAMEN POR ALUMNO (menú «Capturar examen»)
+// El maestro califica a mano y escribe los aciertos de cada alumno; al lado ve la calificación
+// del trimestre que suma ese examen con lo demás (tareas, actividades, comportamiento, asistencia…).
+// Usa los mismos datos que «Exámenes» y «Calificaciones»: no hay nada duplicado.
+// ============================================================
+function gTrimCapEx(v) { G.trimExam = +v; G.capExId = null; gRenderCapExamen(); }
+function gCapExElegir(id) { G.capExId = id; gRenderCapExamen(); }
+function gCapExRegistrar() {
+  const g = gGrupo(); if (!g) return;
+  const nombre = (document.getElementById('cx-nom').value || '').trim();
+  const max = gNum(document.getElementById('cx-max').value) || 10;
+  if (!nombre) { gAviso('Ponle nombre al examen.'); return; }
+  if (max <= 0) { gAviso('El total de puntos debe ser mayor que cero.'); return; }
+  const nuevo = { id: gId(), trim: G.trimExam, criterioId: gCritExamen(g).id, nombre, max, tipo: 'examen', fecha: gHoy(), reactivos: null, notas: {} };
+  g.actividades.push(nuevo); G.capExId = nuevo.id; gGuardar(); gRenderCapExamen();
+}
+function gCapExAciertos(exId, aid, el) {
+  gAciertos(exId, aid, el);
+  const g = gGrupo(), t = G.trimExam; const ex = g && g.actividades.find(x => x.id === exId); if (!ex) return;
+  const ce = document.getElementById('cx-c-' + aid);
+  if (ce) { const v = ex.notas[aid] == null ? null : ex.notas[aid] / ex.max * 10; ce.textContent = gEsNE(ex, aid) ? 'NE' : gFmt(v); ce.className = v != null && v < 6 ? 'g-mal' : ''; }
+  const b = el.nextElementSibling; if (b && b.classList.contains('g-nebtn')) b.classList.toggle('on', gEsNE(ex, aid));
+  const st = document.getElementById('cx-s'); if (st) st.innerHTML = gStatsExamen(g, ex);
+  g.alumnos.forEach(al => {   // la calificación del trimestre se recalcula sola
+    const f = document.getElementById('cx-f-' + al.id); if (!f) return;
+    const r = gCalcAlumno(g, al.id, t), bo = gBoleta(r.final);
+    f.innerHTML = gCapFinalHTML(r); f.classList.toggle('g-mal', bo != null && bo < 6 && !r.pend.length); f.classList.toggle('g-pendf', r.pend.length > 0);
+  });
+}
+function gCapExNE(exId, aid, btn) {
+  const g = gGrupo(), ex = g && g.actividades.find(x => x.id === exId), inp = btn.previousElementSibling; if (!ex || !inp) return;
+  inp.value = gEsNE(ex, aid) ? '' : 'NE'; gCapExAciertos(exId, aid, inp);
+}
+// Enter pasa a la casilla del alumno siguiente (captura rápida con el teclado)
+function gCapExEnter(ev, el) {
+  if (ev.key !== 'Enter') return; ev.preventDefault();
+  const all = [...document.querySelectorAll('#g-capexamen .g-nota')], i = all.indexOf(el);
+  const sig = all[i + 1]; if (sig) { sig.focus(); sig.select(); } else el.blur();
+}
+function gRenderCapExamen() {
+  const g = gGrupo();
+  if (!g) return gSinGrupo('Capturar examen', 'Escribe los aciertos de cada alumno y mira su calificación del trimestre');
+  const t = G.trimExam;
+  const exs = gActsTrim(g, t).filter(a => a.tipo === 'examen');
+  if (!exs.find(e => e.id === G.capExId)) G.capExId = exs.length ? exs[exs.length - 1].id : null;
+  const ex = exs.find(e => e.id === G.capExId);
+  let h = `<div class="sec-title">Capturar examen por alumno</div><div class="sec-sub">Califica el examen a mano y escribe los aciertos de cada alumno. A la derecha ves su <b>calificación del trimestre</b>, que suma el examen con todo lo demás.</div>${gBarra()}
+  <div class="g-trims">${[1, 2, 3].map(x => `<button class="ttab${t === x ? ' on' : ''}" onclick="gTrimCapEx(${x})">${G_TRIM_NOM[x]}</button>`).join('')}</div>`;
+  if (!g.alumnos.length) return gPanel().innerHTML = h + gVacio('Este grupo todavía no tiene alumnos. Captura o sube la lista primero.');
+  if (!ex) {
+    h += `<div class="card"><div class="card-title">📝 Registra el examen que aplicaste — ${G_TRIM_NOM[t]}</div>
+      <p style="color:var(--gris);margin:0 0 10px;font-size:13px">Escribe cómo se llama y de cuántos puntos (o reactivos) es. Después te aparece la lista de tus alumnos para capturar los aciertos.</p>
+      <div class="f2"><div class="campo"><label>Nombre del examen</label><input id="cx-nom" placeholder="Ej. Examen del trimestre"></div>
+      <div class="campo"><label>Total de puntos / reactivos</label><input id="cx-max" type="number" min="1" value="10"></div></div>
+      <button class="g-btn" onclick="gCapExRegistrar()">Registrar examen</button></div>`;
+  } else {
+    const c = g.criterios.find(x => x.id === ex.criterioId), pc = c ? gPct(g, c.id, t) : null;
+    h += `<div class="card"><div class="card-title">📝 ${gEsc(ex.nombre)} <span style="font-weight:400;color:var(--gris);font-size:12px">· ${ex.max} pts</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        ${exs.length > 1 ? `<label style="font-weight:600;font-size:12.5px">Examen</label><select onchange="gCapExElegir(this.value)" style="padding:5px 8px;border-radius:8px;border:1.5px solid var(--borde);font-size:12.5px">${exs.map(e => `<option value="${e.id}"${e.id === ex.id ? ' selected' : ''}>${gEsc(e.nombre)} (${e.max} pts)</option>`).join('')}</select>` : ''}
+        <button class="g-btn g-btn-s" onclick="gCapExNuevo()">＋ Registrar otro examen</button>
+      </div>
+      <p style="font-size:12.5px;color:var(--gris);margin:0 0 8px;line-height:1.5">Este examen cuenta en el criterio <b>${gEsc(c ? c.nombre : 'Exámenes')}</b>${pc == null ? '' : `, que vale <b>${gFmt(pc, 0)}%</b> de la calificación del trimestre`}. Escribe los <b>aciertos</b> de cada alumno (o <b>NE</b> si no presentó); una casilla vacía significa «sin calificar». Con <b>Enter</b> pasas al siguiente.</p>
+      <div id="cx-s" class="g-statline">${gStatsExamen(g, ex)}</div>
+      <div class="g-tabla-w"><table class="g-tabla"><thead><tr><th>#</th><th>Alumno</th><th style="width:110px">Aciertos (de ${ex.max})</th><th style="width:80px">Calif. examen</th><th style="width:130px">Calificación del trimestre</th></tr></thead><tbody>` +
+      g.alumnos.map((a, i) => {
+        const n = ex.notas[a.id], ne = gEsNE(ex, a.id), v = n == null ? null : n / ex.max * 10, r = gCalcAlumno(g, a.id, t), bo = gBoleta(r.final);
+        return `<tr><td>${i + 1}</td><td>${gEsc(a.nombre)}</td><td><input class="g-nota${ne ? ' g-ne-in' : ''}" type="text" inputmode="decimal" autocomplete="off" title="Escribe los aciertos o NE si no presentó. Vacía = sin calificar" value="${ne ? 'NE' : (n == null ? '' : n)}" oninput="gCapExAciertos('${ex.id}','${a.id}',this)" onkeydown="gCapExEnter(event,this)"><button type="button" class="g-nebtn${ne ? ' on' : ''}" title="No presentó (NE)" onclick="gCapExNE('${ex.id}','${a.id}',this)">NE</button></td>
+          <td id="cx-c-${a.id}" class="${v != null && v < 6 ? 'g-mal' : ''}">${ne ? 'NE' : gFmt(v)}</td>
+          <td class="g-fin${bo != null && bo < 6 && !r.pend.length ? ' g-mal' : ''}${r.pend.length ? ' g-pendf' : ''}" id="cx-f-${a.id}">${gCapFinalHTML(r)}</td></tr>`;
+      }).join('') + `</tbody></table></div>
+      <div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:10px;line-height:1.5">La calificación del trimestre suma el examen con lo que captures en los demás criterios. Si algo falta, aparece <b>«pendiente»</b> y la calificación es provisional.</div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="g-btn" onclick="gIrA('calif')">📊 Capturar los demás criterios (tareas, comportamiento…)</button>
+        <button class="g-btn g-btn-s" onclick="gIrA('trabajos')">📓 Libreta de trabajos</button>
+        <button class="g-btn g-btn-s" onclick="gIrA('lista')">✅ Pase de lista</button>
+        <button class="g-btn g-btn-s" onclick="gDescargarResultadosExamen('${ex.id}')">⬇ Resultados del examen</button>
+      </div></div>`;
+  }
+  gPanel().innerHTML = h;
+}
+// «Registrar otro examen»: muestra solo el formulario de registro
+function gCapExNuevo() {
+  const g = gGrupo(), t = G.trimExam; if (!g) return;
+  const p = gPanel();
+  p.innerHTML = `<div class="sec-title">Capturar examen por alumno</div><div class="sec-sub">Registra el nuevo examen.</div>${gBarra()}
+    <div class="card"><div class="card-title">📝 Registra el examen que aplicaste — ${G_TRIM_NOM[t]}</div>
+      <div class="f2"><div class="campo"><label>Nombre del examen</label><input id="cx-nom" placeholder="Ej. Examen del trimestre"></div>
+      <div class="campo"><label>Total de puntos / reactivos</label><input id="cx-max" type="number" min="1" value="10"></div></div>
+      <button class="g-btn" onclick="gCapExRegistrar()">Registrar examen</button> <button class="g-btn g-btn-s" onclick="gRenderCapExamen()">Cancelar</button></div>`;
+  const n = document.getElementById('cx-nom'); if (n) n.focus();
 }
 
 // ============================================================

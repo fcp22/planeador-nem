@@ -181,6 +181,42 @@ function SUITE() {
     eq('«Borrar todo el historial» lo deja vacío', gHistLeer().length, 0);
     eq('Con el historial vacío no se muestra la tarjeta', gHistHTML(), '');
   } finally { gGrupo = hSv.gGrupo; descargarWord = hSv.descargarWord; confirm = hSv.confirm; gRenderExamenes = hSv.gRenderExamenes; G.data = hSv.data; G.gid = hSv.gid; G.borrador = hSv.borr; localStorage.removeItem(gHistClave()); }
+  S('Capturar examen por alumno (menú nuevo; escáner oculto)');
+  {
+    const mn = document.querySelectorAll('.nav-tab'); const oc = [...mn].map(b => b.getAttribute('onclick') || '');
+    eq('El menú lateral tiene «Capturar examen» y ya no muestra el escáner', [oc.some(x => x.includes("'capexamen'")), oc.some(x => x.includes("'escaner'"))], [true, false]);
+    eq('La pantalla de inicio ofrece «Capturar examen» y no el escáner', [G_MENU.some(m => m[0] === 'capexamen'), G_MENU.some(m => m[0] === 'escaner')], [true, false]);
+    eq('El código del escáner sigue guardado (no se borró)', typeof gRenderEscaner, 'function');
+    eq('«Capturar examen» pide licencia como las calificaciones', !!LIC_TABS_CON_LICENCIA.capexamen, true);
+    const gC = usar(mk({ id: 'gcx', nombre: '2° C', alumnos: [{ id: 'a1', nombre: 'Ana' }, { id: 'a2', nombre: 'Beto' }, { id: 'a3', nombre: 'Carla' }], criterios: [{ id: 'cT', nombre: 'Tareas', pct: 50 }, { id: 'cE', nombre: 'Exámenes', pct: 50 }], actividades: [act('tar', 1, 'cT', { a1: 10, a2: 10, a3: 10 })], asist: {}, plan: {} }));
+    G.tab = 'capexamen'; G.trimExam = 1; G.capExId = null; gRenderCapExamen();
+    const P = () => document.getElementById('g-capexamen');
+    eq('Sin examen registrado: pide registrarlo', [/Registra el examen/.test(P().textContent), !!document.getElementById('cx-nom')], [true, true]);
+    document.getElementById('cx-nom').value = 'Examen 1'; document.getElementById('cx-max').value = '10'; gCapExRegistrar();
+    const exC = gC.actividades.find(a => a.tipo === 'examen');
+    eq('Se registra el examen en el criterio Exámenes, de 10 puntos', [exC && exC.nombre, exC && exC.max, exC && exC.criterioId, exC && exC.trim], ['Examen 1', 10, 'cE', 1]);
+    eq('Aparece la lista de los 3 alumnos', P().querySelectorAll('input.g-nota').length, 3);
+    const inp = i => P().querySelectorAll('input.g-nota')[i];
+    inp(0).value = '8'; gCapExAciertos(exC.id, 'a1', inp(0));
+    eq('Los aciertos quedan guardados', exC.notas.a1, 8);
+    eq('Se muestra la calif. del examen', document.getElementById('cx-c-a1').textContent, '8.0');
+    eq('Suma el examen (8, 50 %) con las tareas (10, 50 %) = 9', document.getElementById('cx-f-a1').querySelector('b').textContent, '9');
+    eq('Un alumno sin examen queda «pendiente»', /pendiente/.test(document.getElementById('cx-f-a2').textContent), true);
+    inp(1).value = 'NE'; gCapExAciertos(exC.id, 'a2', inp(1));
+    eq('NE queda como no presentó y se muestra «NE»', [gEsNE(exC, 'a2'), document.getElementById('cx-c-a2').textContent], [true, 'NE']);
+    inp(2).value = '15'; gCapExAciertos(exC.id, 'a3', inp(2));
+    eq('Más aciertos que el total se rechaza', [inp(2).classList.contains('g-inval'), exC.notas.a3], [true, undefined]);
+    inp(2).value = '4'; gCapExAciertos(exC.id, 'a3', inp(2));
+    eq('4 de 10 con tareas 10 → 7 de trimestre', document.getElementById('cx-f-a3').querySelector('b').textContent, '7');
+    eq('Las estadísticas del examen se actualizan', /2<\/b> examen\(es\) calificado/.test(document.getElementById('cx-s').innerHTML), true);
+    gCapExNE(exC.id, 'a2', inp(1).nextElementSibling);
+    eq('El botón NE alterna (quita el NE)', gEsNE(exC, 'a2'), false);
+    gCapExNuevo(); document.getElementById('cx-nom').value = 'Examen 2'; document.getElementById('cx-max').value = '20'; gCapExRegistrar();
+    eq('Registrar otro examen: queda elegido el nuevo (de 20) y hay selector', [G.capExId === gC.actividades.filter(a => a.tipo === 'examen')[1].id, !!P().querySelector('select[onchange^="gCapExElegir"]'), P().querySelectorAll('input.g-nota').length], [true, true, 3]);
+    gTrimCapEx(2);
+    eq('Cambiar de trimestre: el 2.º no tiene examen y pide registrarlo', [G.trimExam, !!document.getElementById('cx-nom')], [2, true]);
+    G.trimExam = 1;
+  }
   S('Excel con varias hojas (de 1 a 6)');
   eq('Hoja «3 A» → grupo «3° A»', gNombreGrupoDeHoja('3 A'), '3° A');
   eq('Hoja «3° b» → grupo «3° B»', gNombreGrupoDeHoja('3° b'), '3° B');

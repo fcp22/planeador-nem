@@ -1,6 +1,6 @@
 {
- "version": "734be36dce22ac04",
- "fecha": "2026-11-24T18:12:14",
+ "version": "1a53800ec78453b2",
+ "fecha": "2026-11-24T18:36:32",
  "servidorMin": 1,
  "archivos": [
   {
@@ -105,8 +105,8 @@
   },
   {
    "p": "gestion.js",
-   "h": "452868112facfaa272ecda9a0a86e21a761bb93d82eac75c44ee72df2922a52a",
-   "s": 271361
+   "h": "823866224a0c4d19f3c2fe14d34b1b09282906deb03843a8418b6952da337077",
+   "s": 280647
   },
   {
    "p": "icons/icono-180.png",
@@ -135,8 +135,8 @@
   },
   {
    "p": "index.html",
-   "h": "0d092223fe225010f8ad493bcdd86585151581051a9ee6ead498d05490c13986",
-   "s": 148846
+   "h": "847ccf9f745877fbe98fef826849f8bd0a83820dc4315cc92798a9c3892d86fe",
+   "s": 149144
   },
   {
    "p": "libreta.js",
@@ -145,8 +145,8 @@
   },
   {
    "p": "licencia.js",
-   "h": "415493bf8deb388cc7fdec578d38408fb7ab47fbcba6addd6e4af2d02463f9da",
-   "s": 59637
+   "h": "bec4f200d2c1a193d8bde5a5fbc6ae1a7fbfa7aeb0179deece704884a3908a78",
+   "s": 59680
   },
   {
    "p": "local-shim.js",
@@ -165,8 +165,8 @@
   },
   {
    "p": "privacidad.js",
-   "h": "29f710c1c0f1612b85d79ec4b6cfe567f673f263c50e1c918240b26dc37930d1",
-   "s": 18119
+   "h": "0cce8d2a8ecfd214296a2591ee0c5212710584e757ded01ac10bf5f7c1892404",
+   "s": 17779
   },
   {
    "p": "projects.js",
@@ -200,7 +200,7 @@
   },
   {
    "p": "sw.js",
-   "h": "aad6e7f576d4a3246c3461b7cc5679863dfd8d72857798ca7b010e31ba8ee4c7",
+   "h": "574b1227814d4da9f3cbe7877d65853f5fe8e74075229804525f71d365e44ebb",
    "s": 4986
   }
  ]

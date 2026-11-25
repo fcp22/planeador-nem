@@ -192,14 +192,14 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && LI
 // Incluye: 2 documentos con IA (uno de cada tipo; el examen de hasta 5 reactivos y 1 sola secuencia), verlos en pantalla,
 // crear grupos y generar el examen. NO incluye: descargar Word/PDF/Excel, subir listas desde archivo, pase de lista,
 // calificaciones ni seguimiento de rezago (eso se abre con la licencia). El tope de documentos lo hace cumplir el servidor.
-const LIC_TABS_CON_LICENCIA = { lista: 'Pase de lista', calif: 'Calificaciones y promedios', trabajos: 'Libreta de trabajos', rezago: 'Seguimiento de rezago', recup: 'Recuperativos', bitacora: 'Bitácora e incidencias', escaner: 'Escanear examen' };
+const LIC_TABS_CON_LICENCIA = { lista: 'Pase de lista', calif: 'Calificaciones y promedios', trabajos: 'Libreta de trabajos', rezago: 'Seguimiento de rezago', recup: 'Recuperativos', bitacora: 'Bitácora e incidencias', escaner: 'Escanear examen', capexamen: 'Capturar examen' };
 // Botón «Ver planes y precios» (página de suscripción, en ventana aparte para no cerrar la app)
 const LIC_BTN_PLANES = (est) => `<button type="button" onclick="var a=document.getElementById('lic-aviso-prueba');if(a)a.style.display='none';gIrA('planes')" style="${est || 'display:block;width:100%;text-align:center;margin-top:8px;padding:11px;font-size:14.5px;font-weight:700;border:2px solid #1e3a5f;border-radius:10px;background:#fff;color:#1e3a5f;cursor:pointer'}">💳 Ver planes y precios</button>`;
 function licEsPrueba() { const e = LIC.estado; return !!(e && e.prueba && e.activa) && !licEsAdminCuenta(); }
 function licTabBloqueada(id) { return !!LIC_TABS_CON_LICENCIA[id] && licEsPrueba(); }
 function licHTMLBloqueo(id) {
   return `<div class="card pronto-box"><div class="pi">🔒</div><h2>${LIC_TABS_CON_LICENCIA[id]}</h2>
-    <p>Esta herramienta se abre con tu licencia: subir tu lista de alumnos desde Excel, pasar lista, calificaciones, promedios, detección de rezago y reportes de incidencia con sus protocolos y escáner de exámenes.</p>
+    <p>Esta herramienta se abre con tu licencia: subir tu lista de alumnos desde Excel, pasar lista, calificaciones, promedios, detección de rezago y reportes de incidencia con sus protocolos y la captura de exámenes por alumno.</p>
     <p style="font-size:12.5px;color:var(--gris)">En tu prueba gratis puedes crear 2 documentos con IA (un plano o analítico y un examen) y verlos en pantalla.</p>
     <button class="g-btn" style="margin-top:14px" onclick="gIrA('licencia')">Activar mi licencia</button>
     <div style="max-width:320px;margin:8px auto 0">${LIC_BTN_PLANES()}</div></div>`;
