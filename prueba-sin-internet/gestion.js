@@ -1972,8 +1972,8 @@ function gExamenHTML(g, ex, conClave) {
     }
     return h;
   }).join('');
-  const cab = conClave ? `<p style="text-align:center"><b>${gEsc(ex.titulo)} — CLAVE DE RESPUESTAS</b></p>` :
-    `<p style="text-align:center;margin:0"><b>${gEsc(gEscuela() || 'Escuela Secundaria')}</b></p><p style="text-align:center;margin:0"><b>${gEsc(ex.titulo)}</b></p>
+  const cab = conClave ? `<p style="text-align:center"><b>${gEsc(ex.titulo || ex.nombre)} — CLAVE DE RESPUESTAS</b></p>` :
+    `<p style="text-align:center;margin:0"><b>${gEsc(gEscuela() || 'Escuela Secundaria')}</b></p><p style="text-align:center;margin:0"><b>${gEsc(ex.titulo || ex.nombre)}</b></p>
      <p><b>Alumno:</b> ______________________________________ &nbsp; <b>Grupo:</b> ${gEsc(g.nombre)} &nbsp; <b>Fecha:</b> ____________ &nbsp; <b>Calificación:</b> ______ / ${gMaxExamen(ex)}</p>
      <p style="font-size:9pt"><b>Indicaciones:</b> Lee con atención cada reactivo y responde en el espacio indicado. Docente: ${gEsc(gDocente())}.</p>`;
   return cab + items;

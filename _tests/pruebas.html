@@ -143,6 +143,12 @@ function SUITE() {
   eq('«APELLIDO / APELLIDO / NOMBRE» → sin diagonales', gLimpiarNombre('BAEZA / PECH / JONATHAN ALEJANDRO'), 'BAEZA PECH JONATHAN ALEJANDRO');
   eq('Se sigue quitando el número del inicio', gLimpiarNombre('1. AGUILAR PECH JUAN'), 'AGUILAR PECH JUAN');
   eq('Excel con columna «APELLIDO 1 / APELLIDO 2 / NOMBRE(S)» → detecta los nombres', gExtraerNombres([['No.', 'APELLIDO 1 / APELLIDO 2 / NOMBRE(S)'], ['1', 'BAEZA / PECH / JONATHAN ALEJANDRO'], ['2', 'BE / CANCHE / FRANGEL ALONSO'], ['3', 'BE / LOPEZ / AARON ISRAEL']]), ['BAEZA PECH JONATHAN ALEJANDRO', 'BE CANCHE FRANGEL ALONSO', 'BE LOPEZ AARON ISRAEL']);
+  S('Word de un examen ya guardado');
+  const exG = { id: 'z', nombre: 'Examen de prueba', reactivos: [{ tipo: 'verdadero_falso', texto: 'El cielo es azul.', respuesta: 'Verdadero', pda: 'PDA de prueba' }] };
+  const grpW = { nombre: '3° Z', materia: 'Español', alumnos: [] };
+  eq('La clave de un examen guardado lleva el título', /Examen de prueba — CLAVE DE RESPUESTAS/.test(gExamenHTML(grpW, exG, true)), true);
+  eq('La hoja del examen para el alumno lleva el título', gExamenHTML(grpW, exG, false).includes('Examen de prueba'), true);
+  eq('El borrador (con «titulo») sigue funcionando', /Otro título — CLAVE/.test(gExamenHTML(grpW, { titulo: 'Otro título', reactivos: exG.reactivos }, true)), true);
   S('Excel con varias hojas (de 1 a 6)');
   eq('Hoja «3 A» → grupo «3° A»', gNombreGrupoDeHoja('3 A'), '3° A');
   eq('Hoja «3° b» → grupo «3° B»', gNombreGrupoDeHoja('3° b'), '3° B');
