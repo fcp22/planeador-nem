@@ -204,6 +204,11 @@ function SUITE() {
     eq('Se desglosa cada criterio con su porcentaje en el encabezado', [...P().querySelectorAll('th.g-cx-k')].map(h => h.textContent.replace(/\s+/g, ' ').trim()), ['Tareas50 %', '✏️ Exámenes50 %']);
     eq('Tareas: 10 y aporta 5.00', document.getElementById('cx-k-cT-a1').textContent.replace(/\s+/g, ' ').trim(), '10.0aporta 5.00');
     eq('Exámenes: 8 y aporta 4.00 (la suma de los aportes es el trimestre)', document.getElementById('cx-k-cE-a1').textContent.replace(/\s+/g, ' ').trim(), '8.0aporta 4.00');
+    eq('Con una sola fuente no se muestra «promedio de»', P().querySelectorAll('.cx-partes').length, 0);
+    gC.actividades.push(act('tar2', 1, 'cT', { a1: 6 })); gRenderCapExamen();
+    { const t1 = document.getElementById('cx-k-cT-a1'); eq('Si el criterio tiene 2 partes (10 y 6) muestra de qué se forma y promedia 8', [t1.querySelector('.cx-partes') && t1.querySelector('.cx-partes').textContent.replace(/\s+/g, ' '), t1.querySelector('b').textContent], ['promedio de • 10.0 · • 6.0', '8.0']); }
+    gC.actividades = gC.actividades.filter(x => x.id !== 'tar2'); gRenderCapExamen();
+    { const i0 = P().querySelectorAll('input.g-nota')[0]; i0.value = '8'; gCapExAciertos(exC.id, 'a1', i0); }
     eq('Alumno sin examen: el criterio Exámenes muestra «—»', document.getElementById('cx-k-cE-a2').textContent.trim(), '—');
     eq('Un alumno sin examen queda «pendiente»', /pendiente/.test(document.getElementById('cx-f-a2').textContent), true);
     inp(1).value = 'NE'; gCapExAciertos(exC.id, 'a2', inp(1));
