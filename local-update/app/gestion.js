@@ -622,6 +622,7 @@ function gRenderInicio() {
   const gs = G.data ? G.data.grupos : [];
   if (G.data && !gPerfil().escuela) h += `<div class="g-aviso" style="background:#fffbeb;border-color:#fde68a;color:#92400e">🏫 Falta el nombre de tu escuela. <a href="#" onclick="gIrA('grupos');return false">Captúralo en «Mis grupos»</a> para que aparezca en tus documentos.</div>`;
   h += gRespAvisoHTML();
+  if (typeof nubeTarjetaHTML === 'function') h += nubeTarjetaHTML('inicio');
   h += gHoyTocaHTML();
   h += `<div class="card"><div class="card-title">📌 Hoy en mis grupos</div>`;
   if (!gs.length) h += `<p style="color:var(--gris)">Aún no tienes grupos. <a href="#" onclick="gIrA('grupos');return false">Crea el primero</a> para pasar lista, calificar y crear exámenes, o <a href="#" onclick="gIrA('grupos');return false"><b>restaura tu respaldo</b></a> si ya los tenías en otro equipo.</p>`;
@@ -896,6 +897,7 @@ function gRenderGrupos() {
   let h = `<div class="sec-title">Mis grupos y alumnos</div>
   <div class="sec-sub">Crea tus grupos una sola vez; la lista de alumnos se usa en el pase de lista, las calificaciones y los exámenes. 🔒 Los nombres se guardan <strong>solo en este dispositivo</strong>: descarga un respaldo de vez en cuando.</div>`;
   h += gRespAvisoHTML();
+  if (typeof nubeTarjetaHTML === 'function') h += nubeTarjetaHTML();
   if (!gs.length) h += gRestaurarTarjetaHTML();
   h += `<details class="card gg-det" ${p.escuela ? '' : 'open'}><summary class="card-title" style="cursor:pointer">🏫 ${p.escuela ? gEsc(p.escuela) + (p.cct ? ' · CCT ' + gEsc(p.cct) : '') + (p.municipio ? ' · ' + gEsc(p.municipio) : '') : 'Mi escuela: escribe aquí los datos de tu escuela'} <span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--gris)">✏️ ver / editar</span></summary>
     <div class="f3"><div class="campo"><label>Nombre de la escuela</label><input id="gp-esc" value="${gEsc(gPerfil().escuela)}" placeholder="Escuela Secundaria…"></div>

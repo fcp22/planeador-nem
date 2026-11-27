@@ -1,6 +1,6 @@
 {
- "version": "53dff5e9ddc1e78d",
- "fecha": "2026-11-25T12:43:04",
+ "version": "c93532bf5a492375",
+ "fecha": "2026-11-27T12:19:15",
  "servidorMin": 1,
  "archivos": [
   {
@@ -105,8 +105,8 @@
   },
   {
    "p": "gestion.js",
-   "h": "a2eff744830ae9ffc24456c825aa527d609d6d7df650af94a5db9dc2a68d689d",
-   "s": 283827
+   "h": "b7057cc493ced3d82282c4901641c90863afb7a264a91c88c552507b7e2c3532",
+   "s": 283973
   },
   {
    "p": "icons/icono-180.png",
@@ -135,8 +135,8 @@
   },
   {
    "p": "index.html",
-   "h": "d19655a72d41bb2fba60081df328cac9a77e5bc34bea0c5928c8c07b1f5ae8fa",
-   "s": 149144
+   "h": "e31be7687a0fddedbe55ed907c983a2e700b9705564adcc8752a58ba40709478",
+   "s": 149337
   },
   {
    "p": "libreta.js",
@@ -164,9 +164,14 @@
    "s": 95762
   },
   {
+   "p": "nube.js",
+   "h": "e931f769e70b43e3d76551986044c43100c72bbab3aefd524d0ed5497c9b2b4c",
+   "s": 38443
+  },
+  {
    "p": "privacidad.js",
-   "h": "0cce8d2a8ecfd214296a2591ee0c5212710584e757ded01ac10bf5f7c1892404",
-   "s": 17779
+   "h": "ee6f8ab0318d83f51d43e1c8e8c886eddfd86c182d80d75d216f6cf12957dbc1",
+   "s": 18616
   },
   {
    "p": "projects.js",
@@ -200,8 +205,8 @@
   },
   {
    "p": "sw.js",
-   "h": "0f7d35b1429c3132b3de6fa1b587f4dd95e7437894686804a4aa5280205c2424",
-   "s": 4986
+   "h": "27788fe0635f0242b0f723a1ac31a4f6adc77d3407c9deeac8a26043a1b8acb8",
+   "s": 5014
   }
  ]
 }

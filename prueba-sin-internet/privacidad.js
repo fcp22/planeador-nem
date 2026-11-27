@@ -4,8 +4,8 @@
 //  • Queda siempre disponible en el menú («Aviso de privacidad», antes de «Mi licencia») para leerlo las veces que se necesite.
 // Para cambiar el texto: edita privSecciones() y sube PRIV_VERSION (así se vuelve a pedir la aceptación).
 // ============================================================
-const PRIV_VERSION = '2026-11-24';
-const PRIV_FECHA = '24 de noviembre de 2026';
+const PRIV_VERSION = '2026-11-27';
+const PRIV_FECHA = '27 de noviembre de 2026';
 const PRIV_CONTACTO = 'planeador.nem.docente@gmail.com';
 
 function privSecciones() {
@@ -15,9 +15,10 @@ function privSecciones() {
     ['2. Tus datos como usuario (docente)', `<p>Para crear tu cuenta y darte el servicio tratamos: tu <b>nombre</b>, <b>correo electrónico</b>, los datos de tu <b>escuela</b> que decidas capturar (nombre, CCT, municipio, director), tu <b>licencia</b> (código canjeado, fechas) y tu <b>consumo</b> de funciones con inteligencia artificial (solo cuántos documentos usaste).</p>
       <p><b>Para qué se usan:</b> identificarte, verificar tu licencia, controlar el uso justo, dar soporte y evitar abusos (por ejemplo, correos temporales). No los vendemos ni los usamos para publicidad ni para perfilarte.</p>`],
     ['3. Datos de tus alumnos y de tu grupo: se quedan contigo', `<p>Los datos de tus alumnos (nombres, listas, asistencia, calificaciones, libreta de trabajos, incidencias o bitácora, seguimiento de rezago, y cualquier nota que escribas) <b>se guardan únicamente en tu dispositivo</b>: en el navegador de tu equipo o, en la versión local, en una carpeta de tu computadora. <b>No se suben a nuestros servidores ni a la nube</b>, y la app no los manda a la inteligencia artificial.</p>
+      <p><b>Si activas «Sincronizar mis aparatos»</b> (opcional), tus datos se <b>cifran en tu aparato</b> con una llave que solo tienen tus aparatos vinculados, y viajan por un buzón de paso (Google Firebase) hasta tu otro aparato. Nadie más puede leerlos: ni Google ni el Planeador tienen la llave. El paquete cifrado <b>se borra cuando tu otro aparato lo recibe</b>, o solo a los <b>14 días</b> como máximo. Puedes dejar de sincronizar cuando quieras desde «Mis grupos».</p>
       <p>Algunos de esos datos pueden ser <b>personales de menores de edad</b> y, según lo que tú escribas (por ejemplo, observaciones de conducta, de salud o de su situación familiar), <b>datos sensibles</b>. Por eso, la decisión de qué capturar y cómo cuidarlo es tuya.</p>`],
     ['4. En palabras sencillas: qué sale de tu dispositivo y qué NO', `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;margin-bottom:10px"><p style="margin:0 0 4px"><b>✅ NO sale de tu dispositivo (se queda contigo):</b></p>
-      <ul style="margin:0 0 0 18px"><li>Los <b>nombres de tus alumnos</b> y tus listas de grupo.</li><li>Asistencia, calificaciones, libreta de trabajos, incidencias o bitácora, seguimiento de rezago y tus notas.</li><li>Tus respaldos y los archivos que subes (horario, calendario).</li></ul></div>
+      <ul style="margin:0 0 0 18px"><li>Los <b>nombres de tus alumnos</b> y tus listas de grupo.</li><li>Asistencia, calificaciones, libreta de trabajos, incidencias o bitácora, seguimiento de rezago y tus notas.</li><li>Tus respaldos y los archivos que subes (horario, calendario).</li><li>Si sincronizas tus aparatos, lo anterior viaja <b>cifrado</b> (ilegible para cualquiera) y se borra del buzón al llegar, o a los 14 días.</li></ul></div>
       <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:10px 14px"><p style="margin:0 0 4px"><b>⚠️ SÍ sale por internet, solo cuando usas la función:</b></p>
       <ul style="margin:0 0 0 18px"><li><b>Tu cuenta:</b> correo y nombre del docente, tu licencia y cuántos documentos con IA has usado.</li>
       <li><b>Planeaciones, secuencias y exámenes con IA:</b> solo grado, materia, temas, aprendizajes esperados (PDA), nombre del proyecto y lo que tú escribas en los cuadros de texto (por ejemplo, el contexto del grupo). <b>La app no manda tus listas ni calificaciones.</b></li>
@@ -40,7 +41,7 @@ function privSecciones() {
     ['7. Terceros que participan', `<p>Para dar el servicio intervienen: <b>Google</b> (cuentas y, si lo eliges, inicio con Google), <b>Apple</b> (solo si entras con Apple), <b>Cloudflare</b> (servidor que valida licencias y conecta con la IA) y un <b>proveedor de inteligencia artificial</b> (que recibe el texto de tu solicitud y, en el horario, la foto o PDF que envías). Cada uno trata los datos según sus propias políticas de privacidad.</p>`],
     ['8. Tus derechos (acceso, rectificación, cancelación y oposición)', `<p>Puedes pedir en cualquier momento <b>acceder, corregir, cancelar</b> tus datos de cuenta u <b>oponerte</b> a su uso, escribiendo a <b>${PRIV_CONTACTO}</b> desde el correo de tu cuenta. Si quieres que cancelemos tu cuenta, lo hacemos y dejamos de tratar tus datos de cuenta, salvo lo que debamos conservar por obligación legal.</p>
       <p>Los datos de tus alumnos <b>no los tenemos</b>: están en tu dispositivo. Para borrarlos, usa las opciones de la app o borra los datos del navegador (o la carpeta «datos» en la versión local). Antes de hacerlo, haz un respaldo si lo necesitas.</p>`],
-    ['9. Cuánto tiempo conservamos tus datos de cuenta', `<p>Mientras tu cuenta esté activa y el tiempo necesario para atender temas de licencias, soporte o responsabilidades legales. Los datos de tus alumnos duran en tu dispositivo el tiempo que tú decidas.</p>`],
+    ['9. Cuánto tiempo conservamos tus datos de cuenta', `<p>Mientras tu cuenta esté activa y el tiempo necesario para atender temas de licencias, soporte o responsabilidades legales. Los datos de tus alumnos duran en tu dispositivo el tiempo que tú decidas. Si sincronizas tus aparatos, el paquete cifrado dura en el buzón de paso solo hasta que tu otro aparato lo recibe, o 14 días como máximo.</p>`],
     ['10. Cambios a este aviso', `<p>Si este aviso cambia de forma importante, te lo mostraremos de nuevo para que lo leas y lo aceptes. Siempre podrás consultarlo en el menú, en <b>«Aviso de privacidad»</b>, justo antes de «Mi licencia».</p>
       <p style="color:#64748b;font-size:12.5px">Versión ${PRIV_VERSION} · Última actualización: ${PRIV_FECHA}.</p>`],
   ];
@@ -86,7 +87,7 @@ function privRender() {
   const ac = (() => { try { return JSON.parse(localStorage.getItem(privClave()) || 'null'); } catch (e) { return null; } })();
   p.innerHTML = `<div class="sec-title">Aviso de privacidad</div><div class="sec-sub">Cómo se cuidan los datos en el Planeador y qué te corresponde como docente.</div>
     <div class="card" style="max-width:860px;font-size:14px;line-height:1.6">
-      <div class="g-aviso" style="margin-bottom:6px;font-size:13px">🔒 <b>Resumen:</b> los datos de tus alumnos viven <b>solo en tu dispositivo</b>. Lo que cruza internet (tu cuenta, tu licencia y las solicitudes a la IA, incluida la foto del horario) va cifrado y de forma temporal; pide a tus alumnos que escriban solo su número de lista. <b>Tú eres responsable de los datos que captures y de tus respaldos.</b></div>
+      <div class="g-aviso" style="margin-bottom:6px;font-size:13px">🔒 <b>Resumen:</b> los datos de tus alumnos viven <b>solo en tus aparatos</b> (si los sincronizas, viajan cifrados y no se quedan en la nube). Lo que cruza internet (tu cuenta, tu licencia y las solicitudes a la IA, incluida la foto del horario) va cifrado y de forma temporal; pide a tus alumnos que escriban solo su número de lista. <b>Tú eres responsable de los datos que captures y de tus respaldos.</b></div>
       ${privCuerpoHTML()}
       <p style="margin-top:16px;font-size:12.5px;color:var(--gris)">${ac && ac.t ? '✓ Lo aceptaste el ' + new Date(ac.t).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) + '.' : ''}</p>
     </div>`;

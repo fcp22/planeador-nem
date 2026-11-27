@@ -1261,7 +1261,7 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
 
 <script src="firebase-config.js?v=202611180600"></script>
 <script src="correos-temporales.js?v=202611180600"></script>
-<script src="privacidad.js?v=202611242330"></script>
+<script src="privacidad.js?v=202611271200"></script>
 <script src="auth.js?v=202611191500"></script>
 <script src="licencia.js?v=202611242330"></script>
 <script src="curriculum.js?v=202611180600"></script>
@@ -1293,11 +1293,12 @@ Problemática 2: Cálculo mental y razonamiento lógico-matemático..."></textar
   });
 })();
 </script>
-<script src="gestion.js?v=202611251200"></script>
+<script src="gestion.js?v=202611271200"></script>
 <script src="bitacora.js?v=202611180600"></script>
 <script src="escaner.js?v=202611241200"></script>
 <script src="libreta.js?v=202611182230"></script>
 <script src="rezago.js?v=202611181700"></script>
+<script src="nube.js?v=202611271200"></script>
 <script>
 // ── ESTADO ──────────────────────────────────────────────
 let tipoActivo='a', semAct=1, semsGen=new Set();
@@ -1335,6 +1336,7 @@ function entrarApp(){
   document.getElementById('d-doc').value=usr.nombre;
   renderEjesYPerfil();
   if(typeof gCargar==='function') gCargar();
+  if(typeof nubeIniciar==='function') nubeIniciar();   // sincronizar mis aparatos (cifrado)
   document.querySelectorAll('.admin-only').forEach(el=>el.classList.toggle('hidden', !esAdmin()));
   navReiniciar();
   if(typeof gArmarNavInferior==='function') gArmarNavInferior();
@@ -1353,6 +1355,7 @@ function entrarApp(){
 }
 // Se llama cuando no hay sesión
 function salirApp(){
+  if(typeof nubeDetener==='function') nubeDetener();
   usuarioActivo=null;
   { const lp=document.getElementById('lic-puerta'); if(lp) lp.style.display='none'; const ap=document.getElementById('app'); if(ap) ap.removeAttribute('inert'); if(typeof LIC_PUERTA!=='undefined'){ LIC_PUERTA.activa=false; clearInterval(LIC_PUERTA.timer); } }
   if(typeof G!=='undefined'){ G.data=null; G.gid=null; G.tab=null; }

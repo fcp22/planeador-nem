@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pruebas de sincronización (no se publica)</title>
+<meta name="robots" content="noindex">
+<style>
+body{font:14px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:16px;max-width:900px;margin:auto;color:#1e293b}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 6px;color:#1e3a5f}
+.res{padding:10px 14px;border-radius:10px;font-weight:700;margin:10px 0}.res.ok{background:#dcfce7;color:#166534}.res.mal{background:#fee2e2;color:#991b1b}
+table{border-collapse:collapse;width:100%}td{border-top:1px solid #e2e8f0;padding:5px 6px;vertical-align:top}
+td.s{width:28px;text-align:center;font-weight:700}tr.ok td.s{color:#16a34a}tr.mal td.s{color:#dc2626}tr.mal{background:#fef2f2}
+iframe{position:absolute;left:-9999px;width:900px;height:700px;border:0}
+</style></head><body>
+<h1>Pruebas de «Sincronizar mis aparatos»</h1>
+<small>Aparatos simulados en memoria y la app real en un marco oculto. No usa Firebase ni toca datos reales.</small>
+<div id="estado" class="res">Corriendo…</div>
+<div id="tablas"></div>
+<script src="../beta/nube.js"></script>
+<script>
+const R = []; let sec = '';
+const S = t => { sec = t; };
+const ok = (n, c, d) => R.push({ sec, n, ok: !!c, d: d === undefined ? '' : String(d) });
+const eq = (n, got, want) => R.push({ sec, n, ok: JSON.stringify(got) === JSON.stringify(want), d: 'obtuvo ' + JSON.stringify(got) + (JSON.stringify(got) === JSON.stringify(want) ? '' : ', esperaba ' + JSON.stringify(want)) });
+const dormir = ms => new Promise(r => setTimeout(r, ms));
+async function hasta(cond, ms = 4000) { const t = Date.now(); while (!cond()) { if (Date.now() - t > ms) return false; await dormir(15); } return true; }
+const cp = o => JSON.parse(JSON.stringify(o));
+function AlmMem(snap) {
+  let llave = null, est = null; const env = new Map(); const st = { snap: snap || { d: { v: 1, grupos: [] }, h: [], t: [] } };
+  return { st, llave: () => llave, ponerLlave: t => { llave = t; }, estado: () => est && cp(est), ponerEstado: e => { est = cp(e); },
+    leerSnap: () => cp(st.snap), aplicarSnap: s => { st.snap = cp(s); }, guardarEnv: async (v, s) => { env.set(v, JSON.stringify(s)); }, leerEnv: async v => env.has(v) ? JSON.parse(env.get(v)) : null };
+}
+function aparato(tr, id, nombre, snap, preguntar) {
+  return new NUBE.Sinc({ tr, alm: AlmMem(snap), dev: id, nombre, espera: 20, esperaMax: 80, preguntar: preguntar || (async () => true) });
+}
+const grupo = () => ({ id: 'g1', nombre: '3° A', grado: '3', materia: 'Español', alumnos: [{ id: 'a1', nombre: 'Ana Pérez' }, { id: 'a2', nombre: 'Beto Díaz' }], asist: {}, criterios: [{ id: 'c1', nombre: 'Tareas', pct: 100 }], actividades: [{ id: 'x1', trim: 1, criterioId: 'c1', nombre: 'Tarea 1', max: 10, tipo: 'actividad', notas: {} }], plan: {} });
+const datos = () => ({ d: { v: 1, grupos: [grupo()], perfil: { escuela: 'FCP' } }, h: [{ id: 100, nombre: 'Plano 1' }], t: [] });
+const notas = s => s.alm.st.snap.d.grupos[0].actividades[0].notas;
+async function quieto(...ss) { for (let i = 0; i < 6; i++) { await dormir(40); await Promise.all(ss.map(s => s.cola)); } }
+async function vincular(nuevo, viejo) {
+  await nuevo.iniciar(); const cod = await nuevo.pedirVinculo();
+  await hasta(() => viejo.pedidos.length); const p = viejo.pedidos[0];
+  await viejo.aprobar(p.id); await hasta(() => nuevo.modo === 'activo'); return { cod, p };
+}
+
+async function correr() {
+  // ════ Mezcla ════
+  S('Mezcla de tres vías');
+  const b = { a: 1, b: { x: 1, y: 1 }, lista: [{ id: 1, v: 'uno' }, { id: 2, v: 'dos' }] };
+  const l = { a: 2, b: { x: 1, y: 1 }, lista: [{ id: 1, v: 'uno' }, { id: 2, v: 'dos' }, { id: 3, v: 'tres-local' }] };
+  const r = { a: 1, b: { x: 1, y: 5 }, lista: [{ id: 1, v: 'UNO' }, { id: 4, v: 'cuatro-remoto' }] };
+  const m = NUBE.m3(b, l, r);
+  eq('Cambios distintos en cada lado se conservan los dos', [m.a, m.b.y], [2, 5]);
+  eq('Listas por id: cambio remoto, borrado remoto, alta local y alta remota', m.lista.map(x => x.id + ':' + x.v), ['1:UNO', '3:tres-local', '4:cuatro-remoto']);
+  eq('Mismo dato cambiado en los dos: gana el de este aparato', NUBE.m3({ n: 5 }, { n: 7 }, { n: 9 }).n, 7);
+  const sb = NUBE.mezclar(null, { d: { perfil: { escuela: '' }, grupos: [{ id: 'a' }] }, h: [], t: [] }, { d: { perfil: { escuela: 'FCP' }, grupos: [{ id: 'b' }] }, h: [], t: [] });
+  eq('Primera vez sin base: escuela vacía toma la del otro y se juntan grupos', [sb.d.perfil.escuela, sb.d.grupos.map(g => g.id)], ['FCP', ['a', 'b']]);
+  const mh = NUBE.mezclar({ d: {}, h: [{ id: 1 }], t: [] }, { d: {}, h: [{ id: 2 }, { id: 1 }], t: [] }, { d: {}, h: [], t: [] });
+  eq('Historial: plano borrado en el otro aparato se borra; el nuevo se queda', mh.h.map(x => x.id), [2]);
+
+  S('Cifrado');
+  const k1 = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+  const k2 = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+  const c = await NUBE.cifrar(k1, datos());
+  eq('Se abre con la llave correcta', (await NUBE.descifrar(k1, c)).d.grupos[0].alumnos[0].nombre, 'Ana Pérez');
+  let fallo = false; try { await NUBE.descifrar(k2, c); } catch (e) { fallo = true; }
+  ok('Con otra llave NO se puede abrir', fallo);
+  ok('El paquete no contiene nombres legibles', !new TextDecoder('latin1').decode(c.ct).includes('Ana'));
+
+  // ════ Protocolo con aparatos simulados ════
+  S('Vincular aparatos');
+  const tr = NUBE.TrMemoria();
+  const A = aparato(tr, 'A', 'Mac · Safari', datos()), B = aparato(tr, 'B', 'iPhone · Safari');
+  eq('Primer aparato sin activar: «apagado»', await A.iniciar(), 'apagado');
+  eq('Al activar queda «activo»', await A.activar(), 'activo');
+  await hasta(() => tr.st.cas.A); ok('Deja su paquete cifrado en su casillero', tr.st.cas.A && tr.st.cas.A.ct.length > 0);
+  ok('El buzón no guarda nada legible', !JSON.stringify(tr.st).includes('Ana') && !JSON.stringify(tr.st).includes('FCP'));
+  eq('Segundo aparato con la misma cuenta: «sin-vincular»', await B.iniciar(), 'sin-vincular');
+  const cod = await B.pedirVinculo();
+  await hasta(() => A.pedidos.length);
+  eq('El aparato viejo ve la petición con el mismo código', A.pedidos.map(p => [p.nombre, p.codigo]), [['iPhone · Safari', cod]]);
+  ok('La petición no lleva la llave', !JSON.stringify(tr.st.vin).includes(A.alm.llave()));
+  await A.aprobar(A.pedidos[0].id);
+  ok('Tras aprobar, el nuevo queda «activo»', await hasta(() => B.modo === 'activo'));
+  ok('El nuevo recibe los grupos', await hasta(() => B.alm.st.snap.d.grupos.length === 1));
+  eq('… con la misma llave (nunca viajó legible)', B.alm.llave(), A.alm.llave());
+  eq('… y el historial de planeaciones', B.alm.st.snap.h.map(x => x.nombre), ['Plano 1']);
+  await quieto(A, B);
+  ok('El paquete se borra del buzón cuando el otro aparato ya lo bajó', await hasta(() => !tr.st.cas.A));
+  ok('La petición de vínculo se borró', !Object.keys(tr.st.vin).length);
+
+  S('Cambios en los dos sentidos');
+  notas(B).a1 = 9; B.cambioLocal(); await B.sincronizarYa();
+  ok('Calificación capturada en el celular llega a la computadora', await hasta(() => notas(A).a1 === 9));
+  await quieto(A, B);
+  A.alm.st.snap.d.grupos[0].alumnos.push({ id: 'a3', nombre: 'Carla Ruiz' }); A.cambioLocal(); await A.sincronizarYa();
+  ok('Alumno agregado en la computadora llega al celular', await hasta(() => B.alm.st.snap.d.grupos[0].alumnos.length === 3));
+  await quieto(A, B);
+  ok('Buzón vacío cuando todos bajaron', await hasta(() => !Object.keys(tr.st.cas).length));
+
+  S('Cambios al mismo tiempo (sin perder nada)');
+  notas(A).a1 = 7; A.cambioLocal(); notas(B).a2 = 6; B.cambioLocal();
+  await Promise.all([A.sincronizarYa(), B.sincronizarYa()]);
+  await quieto(A, B); await dormir(150); await quieto(A, B);
+  eq('Computadora tiene las dos notas', [notas(A).a1, notas(A).a2], [7, 6]);
+  eq('Celular tiene las dos notas', [notas(B).a1, notas(B).a2], [7, 6]);
+  B.alm.st.snap.d.grupos[0].alumnos = B.alm.st.snap.d.grupos[0].alumnos.filter(x => x.id !== 'a3'); B.cambioLocal();
+  A.alm.st.snap.d.perfil.escuela = 'Sec. FCP Ticul'; A.cambioLocal();
+  await Promise.all([A.sincronizarYa(), B.sincronizarYa()]); await quieto(A, B); await dormir(150); await quieto(A, B);
+  eq('Alumno borrado en el celular se borra en la computadora', A.alm.st.snap.d.grupos[0].alumnos.map(x => x.id), ['a1', 'a2']);
+  eq('Escuela cambiada en la computadora llega al celular', B.alm.st.snap.d.perfil.escuela, 'Sec. FCP Ticul');
+
+  S('Sin internet');
+  tr.caido = true; notas(B).a1 = 10; B.cambioLocal();
+  let err = false; try { await B.sincronizarYa(); } catch (e) { err = true; }
+  ok('Sin conexión no se pierde: queda «por enviar»', err && B.estado().sucio);
+  tr.caido = false; await B.sincronizarYa();
+  ok('Al volver el internet se envía', await hasta(() => notas(A).a1 === 10) && !B.estado().sucio);
+  await quieto(A, B);
+
+  S('Tercer aparato, rechazo y desvincular');
+  const C = aparato(tr, 'C', 'iPad · Safari');
+  await vincular(C, A);
+  ok('Un tercer aparato recibe todo', await hasta(() => C.alm.st.snap.d.grupos.length === 1 && C.alm.st.snap.d.grupos[0].actividades[0].notas.a1 === 10));
+  await quieto(A, B, C);
+  const D = aparato(tr, 'D', 'Intruso'); await D.iniciar(); await D.pedirVinculo();
+  await hasta(() => A.pedidos.length); await A.rechazar(A.pedidos[0].id);
+  ok('Si no se aprueba, no recibe la llave ni los datos', await hasta(() => D.modo === 'sin-vincular') && !D.alm.llave() && !D.alm.st.snap.d.grupos.length);
+  eq('Al dejar de sincronizar, el aparato queda «sin-vincular»', await C.desvincular(), 'sin-vincular');
+  ok('… y conserva sus datos', C.alm.st.snap.d.grupos.length === 1);
+  ok('… y ya no aparece como aparato vinculado', !tr.st.aps.C);
+
+  S('Caducidad y primera vez con datos en los dos');
+  tr.st.cas.Z = { de: 'Z', ver: 'Z.1', base: {}, creado: 0, expira: Date.now() - 1000, z: 1, iv: 'AAAA', ct: new Uint8Array(3), tomado: [] };
+  notas(A).a2 = 8; A.cambioLocal(); await A.sincronizarYa(); await quieto(A, B);
+  ok('Un paquete con más de 14 días se borra solo', await hasta(() => !tr.st.cas.Z));
+  const tr2 = NUBE.TrMemoria();
+  const P = aparato(tr2, 'P', 'Mac', datos());
+  let preguntado = false;
+  const Q = aparato(tr2, 'Q', 'iPhone', { d: { v: 1, grupos: [{ id: 'prueba', nombre: 'Grupo de prueba', alumnos: [] }] }, h: [], t: [] }, async () => { preguntado = true; return true; });
+  await P.iniciar(); await P.activar(); await vincular(Q, P);
+  await hasta(() => preguntado); await quieto(P, Q);
+  ok('Si el nuevo ya tenía datos, pregunta antes de reemplazarlos', preguntado);
+  eq('Al aceptar, queda igual que la computadora', Q.alm.st.snap.d.grupos.map(g => g.id), ['g1']);
+  [A, B, C, D, P, Q].forEach(s => s.detener(false));
+
+  // ════ La app real (en un marco) ════
+  await probarApp();
+  mostrar();
+}
+
+async function probarApp() {
+  S('En la app real');
+  const fr = document.createElement('iframe'); fr.src = '../beta/index.html'; document.body.appendChild(fr);
+  await new Promise(r => fr.onload = r); await dormir(1200);
+  const w = fr.contentWindow, uid = 'prueba-nube-' + Date.now();
+  const G = w.eval('G');
+  w.getUsuario = () => ({ uid, curp: uid, nombre: 'Prueba', email: 'prueba@ejemplo.com' });
+  G.key = w.gClave(); G.data = { v: 1, grupos: [grupo()], perfil: { escuela: 'FCP' } }; G.gid = 'g1'; w.gGuardar();
+  const tr = NUBE.TrMemoria();
+  await w.nubeIniciar(tr); w.NUBE.sinc.espera = 20; w.NUBE.sinc.esperaMax = 80;
+  eq('Sin activar: la tarjeta ofrece «Activar»', /Activar en este aparato/.test(w.nubeTarjetaHTML()), true);
+  eq('En Inicio no estorba si no hay nada que vincular', /display:none/.test(w.nubeTarjetaHTML('inicio')), true);
+  await w.NUBE.sinc.activar();
+  ok('Activada: tarjeta «Sincronización activa»', /Sincronización activa/.test(w.nubeTarjetaHTML()));
+  const Cel = aparato(tr, 'CEL', 'iPhone · Safari');
+  await Cel.iniciar(); await Cel.pedirVinculo();
+  ok('La app muestra la ventana «¿Aprobar otro aparato?» con el código', await hasta(() => w.document.getElementById('nube-aprobar') && w.document.getElementById('nube-aprobar').textContent.includes(Cel.vinc.codigo)));
+  await w.nubeAprobar(w.NUBE.sinc.pedidos[0].id);
+  ok('El celular recibe los grupos de la app', await hasta(() => Cel.alm.st.snap.d.grupos.length === 1));
+  ok('La ventana de aprobar se cierra', !w.document.getElementById('nube-aprobar'));
+  await quieto(Cel, w.NUBE.sinc);
+  notas(Cel).a2 = 9; Cel.cambioLocal(); await Cel.sincronizarYa();
+  ok('Calificación del celular llega a la app (memoria y almacenamiento)', await hasta(() => G.data.grupos[0].actividades[0].notas.a2 === 9 && JSON.parse(w.localStorage.getItem(G.key)).grupos[0].actividades[0].notas.a2 === 9));
+  await quieto(Cel, w.NUBE.sinc);
+  G.data.grupos[0].actividades[0].notas.a1 = 6; w.gGuardar();   // guardado normal de la app
+  ok('Un guardado normal de la app se envía solo al celular', await hasta(() => notas(Cel).a1 === 6));
+  ok('Los datos guardados en el buzón no tienen nombres legibles', !JSON.stringify(tr.st).includes('Ana'));
+  w.nubeDetener(); Cel.detener(false);
+  try { [G.key, G.key + '_mod', 'nem_nube_llave_' + uid, 'nem_nube_est_' + uid].forEach(k => w.localStorage.removeItem(k)); } catch (e) {}
+}
+
+function mostrar() {
+  const mal = R.filter(x => !x.ok), secs = [...new Set(R.map(x => x.sec))];
+  const est = document.getElementById('estado');
+  est.className = 'res ' + (mal.length ? 'mal' : 'ok'); est.textContent = (mal.length ? '✗ ' + mal.length + ' prueba(s) fallaron de ' : '✓ Todas pasaron: ') + R.length + (mal.length ? '' : ' pruebas');
+  document.getElementById('tablas').innerHTML = secs.map(s => '<h2>' + s + '</h2><table>' + R.filter(x => x.sec === s).map(x => '<tr class="' + (x.ok ? 'ok' : 'mal') + '"><td class="s">' + (x.ok ? '✓' : '✗') + '</td><td>' + x.n + (x.d ? '<br><small>' + x.d.replace(/</g, '&lt;') + '</small>' : '') + '</td></tr>').join('') + '</table>').join('');
+  window.__resultados = { total: R.length, fallaron: mal.length, mal };
+}
+correr().catch(e => { R.push({ sec, n: 'Error: ' + (e && e.message), ok: false, d: e && e.stack }); mostrar(); });
+</script></body></html>
