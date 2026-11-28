@@ -1,6 +1,6 @@
 {
- "version": "c93532bf5a492375",
- "fecha": "2026-11-27T12:19:15",
+ "version": "b806623bbe83083e",
+ "fecha": "2026-11-27T20:25:28",
  "servidorMin": 1,
  "archivos": [
   {
@@ -105,8 +105,8 @@
   },
   {
    "p": "gestion.js",
-   "h": "b7057cc493ced3d82282c4901641c90863afb7a264a91c88c552507b7e2c3532",
-   "s": 283973
+   "h": "311a31d934c58355cb2cb4179477b845572f990c76e4ecf7e77be01f53412cdf",
+   "s": 284141
   },
   {
    "p": "icons/icono-180.png",
@@ -135,7 +135,7 @@
   },
   {
    "p": "index.html",
-   "h": "e31be7687a0fddedbe55ed907c983a2e700b9705564adcc8752a58ba40709478",
+   "h": "96b72b03003c8a031c606200adab103e8c483f400c165d66804ac1ed0d6dc5e8",
    "s": 149337
   },
   {
@@ -165,8 +165,8 @@
   },
   {
    "p": "nube.js",
-   "h": "e931f769e70b43e3d76551986044c43100c72bbab3aefd524d0ed5497c9b2b4c",
-   "s": 38443
+   "h": "d1de36b55cfe805ddb098aa3f337a5eb5236365cc0392303dd32f1dd9f7663d0",
+   "s": 39291
   },
   {
    "p": "privacidad.js",
@@ -205,7 +205,7 @@
   },
   {
    "p": "sw.js",
-   "h": "27788fe0635f0242b0f723a1ac31a4f6adc77d3407c9deeac8a26043a1b8acb8",
+   "h": "6f42d3fb3504014f2d98eb1e55252dbcd6d7a8021691d6bfbf1b2ac44d546a4b",
    "s": 5014
   }
  ]

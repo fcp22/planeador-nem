@@ -55,6 +55,9 @@ async function correr() {
   eq('Primera vez sin base: escuela vacía toma la del otro y se juntan grupos', [sb.d.perfil.escuela, sb.d.grupos.map(g => g.id)], ['FCP', ['a', 'b']]);
   const mh = NUBE.mezclar({ d: {}, h: [{ id: 1 }], t: [] }, { d: {}, h: [{ id: 2 }, { id: 1 }], t: [] }, { d: {}, h: [], t: [] });
   eq('Historial: plano borrado en el otro aparato se borra; el nuevo se queda', mh.h.map(x => x.id), [2]);
+  const me = NUBE.mezclar({ d: {}, h: [], t: [], e: [{ id: 'x', ts: 1 }] }, { d: {}, h: [], t: [], e: [{ id: 'y', ts: 3 }, { id: 'x', ts: 1 }] }, { d: {}, h: [], t: [], e: [{ id: 'z', ts: 2 }] });
+  eq('Exámenes generados: borrado en el otro se borra; los nuevos de los dos se quedan (más reciente primero)', me.e.map(x => x.id), ['y', 'z']);
+  eq('Si el otro aparato no manda exámenes, se conservan los de aquí', NUBE.mezclar(null, { d: {}, h: [], t: [], e: [{ id: 'q', ts: 1 }] }, { d: {}, h: [], t: [] }).e.map(x => x.id), ['q']);
 
   S('Cifrado');
   const k1 = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
@@ -174,8 +177,15 @@ async function probarApp() {
   G.data.grupos[0].actividades[0].notas.a1 = 6; w.gGuardar();   // guardado normal de la app
   ok('Un guardado normal de la app se envía solo al celular', await hasta(() => notas(Cel).a1 === 6));
   ok('Los datos guardados en el buzón no tienen nombres legibles', !JSON.stringify(tr.st).includes('Ana'));
+  await quieto(Cel, w.NUBE.sinc);
+  w.localStorage.setItem(w.gHistClave(), JSON.stringify([{ id: 'exA', ts: Date.now(), gid: 'g1', grupo: '3° A', materia: 'Español', trim: 1, titulo: 'Examen de la compu', reactivos: [{ tipo: 'verdadero_falso', pregunta: 'P', respuesta: 'Verdadero', valor: 1 }] }]));
+  ok('Un examen generado en la app llega al celular', await hasta(() => (Cel.alm.st.snap.e || []).some(x => x.id === 'exA')));
+  await quieto(Cel, w.NUBE.sinc);
+  Cel.alm.st.snap.e = [{ id: 'exB', ts: Date.now() + 1, gid: 'g1', grupo: '3° A', materia: 'Español', trim: 1, titulo: 'Examen del celular', reactivos: [{ tipo: 'verdadero_falso', pregunta: 'P', respuesta: 'Falso', valor: 1 }] }].concat(Cel.alm.st.snap.e);
+  Cel.cambioLocal(); await Cel.sincronizarYa();
+  ok('Un examen generado en el celular aparece en «Mis exámenes generados» de la app', await hasta(() => w.gHistLeer().map(x => x.id).join() === 'exB,exA' && /Examen del celular/.test(w.gHistHTML())));
   w.nubeDetener(); Cel.detener(false);
-  try { [G.key, G.key + '_mod', 'nem_nube_llave_' + uid, 'nem_nube_est_' + uid].forEach(k => w.localStorage.removeItem(k)); } catch (e) {}
+  try { [G.key, G.key + '_mod', 'nem_nube_llave_' + uid, 'nem_nube_est_' + uid, w.gHistClave()].forEach(k => w.localStorage.removeItem(k)); } catch (e) {}
 }
 
 function mostrar() {

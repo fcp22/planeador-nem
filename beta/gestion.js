@@ -804,7 +804,7 @@ function gRespAvisoHTML() {
 }
 // ── Respaldo TOTAL ──
 // Incluye todo lo del maestro en este equipo: grupos (alumnos, asistencias, calificaciones, libreta, exámenes, recuperativos),
-// datos de la escuela, horario semanal, bitácora, historial de planeaciones, temas guardados y los archivos subidos (calendario, etc.).
+// datos de la escuela, horario semanal, bitácora, historial de planeaciones, temas guardados, exámenes generados con IA y los archivos subidos (calendario, etc.).
 function gBlobB64(blob) { return new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => mal(r.error); r.readAsDataURL(blob); }); }
 function gB64Blob(b64, mime) { const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], { type: mime || 'application/octet-stream' }); }
 async function gArchivosTodos() {   // todos los archivos subidos de esta cuenta (calendario, horario…)
@@ -815,7 +815,7 @@ async function gRespaldoPaquete() {
   const lee = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
   const arch = [];
   for (const r of await gArchivosTodos()) { try { arch.push({ id: r.id, cat: r.cat || 'cal', nombre: r.nombre, tipo: r.tipo, mime: r.mime, t: r.t, b64: await gBlobB64(r.blob) }); } catch (e) { /* un archivo dañado no impide el respaldo */ } }
-  return { app: 'planeador-nem', v: 2, total: true, fecha: new Date().toISOString(), datos: G.data, historial: (typeof histKey === 'function' ? lee(histKey()) : null) || [], temas: lee(gTemasClave()) || [], archivos: arch };
+  return { app: 'planeador-nem', v: 2, total: true, fecha: new Date().toISOString(), datos: G.data, historial: (typeof histKey === 'function' ? lee(histKey()) : null) || [], temas: lee(gTemasClave()) || [], examenesIA: lee(gHistClave()) || [], archivos: arch };
 }
 async function gRespaldar() {
   const btns = [...document.querySelectorAll('[onclick="gRespaldar()"]')]; btns.forEach(b => { b.disabled = true; });
@@ -850,6 +850,7 @@ function gRestaurar(input) {
         try { if (typeof histKey === 'function') localStorage.setItem(histKey(), JSON.stringify(d.historial || [])); } catch (e) { /* sin espacio */ }
         try { if (typeof cargarHist === 'function' && typeof historial !== 'undefined') { historial = cargarHist(); if (typeof renderHist === 'function' && document.getElementById('hist-lista')) renderHist(); } } catch (e) { /* el historial en pantalla se actualiza al recargar */ }
         try { localStorage.setItem(gTemasClave(), JSON.stringify(d.temas || [])); } catch (e) { /* sin espacio */ }
+        if (Array.isArray(d.examenesIA)) try { localStorage.setItem(gHistClave(), JSON.stringify(d.examenesIA)); } catch (e) { /* sin espacio */ }
         let malArch = 0;
         for (const x of (d.archivos || [])) { try { await gCalPoner({ id: x.id, cuenta: G.key, cat: x.cat || 'cal', nombre: x.nombre, tipo: x.tipo, mime: x.mime, blob: gB64Blob(x.b64, x.mime), t: x.t || Date.now() }); } catch (e) { malArch++; } }
         if (malArch) gAviso(`No se pudieron restaurar ${malArch} archivo(s) subido(s); lo demás sí se restauró.`);
@@ -948,7 +949,7 @@ function gRenderGrupos() {
     <p class="g-resp-fecha" style="margin:0 0 10px;font-weight:600;color:var(--azul)">${gRespTexto()}</p>
     <button class="g-btn" onclick="gRespaldar()">⬇ Descargar respaldo</button>
     <label class="g-btn g-btn-s" style="display:inline-block;cursor:pointer">⬆ Restaurar respaldo<input type="file" accept=".json,application/json" style="display:none" onchange="gRestaurar(this)"></label>
-    <div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px;line-height:1.5">💡 <b>Qué se respalda (todo):</b> tus grupos con su lista de alumnos, el pase de lista, los criterios, actividades, libreta de trabajos, exámenes, calificaciones y recuperativos; los datos de tu escuela, tu horario, la bitácora, el historial de planeaciones, los temas guardados y los archivos que subiste (calendario escolar, etc.). Los respaldos hechos antes de esta versión solo traían grupos y calificaciones, y también se pueden restaurar.<br><br>🛡️ <b>Cuida tu información:</b> tus datos se guardan solo en este equipo, por eso conviene respaldar seguido (por ejemplo cada semana y siempre antes de borrar datos del navegador, formatear o cambiar de computadora). El archivo se descarga en <b>Descargas</b>: guárdalo en una carpeta tuya, en una USB o mándalo a tu correo.<br>📱 <b>Celular u otra computadora:</b> la información no se sincroniza sola. Para verla en otro equipo, descarga el respaldo aquí, pásalo a ese equipo (AirDrop, correo o WhatsApp) y usa «Restaurar respaldo» allá. Restaurar reemplaza lo que ya haya en ese equipo.</div></details>`;
+    <div class="ayuda" style="font-size:12px;color:var(--gris);margin-top:10px;line-height:1.5">💡 <b>Qué se respalda (todo):</b> tus grupos con su lista de alumnos, el pase de lista, los criterios, actividades, libreta de trabajos, exámenes, calificaciones y recuperativos; los datos de tu escuela, tu horario, la bitácora, el historial de planeaciones, los temas guardados, los exámenes generados con IA y los archivos que subiste (calendario escolar, etc.). Los respaldos hechos antes de esta versión solo traían grupos y calificaciones, y también se pueden restaurar.<br><br>🛡️ <b>Cuida tu información:</b> tus datos se guardan solo en este equipo, por eso conviene respaldar seguido (por ejemplo cada semana y siempre antes de borrar datos del navegador, formatear o cambiar de computadora). El archivo se descarga en <b>Descargas</b>: guárdalo en una carpeta tuya, en una USB o mándalo a tu correo.<br>📱 <b>Celular u otra computadora:</b> la información no se sincroniza sola. Para verla en otro equipo, descarga el respaldo aquí, pásalo a ese equipo (AirDrop, correo o WhatsApp) y usa «Restaurar respaldo» allá. Restaurar reemplaza lo que ya haya en ese equipo.</div></details>`;
   gPanel().innerHTML = h;
 }
 
@@ -1858,15 +1859,13 @@ function gNormalizarExamen(j, n, pdas) {
 }
 // ── Historial de exámenes generados: quedan 3 días en este dispositivo para abrirlos o bajarlos otra vez ──
 // (si recargas la página o se te cierra, un examen sin guardar no se pierde). Pasados 3 días se borran solos; también puedes borrarlos antes.
-const G_HIST_DIAS = 3;
+const G_HIST_MAX = 50;   // exámenes generados que se guardan (hasta que el docente los borre); al pasar de 50 sale el más antiguo
 function gHistClave() { const u = (typeof getUsuario === 'function') ? getUsuario() : null; return 'nem_hist_exam_' + ((u && u.uid) || 'anon'); }
 function gHistEscribir(a) { try { localStorage.setItem(gHistClave(), JSON.stringify(a)); } catch (e) {} }
 function gHistLeer() {
   let a = []; try { a = JSON.parse(localStorage.getItem(gHistClave()) || '[]'); } catch (e) {}
   if (!Array.isArray(a)) a = [];
-  const lim = Date.now() - G_HIST_DIAS * 864e5, v = a.filter(x => x && x.ts > lim && Array.isArray(x.reactivos));
-  if (v.length !== a.length) gHistEscribir(v);
-  return v;
+  return a.filter(x => x && Array.isArray(x.reactivos));
 }
 function gHistGuardarBorrador(b) {
   if (!b || b.editId || b.noHist) return;   // la clave de un examen ya guardado no entra: ese examen ya vive en su grupo
@@ -1876,24 +1875,20 @@ function gHistGuardarBorrador(b) {
     const a = gHistLeer(), i = a.findIndex(x => x.id === b.histId);
     const it = { id: b.histId, ts: i >= 0 ? a[i].ts : Date.now(), gid: g.id, grupo: g.nombre, materia: g.materia, trim: b.trim, titulo: b.titulo || 'Examen', tema: b.tema || '', criterioId: b.criterioId, conPda: !!b.conPda, revisado: b.revisado === true, reactivos: JSON.parse(JSON.stringify(b.reactivos)) };
     if (i >= 0) a[i] = it; else a.unshift(it);
-    gHistEscribir(a.slice(0, 30));
+    gHistEscribir(a.slice(0, G_HIST_MAX));
   } catch (e) {}
-}
-function gHistVence(ts) {
-  const r = ts + G_HIST_DIAS * 864e5 - Date.now(), d = Math.floor(r / 864e5), h = Math.floor((r % 864e5) / 36e5);
-  return d >= 1 ? 'en ' + gPlural(d, 'día', 'días') : (h >= 1 ? 'en ' + gPlural(h, 'hora', 'horas') : 'en menos de una hora');
 }
 function gHistHTML() {
   const a = gHistLeer(); if (!a.length) return '';
   const fila = x => `<div style="border:1.5px solid var(--borde);border-radius:12px;padding:10px 12px;margin-bottom:8px">
       <div style="font-weight:700">${gEsc(x.titulo)}</div>
-      <div style="font-size:12px;color:var(--gris);margin:2px 0 8px">${gEsc(x.grupo)} · ${G_TRIM_NOM[x.trim] || ''} · ${x.reactivos.length} reactivos · ${x.revisado ? '✓ clave revisada' : 'clave sin revisar'} · creado ${gEsc(new Date(x.ts).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }))} · <b>se borra ${gHistVence(x.ts)}</b></div>
+      <div style="font-size:12px;color:var(--gris);margin:2px 0 8px">${gEsc(x.grupo)} · ${G_TRIM_NOM[x.trim] || ''} · ${x.reactivos.length} reactivos · ${x.revisado ? '✓ clave revisada' : 'clave sin revisar'} · creado ${gEsc(new Date(x.ts).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }))}</div>
       <button class="g-btn g-btn-s" style="margin:0 6px 6px 0" onclick="gHistAbrir('${x.id}')">✏️ Abrir y revisar</button>
       <button class="g-btn g-btn-s" style="margin:0 6px 6px 0" onclick="gHistDescargar('${x.id}',false)">⬇ Examen (Word)</button>
       <button class="g-btn g-btn-s" style="margin:0 6px 6px 0" onclick="gHistDescargar('${x.id}',true)">⬇ Clave (Word)</button>
       <button class="g-btn g-btn-s" style="margin:0 0 6px 0;color:#b91c1c" onclick="gHistBorrar('${x.id}')">🗑 Borrar</button></div>`;
   return `<details class="card g-det" id="g-hist" open><summary class="card-title" style="cursor:pointer">🕘 Mis exámenes generados (${a.length})</summary>
-    <div class="g-aviso" style="margin:8px 0 12px;font-size:12.5px">Aquí quedan tus exámenes generados con IA durante <b>${G_HIST_DIAS} días</b>, para que los abras o los descargues las veces que necesites. <b>Pasado ese tiempo se borran solos</b> de este dispositivo; también puedes borrarlos antes. Los exámenes que guardes «para calificar» no se borran.</div>
+    <div class="g-aviso" style="margin:8px 0 12px;font-size:12.5px">Aquí se guardan tus exámenes generados con IA <b>hasta que tú los borres</b>, para que los abras o los descargues las veces que necesites. Caben <b>${G_HIST_MAX}</b>; al pasar de ese número, el más antiguo se borra para dejar lugar.${a.length >= G_HIST_MAX - 5 ? ` <b>Ya tienes ${a.length} de ${G_HIST_MAX}:</b> borra los que ya no uses.` : ''} Los exámenes que guardes «para calificar» quedan además en su grupo.</div>
     ${a.map(fila).join('')}
     <button class="g-btn g-btn-s" style="color:#b91c1c" onclick="gHistBorrarTodo()">🗑 Borrar todo el historial</button></details>`;
 }
@@ -2208,7 +2203,7 @@ function gCrearEvalProyectoEx(id) { G.trimPlan = G.trimExam; gCrearEvalProyecto(
 function gExamenesListaHTML(g, t) {
   const exs = gActsTrim(g, t).filter(a => a.tipo === 'examen');
   let h = `<div class="card" id="g-lista-ex"><div class="card-title">🧮 Capturar calificaciones de exámenes — ${G_TRIM_NOM[t]}</div>`;
-  if (!exs.length) h += `<p style="color:var(--gris);margin:0 0 10px">Aquí aparecerá la <b>lista de tus alumnos</b> para escribir lo que sacó cada uno. Primero hay que dar de alta el examen: si ya lo aplicaste en papel, regístralo; si todavía no, genéralo con IA más abajo.</p><button class="g-btn" onclick="gAbrirPapel()">📄 Registrar un examen que ya apliqué</button>`;
+  if (!exs.length) h += `<p style="color:var(--gris);margin:0 0 10px">Aquí aparecerá la <b>lista de tus alumnos</b> para escribir lo que sacó cada uno. Primero hay que dar de alta el examen: si ya lo aplicaste en papel, regístralo; si todavía no, genéralo con IA más abajo.${gHistLeer().length ? ' Los que ya generaste están aquí abajo, en <b>«Mis exámenes generados»</b>.' : ''}</p><button class="g-btn" onclick="gAbrirPapel()">📄 Registrar un examen que ya apliqué</button>`;
   exs.forEach(ex => {
     h += `<details class="g-ex" id="ex-${ex.id}" ${exs.length === 1 || G.exAbierto === ex.id ? 'open' : ''}><summary><b>${gEsc(ex.nombre)}</b> <span style="color:var(--gris);font-size:12px">· ${ex.max} pts · ${gEsc((g.criterios.find(c => c.id === ex.criterioId) || {}).nombre || '')}</span>${ex.reactivos ? (ex.revisado === true ? '<span class="g-clave-tag g-clave-ok">✓ Clave revisada</span>' : '<span class="g-clave-tag g-clave-no">⚠ Clave sin revisar</span>') : ''}</summary>
       <div id="gs-${ex.id}" class="g-statline">${gStatsExamen(g, ex)}</div>
@@ -2230,7 +2225,7 @@ function gRenderExamenes() {
   let h = `<div class="sec-title">Exámenes</div><div class="sec-sub">Crea un examen con su clave de respuestas, captura los aciertos de cada alumno y la calificación se calcula sola.</div>${gBarra()}
   <div class="g-trims">${[1, 2, 3].map(x => `<button class="ttab${t === x ? ' on' : ''}" onclick="gTrimExam(${x})">${G_TRIM_NOM[x]}</button>`).join('')}</div>
   <div class="card"><div class="card-title">⚖️ Valor en la calificación — ${G_TRIM_NOM[t]}</div><div id="g-peso-card">${gPesoCardHTML(g, t)}</div></div>
-  ${G.evalModo === 'proyecto' ? '' : gExamenesListaHTML(g, t)}
+  ${G.evalModo === 'proyecto' ? '' : gExamenesListaHTML(g, t) + gHistHTML()}
   ${G.evalModo === 'proyecto' ? gProyectoEvalHTML(g, t) : `<div class="card"><div class="card-title">✨ Generar examen con IA — ${gEsc(g.materia)} ${g.grado}°</div>
     ${gTemasPanel(g, t)}
     <div class="campo"><label>Temas o contenidos a evaluar</label><textarea id="ge-tema" rows="4" placeholder="Ej. Ecuaciones de primer grado con una incógnita; problemas de proporcionalidad directa">${gEsc(G.temaUlt || '')}</textarea><div class="ayuda">Mientras más específico, mejor el examen. Puedes escribir tus propios temas o corregir los que marcaste.</div><div class="ayuda" style="color:#92400e">🔒 Esto se envía a la IA: <b>no escribas nombres de alumnos</b> ni datos de conducta, salud o familia.</div></div>
@@ -2270,7 +2265,6 @@ function gRenderExamenes() {
   }
 
   if (G.evalModo !== 'proyecto') {
-  h += gHistHTML();
   h += `<details class="card g-det" id="g-papel"><summary>📄 Ya apliqué un examen en papel (registrarlo sin IA)</summary>
     <div class="f2" style="margin-top:12px"><div class="campo"><label>Nombre</label><input id="gp-nom" placeholder="Ej. Examen del trimestre"></div>
     <div class="campo"><label>Total de puntos / reactivos</label><input id="gp-max" type="number" min="1" value="10"></div>

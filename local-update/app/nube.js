@@ -9,7 +9,7 @@
 //   viaja cifrada y nunca se escribe ni se ve).
 // • Mezcla de tres vías (base común, local, remoto): si cada aparato cambió cosas distintas, se conservan las dos.
 // Los archivos subidos (calendario, etc.) NO viajan: pesan mucho; esos van en el respaldo.
-// Depende de: auth.js (getUsuario), gestion.js (G, gRender, gGrupo, gTemasClave, gHorarioToast) e index.html
+// Depende de: auth.js (getUsuario), gestion.js (G, gRender, gGrupo, gTemasClave, gHistClave, gHorarioToast) e index.html
 // (histKey, historial, renderHist). Las pruebas usan NUBE.Sinc + NUBE.TrMemoria sin Firebase.
 // ============================================================
 (function () {
@@ -58,13 +58,16 @@
     (Array.isArray(l) ? l : []).concat(Array.isArray(r) ? r : []).forEach(x => { const k = claveTema(x); if (!vistos.has(k)) { vistos.add(k); out.push(x); } });
     return out.slice(0, 40);
   }
-  // Paquete = { d: datos de gestión, h: historial de planeaciones, t: temas }. base null = sin versión común.
+  // Paquete = { d: datos de gestión, h: historial de planeaciones, t: temas, e: exámenes generados con IA }. base null = sin versión común.
+  const MAX_EXAM = 50;
   function mezclar(base, l, r) {
     const b = base || null;
     const d = m3(b ? b.d : NB, l.d, r.d);
     let h = r.h === undefined ? l.h : m3(b && b.h !== undefined ? b.h : NB, l.h, r.h);
     if (Array.isArray(h)) h = h.slice().sort((x, y) => (+y.id || 0) - (+x.id || 0)).slice(0, 20);
-    return { d, h: h || [], t: unirTemas(l.t, r.t) };
+    let e = r.e === undefined ? l.e : m3(b && b.e !== undefined ? b.e : NB, l.e, r.e);   // por id: un examen borrado en un aparato se borra en el otro
+    if (Array.isArray(e)) e = e.slice().sort((x, y) => (+y.ts || 0) - (+x.ts || 0)).slice(0, MAX_EXAM);
+    return { d, h: h || [], t: unirTemas(l.t, r.t), e: e || [] };
   }
 
   // ── Cifrado (WebCrypto) y compresión ─────────────────────
@@ -237,7 +240,8 @@
       const e = this.estado(); if (!e.sucio && !forzar) return;
       const gen = this.gen;
       let snap = this.alm.leerSnap(), enc = await cifrar(this.llave, snap);
-      if (enc.ct.length > MAX_BYTES) { snap = { d: snap.d, t: snap.t }; enc = await cifrar(this.llave, snap); }   // sin historial de planeaciones
+      if (enc.ct.length > MAX_BYTES) { snap = { d: snap.d, t: snap.t, e: snap.e }; enc = await cifrar(this.llave, snap); }   // sin historial de planeaciones
+      if (enc.ct.length > MAX_BYTES) { snap = { d: snap.d, t: snap.t }; enc = await cifrar(this.llave, snap); }   // ni exámenes generados
       if (enc.ct.length > MAX_BYTES) { this.error = 'Tus datos son demasiado grandes para sincronizar. Usa el respaldo.'; this._aviso(); return; }
       const ver = this.dev + '.' + (e.n + 1), ahora = Date.now();
       try {
@@ -267,14 +271,14 @@
           let B = null; if (bv) { try { B = await this.alm.leerEnv(bv); } catch (err) { B = null; } }
           let M;
           if (B) M = mezclar(B, L, R);
-          else if (!L.d || !L.d.grupos || !L.d.grupos.length) M = mezclar(null, { d: R.d, h: R.h || L.h, t: L.t }, R);
+          else if (!L.d || !L.d.grupos || !L.d.grupos.length) M = mezclar(null, { d: R.d, h: R.h || L.h, t: L.t, e: R.e || L.e }, R);
           else if (!e.n && !Object.keys(e.recibidas).length) {
             const reemplazar = await this.preguntar(L, R, doc.de);
-            M = reemplazar ? { d: R.d, h: R.h || L.h, t: unirTemas(R.t, L.t) } : mezclar(null, L, R);
+            M = reemplazar ? { d: R.d, h: R.h || L.h, t: unirTemas(R.t, L.t), e: R.e || L.e } : mezclar(null, L, R);
           } else M = mezclar(null, L, R);
           if (!igual(M, L)) { this.alm.aplicarSnap(M); try { this.alRecibir && this.alRecibir(doc.de, this.nombres[doc.de]); } catch (err) {} }
           const e2 = this.estado(); e2.recibidas[doc.de] = doc.ver; e2.ultRecibo = ahora; this._ponerEstado(e2);
-          if (!igual(M.d, R.d) || (R.h !== undefined && !igual(M.h, R.h))) this.cambioLocal();   // tengo cosas que el otro no: se las mando
+          if (!igual(M.d, R.d) || (R.h !== undefined && !igual(M.h, R.h)) || (R.e !== undefined && !igual(M.e, R.e))) this.cambioLocal();   // tengo cosas que el otro no: se las mando
         }
         try { await this.tr.marcarTomado(doc.id, this.dev); } catch (err) { continue; }
         try {   // ¿ya lo bajaron todos los aparatos activos? entonces se borra del buzón
@@ -347,6 +351,7 @@
     try { if (typeof G !== 'undefined' && G.key) c.push(G.key); } catch (e) {}
     try { if (typeof histKey === 'function') c.push(histKey()); } catch (e) {}
     try { if (typeof gTemasClave === 'function') c.push(gTemasClave()); } catch (e) {}
+    try { if (typeof gHistClave === 'function') c.push(gHistClave()); } catch (e) {}
     return c;
   }
   function idbEnv() {
@@ -364,7 +369,8 @@
     ponerEstado(e) { const u = uidAct(); if (u) try { localStorage.setItem('nem_nube_est_' + u, JSON.stringify(e)); } catch (x) {} },
     leerSnap() {
       const d = (typeof G !== 'undefined' && G.key && lee(G.key)) || (typeof G !== 'undefined' && G.data) || { v: 1, grupos: [] };
-      return { d, h: (typeof histKey === 'function' ? lee(histKey()) : null) || [], t: (typeof gTemasClave === 'function' ? lee(gTemasClave()) : null) || [] };
+      return { d, h: (typeof histKey === 'function' ? lee(histKey()) : null) || [], t: (typeof gTemasClave === 'function' ? lee(gTemasClave()) : null) || [],
+        e: (typeof gHistClave === 'function' ? lee(gHistClave()) : null) || [] };
     },
     aplicarSnap(s) {
       NUBE.aplicando = true;
@@ -372,6 +378,7 @@
         localStorage.setItem(G.key, JSON.stringify(s.d)); localStorage.setItem(G.key + '_mod', String(Date.now()));
         if (typeof histKey === 'function' && Array.isArray(s.h)) localStorage.setItem(histKey(), JSON.stringify(s.h));
         if (typeof gTemasClave === 'function') localStorage.setItem(gTemasClave(), JSON.stringify(s.t || []));
+        if (typeof gHistClave === 'function' && Array.isArray(s.e)) localStorage.setItem(gHistClave(), JSON.stringify(s.e));
       } catch (e) { /* sin espacio: queda lo que se pudo */ }
       finally { NUBE.aplicando = false; }
       G.data = s.d; if (!G.data.grupos.some(g => g.id === G.gid)) G.gid = G.data.grupos[0] ? G.data.grupos[0].id : null;
