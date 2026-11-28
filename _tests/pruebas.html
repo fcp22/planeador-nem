@@ -149,6 +149,29 @@ function SUITE() {
   eq('La clave de un examen guardado lleva el título', /Examen de prueba — CLAVE DE RESPUESTAS/.test(gExamenHTML(grpW, exG, true)), true);
   eq('La hoja del examen para el alumno lleva el título', gExamenHTML(grpW, exG, false).includes('Examen de prueba'), true);
   eq('El borrador (con «titulo») sigue funcionando', /Otro título — CLAVE/.test(gExamenHTML(grpW, { titulo: 'Otro título', reactivos: exG.reactivos }, true)), true);
+  S('Aparatos: solo uno abierto a la vez y máximo por licencia');
+  {
+    const id1 = licAparatoId(); LIC.ap = null; const id2 = licAparatoId();
+    ok('El aparato tiene un identificador fijo (se guarda en el navegador)', id1 === id2 && /^[a-z0-9]{16,40}$/.test(id1), id1);
+    ok('Nombre del aparato legible (p. ej. «Mac · Chrome»)', /^(iPhone|iPad|Android|Windows|Chromebook|Mac|Linux|Aparato)( · \w+)?$/.test(licAparatoNombre()), licAparatoNombre());
+    const pz = () => document.getElementById('lic-puerta'), app = document.getElementById('app');
+    const limpiar = () => { pz().style.display = 'none'; app.removeAttribute('inert'); LIC.codigo = ''; };
+    licPuertaAparato('otra_sesion', { aparato: 'iPhone · Safari', message: 'x' });
+    ok('Otra sesión: se bloquea la app', pz().style.display === 'flex' && app.hasAttribute('inert'));
+    ok('…dice en qué aparato se abrió y ofrece «Usar aquí»', /iPhone · Safari/.test(pz().textContent) && /Usar aquí/.test(pz().textContent));
+    limpiar();
+    licPuertaAparato('aparatos_llenos', { max: 2, cambiosQuedan: 1, aparatos: [{ id: 'aaaaaaaa1', nombre: 'Windows · Chrome', ultimo: '2026-11-20' }, { id: 'aaaaaaaa2', nombre: 'iPhone · Safari', ultimo: '2026-11-27' }] });
+    eq('Aparatos llenos: lista sus 2 aparatos con botón «Quitar»', [...pz().querySelectorAll('button')].filter(b => b.textContent === 'Quitar').length, 2);
+    ok('…y avisa cuántos cambios le quedan', /1 vez más este mes/.test(pz().textContent), pz().textContent.slice(0, 200));
+    limpiar();
+    licPuertaAparato('aparatos_llenos', { max: 2, cambiosQuedan: 0, aparatos: [{ id: 'aaaaaaaa1', nombre: 'Windows · Chrome' }] });
+    ok('Sin cambios este mes: no hay «Quitar» y pide escribir al contacto', ![...pz().querySelectorAll('button')].some(b => b.textContent === 'Quitar') && /máximo de veces/.test(pz().textContent));
+    limpiar();
+    licPuertaAparato('aparato_quitado', { message: 'Este aparato ya no está registrado en tu cuenta.' });
+    ok('Aparato quitado: ofrece registrarlo de nuevo', /Registrar este aparato/.test(pz().textContent));
+    limpiar();
+  }
+
   S('Hojas del examen (carta vertical, la letra se ajusta)');
   const reacH = (n, largo) => Array.from({ length: n }, (_, k) => ({ tipo: 'opcion_multiple', valor: 1, respuesta: 'A', pregunta: (largo ? 'Lee con atención la siguiente situación que ocurre en una comunidad de Yucatán durante la feria del pueblo y responde lo que se pide sobre ella, considerando todos los datos. ' : 'Pregunta corta número ') + k + '?', opciones: ['Opción uno', 'Opción dos', 'Opción tres', 'Opción cuatro'] }));
   const ex8 = { titulo: 'Ocho', hojas: 1, reactivos: reacH(8, false) };

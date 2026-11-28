@@ -1,6 +1,6 @@
 {
- "version": "e86947c33de41c49",
- "fecha": "2026-11-27T20:35:30",
+ "version": "aa2dd2c01c3a0726",
+ "fecha": "2026-11-27T20:46:16",
  "servidorMin": 1,
  "archivos": [
   {
@@ -135,7 +135,7 @@
   },
   {
    "p": "index.html",
-   "h": "4fecf8e0def91c869874815e9f344778f5c7ba30cb22560369e3e9f49d0d2807",
+   "h": "7d212a692ef0d61a2b0bc76fa98ff2bdf3df7680cc30928bc8551d1a9dbaa3ca",
    "s": 149554
   },
   {
@@ -145,8 +145,8 @@
   },
   {
    "p": "licencia.js",
-   "h": "bec4f200d2c1a193d8bde5a5fbc6ae1a7fbfa7aeb0179deece704884a3908a78",
-   "s": 59680
+   "h": "0eed2da527d9eae4d3a44d828d9b4e2b7e94b7cad51ccecb370450b0cbf6ac35",
+   "s": 67120
   },
   {
    "p": "local-shim.js",
@@ -205,7 +205,7 @@
   },
   {
    "p": "sw.js",
-   "h": "be89362bc043b0221004798d33fd73657cf537a2810b135f9fee077a3c6141bc",
+   "h": "6ca0c7662c410f22e630dccfdce947a851b0fb4610ea222f7b322e4e11e7803f",
    "s": 5014
   }
  ]

@@ -10,9 +10,29 @@ function workerUrl() { return String((window.NEM_CONFIG && window.NEM_CONFIG.wor
 async function idToken() { const u = AUTH && AUTH.auth && AUTH.auth.currentUser; return u ? await u.getIdToken() : null; }
 const esperar = ms => new Promise(r => setTimeout(r, ms));
 
+// ── Identificador de ESTE aparato (contra cuentas compartidas) ──
+// Se crea una vez y se guarda en el navegador. El servidor deja tener pocos aparatos por cuenta y solo uno abierto a la vez.
+function licAparatoId() {
+  if (LIC.ap) return LIC.ap;
+  let v = ''; try { v = localStorage.getItem('nem_aparato_id') || ''; } catch (e) { /* sin almacenamiento */ }
+  if (!/^[a-z0-9]{16,40}$/.test(v)) {
+    v = Array.from(crypto.getRandomValues(new Uint8Array(14)), b => (b % 36).toString(36)).join('') + Date.now().toString(36);
+    try { localStorage.setItem('nem_aparato_id', v); } catch (e) { /* sin almacenamiento: dura lo que dure la pestaña */ }
+  }
+  return (LIC.ap = v);
+}
+function licAparatoNombre() {
+  const u = navigator.userAgent || '';
+  const so = /iPhone/.test(u) ? 'iPhone' : (/iPad/.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1)) ? 'iPad' : /Android/.test(u) ? 'Android' : /Windows/.test(u) ? 'Windows' : /CrOS/.test(u) ? 'Chromebook' : /Mac OS|Macintosh/.test(u) ? 'Mac' : /Linux/.test(u) ? 'Linux' : 'Aparato';
+  const nav = /Edg\//.test(u) ? 'Edge' : /OPR\//.test(u) ? 'Opera' : /Firefox|FxiOS/.test(u) ? 'Firefox' : /Chrome|CriOS/.test(u) ? 'Chrome' : /Safari/.test(u) ? 'Safari' : '';
+  return so + (nav ? ' · ' + nav : '');
+}
+const LIC_COD_APARATO = ['otra_sesion', 'aparatos_llenos', 'aparato_quitado'];
+
 // Llamada genérica al servidor
-async function workerFetch(ruta, { metodo = 'GET', body, admin } = {}) {
+async function workerFetch(ruta, { metodo = 'GET', body, admin, tomar } = {}) {
   const base = workerUrl();
+  if (!admin) ruta += (ruta.includes('?') ? '&' : '?') + 'ap=' + licAparatoId() + '&apn=' + encodeURIComponent(licAparatoNombre()) + (tomar ? '&tomar=1' : '');
   if (!base) { const e = new Error('La IA todavía no está conectada (falta «workerUrl» en firebase-config.js).'); e.codigo = 'config'; throw e; }
   const headers = {};
   if (admin) headers['X-Admin-Key'] = admin;
@@ -24,7 +44,9 @@ async function workerFetch(ruta, { metodo = 'GET', body, admin } = {}) {
   let data = null; try { data = await res.json(); } catch (e) { /* sin cuerpo */ }
   if (!res.ok) {
     const m = (data && data.error) || {};
-    const er = new Error(m.message || `Error ${res.status}`); er.codigo = m.codigo || 'http_' + res.status; er.status = res.status; er.reintentar = !!m.reintentar; throw er;
+    const er = new Error(m.message || `Error ${res.status}`); er.codigo = m.codigo || 'http_' + res.status; er.status = res.status; er.reintentar = !!m.reintentar; er.datos = m;
+    if (!admin && LIC_COD_APARATO.includes(er.codigo) && !licEsAdminCuenta()) licPuertaAparato(er.codigo, m);
+    throw er;
   }
   return data;
 }
@@ -71,9 +93,9 @@ function licPintarChip() {
   c.textContent = e.admin ? 'IA: administrador' : !e.activa ? 'IA sin licencia' : e.prueba ? `IA ${e.usadas}/${e.limite}` : `IA: te quedan ${e.restantes}`;
   c.style.background = e.activa ? (pocos ? '#f59e0b' : 'rgba(255,255,255,.18)') : '#dc2626';
 }
-async function licCargar() {
+async function licCargar(tomar) {
   if (!workerUrl()) return null;
-  try { LIC.estado = await workerFetch('/v1/estado'); LIC.error = ''; LIC.codigo = ''; }
+  try { LIC.estado = await workerFetch('/v1/estado', { tomar }); LIC.error = ''; LIC.codigo = ''; }
   catch (e) { LIC.estado = null; LIC.error = e.message; LIC.codigo = e.codigo || ''; }
   licPintarChip(); return LIC.estado;
 }
@@ -82,7 +104,7 @@ function licReiniciar() { LIC.estado = null; LIC.error = ''; licPintarChip(); }
 function licFecha(iso) { return iso ? new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'; }
 
 // ── PUERTA DE ACCESO: sin licencia vigente, la app NO se abre ──────────────
-// Se revisa al entrar, cada 20 minutos y al volver a la pestaña. Mientras la licencia no esté vigente solo se
+// Se revisa al entrar, cada 10 minutos y al volver a la pestaña (si pasaron 3 minutos). Mientras la licencia no esté vigente solo se
 // ve la pantalla de bloqueo (canjear un código, descargar el respaldo o cerrar sesión).
 // Las cuentas de administrador (adminEmails) nunca se bloquean, para poder generar códigos.
 // Nota: la app es una página estática; esta puerta frena el uso normal. La verificación fuerte de la IA sigue en el servidor.
@@ -154,6 +176,46 @@ function licPuertaCorreo(msg) {
     <p style="font-size:11px;color:#94a3b8;margin:12px 0 0">Cuenta: ${gEsc((u && u.email) || '')}</p>
   </div>`;
 }
+// ── Pantallas de APARATO: otra sesión abierta, demasiados aparatos o aparato quitado ──
+function licPuertaAparato(codigo, d) {
+  LIC_PUERTA.activa = false; LIC.codigo = codigo;
+  const el = licPuertaEl(); el.style.display = 'flex';
+  const app = document.getElementById('app'); if (app) app.setAttribute('inert', '');
+  const u = (typeof getUsuario === 'function') ? getUsuario() : null, contacto = window.NEM_CONFIG && window.NEM_CONFIG.contacto;
+  const btn = (txt, fn, pri) => `<button onclick="${fn}" style="${pri ? 'width:100%;padding:12px;font-size:15px;font-weight:700;border:0;border-radius:10px;background:#1e3a5f;color:#fff' : 'padding:8px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#fff;font-size:13px'};cursor:pointer">${txt}</button>`;
+  const resp = typeof gRespaldar === 'function' && typeof G !== 'undefined' && G.data ? btn('⬇ Descargar mi respaldo', 'gRespaldar()') : '';
+  let ico, titulo, cuerpo;
+  if (codigo === 'aparatos_llenos') {
+    const quedan = d.cambiosQuedan || 0;
+    ico = '💻'; titulo = 'Este aparato no está registrado';
+    cuerpo = `<p style="margin:0 0 12px;font-size:14px;line-height:1.5;color:#475569">Tu licencia se puede usar en <b>${d.max || 2} aparatos</b> (por ejemplo, tu computadora y tu celular) y ya están ocupados. Para usar el Planeador aquí, quita uno:</p>
+      <div style="text-align:left;margin-bottom:10px">${(d.aparatos || []).map(a => `<div style="display:flex;align-items:center;gap:10px;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;margin-bottom:6px"><div style="flex:1;min-width:0"><b style="font-size:14px">${gEsc(a.nombre || 'Aparato')}</b><div style="font-size:11.5px;color:#64748b">Último uso: ${gEsc(licFechaCorta(a.ultimo))}</div></div>${quedan ? `<button onclick="licPuertaQuitar('${gEsc(a.id)}', this)" style="padding:6px 12px;border:1.5px solid #fca5a5;border-radius:8px;background:#fff;color:#b91c1c;font-size:12.5px;font-weight:600;cursor:pointer">Quitar</button>` : ''}</div>`).join('')}</div>
+      <div id="lp-err" style="display:none;color:#b91c1c;font-size:13px;margin-bottom:10px"></div>
+      <p style="font-size:12.5px;color:${quedan ? '#64748b' : '#b91c1c'};margin:0">${quedan ? `Puedes cambiar de aparato ${quedan} ${quedan === 1 ? 'vez' : 'veces'} más este mes.` : `Ya cambiaste de aparato el máximo de veces este mes. ${contacto ? 'Escribe a <b>' + gEsc(contacto) + '</b> para que te lo liberen.' : 'Pide que te lo liberen.'}`}</p>`;
+  } else if (codigo === 'aparato_quitado') {
+    ico = '💻'; titulo = 'Este aparato se quitó de tu cuenta';
+    cuerpo = `<p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#475569">${gEsc(d.message || '')}</p>${btn('Registrar este aparato', 'licPuertaVerificar()', true)}`;
+  } else {
+    ico = '📱'; titulo = 'Tu cuenta se abrió en otro aparato';
+    cuerpo = `<p style="margin:0 0 6px;font-size:14px;line-height:1.5;color:#475569">Se abrió en: <b>${gEsc(d.aparato || 'otro aparato')}</b>.</p>
+      <p style="margin:0 0 16px;font-size:13.5px;line-height:1.5;color:#475569">Tu licencia solo puede estar abierta en un aparato a la vez. Si quieres seguir aquí, el otro se cerrará.</p>
+      ${btn('Usar aquí', 'licPuertaVerificar()', true)}
+      <p style="font-size:12px;color:#64748b;margin:12px 0 0">¿No fuiste tú? Cambia tu contraseña: alguien más está usando tu cuenta.</p>`;
+  }
+  el.innerHTML = `<div style="${LIC_TARJETA}"><div style="font-size:38px">${ico}</div>
+    <h2 style="margin:8px 0 8px;font-size:20px;color:#1e3a5f">${titulo}</h2>${cuerpo}
+    <p style="font-size:12px;color:#64748b;margin:14px 0 0">Tus datos (grupos, calificaciones) siguen guardados en este aparato.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">${resp}${btn('Cerrar sesión', 'licPuertaSalir()')}</div>
+    <p style="font-size:11px;color:#94a3b8;margin:12px 0 0">Cuenta: ${gEsc((u && u.email) || '')} · Este aparato: ${gEsc(licAparatoNombre())}</p></div>`;
+}
+function licFechaCorta(dia) { if (!dia) return '—'; const t = Date.parse(dia + (dia.length === 10 ? 'T12:00:00' : '')); return isNaN(t) ? '—' : new Date(t).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }); }
+async function licPuertaQuitar(id, b) {
+  const nombre = b && b.parentNode ? b.parentNode.querySelector('b').textContent : 'ese aparato';
+  if (!confirm('¿Quitar «' + nombre + '» de tu cuenta?\nAhí ya no se podrá abrir el Planeador (sus datos se quedan en ese aparato).')) return;
+  if (b) { b.disabled = true; b.textContent = 'Quitando…'; }
+  try { await workerFetch('/v1/aparatos/quitar', { metodo: 'POST', body: { quitar: id } }); await licPuertaVerificar(); }
+  catch (e) { const er = document.getElementById('lp-err'); if (er) { er.textContent = e.message; er.style.display = 'block'; } if (b) { b.disabled = false; b.textContent = 'Quitar'; } }
+}
 function licPuertaSalir() { const el = document.getElementById('lic-puerta'); if (el) el.style.display = 'none'; const app = document.getElementById('app'); if (app) app.removeAttribute('inert'); if (typeof doLogout === 'function') doLogout(); }
 async function licPuertaCanjear() {
   const c = (document.getElementById('lp-codigo').value || '').trim(), err = document.getElementById('lp-err'), b = document.getElementById('lp-btn');
@@ -168,7 +230,8 @@ function licPuertaReintentar() { licPuertaVerificar(); }
 async function licPuertaVerificar() {
   if (!workerUrl() || licEsAdminCuenta()) { licPuertaCerrar(); licCargar(); return true; }
   licPuertaAbrir();
-  const e = await licCargar(); LIC_PUERTA.ultimo = Date.now();
+  const e = await licCargar(true); LIC_PUERTA.ultimo = Date.now();
+  if (LIC_COD_APARATO.includes(LIC.codigo)) return false;   // ya se mostró la pantalla del aparato
   if (e && e.activa) { licCacheGuardar(e.vence); licPuertaCerrar(); if (typeof G !== 'undefined' && G.tab === 'inicio' && typeof gRender === 'function') gRender(); return true; }
   if (e) { licPuertaBloquear(e); return false; }
   if (LIC.codigo === 'correo_no_autorizado') { licCacheGuardar(''); licPuertaCorreo(LIC.error); return false; }
@@ -179,14 +242,15 @@ async function licPuertaVerificar() {
 async function licPuertaRevisar() {
   if (!workerUrl() || licEsAdminCuenta() || !(typeof getUsuario === 'function' && getUsuario())) return;
   const e = await licCargar(); LIC_PUERTA.ultimo = Date.now();
+  if (LIC_COD_APARATO.includes(LIC.codigo)) return;   // ya se mostró la pantalla del aparato
   if (e && e.activa) { licCacheGuardar(e.vence); return; }
   if (e) licPuertaBloquear(e);
   else if (LIC.codigo === 'correo_no_autorizado') { licCacheGuardar(''); licPuertaCorreo(LIC.error); }
 }
 function licPuertaVigilar() {
-  clearInterval(LIC_PUERTA.timer); LIC_PUERTA.timer = setInterval(licPuertaRevisar, 20 * 60 * 1000);
+  clearInterval(LIC_PUERTA.timer); LIC_PUERTA.timer = setInterval(licPuertaRevisar, 10 * 60 * 1000);
 }
-document.addEventListener('visibilitychange', () => { if (!document.hidden && LIC_PUERTA.activa && Date.now() - LIC_PUERTA.ultimo > 10 * 60 * 1000) licPuertaRevisar(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && LIC_PUERTA.activa && Date.now() - LIC_PUERTA.ultimo > 3 * 60 * 1000) licPuertaRevisar(); });
 
 // ── PRUEBA GRATIS: qué incluye y qué queda para quien tiene licencia ──────────
 // Incluye: 2 documentos con IA (uno de cada tipo; el examen de hasta 5 reactivos y 1 sola secuencia), verlos en pantalla,
@@ -378,6 +442,7 @@ async function licAdminCuenta(id, accion) {
   licAdminErr(''); const k = licAdminClave(); if (!k) return licAdminErr('Escribe la clave de administrador.');
   const c = (LIC.cuentas || []).find(x => x.id === id); if (!c) return;
   const body = { id, accion };
+  if (accion === 'aparatos' && !confirm('¿Liberar los aparatos de ' + c.correo + '?\nPodrá registrar de nuevo los aparatos con los que entre.')) return;
   if (accion === 'bloquear' && !confirm('¿Bloquear a ' + c.correo + '? Ya no podrá usar la IA hasta que la reactives.')) return;
   if (accion === 'cuota') {
     const v = prompt('Tope de documentos con IA para ' + c.correo + '\n(' + (c.prueba ? 'es el total de su prueba' : 'es por mes') + '; hoy: ' + c.cuota + ', usados: ' + c.usadas + ').\nEscribe un número de 0 a 2000:', c.cuota);
@@ -387,6 +452,7 @@ async function licAdminCuenta(id, accion) {
   }
   try {
     const r = await workerFetch('/admin/cuenta', { metodo: 'POST', body, admin: k });
+    if (accion === 'aparatos') { c.aparatos = []; c.cambiosMes = 0; licAdminCuentasPintar(); return; }
     c.cuota = r.cuota;
     if (accion === 'bloquear') { c.estadoAntes = c.estado; c.estado = 'revocada'; }
     if (accion === 'reactivar') c.estado = Date.parse(c.vence) < Date.now() ? 'vencida' : (c.prueba ? 'prueba' : 'activa');
@@ -417,8 +483,9 @@ function licAdminCuentasPintar() {
       const dato = (t, v) => `<div><span>${t}</span><b>${v}</b></div>`;
       return `<div class="la-cta"><div class="la-cta-top"><div class="la-cta-mail">${gEsc(c.correo)}</div><div class="la-cta-est" style="color:${e[1]}">${e[0]}</div></div>
         <div class="la-cta-datos">${dato('Plan', gEsc(c.plan || '—'))}${dato('Le quedan', vivo ? dias(c.vence) : '—')}${dato('Vence', licFecha(c.vence))}${dato('IA usada', c.usadas + ' de ' + c.cuota)}</div>
+        ${c.aparatos ? `<div class="la-cta-nota">💻 Aparatos: ${c.aparatos.length ? gEsc(c.aparatos.join(', ')) : 'ninguno'}${c.cambiosMes ? ` · cambió ${c.cambiosMes} ${c.cambiosMes === 1 ? 'vez' : 'veces'} este mes` : ''}</div>` : ''}
         ${c.nota ? '<div class="la-cta-nota">' + gEsc(c.nota) + '</div>' : ''}
-        <div class="la-cta-bot">${c.estado === 'revocada' ? `<button class="g-btn g-btn-s" onclick="licAdminCuenta('${c.id}','reactivar')">✅ Reactivar</button>` : `<button class="g-btn g-btn-s" onclick="licAdminCuenta('${c.id}','bloquear')">🚫 Bloquear</button>`}<button class="g-btn g-btn-s" onclick="licAdminCuenta('${c.id}','cuota')">🔢 Cambiar tope</button></div></div>`; }).join('') + '</div>' : '<p style="color:var(--gris)">No hay cuentas en esta categoría.</p>') +
+        <div class="la-cta-bot">${c.estado === 'revocada' ? `<button class="g-btn g-btn-s" onclick="licAdminCuenta('${c.id}','reactivar')">✅ Reactivar</button>` : `<button class="g-btn g-btn-s" onclick="licAdminCuenta('${c.id}','bloquear')">🚫 Bloquear</button>`}<button class="g-btn g-btn-s" onclick="licAdminCuenta('${c.id}','cuota')">🔢 Cambiar tope</button>${c.aparatos && c.aparatos.length ? `<button class="g-btn g-btn-s" onclick="licAdminCuenta('${c.id}','aparatos')">💻 Liberar aparatos</button>` : ''}</div></div>`; }).join('') + '</div>' : '<p style="color:var(--gris)">No hay cuentas en esta categoría.</p>') +
     `<div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:8px">Una cuenta aparece aquí desde que entra por primera vez a la app. Las que se registran pero no abren la app, no se ven.</div>`;
 }
 
