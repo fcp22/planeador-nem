@@ -1,6 +1,6 @@
 {
- "version": "b806623bbe83083e",
- "fecha": "2026-11-27T20:25:28",
+ "version": "9ddca40a988fc7e7",
+ "fecha": "2026-11-27T20:30:38",
  "servidorMin": 1,
  "archivos": [
   {
@@ -100,13 +100,13 @@
   },
   {
    "p": "generators.js",
-   "h": "bb149890884b26c6bcd7da6adcafc87f3e5059e7ec9c31b1d635ed15c3a03cdf",
-   "s": 42238
+   "h": "8dddadf2ef1d00b1950ae3838ffed92c79c9e209465f7b38a96853cb68898a74",
+   "s": 42510
   },
   {
    "p": "gestion.js",
-   "h": "311a31d934c58355cb2cb4179477b845572f990c76e4ecf7e77be01f53412cdf",
-   "s": 284141
+   "h": "27a4aa8046b222def3f15ed76b53eff5dea498c0d7cc784375d56c3ec2dcd7e5",
+   "s": 291682
   },
   {
    "p": "icons/icono-180.png",
@@ -135,7 +135,7 @@
   },
   {
    "p": "index.html",
-   "h": "96b72b03003c8a031c606200adab103e8c483f400c165d66804ac1ed0d6dc5e8",
+   "h": "659610729d31a4f2a08a04c7652c40061357770a6433e58b73f6b3ade25e3dda",
    "s": 149337
   },
   {
@@ -205,7 +205,7 @@
   },
   {
    "p": "sw.js",
-   "h": "6f42d3fb3504014f2d98eb1e55252dbcd6d7a8021691d6bfbf1b2ac44d546a4b",
+   "h": "3c5c5241548d3021d918287335a53fb77ed64ab6400b4b57bb552528206b0f9a",
    "s": 5014
   }
  ]

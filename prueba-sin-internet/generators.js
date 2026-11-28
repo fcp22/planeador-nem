@@ -633,7 +633,8 @@ function paginarTablas(htmlContenido) {
   return raiz.innerHTML;
 }
 
-function armarHTMLWord(htmlContenido) {
+function armarHTMLWord(htmlContenido, opc) {
+  const vertical = !!(opc && opc.vertical);   // exámenes: carta vertical (lo demás sale horizontal)
   try { htmlContenido = paginarTablas(htmlContenido); } catch (e) { console.warn('No se pudo ajustar el paginado:', e); }
   // Marca de agua con datos del maestro para identificar el documento
   const usr = (typeof getUsuario === 'function') ? getUsuario() : null;
@@ -665,13 +666,13 @@ function armarHTMLWord(htmlContenido) {
   p { margin: 3px 0; }
   h2, h3 { margin: 6px 0 3px 0; }
   @page {
-    size: landscape;
-    margin: 1.3cm 1.3cm;
+    size: ${vertical ? 'portrait' : 'landscape'};
+    margin: ${vertical ? '1.5cm 1.5cm' : '1.3cm 1.3cm'};
   }
   @page Section1 {
-    size: 792pt 612pt;
-    mso-page-orientation: landscape;
-    margin: 1.3cm 1.3cm;
+    size: ${vertical ? '612pt 792pt' : '792pt 612pt'};
+    mso-page-orientation: ${vertical ? 'portrait' : 'landscape'};
+    margin: ${vertical ? '1.5cm 1.5cm' : '1.3cm 1.3cm'};
   }
   div.Section1 { page: Section1; }
 </style>
@@ -685,9 +686,9 @@ ${marcaAgua}
 </html>`;
   return html;
 }
-function descargarWord(htmlContenido, nombreArchivo) {
+function descargarWord(htmlContenido, nombreArchivo, opc) {
   if (typeof licBloqueaDescarga === 'function' && licBloqueaDescarga()) return;   // en la prueba gratis no se descarga
-  const html = armarHTMLWord(htmlContenido);
+  const html = armarHTMLWord(htmlContenido, opc);
   const blob = new Blob([html], { type: 'application/msword' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

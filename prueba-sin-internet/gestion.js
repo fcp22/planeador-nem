@@ -1781,7 +1781,8 @@ DATOS:
 ${pdaBloque}- Dificultad: ${o.dif}
 - Número de reactivos: ${o.n}
 - Tipos de reactivo permitidos: ${o.tipos.map(t => G_TIPOS_EXAM[t]).join(', ')} (reparte los reactivos entre ellos)
-
+${o.hojas ? `- El examen debe caber impreso en ${o.hojas === 1 ? '1 hoja' : o.hojas + ' hojas'} tamaño carta: redacta preguntas breves y claras (máximo 30 palabras) y opciones cortas (máximo 10 palabras cada una), sin perder calidad.
+` : ''}
 REGLAS:
 - Los reactivos deben evaluar comprensión y aplicación, no solo memoria; usa situaciones cercanas a estudiantes de México cuando sea natural.
 - Lenguaje claro para adolescentes. Una sola respuesta correcta en cada reactivo.
@@ -1873,7 +1874,7 @@ function gHistGuardarBorrador(b) {
   try {
     if (!b.histId) b.histId = gId();
     const a = gHistLeer(), i = a.findIndex(x => x.id === b.histId);
-    const it = { id: b.histId, ts: i >= 0 ? a[i].ts : Date.now(), gid: g.id, grupo: g.nombre, materia: g.materia, trim: b.trim, titulo: b.titulo || 'Examen', tema: b.tema || '', criterioId: b.criterioId, conPda: !!b.conPda, revisado: b.revisado === true, reactivos: JSON.parse(JSON.stringify(b.reactivos)) };
+    const it = { id: b.histId, ts: i >= 0 ? a[i].ts : Date.now(), gid: g.id, grupo: g.nombre, materia: g.materia, trim: b.trim, titulo: b.titulo || 'Examen', tema: b.tema || '', criterioId: b.criterioId, conPda: !!b.conPda, revisado: b.revisado === true, hojas: +b.hojas || 0, reactivos: JSON.parse(JSON.stringify(b.reactivos)) };
     if (i >= 0) a[i] = it; else a.unshift(it);
     gHistEscribir(a.slice(0, G_HIST_MAX));
   } catch (e) {}
@@ -1897,14 +1898,14 @@ function gHistAbrir(id) {
   if (G.data.grupos.some(g => g.id === x.gid)) { G.gid = x.gid; G.gidManual = true; }
   const g = gGrupo(); if (!g) return;
   G.trimExam = x.trim; G.temaUlt = x.tema || '';
-  G.borrador = { titulo: x.titulo, reactivos: JSON.parse(JSON.stringify(x.reactivos)), tema: x.tema, trim: x.trim, criterioId: gCritExamen(g).id, conPda: x.conPda, revisado: x.revisado === true, histId: x.id };
+  G.borrador = { titulo: x.titulo, reactivos: JSON.parse(JSON.stringify(x.reactivos)), tema: x.tema, trim: x.trim, criterioId: gCritExamen(g).id, conPda: x.conPda, revisado: x.revisado === true, hojas: +x.hojas || 0, histId: x.id };
   gRenderExamenes();
   const b = document.getElementById('g-borrador'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function gHistDescargar(id, clave) {
   const x = gHistLeer().find(y => y.id === id); if (!x) { gRenderExamenes(); return; }
   const g = G.data.grupos.find(y => y.id === x.gid) || { nombre: x.grupo, materia: x.materia, alumnos: [] };
-  descargarWord(gExamenHTML(g, { titulo: x.titulo, reactivos: x.reactivos }, clave), `${clave ? 'Clave' : 'Examen'}_${String(x.materia || '').replace(/\W+/g, '_')}_${String(x.grupo || '').replace(/\W+/g, '_')}.doc`);
+  descargarWord(gExamenHTML(g, { titulo: x.titulo, reactivos: x.reactivos, hojas: x.hojas || 0 }, clave), `${clave ? 'Clave' : 'Examen'}_${String(x.materia || '').replace(/\W+/g, '_')}_${String(x.grupo || '').replace(/\W+/g, '_')}.doc`, { vertical: true });
 }
 function gHistBorrar(id) {
   if (!confirm('¿Borrar este examen del historial? No se puede deshacer.')) return;
@@ -1927,11 +1928,12 @@ async function gGenerarExamen() {
   const btn = document.getElementById('ge-btn'); btn.disabled = true; btn.textContent = 'Generando examen…';
   try {
     const pdas = gPdasElegidos(tema);   // PDA de los temas que marcó el docente (puede ir vacío)
-    const texto = await llamarGeminiJSON(gPromptExamen(g, { trim: G.trimExam, tema, pdas, n, tipos, dif: document.getElementById('ge-dif').value }), 'examen');
+    const hojas = +((document.getElementById('ge-hojas') || {}).value || 0); G.hojasUlt = hojas;
+    const texto = await llamarGeminiJSON(gPromptExamen(g, { trim: G.trimExam, tema, pdas, n, tipos, hojas, dif: document.getElementById('ge-dif').value }), 'examen');
     const ex = gNormalizarExamen(parsearJSON(texto), n, pdas);
     if (!ex.reactivos.length) throw new Error('La IA no devolvió reactivos válidos.');
     G.temaUlt = tema;
-    G.borrador = Object.assign(ex, { tema, trim: G.trimExam, criterioId: gCritExamen(g).id, conPda: pdas.length > 0, revisado: false });
+    G.borrador = Object.assign(ex, { tema, trim: G.trimExam, criterioId: gCritExamen(g).id, conPda: pdas.length > 0, hojas, revisado: false });
     gHistGuardarBorrador(G.borrador);
     gRenderExamenes();
     const b = document.getElementById('g-borrador'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2011,7 +2013,7 @@ function gBorrActualizar() {
   const msg = document.getElementById('g-rev-msg');
   if (msg) msg.innerHTML = n ? `<b>${n}</b> reactivo(s) con <b>«revisar clave»</b> (en amarillo). Corrígelos para poder marcar la revisión.` : (b.revisado ? '✓ Clave revisada: ya puedes guardarlo para calificar y usarlo en el escáner.' : 'Lee cada pregunta con su respuesta y marca la casilla. Sin esto no se puede guardar ni usar en el escáner.');
   const bt = document.getElementById('g-btn-guardar'); if (bt) bt.disabled = !gBorrListo(b);
-  gHistGuardarBorrador(b);
+  gHistGuardarBorrador(b);  gHojasRefrescar();
 }
 function gMarcarRevisado(v) { const b = G.borrador; if (!b) return; b.revisado = !!v && gBorrPendientes(b) === 0; gBorrActualizar(); }
 // Pone la clave de un examen ya guardado en el editor para revisarla (no cambia los puntos ni las calificaciones capturadas)
@@ -2019,36 +2021,115 @@ function gRevisarGuardado(id) {
   const g = gGrupo(), ex = g.actividades.find(x => x.id === id); if (!ex || !ex.reactivos) return;
   const reactivos = JSON.parse(JSON.stringify(ex.reactivos)); reactivos.forEach(r => { r.revisar = !!gRevReactivo(r); });
   G.trimExam = ex.trim;
-  G.borrador = { titulo: ex.nombre, reactivos, tema: ex.tema || '', trim: ex.trim, criterioId: ex.criterioId, editId: ex.id, conPda: reactivos.some(r => r.pda), revisado: false };
+  G.borrador = { titulo: ex.nombre, reactivos, tema: ex.tema || '', trim: ex.trim, criterioId: ex.criterioId, editId: ex.id, conPda: reactivos.some(r => r.pda), hojas: +ex.hojas || 0, revisado: false };
   gRenderExamenes();
   const b = document.getElementById('g-borrador'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function gMaxExamen(ex) { return ex.reactivos.reduce((s, r) => s + (r.valor || 1), 0); }
 
-function gExamenHTML(g, ex, conClave) {
-  const letras = 'ABCD';
+// ── Hojas del examen ──
+// El docente elige en cuántas hojas (carta vertical) debe caber. Al descargar, la app MIDE el examen en el navegador
+// con el ancho y alto útiles de la hoja y busca la letra más grande (11 → 9 pt) con la que cabe; si ni con 9 pt cabe, avisa.
+const G_HOJA = { anchoPx: 703, altoPx: 942, pie: 40, factor: 1.25 };   // carta vertical con márgenes de 1.5 cm (a 96 ppp); pie = marca del documento
+// factor: Word/LibreOffice dejan más espacio entre párrafos que el navegador; medido con LibreOffice, el examen sale ~25 % más alto
+const G_HOJAS_OPC = [0, 1, 2, 3, 4];
+const G_LETRAS_EXAM = [11, 10.5, 10, 9.5, 9];
+function gHojasNom(n) { return +n ? gPlural(+n, 'hoja', 'hojas') : 'Sin límite'; }
+function gOpcCortas(r) { return r.tipo === 'opcion_multiple' && Array.isArray(r.opciones) && r.opciones.every(o => String(o).length <= 38); }
+function gExamCuerpo(g, ex, conClave, f, compacto) {
+  const letras = 'ABCD', fs = `font-size:${f}pt;`;
   const items = ex.reactivos.map((r, i) => {
-    let h = `<p style="margin:10px 0 3px"><b>${i + 1}.</b> ${gEsc(r.pregunta)} <span style="font-size:8pt">(${r.valor} pt${r.valor > 1 ? 's' : ''})</span></p>`;
-    if (r.tipo === 'opcion_multiple') h += r.opciones.map((o, k) => `<p style="margin:0 0 0 24px">${letras[k]}) ${gEsc(o)}</p>`).join('');
-    else if (r.tipo === 'verdadero_falso') h += `<p style="margin:0 0 0 24px">( ) Verdadero &nbsp;&nbsp; ( ) Falso</p>`;
-    else if (r.tipo === 'respuesta_corta') h += `<p style="margin:6px 0 0 24px">R: ______________________________________________</p>`;
-    else h += '<p style="margin:6px 0 0 24px">______________________________________________________</p>'.repeat(3);
+    let h = `<p style="margin:${compacto ? '6px 0 2px' : '10px 0 3px'};${fs}"><b>${i + 1}.</b> ${gEsc(r.pregunta)} <span style="font-size:${Math.max(7, f - 2)}pt">(${r.valor} pt${r.valor > 1 ? 's' : ''})</span></p>`;
+    if (r.tipo === 'opcion_multiple') {
+      if (compacto && gOpcCortas(r)) {   // opciones cortas: dos por renglón
+        const c = k => `<td style="border:none;padding:0 6px 0 0;width:50%;${fs}">${letras[k]}) ${gEsc(r.opciones[k])}</td>`;
+        h += `<table style="width:auto;margin:0 0 0 24px;border:none"><tr>${c(0)}${c(1)}</tr><tr>${c(2)}${c(3)}</tr></table>`;
+      } else h += r.opciones.map((o, k) => `<p style="margin:0 0 0 24px;${fs}">${letras[k]}) ${gEsc(o)}</p>`).join('');
+    }
+    else if (r.tipo === 'verdadero_falso') h += `<p style="margin:0 0 0 24px;${fs}">( ) Verdadero &nbsp;&nbsp; ( ) Falso</p>`;
+    else if (r.tipo === 'respuesta_corta') h += `<p style="margin:${compacto ? '3px' : '6px'} 0 0 24px;${fs}">R: ______________________________________________</p>`;
+    else h += `<p style="margin:${compacto ? '3px' : '6px'} 0 0 24px;${fs}">______________________________________________________</p>`.repeat(3);
     if (conClave) {
       const k = 'ABCD'.indexOf(r.respuesta), txt = r.tipo === 'opcion_multiple' && k >= 0 && r.opciones[k] ? `${r.respuesta}) ${r.opciones[k]}` : r.respuesta;
-      h += `<p style="margin:2px 0 0 24px;color:#166534"><b>Respuesta:</b> ${gEsc(txt)}</p>`;
+      h += `<p style="margin:2px 0 0 24px;color:#166534;${fs}"><b>Respuesta:</b> ${gEsc(txt)}</p>`;
       if (r.pda) h += `<p style="margin:0 0 0 24px;font-size:9pt;color:#334155"><b>PDA:</b> ${gEsc(r.pda)}</p>`;   // el PDA va en la clave del docente, no en la hoja del alumno
     }
     return h;
   }).join('');
-  const cab = conClave ? `<p style="text-align:center"><b>${gEsc(ex.titulo || ex.nombre)} — CLAVE DE RESPUESTAS</b></p>` :
-    `<p style="text-align:center;margin:0"><b>${gEsc(gEscuela() || 'Escuela Secundaria')}</b></p><p style="text-align:center;margin:0"><b>${gEsc(ex.titulo || ex.nombre)}</b></p>
-     <p><b>Alumno:</b> ______________________________________ &nbsp; <b>Grupo:</b> ${gEsc(g.nombre)} &nbsp; <b>Fecha:</b> ____________ &nbsp; <b>Calificación:</b> ______ / ${gMaxExamen(ex)}</p>
-     <p style="font-size:9pt"><b>Indicaciones:</b> Lee con atención cada reactivo y responde en el espacio indicado. Docente: ${gEsc(gDocente())}.</p>`;
+  const cab = conClave ? `<p style="text-align:center;${fs}"><b>${gEsc(ex.titulo || ex.nombre)} — CLAVE DE RESPUESTAS</b></p>` :
+    `<p style="text-align:center;margin:0;${fs}"><b>${gEsc(gEscuela() || 'Escuela Secundaria')}</b></p><p style="text-align:center;margin:0;${fs}"><b>${gEsc(ex.titulo || ex.nombre)}</b></p>
+     <p style="${fs}"><b>Alumno:</b> ______________________________________ &nbsp; <b>Grupo:</b> ${gEsc(g.nombre)} &nbsp; <b>Fecha:</b> ____________ &nbsp; <b>Calificación:</b> ______ / ${gMaxExamen(ex)}</p>
+     <p style="font-size:${Math.max(8, f - 1)}pt"><b>Indicaciones:</b> Lee con atención cada reactivo y responde en el espacio indicado. Docente: ${gEsc(gDocente())}.</p>`;
   return cab + items;
+}
+// Alto (en px) que ocupa el examen en una hoja carta vertical; 0 si no se puede medir
+function gExamAlto(html) {
+  const a = gExamAltoNav(html); return a ? Math.round(a * G_HOJA.factor) : 0;
+}
+function gExamAltoNav(html) {
+  let d = null;
+  try {
+    d = document.createElement('div');
+    d.style.cssText = `position:absolute;left:-10000px;top:0;width:${G_HOJA.anchoPx}px;font:10pt Calibri,Arial,sans-serif;line-height:1.3;visibility:hidden`;
+    d.innerHTML = '<style>table{border-collapse:collapse}td,th{padding:4px 6px;vertical-align:top}p{margin:3px 0}</style>' + html;
+    document.body.appendChild(d);
+    return d.offsetHeight || 0;
+  } catch (e) { return 0; } finally { if (d && d.parentNode) d.parentNode.removeChild(d); }
+}
+// Letra y modo con que se imprime: { f, compacto, hojas, cabe, paginas }
+function gExamAjuste(g, ex) {
+  const hojas = +ex.hojas || 0, cap = n => n * G_HOJA.altoPx - G_HOJA.pie;
+  if (!hojas) { const a = gExamAlto(gExamCuerpo(g, ex, false, 10, false)); return { f: 10, compacto: false, hojas: 0, cabe: true, paginas: a ? Math.max(1, Math.ceil((a + G_HOJA.pie) / G_HOJA.altoPx)) : 0 }; }
+  let a = 0;
+  for (const f of G_LETRAS_EXAM) {
+    a = gExamAlto(gExamCuerpo(g, ex, false, f, true));
+    if (!a) return { f: 10, compacto: true, hojas, cabe: true, paginas: 0 };   // sin poder medir: letra normal compacta
+    if (a <= cap(hojas)) return { f, compacto: true, hojas, cabe: true, paginas: Math.max(1, Math.ceil((a + G_HOJA.pie) / G_HOJA.altoPx)) };
+  }
+  return { f: G_LETRAS_EXAM[G_LETRAS_EXAM.length - 1], compacto: true, hojas, cabe: false, paginas: Math.ceil((a + G_HOJA.pie) / G_HOJA.altoPx) };
+}
+function gExamenHTML(g, ex, conClave) {
+  const aj = gExamAjuste(g, ex);
+  return gExamCuerpo(g, ex, conClave, aj.f, aj.compacto);
+}
+// Texto que ve el docente bajo el examen: en cuántas hojas queda
+function gHojasInfo(g, b) {
+  if (!b || !b.reactivos || !b.reactivos.length) return '';
+  const aj = gExamAjuste(g, b);
+  if (!aj.paginas) return '';
+  if (!aj.hojas) return `📄 Así como está ocupa unas <b>${gPlural(aj.paginas, 'hoja', 'hojas')}</b> (carta, letra de 10 pt). Si quieres que quepa en menos, elige el número de hojas.`;
+  if (aj.cabe) return `📄 Cabe en <b>${gPlural(aj.paginas, 'hoja', 'hojas')}</b> con letra de <b>${String(aj.f).replace('.', ',')} pt</b>${aj.paginas < aj.hojas ? ` (pediste ${gPlural(aj.hojas, 'hoja', 'hojas')})` : ''}.`;
+  return `<span style="color:#b45309">⚠ <b>No cabe en ${gPlural(aj.hojas, 'hoja', 'hojas')}</b> ni con la letra más chica (9 pt): ocupa unas ${aj.paginas}. Quita reactivos con ✕ o elige más hojas.</span>`;
+}
+let gHojasT = null;
+function gHojasRefrescar() {
+  clearTimeout(gHojasT);
+  gHojasT = setTimeout(() => { const el = document.getElementById('g-hojas-info'), g = gGrupo(); if (el && g && G.borrador) el.innerHTML = gHojasInfo(g, G.borrador); }, 350);
+}
+function gHojasBorrador(v) { const b = G.borrador; if (!b) return; b.hojas = +v || 0; G.hojasUlt = b.hojas; gHistGuardarBorrador(b); gHojasRefrescar(); }
+// Antes de generar: cuántos reactivos de los tipos elegidos caben (aprox.) en N hojas
+function gHojasCapacidad(g, hojas, tipos) {
+  if (!hojas || !tipos.length) return 0;
+  const tipo = k => tipos[k % tipos.length];
+  const mk = n => ({ titulo: 'Examen de ejemplo para medir', hojas, reactivos: Array.from({ length: n }, (_, k) => ({ tipo: tipo(k), valor: tipo(k) === 'desarrollo' ? 2 : 1, respuesta: 'A',
+    pregunta: 'Pregunta de ejemplo de longitud media para medir cuánto espacio ocupa un reactivo típico del examen de secundaria.',
+    opciones: ['Opción de respuesta corta', 'Otra opción de respuesta', 'Tercera opción breve', 'Cuarta opción breve'] })) });
+  const cap = hojas * G_HOJA.altoPx - G_HOJA.pie;
+  let mejor = 0;
+  for (let n = 1; n <= 30; n++) { const a = gExamAlto(gExamCuerpo(g, mk(n), false, 10, true)); if (!a) return 0; if (a <= cap) mejor = n; else break; }
+  return mejor;
+}
+function gHojasCambio() {
+  const g = gGrupo(), sel = document.getElementById('ge-hojas'), inp = document.getElementById('ge-n'), ay = document.getElementById('ge-hojas-ay'); if (!g || !sel) return;
+  const hojas = +sel.value || 0; G.hojasUlt = hojas;
+  const tipos = Object.keys(G_TIPOS_EXAM).filter(t => { const c = document.getElementById('ge-t-' + t); return c && c.checked; });
+  const cap = gHojasCapacidad(g, hojas, tipos);
+  if (cap && inp) { const max = licEsPrueba() ? 5 : 30; if ((parseInt(inp.value, 10) || 0) > cap) inp.value = Math.min(cap, max); }
+  if (ay) ay.innerHTML = !hojas ? 'La app no limita el largo del examen.' : cap ? `En ${gPlural(hojas, 'hoja', 'hojas')} caben unos <b>${cap} reactivos</b> de los tipos que elegiste. Al descargar, la letra se ajusta para que quepa.` : 'Al descargar, la letra se ajusta para que quepa.';
 }
 function gDescargarExamen(ex, clave) {
   const g = gGrupo();
-  descargarWord(gExamenHTML(g, ex, clave), `${clave ? 'Clave' : 'Examen'}_${g.materia.replace(/\W+/g, '_')}_${g.nombre.replace(/\W+/g, '_')}.doc`);
+  descargarWord(gExamenHTML(g, ex, clave), `${clave ? 'Clave' : 'Examen'}_${g.materia.replace(/\W+/g, '_')}_${g.nombre.replace(/\W+/g, '_')}.doc`, { vertical: true });
 }
 function gGuardarExamen() {
   const g = gGrupo(); const b = G.borrador; if (!b) return;
@@ -2057,9 +2138,9 @@ function gGuardarExamen() {
   const reactivos = b.reactivos.map(r => { const c = Object.assign({}, r); delete c.revisar; delete c.motivo; return c; });
   if (b.editId) {   // clave de un examen ya guardado: se conservan puntos y calificaciones capturadas
     const ex = g.actividades.find(x => x.id === b.editId);
-    if (ex) { ex.reactivos = reactivos; ex.revisado = true; ex.revisadoEl = gHoy(); G.exAbierto = ex.id; G.borrador = null; gGuardar(); gRenderExamenes(); gIrAExamen(); gAviso('Clave revisada. Este examen ya se puede usar en el escáner.'); return; }
+    if (ex) { ex.reactivos = reactivos; ex.hojas = +b.hojas || 0; ex.revisado = true; ex.revisadoEl = gHoy(); G.exAbierto = ex.id; G.borrador = null; gGuardar(); gRenderExamenes(); gIrAExamen(); gAviso('Clave revisada. Este examen ya se puede usar en el escáner.'); return; }
   }
-  const nuevo = { id: gId(), trim: b.trim, criterioId: b.criterioId, nombre: b.titulo, max: gMaxExamen(b), tipo: 'examen', fecha: gHoy(), tema: b.tema, reactivos, revisado: true, revisadoEl: gHoy(), notas: {} };
+  const nuevo = { id: gId(), trim: b.trim, criterioId: b.criterioId, nombre: b.titulo, max: gMaxExamen(b), tipo: 'examen', fecha: gHoy(), tema: b.tema, hojas: +b.hojas || 0, reactivos, revisado: true, revisadoEl: gHoy(), notas: {} };
   g.actividades.push(nuevo); G.exAbierto = nuevo.id;
   G.borrador = null; gGuardar(); gRenderExamenes(); gIrAExamen();
 }
@@ -2230,10 +2311,11 @@ function gRenderExamenes() {
     ${gTemasPanel(g, t)}
     <div class="campo"><label>Temas o contenidos a evaluar</label><textarea id="ge-tema" rows="4" placeholder="Ej. Ecuaciones de primer grado con una incógnita; problemas de proporcionalidad directa">${gEsc(G.temaUlt || '')}</textarea><div class="ayuda">Mientras más específico, mejor el examen. Puedes escribir tus propios temas o corregir los que marcaste.</div><div class="ayuda" style="color:#92400e">🔒 Esto se envía a la IA: <b>no escribas nombres de alumnos</b> ni datos de conducta, salud o familia.</div></div>
     <div class="f3">
+      <div class="campo"><label>Número de hojas</label><select id="ge-hojas" onchange="gHojasCambio()">${G_HOJAS_OPC.map(n => `<option value="${n}" ${(+G.hojasUlt || 0) === n ? 'selected' : ''}>${gHojasNom(n)}</option>`).join('')}</select><div class="ayuda" id="ge-hojas-ay">Tamaño carta, hoja vertical.</div></div>
       <div class="campo"><label>Número de reactivos</label>${licEsPrueba() ? '<input id="ge-n" type="number" min="3" max="5" value="5"><div class="ayuda">En la prueba gratis: hasta 5 reactivos.</div>' : '<input id="ge-n" type="number" min="3" max="30" value="10">'}</div>
       <div class="campo"><label>Dificultad</label><select id="ge-dif"><option>Básica</option><option selected>Media</option><option>Alta</option></select></div>
     </div>
-    <div class="campo"><label>Tipos de reactivo</label><div class="g-checks">${Object.entries(G_TIPOS_EXAM).map(([k, v]) => `<label><input type="checkbox" id="ge-t-${k}" ${k !== 'desarrollo' ? 'checked' : ''}> ${v}</label>`).join('')}</div></div>
+    <div class="campo"><label>Tipos de reactivo</label><div class="g-checks">${Object.entries(G_TIPOS_EXAM).map(([k, v]) => `<label><input type="checkbox" id="ge-t-${k}" ${k !== 'desarrollo' ? 'checked' : ''} onchange="gHojasCambio()"> ${v}</label>`).join('')}</div></div>
     <div class="l-err" id="ge-err" style="margin:0 0 12px"></div>
     <button class="g-btn" id="ge-btn" onclick="gGenerarExamen()">✨ Generar examen con IA</button>
     <div class="ayuda" style="font-size:11px;color:var(--gris);margin-top:8px">⚠ Revisa el examen y la clave antes de aplicarlo: la IA puede equivocarse.</div></div>`}`;
@@ -2243,7 +2325,8 @@ function gRenderExamenes() {
     b.reactivos.forEach(r => { r.revisar = !!gRevReactivo(r); });
     h += `<div class="card" id="g-borrador"><div class="card-title">${edit ? '✏️ Revisa la clave de tu examen' : '👀 Revisa tu examen'} (${gMaxExamen(b)} puntos)</div>
       <div class="ayuda" style="margin:-4px 0 10px">Este examen suma <b>${gMaxExamen(b)} puntos</b> (lo que vale cada pregunta aparece entre paréntesis). Al capturar los aciertos de cada alumno, la app lo convierte sola a una calificación de 0 a 10.</div>
-      <div class="campo"><label>Título</label><input value="${gEsc(b.titulo)}" oninput="gTituloBorrador(this.value)"></div>` +
+      <div class="campo"><label>Título</label><input value="${gEsc(b.titulo)}" oninput="gTituloBorrador(this.value)"></div>
+      <div class="campo"><label>Hojas al imprimir</label><select onchange="gHojasBorrador(this.value)" style="max-width:220px">${G_HOJAS_OPC.map(n => `<option value="${n}" ${(+b.hojas || 0) === n ? 'selected' : ''}>${gHojasNom(n)}</option>`).join('')}</select><div class="ayuda" id="g-hojas-info">${gHojasInfo(g, b)}</div></div>` +
       `<div class="ayuda" style="margin:-4px 0 10px">Puedes corregir cualquier pregunta, opción o respuesta directamente aquí${edit ? '' : ', o quitar la que no te guste con ✕'}. Los reactivos en <b style="background:#fef3c7;padding:0 4px;border-radius:4px">amarillo</b> traen la clave dudosa: elige tú la respuesta correcta.</div>` +
       b.reactivos.map((r, i) => {
         const m = gRevReactivo(r);
@@ -2274,6 +2357,7 @@ function gRenderExamenes() {
   }
   gPanel().innerHTML = h;
   if (G.borrador) gBorrActualizar();
+  if (+G.hojasUlt && document.getElementById('ge-hojas')) gHojasCambio();
 }
 
 // ============================================================
