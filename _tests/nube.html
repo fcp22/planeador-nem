@@ -151,7 +151,21 @@ async function correr() {
   ok('Si el otro aparato está VACÍO, no pregunta (no se puede cambiar mis grupos por nada)', !preg2);
   eq('…el que tenía grupos los conserva', W.alm.st.snap.d.grupos.map(g => g.id), ['g1']);
   ok('…y se los pasa al aparato vacío', await hasta(() => V.alm.st.snap.d.grupos.length === 1));
-  [A, B, C, D, P, Q, V, W].forEach(s => s.detener(false));
+  S('Si la escucha en vivo se corta (iPhone dormido)');
+  const tr4 = NUBE.TrMemoria();
+  const M1 = aparato(tr4, 'M1', 'Mac', datos()), I1 = aparato(tr4, 'I1', 'iPhone');
+  await M1.iniciar(); await M1.activar(); await vincular(I1, M1); await quieto(M1, I1);
+  I1.oyentes.forEach(f => f()); I1.oyentes = [];   // el iPhone deja de escuchar en vivo
+  M1.alm.st.snap.d.perfil.escuela = 'Sec. Felipe Carrillo Puerto'; M1.cambioLocal(); await M1.sincronizarYa(); await quieto(M1, I1);
+  ok('Sin escucha en vivo, el cambio todavía no llega', I1.alm.st.snap.d.perfil.escuela !== 'Sec. Felipe Carrillo Puerto');
+  await I1.revisar(); await quieto(M1, I1);
+  eq('…al volver a la app (revisar el buzón) sí llega', I1.alm.st.snap.d.perfil.escuela, 'Sec. Felipe Carrillo Puerto');
+  I1.alm.st.snap.d.perfil.escuela = 'Escuela cambiada en el iPhone'; notas(I1).a1 = 9; I1.cambioLocal(); await I1.sincronizarYa(); await quieto(M1, I1);
+  eq('Al revés: un dato que ya tenía valor, cambiado en el iPhone, llega a la Mac', M1.alm.st.snap.d.perfil.escuela, 'Escuela cambiada en el iPhone');
+  eq('…y una calificación corregida también', notas(M1).a1, 9);
+  M1.alm.st.snap.d.perfil.escuela = 'Otra vez en la Mac'; notas(M1).a1 = 7; M1.cambioLocal(); await M1.sincronizarYa(); await I1.revisar(); await quieto(M1, I1);
+  eq('Segunda corrección en la Mac: el iPhone toma el valor nuevo', [I1.alm.st.snap.d.perfil.escuela, notas(I1).a1], ['Otra vez en la Mac', 7]);
+  [A, B, C, D, P, Q, V, W, M1, I1].forEach(s => s.detener(false));
 
   // ════ La app real (en un marco) ════
   await probarApp();

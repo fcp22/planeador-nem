@@ -15,7 +15,7 @@
 (function () {
   'use strict';
   const DIA = 86400000, CADUCA = 14 * DIA, ACTIVO = 30 * DIA, VINC_CADUCA = 15 * 60000;
-  const MAX_BYTES = 1000000, MAX_ENV = 20, ESPERA = 4000, ESPERA_MAX = 20000;
+  const MAX_BYTES = 1000000, MAX_ENV = 40, ESPERA = 4000, ESPERA_MAX = 20000;
   const NB = { sinBase: true };   // marca: no hay versión común (primera vez)
 
   // ── Mezcla de tres vías ──────────────────────────────────
@@ -234,7 +234,15 @@
       const espera = Math.max(0, Math.min(ms, this.desde + (this.esperaMax || ESPERA_MAX) - ahora));
       this.timer = setTimeout(() => { this.timer = null; this._serie(() => this._enviar()).catch(() => {}); }, espera);
     }
-    sincronizarYa() { if (this.modo === 'activo') { clearTimeout(this.timer); this.timer = null; return this._serie(() => this._enviar(true)); } return Promise.resolve(); }
+    sincronizarYa() { if (this.modo === 'activo') { clearTimeout(this.timer); this.timer = null; return this._serie(() => this._enviar(true)).then(() => this.revisar()); } return Promise.resolve(); }
+    // Lee el buzón una vez. La escucha en vivo a veces se corta (el iPhone duerme la app en segundo plano o ahorra batería):
+    // esto se llama al volver a la app, al recuperar internet y cada minuto mientras está abierta, para que nada se quede esperando.
+    async revisar() {
+      if (this.modo !== 'activo' || !this.llave || !this.tr.leerCasilleros) return;
+      let docs; try { docs = await this.tr.leerCasilleros(); } catch (e) { return; }
+      await this._serie(() => this._recibir(docs));
+      if (this.estado().sucio) this.programar(0);
+    }
     async _enviar(forzar) {
       if (this.modo !== 'activo' || !this.llave) return;
       const e = this.estado(); if (!e.sucio && !forzar) return;
@@ -269,6 +277,9 @@
           if (!R || !R.d || !Array.isArray(R.d.grupos)) continue;
           const L = this.alm.leerSnap(), bv = doc.base && doc.base[this.dev];
           let B = null; if (bv) { try { B = await this.alm.leerEnv(bv); } catch (err) { B = null; } }
+          // Si el otro aparato todavía no conocía mi versión, el punto de comparación es el último paquete que recibí de él.
+          // Así, un dato que el otro cambió (escuela, una calificación…) llega aunque yo también tenga un valor.
+          if (!B && e.recibidas[doc.de]) { try { B = await this.alm.leerEnv('r:' + e.recibidas[doc.de]); } catch (err) { B = null; } }
           let M;
           if (B) M = mezclar(B, L, R);
           else if (!L.d || !L.d.grupos || !L.d.grupos.length) M = mezclar(null, { d: R.d, h: R.h || L.h, t: L.t, e: R.e || L.e }, R);
@@ -278,6 +289,7 @@
             M = reemplazar ? { d: R.d, h: R.h || L.h, t: unirTemas(R.t, L.t), e: R.e || L.e } : mezclar(null, L, R);
           } else M = mezclar(null, L, R);
           if (!igual(M, L)) { this.alm.aplicarSnap(M); try { this.alRecibir && this.alRecibir(doc.de, this.nombres[doc.de]); } catch (err) {} }
+          try { await this.alm.guardarEnv('r:' + doc.ver, R, MAX_ENV); } catch (err) { /* sin la copia, la próxima mezcla junta sin perder nada */ }
           const e2 = this.estado(); e2.recibidas[doc.de] = doc.ver; e2.ultRecibo = ahora; this._ponerEstado(e2);
           if (!igual(M.d, R.d) || (R.h !== undefined && !igual(M.h, R.h)) || (R.e !== undefined && !igual(M.e, R.e))) this.cambioLocal();   // tengo cosas que el otro no: se las mando
         }
@@ -310,6 +322,7 @@
       async quitarAparato(id) { tr._ok(); delete st.aps[id]; },
       async ponerCasillero(id, d) { tr._ok(); st.cas[id] = cp(d); emitir(oyC, st.cas); },
       escucharCasilleros(cb) { oyC.add(cb); setTimeout(() => cb(lista(st.cas)), 0); return () => oyC.delete(cb); },
+      async leerCasilleros() { tr._ok(); return lista(st.cas); },
       async marcarTomado(id, dev) { tr._ok(); const d = st.cas[id]; if (!d) return; if (!d.tomado.includes(dev)) d.tomado.push(dev); emitir(oyC, st.cas); },
       async borrarCasillero(id) { tr._ok(); if (st.cas[id]) { delete st.cas[id]; emitir(oyC, st.cas); } },
       async pedirVinculo(id, d) { tr._ok(); st.vin[id] = cp(d); emitir(oyV, st.vin); },
@@ -326,6 +339,7 @@
     const fs = firebase.firestore, raiz = db.collection('sync').doc(uid);
     const cas = raiz.collection('casillero'), apa = raiz.collection('aparatos'), vin = raiz.collection('vinculo'), inf = raiz.collection('llave').doc('info');
     const ms = t => (t && typeof t.toMillis === 'function') ? t.toMillis() : (+t || 0);
+    const docCas = d => { const x = d.data(); return Object.assign({}, x, { id: d.id, ct: x.ct && x.ct.toUint8Array ? x.ct.toUint8Array() : new Uint8Array(0), expira: ms(x.expira) }); };
     return {
       async info() { const s = await inf.get(); return s.exists ? s.data() : null; },
       ponerInfo: kid => inf.set({ kid, creado: Date.now() }),
@@ -333,7 +347,8 @@
       ponerAparato: (id, d) => apa.doc(id).set(d, { merge: true }),
       quitarAparato: id => apa.doc(id).delete(),
       ponerCasillero: (id, d) => cas.doc(id).set(Object.assign({}, d, { ct: fs.Blob.fromUint8Array(d.ct), expira: fs.Timestamp.fromMillis(d.expira) })),
-      escucharCasilleros: (cb, err) => cas.onSnapshot(q => cb(q.docs.map(d => { const x = d.data(); return Object.assign({}, x, { id: d.id, ct: x.ct && x.ct.toUint8Array ? x.ct.toUint8Array() : new Uint8Array(0), expira: ms(x.expira) }); })), err),
+      escucharCasilleros: (cb, err) => cas.onSnapshot(q => cb(q.docs.map(docCas)), err),
+      leerCasilleros: async () => (await cas.get({ source: 'server' })).docs.map(docCas),
       marcarTomado: (id, dev) => cas.doc(id).update({ tomado: fs.FieldValue.arrayUnion(dev) }),
       borrarCasillero: id => cas.doc(id).delete(),
       pedirVinculo: (id, d) => vin.doc(id).set(Object.assign({}, d, { expira: fs.Timestamp.fromMillis(d.expira) })),
@@ -527,5 +542,16 @@
   window.nubeTarjetaHTML = tarjetaHTML;
   // Al salir de la app o perder la pantalla (celular), manda lo pendiente de inmediato; al volver el internet, también
   document.addEventListener('visibilitychange', () => { const s = NUBE.sinc; if (s && s.modo === 'activo' && document.visibilityState === 'hidden' && s.estado().sucio) s.programar(0); });
-  window.addEventListener('online', () => { const s = NUBE.sinc; if (s && s.modo === 'activo' && s.estado().sucio) s.programar(0); });
+  window.addEventListener('online', () => { const s = NUBE.sinc; if (s && s.modo === 'activo' && s.estado().sucio) s.programar(0); nubeRevisar(); });
+  let ultRevision = 0;
+  function nubeRevisar(forzar) {
+    const s = NUBE.sinc; if (!s || s.modo !== 'activo') return;
+    if (!forzar && Date.now() - ultRevision < 5000) return;
+    ultRevision = Date.now(); s.revisar().catch(() => {});
+  }
+  NUBE.revisar = nubeRevisar;
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') nubeRevisar(); });
+  window.addEventListener('focus', () => nubeRevisar());
+  window.addEventListener('pageshow', () => nubeRevisar());
+  setInterval(() => { if (document.visibilityState === 'visible') nubeRevisar(); }, 60000);
 })();

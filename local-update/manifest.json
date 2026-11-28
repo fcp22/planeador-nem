@@ -1,6 +1,6 @@
 {
- "version": "8643b44bf5042670",
- "fecha": "2026-11-27T22:10:39",
+ "version": "a5a1ed2d4459c45e",
+ "fecha": "2026-11-27T22:25:10",
  "servidorMin": 1,
  "archivos": [
   {
@@ -135,7 +135,7 @@
   },
   {
    "p": "index.html",
-   "h": "e73fb3b4aa74d7aa497a9e352043cecfdac0c513b5ce17e9dc8b446c021e46fe",
+   "h": "0056fe0428af4da053f34858a40a9ebb3fa630a6db2bd3f85bc6ab3093d96edc",
    "s": 149554
   },
   {
@@ -165,8 +165,8 @@
   },
   {
    "p": "nube.js",
-   "h": "444bfa8b031ee1db384ea0e72563e186f23fb0b5fce60542aee54ed55afd53fe",
-   "s": 39434
+   "h": "f8a7d2bff6029dd4c55bae0f059044f38a63d49b60fc267e690ee6078622915d",
+   "s": 41360
   },
   {
    "p": "privacidad.js",
@@ -205,7 +205,7 @@
   },
   {
    "p": "sw.js",
-   "h": "70d9e3c111b0c81fecd553c1d882c016b7fa6e6385e0ae8b7466f0e9bd5ded57",
+   "h": "52cc7216e2eb8b2a558dc99ecfb02156f8be8100a79f0aa81f257b17a1404750",
    "s": 5014
   }
  ]
