@@ -143,7 +143,15 @@ async function correr() {
   await hasta(() => preguntado); await quieto(P, Q);
   ok('Si el nuevo ya tenía datos, pregunta antes de reemplazarlos', preguntado);
   eq('Al aceptar, queda igual que la computadora', Q.alm.st.snap.d.grupos.map(g => g.id), ['g1']);
-  [A, B, C, D, P, Q].forEach(s => s.detener(false));
+  const tr3 = NUBE.TrMemoria();
+  const V = aparato(tr3, 'V', 'Mac (vacía)', { d: { v: 1, grupos: [] }, h: [], t: [] });
+  let preg2 = false;
+  const W = aparato(tr3, 'W', 'iPhone', datos(), async () => { preg2 = true; return true; });
+  await V.iniciar(); await V.activar(); await vincular(W, V); await quieto(V, W);
+  ok('Si el otro aparato está VACÍO, no pregunta (no se puede cambiar mis grupos por nada)', !preg2);
+  eq('…el que tenía grupos los conserva', W.alm.st.snap.d.grupos.map(g => g.id), ['g1']);
+  ok('…y se los pasa al aparato vacío', await hasta(() => V.alm.st.snap.d.grupos.length === 1));
+  [A, B, C, D, P, Q, V, W].forEach(s => s.detener(false));
 
   // ════ La app real (en un marco) ════
   await probarApp();

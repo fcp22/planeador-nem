@@ -272,6 +272,7 @@
           let M;
           if (B) M = mezclar(B, L, R);
           else if (!L.d || !L.d.grupos || !L.d.grupos.length) M = mezclar(null, { d: R.d, h: R.h || L.h, t: L.t, e: R.e || L.e }, R);
+          else if (!R.d.grupos.length) M = mezclar(null, L, R);   // el otro aparato está vacío: nunca se ofrece cambiar mis grupos por nada
           else if (!e.n && !Object.keys(e.recibidas).length) {
             const reemplazar = await this.preguntar(L, R, doc.de);
             M = reemplazar ? { d: R.d, h: R.h || L.h, t: unirTemas(R.t, L.t), e: R.e || L.e } : mezclar(null, L, R);
